@@ -1,0 +1,2 @@
+20180206c - c is for a new pull of Walker's branch fixing a bug with combined detection mode
+20180206d - d is for a pull of Walker's branch switching to C/t and revisit ramp, and increment through C/t list to find a tdet<slew_time

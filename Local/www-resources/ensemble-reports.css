@@ -1,0 +1,163 @@
+/*
+ * CSS for ensemble html reports.
+ * See html-summary.py, the writer that includes this file by reference
+ * in auto-generated summary pages.
+ *
+ * turmon sep 2018
+ */
+
+body {
+  font-family: Arial, Helvetica, sans-serif; 
+  background-color: aliceblue;
+}
+
+/* overall page title */
+h1 {
+  font-size: 1.6em;
+  font-family: "Verdana", "Arial Bold", sans-serif; 
+  text-align: center; 
+  color: DarkRed;
+}
+
+/* main headings - very bold */
+h2 {
+    font-size: 1.5em; 
+    margin-top: 3em;
+    color: DarkRed;
+    background: lightsteelblue;
+    padding: 4px;
+    padding-left: 20px;
+    border-style: solid;
+    border-width: 4px;
+    border-left-width: 1.6em;
+}
+
+h3 {
+    font-size: 1.2em;
+    margin-top: 3em;
+    background: Gainsboro;
+    padding: 4px;
+    padding-left: 20px;
+}
+
+th, td {
+  padding: 5px;
+}
+
+/* 
+ * "gfx" class tables hold two-column info of filename + plot 
+ */
+
+/* expand table spacing, esp. vertical */
+table.gfx {
+    border-spacing: 5px 4em;
+}
+
+/* table headers */
+table.gfx th {
+    font-size: 1.2em;
+    background: Gainsboro;
+}
+
+/* wide first column for filename */
+table.gfx th:first-child {
+    width: 200px;
+}
+
+/* bold first column for filename */
+table.gfx td:first-child {
+    font-weight: bold;
+}
+
+/* See: https://codepen.io/blindside85/pen/ClnIE
+ * Multilevel Nav Menu Dropdowns
+ * A pen by Jesse Dupuy
+ */
+body {
+    margin-top: 80px; /* Add a top margin to avoid content overlay */
+}
+/* styling for nav elements */
+nav ul {
+    font-weight: bold;
+    background-color: lightsteelblue;
+}
+nav li {
+    position: relative;
+    display: inline-block;
+    list-style: none;
+    color: DarkRed;
+}
+nav li a {
+    display: block;
+    padding: 0.5em 1.2em; /* top/bot rt/lft */
+    color: DarkRed;
+    text-decoration: none;
+    /*border-radius: 3px;*/
+    transition: background .2s;
+}
+nav li a:not(:only-child):after {
+    content: '\21b4'; /* down-arrow */
+    display: inline-block;
+    padding-left: .5em;
+    color: DarkRed;
+}
+
+nav li a:hover {
+    background: Gainsboro;
+}
+.level-1 {
+    /*border-bottom: 1px solid #71200f;*/
+    position:fixed;
+    padding-left: 2em;
+    border: 2px solid DarkRed;
+    top:0;
+}
+.level-2,
+.level-3 {
+    padding-left: 1em;
+    min-width: 20em; /* menu item width */
+    border: 2px solid DarkRed;
+}
+
+/*dropdown menu styles*/
+.level-1 li:hover .level-2 {
+    left: 0;
+}
+.level-2:before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 1em;
+  border-bottom: 6px solid DarkRed;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+}
+.level-2 {
+  position: absolute;
+  top: 100%;
+  left: -9999em;
+}
+.level-2 li {
+  position: relative;
+  display: block;
+}
+.level-2 li a {
+  margin: 0;
+}
+.level-2 li:hover .level-3 {
+  left: 100%;
+}
+.level-3:before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -6px;
+  border-bottom: 6px solid transparent;
+  border-top: 6px solid transparent;
+  border-right: 6px solid DarkRed;
+}
+.level-3 {
+  position: absolute;
+  left: -9999em;
+  top: 0;
+}

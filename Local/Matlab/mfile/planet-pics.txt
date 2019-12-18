@@ -1,0 +1,8 @@
+Five exoplanet overlay images:
+
+trappist-1_d.png: rocky sub-earth
+gliese-667C_c.png: super-earth
+gj-1214_b.png: sub-neptune
+neptune
+jupiter
+

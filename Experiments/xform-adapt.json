@@ -1,0 +1,8 @@
+{
+  "xform_name": "",
+  "script_comment": "turmon: coeffs are to be varied",
+  "coeffs": [0,0,0,0],
+  "+modules": {
+    "SurveyEnsemble": "EXOSIMS_local.IPClusterEnsembleJPL2"
+  }
+}

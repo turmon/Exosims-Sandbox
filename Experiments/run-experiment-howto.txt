@@ -1,0 +1,81 @@
+Running Parameter Sweeps in the EXOSIMS Sandbox
+Michael Turmon
+December 18 2018
+
+This is how I currently run parameter sweeps in the Sandbox.  It could
+be made more seamless.  We haven't yet decided if all such sweeps will
+be done in a similar way.
+
+
+[1] Overview
+
+The basic flow is:  Start with a "template script", produce a family of
+"derived scripts" from that.  Check that one of the derived scripts
+works on a single Exosims run.
+
+Then, partition the list of derived scripts (json files) into 3 sets, one
+each for aftac1/2/3, each stored in a per-machine file.  Run simulations
+on each machine.
+
+When the simulations are done, reduce the data (for all of the derived
+scripts).  Make plots and path ensembles for *some* of the derived
+scripts.
+
+
+[2] Step-by-step
+
+
+* Start with a working script, say, Scripts/Habex_works_20181201.json
+
+* Make the set of derived scripts from the template script using the
+following transform:
+
+util/json-xform.py -o Habex_works_20181201.exp/s_%s.json Habex_works_20181201.json Experiments/xform-adapt.json Experiments/xform-c4sample.json
+
+Note: xform-adapt plugs in newer driver infrastructure, and xform-sample
+iterates over the LJS coefficients.
+
+* Do a single test run to set up cache files and ensure everything works:
+
+./add-sims.sh -S 777 -P 1 Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05.json 1
+
+The particular seed does not matter - I used 777.  The particular
+experiment script does not matter either.
+
+* Use the execution time of this run to extrapolate a first-cut on how
+long processing will take.  Evaluate if this time is acceptable.  
+
+* Delete the trial run, so the weird seed does not contaminate the results:
+
+rm -r sims/Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05
+
+* Partition the just-created script files into three sets (assuming you
+want runs on aftac1/2/3).  The magic "84" is the number of derived scripts
+divided by the number of machines, rounded up.  The later "Run-exp.sh"
+currently uses files with *these particular names*, which is bad.
+
+ls Scripts/HabEx_works_20181201.exp/s_c* | split -l 84 -d -a 1 - Run-exp.aftac
+mv Run-exp.aftac0 Run-exp.aftac3
+
+* Begin the runs on each of 3 machines.  The particular log-file does not matter.
+
+nohup ./Run-exp.sh >| Run-c1.log &   [ on aftac1]
+nohup ./Run-exp.sh >| Run-c2.log &   [ on aftac2]
+nohup ./Run-exp.sh >| Run-c3.log &   [ on aftac3]
+
+* Reduce all the data.  This is pretty fast.
+
+make S=Habex_works_20181201.exp reduce
+
+* Make the summary webpage.  *Critical* -- html-only, not html
+
+make S=Habex_works_20181201.exp html-only
+
+* Optionally, for a few specific ensembles, make plots and diagnostics
+in the "per-ensemble" way:
+
+make S=Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05 html
+make S=Habex_works_20181201.exp/s_c1=0.50_c2=0.20_c3=0.10 html
+[...more as needed...]
+
+Similarly for other ensemble targets, like path-ensemble and path-movie-5.

@@ -1,0 +1,55 @@
+[
+    {
+	"xform_type": "update",
+	"xform_name": "",
+	"missionLife": 3.0,
+	"coeffs_comment": "turmon: coefficients auto-substituted",
+	"coeffs": [1, 1, 1, 0.5]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c1={coeffs[0]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[0.05, NaN, NaN, NaN],
+		   [0.1, NaN, NaN, NaN],
+		   [0.2, NaN, NaN, NaN],
+		   [0.3, NaN, NaN, NaN],
+		   [0.4, NaN, NaN, NaN],
+		   [0.5, NaN, NaN, NaN],
+		   [0.6, NaN, NaN, NaN],
+		   [0.8, NaN, NaN, NaN],
+		   [1.0, NaN, NaN, NaN]
+		  ]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c2={coeffs[1]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, 0.05,NaN, NaN],
+		   [NaN, 0.1, NaN, NaN],
+		   [NaN, 0.2, NaN, NaN],
+		   [NaN, 0.3, NaN, NaN],
+		   [NaN, 0.4, NaN, NaN],
+		   [NaN, 0.5, NaN, NaN],
+		   [NaN, 0.6, NaN, NaN],
+		   [NaN, 0.8, NaN, NaN],
+		   [NaN, 1.0, NaN, NaN]
+		  ]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c3={coeffs[2]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, NaN, 0.05,NaN],
+		   [NaN, NaN, 0.1, NaN],
+		   [NaN, NaN, 0.2, NaN],
+		   [NaN, NaN, 0.3, NaN],
+		   [NaN, NaN, 0.4, NaN],
+		   [NaN, NaN, 0.5, NaN],
+		   [NaN, NaN, 0.6, NaN],
+		   [NaN, NaN, 0.8, NaN],
+		   [NaN, NaN, 1.0, NaN]
+		  ]
+    }
+    
+ ]

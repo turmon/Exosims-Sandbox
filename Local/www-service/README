@@ -1,0 +1,20 @@
+
+Contents:
+
+[1]
+httpd.conf file for apache httpd server
+
+[2]
+Log, lock, and process ID (pid) files for running HTTP servers.
+
+For instance, the files for the (default) server on port 8088 are:
+
+  http.8088.fifo      -- server control file
+  http.8088.log       -- server log file
+  http.8088.pid       -- process ID of server
+
+Old logs for servers that were run earlier, but have now exited,
+are kept around and truncated when a new server on that port
+is run again.
+
+For more, see util/html-serve.py.

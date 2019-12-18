@@ -1,0 +1,28 @@
+[
+    {
+	"xform_type": "update",
+	"xform_name": "",
+	"coeffs_comment": "turmon: coefficients auto-substituted",
+	"coeffs": [1, 1, 1, 1]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "cA{coeffs[0]:.0f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[1, NaN, NaN, NaN],
+		   [2, NaN, NaN, NaN],
+		   [5, NaN, NaN, NaN],
+		   [10, NaN, NaN, NaN]
+		  ]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "cB{coeffs[1]:.0f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, 1, NaN, NaN],
+		   [NaN, 2, NaN, NaN],
+		   [NaN, 5, NaN, NaN],
+		   [NaN, 10, NaN, NaN]
+		  ]
+    }
+ ]

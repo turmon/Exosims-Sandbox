@@ -1,0 +1,4 @@
+# transitory web server files
+http.*.fifo
+http.*.log
+http.*.pid

@@ -1,0 +1,8 @@
+{
+    "shortName": "Min Completeness",
+    "comment": "Altering min completeness to see if this makes revisits of easy stars more likely",
+    "scripts": [
+	["minC01",  "HabEx_4m_TSDD_pop100DD_minC01_20180522"], 
+	["minC02",  "HabEx_4m_TSDD_pop100DD_minC02_20180522"]
+    ]
+}

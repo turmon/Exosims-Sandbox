@@ -1,0 +1,6 @@
+ chartime=np.array([])
+    ...: for d in drmc:
+    ...:     if 'char_status' in d.keys():
+    ...:         print d['char_status']
+    ...:         chartime=np.append(chartime, d['char_time'])
+    ...: 

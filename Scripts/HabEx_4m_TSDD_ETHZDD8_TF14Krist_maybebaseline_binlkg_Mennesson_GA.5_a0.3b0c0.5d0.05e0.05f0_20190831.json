@@ -1,0 +1,207 @@
+{
+  "missionLife": 5.0,
+  "missionStart": 64681,
+  "missionPortion": 1,
+  "GAPortion": 0.5,
+  "GA_simult_det_fraction": 0.0,
+  "int_inflection": false,
+  "minComp": 0.1,
+  "pupilDiam": 4,
+  "obscurFac": 0,
+  "dMagLim": 26.0,
+  "dMagLim_offset": 1,
+  "magEZ": 22.4205,
+  "intCutoff": 60.0,
+  "contrast_floor_notyet": 1E-10,
+  "texp_flag": true,
+  "scaleWAdMag": true,
+  "dMagint": 24,
+  "WAint":0.2,
+  "dMag0":26,
+  "WA0":0.2,
+  "charMargin": 0.01,
+  "nVisitsMax": 10,
+  "occ_max_visits": 2,
+  "revisit_wait": 0.335,
+  "phase1_end": 16,
+  "revisit_weight": 10,
+  "n_det_remove": 2, 
+  "n_det_min": 3,
+  "max_successful_chars": 1,
+  "max_successful_dets": 4,
+  "nmax_promo_det": 4,
+  "lum_exp": 0.75,
+  "cachedir": "$HOME/.EXOSIMS/cache_HabEx20190831",
+  "binaryleakfilepath": "/proj/exep/rhonda/binary_leakage/leakData.csv",
+  "wdsfilepath": "/proj/exep/rhonda/binary_leakage/ExoCat_WDS_Sep_dM.csv",
+
+  "occHIPs":"/proj/exep/rhonda/topStars/DD8_HabEx_4m_20190725.txt",  
+  "topstars": 8,
+  "popStars": ["HIP 16537"],
+
+  "coeffs": [0.3,0,0.5,0.05,0.05,0,0],
+  "settlingTime": 0.042, 
+  "thrust": 1040,
+  "slewIsp": 3000,
+  "scMass": 11180,
+  "dryMass": 4550,
+  "coMass":5800,
+  "occulterSep":76600,
+  "skIsp": 308,
+  "defburnPortion":0.85,
+  
+  "ppFact": 0.29,
+  "ppFact_char": 0.1,
+  "stabilityFact": 0.1,
+  "erange": [0,0],
+  "arange":[0.09, 12.4],
+  "Rprange":[0.5, 11.6],
+  "eta": 0.243731,
+  "scaleOrbits": true,
+  "constrainOrbits": true,
+  "keepStarCatalog": true,
+  "fillPhotometry": true,
+  "explainFiltering": true,
+  "filterBinaries": false,
+  "promote_hz_stars": true,
+  "earths_only": false,
+  "filter_for_char": true,
+  "use_char_minintime": true,
+  "lucky_planets": true,
+  
+
+  "scienceInstruments": [
+    {
+      "name": "imagingEMCCD",
+      "QE": 0.9,
+      "optics": 0.28,
+      "pixelScale": 0.0142,
+      "pixelSize": 13e-6,
+      "sread": 0,
+      "idark": 3e-5,
+      "CIC": 1.3e-3,
+      "texp": 10,
+      "ENF": 1,
+      "PCeff": 0.75
+    },
+    {
+      "name": "imagingRedEMCCD",
+      "QE": 0.9,
+      "optics": 0.42,
+      "pixelScale": 0.0211,
+      "pixelSize": 13e-6,
+      "sread": 0,
+      "idark": 3e-5,
+      "CIC": 1.3e-3,
+      "texp": 10,
+      "PCeff": 0.75,
+      "ENF": 1
+    },
+    {
+      "name": "spectroEMCCD",
+      "QE": 0.9,
+      "optics": 0.39,
+      "pixelScale": 0.0142,
+      "pixelSize": 12e-6,
+      "lenslSamp": 2,
+      "sread": 0,
+      "idark": 3e-5,
+      "CIC": 1.3e-3,
+      "texp": 30,
+      "ENF": 1,
+      "Rs": 140,
+      "PCeff": 0.75
+    }
+  ],
+  "starlightSuppressionSystems": [
+    {
+      "name": "VVC550",
+      "lam": 550,
+      "IWA": 0.03,
+      "OWA": 2.127,
+      "ohTime": 0.2,
+      "BW": 0.20,
+      "optics": 0.95,
+      "optics_comment": "contamination",
+      "core_platescale": 0.1,
+      "occ_trans": "/proj/exep/rhonda/HabEx/Krist_occ_trans2_asec500nm.fits",
+      "core_thruput": "/proj/exep/rhonda/HabEx/Krist_core_thruput_asec500nm.fits", 
+      "core_contrast": 1e-10,
+      "koAngles_Small": [1,180],
+      "koAngles_Sun": [40,180],
+      "koAngles_Moon": [1,180],
+      "koAngles_Earth": [1,180]
+    },
+    {
+      "name": "Occulter_testcase",
+      "occulter": true,
+
+      "lam": 650,
+      "IWA": 0.043,
+      "OWA": 5.9,
+      "ohTime": 0.33,
+      "BW": 1.08,
+      "optics": 1,
+      "core_platescale": 0.1667,
+      "occ_trans": "/proj/exep/rhonda/HabEx/Starshade/TV3_occ_trans_asec_650.fits",
+      "occulterDiameter": 52,
+      "NocculterDistances" :1,
+      "occulterDistances": [
+        {
+        "occulterDistance": 76600,
+        "occulterRedEdge": 1000,
+        "occulterBlueEdge": 300
+        }
+      ],
+      "core_thruput": "/proj/exep/rhonda/HabEx/Starshade/TV3_core_thruput_asec_650.fits",
+      "core_mean_intensity": "/proj/exep/rhonda/HabEx/Starshade/TV3_core_mean_intensity_asec_650.fits",
+      "koAngles_Small": [1,180],
+      "koAngles_Sun": [40,83],
+      "koAngles_Moon": [1,180],
+      "koAngles_Earth": [1,180]
+   }
+ ],
+      "observingModes": [
+    {
+      "instName": "imagingEMCCD",
+      "systName": "VVC550",
+      "detection": 1,
+      "lam": 500,
+      "SNR": 7
+    },
+    {
+      "instName": "imagingRedEMCCD",
+      "systName": "VVC550",
+      "detection": 1,
+      "lam": 745,
+      "SNR": 7
+    },
+    {
+      "instName": "spectroEMCCD",
+      "systName": "Occulter_testcase",
+      "SNR": 10
+    }
+  ],
+  "modules": {
+    "PlanetPopulation": "EarthTwinHabZone1SDET",
+    "StarCatalog": "EXOCAT1",
+    "OpticalSystem": "Nemati",
+    "ZodiacalLight": "Mennesson",
+    "BackgroundSources": "GalaxiesFaintStars",
+    "PlanetPhysicalModel": "Forecaster",
+    "Observatory": "WFIRSTObservatoryL2",
+    "TimeKeeping": " ",
+    "PostProcessing": " ",
+    "Completeness": "BrownCompleteness",
+    "TargetList": " ",
+    "SimulatedUniverse": " ",
+    "SurveySimulation": "tieredScheduler_DD",
+    "SurveyEnsemble": "EXOSIMS_local.IPClusterEnsembleJPL2"
+  },
+   "completeness_specs":{
+     "modules":{
+       "PlanetPopulation": "EarthTwinHabZone1SDET", 
+       "PlanetPhysicalModel": " "
+   }
+  }
+}

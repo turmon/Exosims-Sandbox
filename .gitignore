@@ -1,0 +1,19 @@
+# skip DRM output, graphics, csv's
+sims
+
+# skip EXOSIMS source code
+EXOSIMS
+
+# skip ipyparallel per-user config
+# this can be remade with "make ipp-create"
+ipyparallel/*
+
+*.pyc
+
+# vi backup files
+*~
+# emacs tempfiles
+\#*\#
+
+# play area for documentation
+util/sandbox

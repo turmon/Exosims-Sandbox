@@ -1,0 +1,17 @@
+{
+    "shortName": "Vary Ensemble Size",
+    "comment": "Varying the ensemble size to explore sensitivity of yield estimates",
+    "scripts": [
+        ["E3200",   "HabEx_4m_TSDD_BigEns_20180717"],
+        ["E600.0",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e600.0"],
+        ["E600.1",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e600.1"],
+        ["E600.2",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e600.2"],
+        ["E100.0",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e100.0"],
+        ["E100.1",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e100.1"],
+        ["E100.2",  "HabEx_4m_TSDD_BigEns_20180717/subsets/e100.2"],
+        ["E40.0",   "HabEx_4m_TSDD_BigEns_20180717/subsets/e40.0"],
+        ["E40.1",   "HabEx_4m_TSDD_BigEns_20180717/subsets/e40.1"],
+        ["E40.2",   "HabEx_4m_TSDD_BigEns_20180717/subsets/e40.2"],
+        ["E40.3",   "HabEx_4m_TSDD_BigEns_20180717/subsets/e40.3"]
+    ]
+}

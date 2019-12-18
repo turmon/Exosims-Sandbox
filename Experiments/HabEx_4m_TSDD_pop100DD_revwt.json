@@ -1,0 +1,13 @@
+{
+    "shortName": "Revisit Waits",
+    "comment": "Dropping revisit wait period to see if this makes revisits of easy stars more likely",
+    "scripts": [
+	["3",  "HabEx_4m_TSDD_pop100DD_revwt03_20180520"], 
+	["7",  "HabEx_4m_TSDD_pop100DD_revwt07_20180520"], 
+	["15", "HabEx_4m_TSDD_pop100DD_revwt15_20180520"], 
+	["30", "HabEx_4m_TSDD_pop100DD_revwt30_20180520"], 
+	["50", "HabEx_4m_TSDD_pop100DD_revwt50_20180520"], 
+	["70", "HabEx_4m_TSDD_pop100DD_revwt70_20180520"], 
+	["90", "HabEx_4m_TSDD_pop100DD_revwt90_20180520"]
+    ]
+}
