@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+    <url>
+     <loc>/</loc>
+     <lastmod>2018-06-07</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+        
+    <url>
+     <loc>/binned-ensemble-gallery/</loc>
+     <lastmod>2018-06-07</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/path-ensemble-gallery/</loc>
+     <lastmod>2018-06-07</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/single-drm-gallery/</loc>
+     <lastmod>2018-06-07</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+    <url>
+     <loc>/execution/</loc>
+     <lastmod>2018-06-07</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+</urlset>

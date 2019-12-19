@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Single DRM Galleries - EXOSIMS-Sandbox</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Single DRM Galleries";
+    var mkdocs_page_input_path = "single-drm-gallery.md";
+    var mkdocs_page_url = "/single-drm-gallery/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> EXOSIMS-Sandbox</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Galleries</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../binned-ensemble-gallery/">Binned Ensemble Galleries</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../path-ensemble-gallery/">Ensemble Path Galleries</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Single DRM Galleries</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#single-drm-summary">Single-DRM Summary</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#final-frame">Final Frame</a></li>
+        
+            <li><a class="toctree-l4" href="#movie">Movie</a></li>
+        
+            <li><a class="toctree-l4" href="#text-summary">Text Summary</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../execution/">Execution</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">EXOSIMS-Sandbox</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Galleries &raquo;</li>
+        
+      
+    
+    <li>Single DRM Galleries</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="single-drm-summary">Single-DRM Summary</h1>
+<p>We make a movie summarizing a single DRM: keepout, detections, and characterizations/slews.
+We also output the final frame of the movie as a still image (PNG), which
+summarizes
+the whole DRM.</p>
+<h2 id="final-frame">Final Frame</h2>
+<p><img alt="final frame" src="../path/124787829-final.png" /> 
+<a href="../path-ens/path-map.png">(Full size)</a> </p>
+<h2 id="movie">Movie</h2>
+<p><a href="../path/124787829.mp4">Full Movie (mp4)</a></p>
+<h2 id="text-summary">Text Summary</h2>
+<p>The <code>util/drm-ls.py</code> routine lists the number of detections in each drm
+named.
+Something like this should be in the Exosims distribution.</p>
+<pre><code>$ util/drm-ls.py -l sims/HabEx_4m_TS_dmag26p0_20180206f/drm/17*.pkl
+DRM                             Nobs    Ndet    Nchar   Nstar_det
+sims/HabEx_4m_TS_dmag26p0_20180206f/drm/170932699.pkl   703 1656    0   237
+sims/HabEx_4m_TS_dmag26p0_20180206f/drm/173338520.pkl   653 1529    0   235
+sims/HabEx_4m_TS_dmag26p0_20180206f/drm/175677805.pkl   655 1532    0   242
+sims/HabEx_4m_TS_dmag26p0_20180206f/drm/178486032.pkl   676 1586    0   250
+sims/HabEx_4m_TS_dmag26p0_20180206f/drm/178752841.pkl   698 1653    0   242
+*TOTAL                          3385    7956    0   1206
+*MEAN                           677.00  1591.20 0.00    241.20
+5 DRMs examined
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../execution/" class="btn btn-neutral float-right" title="Execution">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../path-ensemble-gallery/" class="btn btn-neutral" title="Ensemble Path Galleries"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../path-ensemble-gallery/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../execution/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/require.js"></script>
+      <script src="../search/search.js"></script>
+
+</body>
+</html>

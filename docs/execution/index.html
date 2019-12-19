@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Execution - EXOSIMS-Sandbox</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Execution";
+    var mkdocs_page_input_path = "execution.md";
+    var mkdocs_page_url = "/execution/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> EXOSIMS-Sandbox</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Galleries</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../binned-ensemble-gallery/">Binned Ensemble Galleries</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../path-ensemble-gallery/">Ensemble Path Galleries</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../single-drm-gallery/">Single DRM Galleries</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Execution</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#pipeline-execution">Pipeline Execution</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#tower-of-abstraction">Tower of abstraction</a></li>
+        
+            <li><a class="toctree-l3" href="#adding-simulations-to-the-ensemble">Adding simulations to the ensemble</a></li>
+        
+            <li><a class="toctree-l3" href="#ipython-parallel-support">iPython parallel support</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">EXOSIMS-Sandbox</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Execution</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="pipeline-execution">Pipeline Execution</h1>
+<p>At the top level, execution is controlled by standard unix <code>make</code>.
+The top-level workflow is as simple as:</p>
+<pre><code>Create Scripts/example.json
+make ipp-start
+add-sims.sh Scripts/example.json 100 
+make S=example reduce
+make S=example graphics
+</code></pre>
+<p>If you go away and forget if the graphics are up to date because
+you might have added more sims, you can just:</p>
+<pre><code>make S=example graphics
+</code></pre>
+<p>and the graphics will be refreshed if there were new simulations added
+since the last time graphics were made, otherwise, the <code>make</code> returns
+immediately.
+This is because the graphics target depends on
+the reduce target, which in turn depends on the <code>sims/example</code> directory.
+This is a powerful feature of <code>make</code>.</p>
+<h2 id="tower-of-abstraction">Tower of abstraction</h2>
+<p>It's turtles all the way down.
+Make calls a shell-script driver to do reductions and produce graphics.
+Typically the shell-script will enforce the naming conventions
+on inputs and outputs, and then call a matlab or python script to do
+the actual processing.
+So, there are three levels of abstraction: the make target,
+the shell driver, and the 'doing' routine, in matlab or python.</p>
+<p>The <code>Makefile</code> lists the targets at the top of the file.</p>
+<h2 id="adding-simulations-to-the-ensemble">Adding simulations to the ensemble</h2>
+<p>Adding simulations is done outside make with the <code>add-sims.sh</code>
+shell script driver.
+Its general usage is simply:</p>
+<pre><code>add-sims.sh SCRIPT N
+</code></pre>
+<p>where <code>SCRIPT</code> is the JSON script, and <code>N</code> is the number of sims
+to add to the ensemble tied to <code>SCRIPT</code>.
+This pushes down to a call to our main driver script for
+Exosims, <code>Local/ipcluster_ensemble_jpl_driver.py</code>.
+The main function of this driver is to put results (DRM, SPC) in the proper place,
+and to perform logging.</p>
+<p>Two options to add-sims are noteworthy:</p>
+<pre><code>-P PAR    =&gt; run without ipython parallel, using PAR independent jobs
+-S SEEDS  =&gt; perform one sim for each integer seed, one per line,
+           in the file SEEDS.  Implies -P.
+</code></pre>
+<p>The <code>-P</code> option uses the same underlying run code, but
+uses independent jobs (run in parallel using <code>xargs</code>)
+rather than ipyparallel.</p>
+<p>The <code>-S SEEDS</code> option allows multiple ensembles to use the same
+set of seeds, so that yield variability due to parameter changes
+is isolated from that due to the simulated universe.
+One Exosims simulation is run per seed.</p>
+<h2 id="ipython-parallel-support">iPython parallel support</h2>
+<p>We added some iPython-parallel ("ipp") targets to the <code>Makefile</code>, which you
+invoke (for example) like:
+<code>make ipp-create</code>.
+The list of targets is as follows:</p>
+<ul>
+<li>
+<p><code>ipp-create</code>: create an ipython-parallel profile for this mission (use once
+     per directory only).
+     Copies several files into the ipyparallel directory.
+     To undo, see <code>ipp-nuke</code>, below.</p>
+</li>
+<li>
+<p><code>ipp-start</code>: start the ipython-parallel controller and engines
+     Note: If <code>EXOSIMS_ENGINE_N</code> (an integer) is exported from the environment,
+     this many engines will be started up, otherwise, the system-default
+     will be used.  To use this, run, from the shell:</p>
+<p>$ EXOSIMS_ENGINE_N=8 make ipp-start</p>
+</li>
+<li>
+<p><code>ipp-stop</code>: stop the above.  See also <code>ipp-kill</code>, below.</p>
+</li>
+<li>
+<p><code>ipp-status</code>: report status of the controller and engines
+     Note: This attempts to run trivial jobs on the remote engines, so it
+     will not work if the engines are busy with another job.  See <code>ipp-ps</code>, below.</p>
+</li>
+<li>
+<p><code>ipp-ps</code>: use the unix <code>ps</code> command to identify the number of running engines</p>
+</li>
+<li>
+<p><code>ipp-kill</code>: sometimes <code>ipp-stop</code> does not work and engines or controllers
+     are orphaned.  <code>ipp-kill</code> identifies these by process id, and kills them.</p>
+</li>
+<li>
+<p><code>ipp-nuke</code>: deletes your ipython-parallel profile.  The inverse of <code>ipp-create</code>.
+     (Note: attempts to <code>ipp-kill</code> first, so as to not leave engines running.)</p>
+</li>
+</ul>
+<p>As evidenced by the various status and termination commands, sometimes
+using ipython parallel in this context can be annoying, because you have
+to remember the state of the worker engines.
+In particular, the engines will have to be restarted (ipp-stop followed by ipp-start)
+when the underlying Exosims code changes, because the engines will have a stale copy.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../single-drm-gallery/" class="btn btn-neutral" title="Single DRM Galleries"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../single-drm-gallery/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/require.js"></script>
+      <script src="../search/search.js"></script>
+
+</body>
+</html>

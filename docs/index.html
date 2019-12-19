@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="./img/favicon.ico">
+  <title>Home - EXOSIMS-Sandbox</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> EXOSIMS-Sandbox</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#exosims-sandbox">EXOSIMS Sandbox</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#sandbox-file-layout">Sandbox File Layout</a></li>
+        
+            <li><a class="toctree-l3" href="#data-reduction">Data Reduction</a></li>
+        
+            <li><a class="toctree-l3" href="#graphical-output">Graphical Output</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Galleries</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="binned-ensemble-gallery/">Binned Ensemble Galleries</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="path-ensemble-gallery/">Ensemble Path Galleries</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="single-drm-gallery/">Single DRM Galleries</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="execution/">Execution</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">EXOSIMS-Sandbox</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="exosims-sandbox">EXOSIMS Sandbox</h1>
+<p>We developed an environment for running batches of Exosims simulations.
+There are three main functional pieces to this sandbox:
+simulation execution, data reduction, and
+graphics; also, there is some ancillary support for iPython parallel engines.
+In general, the workflow is to create an Exosims script, 
+run an ensemble of simulations that dump outputs to disk,
+reduce data from those simulations to
+a set of CSV files, and generate plots.</p>
+<p>Most of the workflow execution is controlled by a <code>Makefile</code>, and
+thus invoked by running <code>make</code> from the shell with an appropriate target.
+The components making up this tower of abstraction are described <a href="execution/">elsewhere</a>.
+The <code>make</code> mechanism both feeds off of and imposes a file structure,
+which we describe next.</p>
+<h2 id="sandbox-file-layout">Sandbox File Layout</h2>
+<p>We run simulations tailored to a couple of mission scenarios.
+We show HabEx here for example, but the Luvoir simulations have
+the same layout.</p>
+<pre><code>HabEx/
+    README 
+    EXOSIMS/          -- symlink to allow "import EXOSIMS"
+    Makefile            -- controls execution
+    Scripts/             -- JSON scripts for Exosims
+      .../HabEx_4m.json -- typical input script 
+    sims/                -- Ensembles of DRM outputs
+      .../HabEx_4m/...  -- DRMs and data from above script
+    add-sims.sh*    -- adds more Exosims runs to sims/
+    Experiments/    -- groups of ensembles
+       .../HabEx.json  -- Lists selected scripts above
+    exps/                -- results of above
+       .../HabEx/...   --    
+    ipyparallel/       -- ipython parallel configuration
+    util/                  -- generic utility code
+    Local/               -- mission-specific code
+</code></pre>
+<p>The main conventions here are:</p>
+<ul>
+<li>The Exosims code applicable to the mission is symlinked so that
+any module can <code>import EXOSIMS</code>.</li>
+<li>The Exosims input scripts are all under the <code>Scripts</code> directory.
+All runs using that script (an <em>ensemble</em>)
+have output in the corresponding directory
+underneath <code>sims</code>.</li>
+<li>For things like parameter sweeps, several related ensembles will
+be generated for a variety of parameters: we call this an <em>experiment</em>.
+The related script names are under <code>Experiments</code>, and their
+corresponding output files (graphics) are under <code>exps</code>.</li>
+<li>Most reduction and graphics code lives in <code>util</code> and <code>Local</code>;
+the latter is intended to be mission-tailored, but the tailoring
+has turned out to be minimal.</li>
+</ul>
+<h3 id="simulation-output-files">Simulation Output Files</h3>
+<p>The subdirectories of <code>sims</code> are of particular interest, because they store
+Exosims outputs like DRMs, reduced data like CSV files, and graphical
+outputs like plots and movies:</p>
+<pre><code>drm/                      -- DRM outputs (time-ordered observation lists)
+    .../seed1.pkl      -- a specific run as a python pickle
+    ...                       -- (and a bunch more runs)
+spc/                       -- SPC (star-planet configuration) files
+    .../seed1.spc        -- a specific SimulatedUniverse as a pickle
+    ...
+run/                        -- run logs
+    .../outspec.json   -- outspec from given runs
+reduce-info.csv       -- CSV files summarizing the ensemble
+reduce-radlum.csv
+reduce-times.csv
+reduce-visits.csv
+reduce-pool.json
+gfx/                        -- various plots as images
+path/                      -- single-DRM movies
+    .../seed1.mp4
+path-ens/               --
+</code></pre>
+<p>Each Exosims run produces a single DRM, stored in <code>drm/</code> according to the
+random-number seed, and a corresponding star-planet configuration
+(the <code>SimulatedUniverse</code>), stored in <code>spc/</code>.
+Depending on how it was run, it may produce a text runlog in <code>run/</code>, and
+a JSON outspec.</p>
+<p>This set of outputs (DRM, SPC, runlog, errorlog, outspec) is made by
+a tailored <code>SurveyEnsemble</code> class
+(<code>Local/EXOSIMS_local/IPClusterEnsembleJPL2.py</code>),
+and a shell-level driver and "run_one" (<code>Local/ipcluster_ensemble_jpl_driver.py</code>).
+These have been generalized and updated from the Exosims stock.</p>
+<p>As mentioned, after an ensemble is run, a reduction script
+is typically invoked that generates the CSV output files,
+and subsequent graphics commands use the ensemble summaries,
+or in some cases just single DRMs.</p>
+<h2 id="data-reduction">Data Reduction</h2>
+<p>We separated data reduction from plotting so that reduction of
+the ensemble could be done once, and then various plots could
+be remade and tweaked quickly from the reduced data.
+The python driver is <code>reduce_drms.py</code>.
+It contains some re-usable code for loading the ensemble of DRMs
+and for computing summaries (means, standard errors,
+medians, quantiles, histograms).</p>
+<p>Data reduction happens at the ensemble level, by reading in
+the set of typically ~100 DRMs and corresponding SPCs, and putting
+out the following CSV files.</p>
+<pre><code>reduce-info.csv       -- metadata
+reduce-times.csv     -- temporal summaries like fuel use 
+reduce-radlum.csv  -- histograms segmented by radius/luminosity
+reduce-visits.csv     -- histograms of revisits
+reduce-earth.csv     -- exo-Earth detection counts
+reduce-pool.json    -- JSON of all reduced data
+</code></pre>
+<p>The CSV format is good at storing vectors, so the above CSV files are
+all vectorized along some index set: time, radius/luminosity, and
+revisit-count.
+This format enforces a certain discipline in how a summary should be
+done: within a bin defined by the index set
+("month 15 of the simulation", "radius in range X, luminosity in range Y"),
+counts that fall in each bin are accumulated across DRMs.
+Then, means, standard errors, and quantiles can be computed from
+the counts.
+So, all CSVs have two columns indicating the lower and upper bin
+boundaries, and for each quantity
+of interest, there is one column each for the mean, standard error, and
+each quantile needed.</p>
+<p>As an example, the fields now stored in <code>reduce_times.csv</code> are:</p>
+<pre><code>h_det_time_lo,             -- bin boundaries
+h_det_time_hi,
+h_det_time_all_mean,   -- cumulative detections
+h_det_time_all_std,
+h_det_time_unq_mean,  -- unique detections only
+h_det_time_unq_std,
+h_det_time_rev_mean,   -- revisits only
+h_det_time_rev_std,
+h_time_fuel_all_mean,   -- fuel use
+h_time_fuel_all_std,
+h_time_fuel_slew_mean,  -- fuel used for slews
+h_time_fuel_slew_std,
+h_time_fuel_keep_mean,  -- fuel for station-keeping
+h_time_fuel_keep_std,
+</code></pre>
+<h2 id="graphical-output">Graphical Output</h2>
+<p>Graphical outputs are generated by Matlab and by Python.
+In some ways, Python is preferable, being un-encumbered by licensing
+and more powerful.
+However, we are comfortable with Matlab plots, and the reduced
+data in CSV is easy to load into Matlab, so we adopted a combined approach.</p>
+<h3 id="graphical-output-files-ensemble-from-matlab">Graphical Output Files: Ensemble From Matlab</h3>
+<p>To make the whole-ensemble
+plots from the CSV files above,
+you run <code>make graphics</code>. 
+This runs a driver (in shell) that invokes Matlab,
+which reads the CSVs and invokes plotting m-files for each
+plot flavor (all in <code>Local/Matlab/mfile</code>):</p>
+<pre><code>plot_drms_script.m           -- driver script
+plot_drm_det_times.m      -- detections-vs-time
+plot_drm_fuel_use.m        -- fuel-vs-time
+plot_drm_radlum.m          -- radius/luminosity
+plot_drm_planet_overlay.m   -- sugar for above
+plot_drm_signal_end.m    -- signal success by writing a file
+</code></pre>
+<p>The resulting output files are put into files in 
+<code>sims/&lt;script&gt;/gfx/</code>:</p>
+<pre><code>gfx/det-detects.png
+gfx/det-cume-detects.png
+gfx/det-fuel.png
+gfx/det-radlum-det.png
+gfx/det-radlum-char.png
+gfx/det-radlum-det-all.png
+</code></pre>
+<p>Both PNG and PDF are generated.</p>
+<p>See the <a href="binned-ensemble-gallery/">binned ensemble plot gallery</a>.</p>
+<h3 id="graphical-output-files-ensemble-from-python">Graphical Output Files: Ensemble From Python</h3>
+<p>Other plots show the tour of characterizations
+made by starshade missions.
+These are made by the python script
+ <code>util/ens-path-graphics.py</code>
+ which is invoked by <code>util/ens-path-summary.sh</code>.
+ The <code>make</code> target is <code>path-ensemble</code>. </p>
+<p>The resulting output files are put into files in 
+<code>sims/&lt;script&gt;/path-ens</code>:</p>
+<pre><code>path-map.png                  -- map-format plot of activity
+path-adjacency-lon.png    -- slews, targets ordered by lon 
+path-adjacency-lat.png    -- slews, targets ordered by lat
+path-visits.csv                 -- mean number of visits per star
+</code></pre>
+<p>See the <a href="path-ensemble-gallery/">ensemble path plot gallery</a>. </p>
+<h3 id="graphical-output-files-single-drm">Graphical Output Files: Single DRM</h3>
+<p>See the <a href="single-drm-gallery/">single-drm gallery</a>. </p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="binned-ensemble-gallery/" class="btn btn-neutral float-right" title="Binned Ensemble Galleries">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="binned-ensemble-gallery/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="./js/theme.js"></script>
+      <script src="./search/require.js"></script>
+      <script src="./search/search.js"></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.17.3
+Build Date UTC : 2018-06-07 17:45:37
+-->
