@@ -11,14 +11,15 @@ To use:
 
 1. The EXOSIMS directory should point to Exosims source code (see below).
 
-  (optional) Use "make ipp-create" to create an iPython-parallel profile, 
-  and use "make ipp-start" to start an iPython-parallel cluster.
+Optionally, use "make ipp-create" to create an iPython-parallel profile, 
+and use "make ipp-start" to start an iPython-parallel cluster. 
+Our own usage does not typically use this facility, however.
 
 2. Put your Exosims input script, a json file, under Scripts.
 
-3. Use "add-sims.sh" to add simulations to the ensemble run (see below).
+3. Use "add-sims.sh" to add simulations to the ensemble run (see under "file contents" below).
 
-4. Use "make S=<script> html", where <script> is the script name in (2), to reduce data, make plots, and update the web page.
+4. Use "make S=<script> html", where <script> is the script name above, to reduce data, make plots, and update the web page.
 
 5.  Reduced data and plots are placed in the sims/<script> directory.  The plots can be
 viewed directly.
@@ -29,7 +30,7 @@ Further documentation is available on how execution works and how
 products are generated is available [on github](https://turmon.github.io/Exosims-Sandbox/),
 or the [JPL github](https://github.jpl.nasa.gov/pages/turmon/EXOSIMS-sandbox/).
 
-## Contents
+## File Contents
 
 The contents here include:
 
