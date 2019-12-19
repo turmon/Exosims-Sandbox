@@ -7,19 +7,23 @@ We chose to have all simulations for the Standards Team for the STDT final repor
 
 ## Process
 
-Before use:
-  (1) The EXOSIMS directory should point to Exosims source code (see below).
-  (optional) Use "make ipp-create" to create an iPython-parallel profile.
-  (optional) Use "make ipp-start" to start an iPython-parallel cluster.
-
 To use:
-  (2) Put your Exosims input script, a json file, under Scripts.
-  (3) Use "add-sims.sh" to add simulations to the ensemble run (see below).
-  (4) Use "make S=<script> html", where <script> is the script name in (2), to reduce data, make plots, and update the web page.
 
-Reduced data and plots are placed in the sims/<script> directory.  The plots can be
-viewed directly, or on the generated webpage:
-  (5) View summary plots by starting a server: "make html-serve"
+1. The EXOSIMS directory should point to Exosims source code (see below).
+
+  (optional) Use "make ipp-create" to create an iPython-parallel profile, 
+  and use "make ipp-start" to start an iPython-parallel cluster.
+
+2. Put your Exosims input script, a json file, under Scripts.
+
+3. Use "add-sims.sh" to add simulations to the ensemble run (see below).
+
+4. Use "make S=<script> html", where <script> is the script name in (2), to reduce data, make plots, and update the web page.
+
+5.  Reduced data and plots are placed in the sims/<script> directory.  The plots can be
+viewed directly.
+
+6. Plots can also be viewed on the generated webpage.  Start a server with "make html-serve"
 
 Further documentation is available on how execution works and how 
 products are generated is available [on github](https://turmon.github.io/Exosims-Sandbox/),
