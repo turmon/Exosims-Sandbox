@@ -1,8 +1,11 @@
+# EXOSIMS Sandbox
 
 This is an Exosims ensemble directory containing scripts, source code, and dumped results.
 
-In principle, multiple such directories could exist for separate families of simulations.  
+In principle, multiple such directories would exist for separate families of simulations.  
 We chose to have all simulations for the Standards Team for the STDT final report reside here.
+
+## Process
 
 Before use:
   (1) The EXOSIMS directory should point to Exosims source code (see below).
@@ -18,24 +21,44 @@ Reduced data and plots are placed in the sims/<script> directory.  The plots can
 viewed directly, or on the generated webpage:
   (5) View summary plots by starting a server: "make html-serve"
 
-----
+Further documentation is available on how execution works and how 
+products are generated is available [on github](https://turmon.github.io/Exosims-Sandbox/),
+or the [JPL github](https://github.jpl.nasa.gov/pages/turmon/EXOSIMS-sandbox/).
+
+## Contents
 
 The contents here include:
 
-[files/links/directories you might want to alter]
-  EXOSIMS     -- symlink to the source code of Exosims used.
-                 The file EXOSIMS/EXOSIMS/__init__.py should exist.
-  Scripts     -- .json scripts for Exosims input, placed here by convention.
+* Files/links/directories you might want to alter
+  + EXOSIMS     
 
-[files/links/directories you might want to inspect or run]
-  Makefile    -- Controls data reduction and startup of ipython parallel engines.
-                 See the Makefile header for actions.
-  add-sims.sh -- Driver script to add more ensemble members.
-                 It contains usage instructions.
-  sims/*      -- Dumped Exosims results, categorized by script-file root name.
+    Symlink to the source code of Exosims used.  The file EXOSIMS/EXOSIMS/__init__.py should exist.
 
-[files/links/directories that are mostly infrastructure]
-  Local       -- Local modules for Exosims, including the run_one() method.
-  ipyparallel -- ipython parallel per-user, per-machine configuration and lock files
-  util        -- utility scripts, mostly called from Makefile.
+  + Scripts     
+
+    .json scripts for Exosims input, placed here by convention.
+
+* Files/links/directories you might want to inspect or run
+  + Makefile    
+
+    Controls data reduction and startup of ipython parallel engines.  See the Makefile header for actions.
+
+  + add-sims.sh 
+
+    Driver script to add more ensemble members.  It contains usage instructions.
+
+  + sims/*      -- Dumped Exosims results, categorized by script-file root name.
+
+* Files/links/directories that are mostly infrastructure
+  + Local       
+
+    Local modules for Exosims, including the run_one() method.
+
+  + util       
+
+    utility scripts, mostly called from Makefile.
+
+  + ipyparallel 
+
+    ipython parallel per-user, per-machine configuration and lock files
 
