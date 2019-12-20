@@ -92,6 +92,17 @@
     </ul>
 	    </li>
           
+            <li class="toctree-l1">
+		
+    <span class="caption-text">foobar.baz</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../src-doc/cool-stuff/">Cool Stuff</a>
+                </li>
+    </ul>
+	    </li>
+          
         </ul>
       </div>
       &nbsp;
@@ -143,8 +154,15 @@ immediately.
 This is because the graphics target depends on
 the reduce target, which in turn depends on the <code>sims/example</code> directory.
 This is a powerful feature of <code>make</code>.</p>
+<p>This works automatically when downstream data needs to change in
+response to additional upstream data.
+If the underlying graphics code changes ("titles in 14 point") you
+need to force the graphics refresh by supplying <code>-B</code> to <code>make</code>,
+which forces the rebuild:</p>
+<pre><code>make -B S=example graphics
+</code></pre>
 <h2 id="tower-of-abstraction">Tower of abstraction</h2>
-<p>It's turtles all the way down.
+<p>It's turtles (of varying colors) all the way down.
 Make calls a shell-script driver to do reductions and produce graphics.
 Typically the shell-script will enforce the naming conventions
 on inputs and outputs, and then call a matlab or python script to do
@@ -227,6 +245,8 @@ when the underlying Exosims code changes, because the engines will have a stale 
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="../src-doc/cool-stuff/" class="btn btn-neutral float-right" title="Cool Stuff">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
       
         <a href="../single-drm-gallery/" class="btn btn-neutral" title="Single DRM Galleries"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
@@ -256,6 +276,8 @@ when the underlying Exosims code changes, because the engines will have a stale 
       
         <span><a href="../single-drm-gallery/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../src-doc/cool-stuff/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

@@ -4,7 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2018-06-07</lastmod>
+     <lastmod>2019-12-19</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,19 +13,19 @@
         
     <url>
      <loc>/binned-ensemble-gallery/</loc>
-     <lastmod>2018-06-07</lastmod>
+     <lastmod>2019-12-19</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/path-ensemble-gallery/</loc>
-     <lastmod>2018-06-07</lastmod>
+     <lastmod>2019-12-19</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/single-drm-gallery/</loc>
-     <lastmod>2018-06-07</lastmod>
+     <lastmod>2019-12-19</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -34,9 +34,19 @@
     
     <url>
      <loc>/execution/</loc>
-     <lastmod>2018-06-07</lastmod>
+     <lastmod>2019-12-19</lastmod>
      <changefreq>daily</changefreq>
     </url>
+    
+
+    
+        
+    <url>
+     <loc>/../src-doc/cool-stuff/</loc>
+     <lastmod>2019-12-19</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
 </urlset>

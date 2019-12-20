@@ -92,6 +92,17 @@
     <a class="" href="execution/">Execution</a>
 	    </li>
           
+            <li class="toctree-l1">
+		
+    <span class="caption-text">foobar.baz</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../src-doc/cool-stuff/">Cool Stuff</a>
+                </li>
+    </ul>
+	    </li>
+          
         </ul>
       </div>
       &nbsp;
@@ -126,9 +137,12 @@
               
                 <h1 id="exosims-sandbox">EXOSIMS Sandbox</h1>
 <p>We developed an environment for running batches of Exosims simulations.
-There are three main functional pieces to this sandbox:
-simulation execution, data reduction, and
-graphics; also, there is some ancillary support for iPython parallel engines.
+There are four main functional pieces to this sandbox:
+simulation execution, data reduction, 
+graphics generation, and webpage generation.
+Also, there is some ancillary support for
+ensembles of related simulations for parameter-tuning, 
+iPython parallel engines, and a webserver for inspection of results.
 In general, the workflow is to create an Exosims script, 
 run an ensemble of simulations that dump outputs to disk,
 reduce data from those simulations to
@@ -150,27 +164,34 @@ the same layout.</p>
       .../HabEx_4m.json -- typical input script 
     sims/                -- Ensembles of DRM outputs
       .../HabEx_4m/...  -- DRMs and data from above script
-    add-sims.sh*    -- adds more Exosims runs to sims/
+    add-sims.sh     -- adds more Exosims runs to sims/
     Experiments/    -- groups of ensembles
        .../HabEx.json  -- Lists selected scripts above
-    exps/                -- results of above
-       .../HabEx/...   --    
-    ipyparallel/       -- ipython parallel configuration
-    util/                  -- generic utility code
+    ipyparallel/       -- ipython parallel configuration, per-user
+    util/                  -- mission-generic utility code
     Local/               -- mission-specific code
 </code></pre>
 <p>The main conventions here are:</p>
 <ul>
 <li>The Exosims code applicable to the mission is symlinked so that
-any module can <code>import EXOSIMS</code>.</li>
+any module here can <code>import EXOSIMS</code> successfully.</li>
 <li>The Exosims input scripts are all under the <code>Scripts</code> directory.
 All runs using that script (an <em>ensemble</em>)
 have output in the corresponding directory
-underneath <code>sims</code>.</li>
+underneath <code>sims</code>.
+This convention allows all utilities to place reduced data, graphics,
+and html index pages into standard locations.</li>
 <li>For things like parameter sweeps, several related ensembles will
-be generated for a variety of parameters: we call this an <em>experiment</em>.
-The related script names are under <code>Experiments</code>, and their
-corresponding output files (graphics) are under <code>exps</code>.</li>
+be generated for a variety of parameters.  We call this an <em>experiment</em>.
+The Exosims input scripts pertaining to an experiment
+are generated from templates that are filed
+under <code>Experiments</code>. Their
+corresponding output files (graphics) are also in directories 
+under <code>sims</code>, but nested one level down.
+That is, scripts for an experiment named "Tune" will be in files
+<code>Scripts/Tune.exp/PARAM.json</code>, and the simulation results will
+be in files like <code>sims/Tune.exp/PARAM/...</code>.
+The <code>Makefile</code> has targets pertaining to such experiments.</li>
 <li>Most reduction and graphics code lives in <code>util</code> and <code>Local</code>;
 the latter is intended to be mission-tailored, but the tailoring
 has turned out to be minimal.</li>
@@ -190,7 +211,7 @@ run/                        -- run logs
 reduce-info.csv       -- CSV files summarizing the ensemble
 reduce-radlum.csv
 reduce-times.csv
-reduce-visits.csv
+reduce-visits.csv, etc.
 reduce-pool.json
 gfx/                        -- various plots as images
 path/                      -- single-DRM movies
@@ -200,13 +221,15 @@ path-ens/               --
 <p>Each Exosims run produces a single DRM, stored in <code>drm/</code> according to the
 random-number seed, and a corresponding star-planet configuration
 (the <code>SimulatedUniverse</code>), stored in <code>spc/</code>.
-Depending on how it was run, it may produce a text runlog in <code>run/</code>, and
-a JSON outspec.</p>
+Depending on how it was run, it may produce a text runlog in <code>log/</code>, and
+a JSON outspec in <code>run/</code>.</p>
 <p>This set of outputs (DRM, SPC, runlog, errorlog, outspec) is made by
 a tailored <code>SurveyEnsemble</code> class
 (<code>Local/EXOSIMS_local/IPClusterEnsembleJPL2.py</code>),
 and a shell-level driver and "run_one" (<code>Local/ipcluster_ensemble_jpl_driver.py</code>).
-These have been generalized and updated from the Exosims stock.</p>
+These have been generalized and updated from the Exosims standard files,
+which are documented in Exosims as subclasses following the
+<code>SurveyEnsemble</code> prototype.</p>
 <p>As mentioned, after an ensemble is run, a reduction script
 is typically invoked that generates the CSV output files,
 and subsequent graphics commands use the ensemble summaries,
@@ -218,19 +241,25 @@ be remade and tweaked quickly from the reduced data.
 The python driver is <code>reduce_drms.py</code>.
 It contains some re-usable code for loading the ensemble of DRMs
 and for computing summaries (means, standard errors,
-medians, quantiles, histograms).</p>
+medians, quantiles, histograms).
+With only one exception, <code>reduce_drms</code> produces averages over
+the ensemble.  Note that this does not limit us to mean values!
+For example, a histogram of yields is also an average over the ensemble:
+bin number "N" of a yield histogram
+contains the average, across the ensemble,
+of this 0/1 variable: "N" exo-earths were detected in the simulation.</p>
 <p>Data reduction happens at the ensemble level, by reading in
 the set of typically ~100 DRMs and corresponding SPCs, and putting
-out the following CSV files.</p>
+out CSV files such as the following non-exclusive list:</p>
 <pre><code>reduce-info.csv       -- metadata
 reduce-times.csv     -- temporal summaries like fuel use 
 reduce-radlum.csv  -- histograms segmented by radius/luminosity
 reduce-visits.csv     -- histograms of revisits
 reduce-earth.csv     -- exo-Earth detection counts
-reduce-pool.json    -- JSON of all reduced data
 </code></pre>
+<p>Currently, there are 14 such files.</p>
 <p>The CSV format is good at storing vectors, so the above CSV files are
-all vectorized along some index set: time, radius/luminosity, and
+all vectorized along some index set: time, radius/luminosity, or 
 revisit-count.
 This format enforces a certain discipline in how a summary should be
 done: within a bin defined by the index set
@@ -240,24 +269,35 @@ Then, means, standard errors, and quantiles can be computed from
 the counts.
 So, all CSVs have two columns indicating the lower and upper bin
 boundaries, and for each quantity
-of interest, there is one column each for the mean, standard error, and
-each quantile needed.</p>
-<p>As an example, the fields now stored in <code>reduce_times.csv</code> are:</p>
+of interest, there is one column each for the mean, standard error, 
+each quantile needed, and the number of ensemble members comprising
+that mean.</p>
+<p>As an example, the fields now stored in <code>reduce_times.csv</code> include:</p>
 <pre><code>h_det_time_lo,             -- bin boundaries
 h_det_time_hi,
 h_det_time_all_mean,   -- cumulative detections
-h_det_time_all_std,
+h_det_time_all_std, 
+h_det_time_all_nEns, 
 h_det_time_unq_mean,  -- unique detections only
-h_det_time_unq_std,
+h_det_time_unq_std, 
+h_det_time_unq_nEns, 
 h_det_time_rev_mean,   -- revisits only
-h_det_time_rev_std,
+h_det_time_rev_std, 
+h_det_time_rev_nEns, 
 h_time_fuel_all_mean,   -- fuel use
-h_time_fuel_all_std,
+h_time_fuel_all_std, 
+h_time_fuel_all_nEns, 
 h_time_fuel_slew_mean,  -- fuel used for slews
-h_time_fuel_slew_std,
+h_time_fuel_slew_std, 
+h_time_fuel_slew_nEns, 
 h_time_fuel_keep_mean,  -- fuel for station-keeping
-h_time_fuel_keep_std,
+h_time_fuel_keep_std, 
+h_time_fuel_keep_nEns
 </code></pre>
+<p>There are 89 such fields in that file, and about 1100 summarized quantities
+all together.</p>
+<p>The one exception to this is the file <code>reduce-earth-char-list.csv</code>, which
+simply contains a list of all attempted characterizations across the entire ensemble.</p>
 <h2 id="graphical-output">Graphical Output</h2>
 <p>Graphical outputs are generated by Matlab and by Python.
 In some ways, Python is preferable, being un-encumbered by licensing
@@ -267,18 +307,18 @@ data in CSV is easy to load into Matlab, so we adopted a combined approach.</p>
 <h3 id="graphical-output-files-ensemble-from-matlab">Graphical Output Files: Ensemble From Matlab</h3>
 <p>To make the whole-ensemble
 plots from the CSV files above,
-you run <code>make graphics</code>. 
-This runs a driver (in shell) that invokes Matlab,
-which reads the CSVs and invokes plotting m-files for each
-plot flavor (all in <code>Local/Matlab/mfile</code>):</p>
+you run <code>make S=(SCRIPT) graphics</code>. 
+This runs a driver (in the shell) that invokes Matlab,
+which reads the CSVs and invokes plotting m-files
+(all in <code>Local/Matlab/mfile</code>) for each
+plot flavor, including for example:</p>
 <pre><code>plot_drms_script.m           -- driver script
 plot_drm_det_times.m      -- detections-vs-time
 plot_drm_fuel_use.m        -- fuel-vs-time
 plot_drm_radlum.m          -- radius/luminosity
-plot_drm_planet_overlay.m   -- sugar for above
-plot_drm_signal_end.m    -- signal success by writing a file
+plot_drm_signal_end.m    -- signals success by writing a file
 </code></pre>
-<p>The resulting output files are put into files in 
+<p>The resulting output files are put into files like the following in 
 <code>sims/&lt;script&gt;/gfx/</code>:</p>
 <pre><code>gfx/det-detects.png
 gfx/det-cume-detects.png
@@ -287,7 +327,7 @@ gfx/det-radlum-det.png
 gfx/det-radlum-char.png
 gfx/det-radlum-det-all.png
 </code></pre>
-<p>Both PNG and PDF are generated.</p>
+<p>Currently, 90 files are generated, mostly PNG image files, but also some PDF files.</p>
 <p>See the <a href="binned-ensemble-gallery/">binned ensemble plot gallery</a>.</p>
 <h3 id="graphical-output-files-ensemble-from-python">Graphical Output Files: Ensemble From Python</h3>
 <p>Other plots show the tour of characterizations
@@ -301,10 +341,36 @@ These are made by the python script
 <pre><code>path-map.png                  -- map-format plot of activity
 path-adjacency-lon.png    -- slews, targets ordered by lon 
 path-adjacency-lat.png    -- slews, targets ordered by lat
-path-visits.csv                 -- mean number of visits per star
+path-visits.csv                 -- mean number of visits per star 
+path-slews.csv                 -- total slews between pairs of stars
 </code></pre>
-<p>See the <a href="path-ensemble-gallery/">ensemble path plot gallery</a>. </p>
+<p>See the <a href="path-ensemble-gallery/">ensemble path plot gallery</a>.</p>
+<p>The latter two CSV files are used by a javascript widget in the generated HTML
+page to show a zoomable plot of slews across the ensemble.</p>
 <h3 id="graphical-output-files-single-drm">Graphical Output Files: Single DRM</h3>
+<p>A final set of plots shows the observations, keepout, or slews for a single
+DRM.
+They are useful in analyzing observation-scheduling behavior, 
+verifying that keepout constraints are honored, and related questions.
+They are made by <code>plot-keepout-and-obs.py</code>, <code>plot-timeline.py</code>,
+and <code>keepout_path_graphics.py</code>.</p>
+<p>For a given DRM with a certain (integer) SEED,
+these files are placed in the directory
+<code>sims/&lt;script&gt;/path/</code>, and named like:</p>
+<pre><code>SEED-obs-timeline.png  -- time-format plot of all observations
+SEED-obs-keepout-all.png -- time-format plot of keepout (all obs.)
+SEED-obs-keepout-char.png -- time-format plot of keepout (char only)
+SEED-obs-timeline-info.csv
+SEED.mp4 -- movie of all detection and char observations
+SEED-final.png -- final frame of above movie
+</code></pre>
+<p>Some other plots and summaries are placed in the directory
+<code>sims/&lt;script&gt;/path/SEED-cume</code>, including:</p>
+<pre><code>path-visits.csv
+path-slews.csv
+</code></pre>
+<p>which are used by the same javascript widget described above, to
+show a zoomable plot of slews for just that DRM.</p>
 <p>See the <a href="single-drm-gallery/">single-drm gallery</a>. </p>
               
             </div>
@@ -355,5 +421,5 @@ path-visits.csv                 -- mean number of visits per star
 
 <!--
 MkDocs version : 0.17.3
-Build Date UTC : 2018-06-07 17:45:37
+Build Date UTC : 2019-12-20 04:01:06
 -->
