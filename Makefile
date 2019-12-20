@@ -54,6 +54,10 @@
 #       are orphaned.  ipp-kill identifies these by process id, and kills them.
 #   ipp-nuke: deletes your ipython-parallel profile.  The inverse of ipp-create.
 #       (Note: attempts to "ipp-kill" first, so as to not leave engines running.)
+# (4) Web-server targets:
+#   html-start: start Apache httpd web-server
+#   html-stop: stop Apache httpd web-server
+#   html-status: show running web-servers, if any
 #
 ## turmon oct 2017, mar 2018
 
