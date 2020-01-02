@@ -76,7 +76,7 @@
     <a class="current" href="./">Execution</a>
     <ul class="subnav">
             
-    <li class="toctree-l2"><a href="#pipeline-execution">Pipeline Execution</a></li>
+    <li class="toctree-l2"><a href="#pipeline-execution-scheme">Pipeline Execution Scheme</a></li>
     
         <ul>
         
@@ -84,7 +84,13 @@
         
             <li><a class="toctree-l3" href="#adding-simulations-to-the-ensemble">Adding simulations to the ensemble</a></li>
         
+            <li><a class="toctree-l3" href="#generating-result-summaries">Generating result summaries</a></li>
+        
             <li><a class="toctree-l3" href="#ipython-parallel-support">iPython parallel support</a></li>
+        
+            <li><a class="toctree-l3" href="#webserver-support">Webserver support</a></li>
+        
+            <li><a class="toctree-l3" href="#tuning-experiment-support">Tuning experiment support</a></li>
         
         </ul>
     
@@ -135,75 +141,95 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="pipeline-execution">Pipeline Execution</h1>
+                <h1 id="pipeline-execution-scheme">Pipeline Execution Scheme</h1>
 <p>At the top level, execution is controlled by standard unix <code>make</code>.
-The top-level workflow is as simple as:</p>
-<pre><code>Create Scripts/example.json
-make ipp-start
-add-sims.sh Scripts/example.json 100 
+The top-level workflow to run 100 simulations using 34-fold parallelism,
+reduce their output, and
+produce a summarizing webpage is as simple as:</p>
+<pre><code>(Create the input script, Scripts/example.json)
+add-sims.sh -P 34 Scripts/example.json 100
 make S=example reduce
-make S=example graphics
+make S=example html
 </code></pre>
-<p>If you go away and forget if the graphics are up to date because
-you might have added more sims, you can just:</p>
-<pre><code>make S=example graphics
+<p>If you go away and forget whether the graphics are up to date because
+you might have added more simulations, you can just:</p>
+<pre><code>make S=example html
 </code></pre>
-<p>and the graphics will be refreshed if there were new simulations added
-since the last time graphics were made, otherwise, the <code>make</code> returns
+<p>By doing this, the graphical plots and html page containing them
+will be refreshed if there were new simulations added
+since the last time the webpage was made, otherwise, the <code>make</code> returns
 immediately.
-This is because the graphics target depends on
-the reduce target, which in turn depends on the <code>sims/example</code> directory.
-This is a powerful feature of <code>make</code>.</p>
-<p>This works automatically when downstream data needs to change in
-response to additional upstream data.
-If the underlying graphics code changes ("titles in 14 point") you
-need to force the graphics refresh by supplying <code>-B</code> to <code>make</code>,
+This is possible because the <code>html</code> target depends on the 
+the <code>reduce</code> target, which finally depends on the <code>sims/example/drm</code>
+directory, where the simulation outputs are placed.
+Dependency management is a powerful feature of <code>make</code>.</p>
+<p>This process works automatically whenever downstream data (webpage) needs to change in
+response to new upstream data (simulations).
+However, if the underlying graphics code changes ("put the titles in 14 point") you
+need to force the webpage refresh by supplying <code>-B</code> to <code>make</code>,
 which forces the rebuild:</p>
-<pre><code>make -B S=example graphics
+<pre><code>make -B S=example html
 </code></pre>
 <h2 id="tower-of-abstraction">Tower of abstraction</h2>
-<p>It's turtles (of varying colors) all the way down.
-Make calls a shell-script driver to do reductions and produce graphics.
+<p>It's turtles (that is, driver scripts) all the way down.
+<code>Make</code> calls a shell-script driver to do data reductions and produce graphics.
 Typically the shell-script will enforce the naming conventions
 on inputs and outputs, and then call a matlab or python script to do
 the actual processing.
 So, there are three levels of abstraction: the make target,
 the shell driver, and the 'doing' routine, in matlab or python.</p>
-<p>The <code>Makefile</code> lists the targets at the top of the file.</p>
+<p>The <code>Makefile</code> lists all the targets at the top of the file, with an explanation.</p>
 <h2 id="adding-simulations-to-the-ensemble">Adding simulations to the ensemble</h2>
 <p>Adding simulations is done outside make with the <code>add-sims.sh</code>
 shell script driver.
-Its general usage is simply:</p>
+Its basic usage is simply:</p>
 <pre><code>add-sims.sh SCRIPT N
 </code></pre>
-<p>where <code>SCRIPT</code> is the JSON script, and <code>N</code> is the number of sims
+<p>where <code>SCRIPT</code> is the JSON script for Exosims,
+and <code>N</code> is the number of sims
 to add to the ensemble tied to <code>SCRIPT</code>.
 This pushes down to a call to our main driver script for
 Exosims, <code>Local/ipcluster_ensemble_jpl_driver.py</code>.
-The main function of this driver is to put results (DRM, SPC) in the proper place,
-and to perform logging.</p>
+The main function of this driver is to put result files in the proper place,
+and to perform logging.
+In particular, the observing sequence ("DRM") for each sim is named for
+the seed and goes in one directory, and the star-planet configuration
+for that sim ("SPC"), also named for the seed, goes in a separate directory.</p>
 <p>Two options to add-sims are noteworthy:</p>
 <pre><code>-P PAR    =&gt; run without ipython parallel, using PAR independent jobs
 -S SEEDS  =&gt; perform one sim for each integer seed, one per line,
            in the file SEEDS.  Implies -P.
 </code></pre>
 <p>The <code>-P</code> option uses the same underlying run code, but
-uses independent jobs (run in parallel using <code>xargs</code>)
-rather than ipyparallel.</p>
+uses independent jobs (run in parallel at the shell level using <code>xargs</code>)
+rather than ipyparallel.
+We typically use <code>-P</code> because it is simpler, but ipython parallel can
+be good for cases where initialization of the simulator takes significant
+time.</p>
 <p>The <code>-S SEEDS</code> option allows multiple ensembles to use the same
 set of seeds, so that yield variability due to parameter changes
 is isolated from that due to the simulated universe.
 One Exosims simulation is run per seed.</p>
+<p>More options and further details are in the <code>add-sims.sh</code> header.</p>
+<h2 id="generating-result-summaries">Generating result summaries</h2>
 <h2 id="ipython-parallel-support">iPython parallel support</h2>
-<p>We added some iPython-parallel ("ipp") targets to the <code>Makefile</code>, which you
-invoke (for example) like:
-<code>make ipp-create</code>.
-The list of targets is as follows:</p>
+<p>As noted, simulations can also be run using iPython parallel, rather than
+shell-level parallelism.
+This mode starts up a given number of python processes ("engines"), which are
+eventually given an Exosims function to run by <code>add-sims.sh</code>.
+This creates extra state (a Python interpreter is held by each "engine"),
+but avoids re-initialization of the Exosims object for each run.
+See also the <code>SurveyEnsemble</code> documentation within Exosims.</p>
+<p>To support creation, startup, and shutdown of these engines,
+we added some iPython-parallel ("ipp") targets to the <code>Makefile</code>.
+These targets operate independently of the simulation/results
+infrastructure targets.
+The targets (invoked like <code>make ipp-create</code>) are:</p>
 <ul>
 <li>
 <p><code>ipp-create</code>: create an ipython-parallel profile for this mission (use once
-     per directory only).
-     Copies several files into the ipyparallel directory.
+     per sandbox instance only).
+     Copies several files into a per-user, per-machine ipyparallel directory.
      To undo, see <code>ipp-nuke</code>, below.</p>
 </li>
 <li>
@@ -214,7 +240,7 @@ The list of targets is as follows:</p>
 <p><code>$ EXOSIMS_ENGINE_N=8 make ipp-start</code></p>
 </li>
 <li>
-<p><code>ipp-stop</code>: stop the above.  See also <code>ipp-kill</code>, below.</p>
+<p><code>ipp-stop</code>: stop the above processes.  See also <code>ipp-kill</code>, below.</p>
 </li>
 <li>
 <p><code>ipp-status</code>: report status of the controller and engines
@@ -222,7 +248,9 @@ The list of targets is as follows:</p>
      will not work if the engines are busy with another job.  See <code>ipp-ps</code>, below.</p>
 </li>
 <li>
-<p><code>ipp-ps</code>: use the unix <code>ps</code> command to identify the number of running engines</p>
+<p><code>ipp-ps</code>: use the unix <code>ps</code> command to identify the number of running
+    engines. This works when the engines are busy, but is not informative
+    about whether engines are responding to Python commands.</p>
 </li>
 <li>
 <p><code>ipp-kill</code>: sometimes <code>ipp-stop</code> does not work and engines or controllers
@@ -230,14 +258,53 @@ The list of targets is as follows:</p>
 </li>
 <li>
 <p><code>ipp-nuke</code>: deletes your ipython-parallel profile.  The inverse of <code>ipp-create</code>.
-     (Note: attempts to <code>ipp-kill</code> first, so as to not leave engines running.)</p>
+     (Note: it attempts to <code>ipp-kill</code> first, so as to not leave engines running.)</p>
 </li>
 </ul>
 <p>As evidenced by the various status and termination commands, sometimes
 using ipython parallel in this context can be annoying, because you have
 to remember the state of the worker engines.
-In particular, the engines will have to be restarted (ipp-stop followed by ipp-start)
-when the underlying Exosims code changes, because the engines will have a stale copy.</p>
+In particular, the engines will have to be restarted (<code>ipp-stop</code> followed by <code>ipp-start</code>)
+when the underlying Exosims code changes, because the already-running
+engines will hold a stale copy of the code.</p>
+<h2 id="webserver-support">Webserver support</h2>
+<p>Results are produced as graphic files and as a webpage that summarizes the
+graphics.  You could view the html in several ways, but one easy way is to
+start a server within the simulations directory.  A simple Python server
+(<code>python -m http.server 8000</code>) is too slow and does not support some
+video functions, so we use httpd (Apache).</p>
+<p>To control this server, the <code>Makefile</code> has these targets:</p>
+<ul>
+<li>
+<p><code>html-start</code>: start httpd server</p>
+</li>
+<li>
+<p><code>html-stop</code>: stop httpd server</p>
+</li>
+<li>
+<p><code>html-status</code>: show running servers, if any, by inspecting their log
+    files.</p>
+</li>
+</ul>
+<p>Using <code>make html-status</code> tells you where to point your browser.
+The server typically can stay up for months without trouble.</p>
+<h2 id="tuning-experiment-support">Tuning experiment support</h2>
+<p>We had occasional need to run multiple linked ensembles to understand
+performance of schedulers in response to different tuning parameters.
+For instance, a scheduler might need to trade off slew time against
+Brown completeness ("should we spend time slewing to a far-off
+high-completeness target, or
+integrate longer on a nearby target with smaller completeness").
+So we seek to compute and maximize yield
+across a selected set of tuning parameters.</p>
+<p>This was handled by creating a series of Exosims input scripts, one for
+each parameter setting, running
+<code>add-sims.sh</code> for each, and performing data reduction as noted above.
+This amounts to an outer loop around the above process.</p>
+<p>Regarding execution, we would generate a list of the input script
+filenames, and farm this list out to the machines available (aftac1,
+aftac2, aftac3).  The detailed process is described in the file 
+<code>Experiments/run-experiment-howto.txt</code>.</p>
               
             </div>
           </div>
