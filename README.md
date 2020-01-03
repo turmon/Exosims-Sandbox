@@ -13,7 +13,7 @@ exist for separate families of simulations.
 
 To use the sandbox for runs and analysis:
 
-1. The EXOSIMS directory should point to Exosims source code (see also
+1. The EXOSIMS directory (a symbolic link) should point to Exosims source code (see also
 under File Contents, below).
 
 2. Put your Exosims input script, a json file, under Scripts.
@@ -27,7 +27,9 @@ page for that simulation.
 5.  Reduced data and plots are placed in the `sims/<script>` directory.  The plots can be
 viewed directly.
 
-6. Plots can also be viewed on the generated webpage.  Start a server with `make html-serve`.
+6. Plots can also be viewed on the generated webpage.  Start a server with
+`make html-serve`, then invoke `make html-status` and point your
+browser to the indicated location.
 
 ## Documentation
 
@@ -40,36 +42,44 @@ or the [JPL github](https://github.jpl.nasa.gov/pages/turmon/EXOSIMS-sandbox/).
 The contents here include:
 
 * Files/links/directories you might want to alter
-  + EXOSIMS     
+  + `EXOSIMS`     
 
-    Symlink to the source code of Exosims used.  The file EXOSIMS/EXOSIMS/__init__.py should exist.
+    Symlink to the source code of Exosims used.  The file `EXOSIMS/EXOSIMS/__init__.py` should exist.
 
-  + Scripts     
+  + `Scripts`     
 
     .json scripts for Exosims input, placed here by convention.
 
 * Files/links/directories you might want to inspect or run
-  + Makefile    
+  + `Makefile`    
 
     Controls data reduction and startup of ipython parallel engines.  See the Makefile header for actions.
 
-  + add-sims.sh 
+  + `add-sims.sh`
 
     Driver script to add more ensemble members.  It contains usage instructions.
 
-  + sims/*      -- Dumped Exosims results, categorized by script-file root
+  + `sims/*`
+
+    Dumped Exosims results, categorized by script-file root
     name.  These generated files are not part of the source code distribution.
 
 * Files/links/directories that are mostly infrastructure
-  + Local       
 
-    Local modules for Exosims, including the run_one() method.
+  + `Local`       
 
-  + util       
+    Local modules to be imported by Exosims, including the run_one()
+    method, and some graphical summarization scripts.
 
-    utility scripts, mostly called from Makefile.
+  + `util`       
 
-  + ipyparallel 
+    Utility scripts, mostly called at the direction of the `Makefile`.
+
+  + `Experiments`
+
+    Infrastructure for running coupled sets of Exosims runs for parameter tuning.
+
+  + `ipyparallel`
 
     iPython-parallel per-user, per-machine configuration and lock files
 
