@@ -6,6 +6,9 @@ This is how I currently run parameter sweeps in the Sandbox.  It could
 be made more seamless.  We haven't yet decided if all such sweeps will
 be done in a similar way.
 
+For more on the "generate derived scripts" step, see the notes on how
+json-xform.py works, currently named "script-expander-2018-11-28.pdf".
+
 
 [1] Overview
 
