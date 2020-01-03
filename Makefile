@@ -22,7 +22,10 @@
 #   path-ensemble: make lon/lat plots of slews taken by an ensemble.
 #   path-movie-N: make "N" path-movies and final frames 
 #   path-final-N: make "N" final frames, only
-#     (for N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
+#   obs-timeline-N: make "N" observing-target timelines
+#   keepout-N: make "N" keepout-vs-time plots
+#     (above targets make selected graphics for N sims chosen from those present,
+#     for N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
 #   html: re-generate the index.html that summarizes the given scenario
 #   html-only: same as html, but do not re-reduce the data or remake graphics.
 # (2) Multi-script reduction and plotting targets --
