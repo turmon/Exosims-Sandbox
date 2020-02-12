@@ -15,5 +15,8 @@ ipyparallel/*
 # emacs tempfiles
 \#*\#
 
+# mac metadata files (sometimes _. is doubled)
+.*DS_Store
+
 # play area for documentation
 util/sandbox
