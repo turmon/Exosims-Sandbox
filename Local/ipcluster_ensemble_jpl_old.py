@@ -56,6 +56,7 @@ Notes:
 
 # turmon 2017, starting from a version by cdx, 2016-2017
 
+from __future__ import print_function
 import numpy as np
 import argparse
 import sys
@@ -115,12 +116,12 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts=''):
     for attempt in range(nbmax):
         try:
             # run one survey simulation
-            print '%%% Running simulation...'
+            print('%%% Running simulation...')
             SS.run_sim()
             DRM = SS.DRM[:]
             systems = SS.SimulatedUniverse.dump_systems()
             seed = SS.seed
-            print '%%% Running simulation: done'
+            print('%%% Running simulation: done')
         except Exception as e:
             # if anything goes wrong, log the error and reset simulation
             fn = os.path.join(outpath, 'log-%d-%d.err' % (seed, attempt+1))
@@ -137,7 +138,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts=''):
     else:
         raise ValueError("Unsuccessful run_sim after %s reset_sim attempts"%nbmax)
     
-    print '%%% Preparing to pickle simulation...'
+    print('%%% Preparing to pickle simulation...')
 
     # SPC object: save out a set of star/planet characteristics
     # turmon 2018/02: added coords so that star lat/lon can be recovered
@@ -237,7 +238,7 @@ def main(args):
     for d in ('run', 'drm', 'sys', 'spc'):
         outpath1 = os.path.join(outpath, d)
         if not os.path.exists(outpath1):
-            print "Creating output path `%s'." % outpath1
+            print("Creating output path `%s'." % outpath1)
             os.makedirs(outpath1)
         if not os.access(outpath1, os.W_OK | os.X_OK):
             raise ValueError("Cannot write to outpath `%s'." % outpath1)
@@ -264,7 +265,7 @@ def main(args):
     res = sim.genOutSpec(tofile = os.path.join(outpath_run, 'outspec_%d.json' % seed))
 
     subtime = time.ctime()
-    print "Submitting run on: %s" % subtime
+    print("Submitting run on: %s" % subtime)
     # if standalone: manually set up the global SS variable for run_one to access
     # (if run under ipyparallel, this is done by ipyparallel)
     if args.standalone:

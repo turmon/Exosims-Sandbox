@@ -36,6 +36,7 @@
 # could be added.
 
 
+from __future__ import print_function
 import argparse
 import sys
 import os
@@ -120,7 +121,7 @@ def load_drm(fn):
     def why_skip(fn, reason, diagnose):
         r'''Supply uniform message upon skipping a file.'''
         if diagnose:
-            print 'Skipped %s (%s)' % (fn, reason)
+            print('Skipped %s (%s)' % (fn, reason))
 
     try:
         drm = pickle.load(file_accessor(fn))
@@ -208,12 +209,12 @@ def summarize_print(fn, s, verbosity, fmt='%.0f', first_call=[]):
         first_call.append('called') # header is done
         line = delim1.join(['%s' % (k,) for k in key_print_order(s)])
         if verbosity:
-            print fmt0('DRM') + line
+            print(fmt0('DRM') + line)
     if verbosity > 1:
         line = delim1.join([fmt % (strip_units(s[k]),) for k in key_print_order(s)])
     elif verbosity == 1:
         line = fmt % (s['Nobs'],)
-    print fmt0(fn) + line
+    print(fmt0(fn) + line)
 
 
 def summarize(fn, drm, accum, verbosity):
@@ -244,7 +245,7 @@ def summ_accum(Ndrm, accum, verbosity):
         summarize_print('*MEAN', mean, verbosity_used, fmt='%.2f', first_call=['called'])
     # this is not handled per-DRM, because it makes no sense there
     if not CSV_OUTPUT:
-        print '%d DRMs examined' % Ndrm
+        print('%d DRMs examined' % Ndrm)
     
 
 ############################################################

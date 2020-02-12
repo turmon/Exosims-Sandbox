@@ -57,6 +57,7 @@
 
 # Apologies: the "business logic" is entwined with the "presentation logic."
 
+from __future__ import print_function
 import argparse
 import sys
 import os
@@ -176,7 +177,7 @@ class HTML_helper(object):
         header or footer are sent out.'''
         global DIAGNOSE
         if DIAGNOSE:
-            print 'Writing HTML to', outfile
+            print('Writing HTML to', outfile)
         self.title = title
         self.outfile = outfile
         self.f_external = open(outfile, 'w') if outfile else None
@@ -546,7 +547,7 @@ class SimSummary(object):
                     cols = line.split('|')
                     hh.table_row(cols[1:-1])
                 else:
-                    print 'Unexpected table line <%s>' % line
+                    print('Unexpected table line <%s>' % line)
             # be sure to close the table out
             if in_table > 0:
                 hh.table_end()            
@@ -705,7 +706,7 @@ def index_ensemble(args, path_sim):
     if not os.path.isdir(os.path.join(path_sim, 'drm')):
         return # not an ensemble -- e.g., a recursive call into an arb. dir
     outdir = 'html'
-    print 'Indexing:', path_sim
+    print('Indexing:', path_sim)
     with ChangeDir(path_sim):
         # ensure the output directory
         if not os.path.isdir(outdir):
@@ -801,7 +802,7 @@ def index_all(args, startpath, title, uplink=None):
     r'''Make a summary table of all ensembles below startpath.
 
     If args.recursive, descend recursively and summarize child directories.'''
-    print 'Indexing:', startpath
+    print('Indexing:', startpath)
     # output HTML
     filename = os.path.join(startpath, 'index.html')
     with HTML_helper(filename, title) as hh:

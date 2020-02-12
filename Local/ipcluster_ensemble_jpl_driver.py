@@ -54,6 +54,7 @@ Notes:
 
 # turmon 2017, starting from a version by cdx, 2016-2017
 
+from __future__ import print_function
 import numpy as np
 import numpy
 import argparse
@@ -130,11 +131,11 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
     seed = SS.seed
     try:
         # run one survey simulation
-        print '%%% Running simulation...'
+        print('%%% Running simulation...')
         SS.run_sim()
         DRM = SS.DRM[:]
         systems = SS.SimulatedUniverse.dump_systems()
-        print '%%% Running simulation: done'
+        print('%%% Running simulation: done')
     except Exception as e:
         # if anything goes wrong, log the error to save it persistently
         fn = os.path.join(outpath, 'log', 'log-%s.err' % str(seed))
@@ -147,7 +148,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         ensure_permissions(fn)
         raise # re-raise the exception
     
-    print '%%% Preparing to pickle simulation...'
+    print('%%% Preparing to pickle simulation...')
 
     # SPC object: save out a set of star/planet characteristics
     # turmon 2018/02: added coords so that star lat/lon can be recovered
@@ -253,7 +254,7 @@ def main(args, xpsecs):
     for d in ('run', 'log', 'drm', 'sys', 'spc'):
         outpath1 = os.path.join(outpath, d)
         if not os.path.exists(outpath1):
-            print "Creating output path `%s'." % outpath1
+            print("Creating output path `%s'." % outpath1)
             try:
                 os.makedirs(outpath1)
             except OSError:
@@ -304,7 +305,7 @@ def main(args, xpsecs):
         os.chmod(fn_log, 0o664) # ensure group-write
 
     subtime = time.ctime()
-    print "Beginning run on: %s" % subtime
+    print("Beginning run on: %s" % subtime)
     # if standalone: manually set up the global SS variable for run_one to access
     # (if run under ipyparallel, this is done on the engines, via ipyparallel,
     # in the SurveyEnsemble __init__)
@@ -326,8 +327,8 @@ def main(args, xpsecs):
 
 if __name__ == "__main__":
     # allow cut-and-paste reproducibility
-    print 'Invoked as:'
-    print ' '.join(sys.argv)
+    print('Invoked as:')
+    print(' '.join(sys.argv))
 
     parser = argparse.ArgumentParser(description='Run an EXOSIMS ensemble under ipyparallel.')
     parser.add_argument('scriptfile', type=str, metavar='SCRIPT', help='Path to scriptfile.')
@@ -364,13 +365,13 @@ if __name__ == "__main__":
             script = open(args.xspecs).read()
             xspecs = json.loads(script)
         except ValueError as err:
-            print "Error: Input xspec file `%s' improperly formatted." % (args.xspecs,)
-            print "Error: JSON error was: ", err
+            print("Error: Input xspec file `%s' improperly formatted." % (args.xspecs,))
+            print("Error: JSON error was: ", err)
             # re-raise here to suppress the rest of the backtrace.
             # it is only confusing details about the bowels of json.loads()
             raise ValueError(err)
         except:
-            print "Error: %s", (sys.exc_info()[0],)
+            print("Error: %s", (sys.exc_info()[0],))
             raise
     elif args.xspecs and args.xspecs.startswith('!'):
         xspecs = json.loads(args.xspecs[1:])

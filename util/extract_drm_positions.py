@@ -44,6 +44,7 @@
 #  turmon oct 2018: created, from keepout_path_graphics
 
 
+from __future__ import print_function
 import sys
 import argparse
 import os
@@ -81,7 +82,7 @@ class ObserveInfo(object):
         r'''Load the DRM, and star/planet info from a "spc" file given as an argument.
         This drm + spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
-        print 'Loading DRM from', loc
+        print('Loading DRM from', loc)
         self.drm = pickle.load(open(loc))
         # (for now, this is always False)
         if spc:
@@ -199,7 +200,7 @@ def extract_positions(OI, args, xspecs):
     try:
         csv_position = open(args.outfile, 'w')
     except IOError:
-        print "Error: could not write position-file '%s'" % args.outfile
+        print("Error: could not write position-file '%s'" % args.outfile)
         raise
     # determine nouns to track, fields to output, etc.
     coords = ('x', 'y', 'z')
@@ -226,7 +227,7 @@ def extract_positions(OI, args, xspecs):
     ########################################
     # Loop over times
     
-    print '%s: Stepping through observations.' % args.progname
+    print('%s: Stepping through observations.' % args.progname)
     Ntime = len(OI.drm)
     for i, obs in enumerate(OI.drm):
         # print progress if needed
@@ -310,7 +311,7 @@ def extract_positions(OI, args, xspecs):
         writer.writerow(info)
         
     # (end loop over observations)
-    print '%s: Done.' % args.progname
+    print('%s: Done.' % args.progname)
     csv_position.close()
 
     
@@ -351,20 +352,20 @@ if __name__ == '__main__':
             script = open(args.xspecs).read()
             xspecs = json.loads(script)
         except ValueError as err:
-            print "Error: Input xspec file `%s' improperly formatted." % (args.xspecs,)
-            print "Error: JSON error was: ", err
+            print("Error: Input xspec file `%s' improperly formatted." % (args.xspecs,))
+            print("Error: JSON error was: ", err)
             # re-raise here to suppress the rest of the backtrace.
             # it is only confusing details about the bowels of json.loads()
             raise ValueError(err)
         except:
-            print "Error: %s", (sys.exc_info()[0],)
+            print("Error: %s", (sys.exc_info()[0],))
             raise
     elif args.xspecs and args.xspecs.startswith('!'):
         xspecs = json.loads(args.xspecs[1:])
     else:
         xspecs = {}
 
-    print '%s: setting standalone mode with seed = %s' % (args.progname, drm_seed)
+    print('%s: setting standalone mode with seed = %s' % (args.progname, drm_seed))
     # ensure simulation seed is reset
     xspecs['seed'] = int(drm_seed)
     # put into stand-alone mode (no ipyparallel)
@@ -372,7 +373,7 @@ if __name__ == '__main__':
 
     # load info about observations (DRM) from given location
     OI = ObserveInfo(args.drm, args.spc)
-    print '%s: %s' % (args.progname, OI.summary())
+    print('%s: %s' % (args.progname, OI.summary()))
 
     extract_positions(OI, args, xspecs)
 

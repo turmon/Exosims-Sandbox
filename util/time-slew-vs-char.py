@@ -26,6 +26,7 @@ turmon jan 2018, oct 2018
 '''
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import glob
@@ -203,7 +204,7 @@ def outer_load_and_reduce(f, verb=0):
     This must be present at the outer scope of the file so it can be loaded
     by a separate process that is created by the multiprocessing module.'''
     if verb > 0:
-        print 'Processing <%s> in pid #%d' % (f, os.getpid())
+        print('Processing <%s> in pid #%d' % (f, os.getpid()))
     sim = SimulationRun(f)
     return sim.summarize()
 
@@ -287,7 +288,7 @@ class EnsembleSummary(object):
                 pass # e.g., don't own the file
 
         fn = args.outfile % ('char-slew-time', 'csv')
-        print '\tDumping to %s' % fn
+        print('\tDumping to %s' % fn)
         # qoi = quantities-of-interest
         saved_fields = ['seed', 'obs_num', 'char_time',  'slew_time']
         Nrow = len(self.summary[saved_fields[0]])
@@ -302,17 +303,17 @@ class EnsembleSummary(object):
         
 
 def main(args):
-    print '%s: Loading %d file patterns.' % (args.progname, len(args.infile))
+    print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
     lazy = True
     ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
     if ensemble.Ndrm_actual == 0:
-        print '%s: Warning: no actual DRMs present.' % (args.progname, )
+        print('%s: Warning: no actual DRMs present.' % (args.progname, ))
     # save a reference to the universe (stars and their attributes)
     ensemble.spc = ensemble.sims[0].spc
     ensemble.Nstar = ensemble.sims[0].Nstar
-    print '%s: Reducing.' % args.progname
+    print('%s: Reducing.' % args.progname)
     ensemble.load_and_reduce()
-    print '%s: Dumping.' % args.progname
+    print('%s: Dumping.' % args.progname)
     ensemble.dump(args)
 
 
@@ -349,7 +350,7 @@ if __name__ == '__main__':
     if not args.outfile:
         args.outfile = ('sims/%s/adhoc' % args.expt_name) + '-%s.%s'
     if args.outfile.count('%s') != 2:
-        print '%s: Need two instances of %%s in output file template' % args.progname
+        print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)
     # ensure enclosing dir exists
     directory = os.path.dirname(args.outfile % ('dummy', 'txt'))
@@ -357,7 +358,7 @@ if __name__ == '__main__':
         os.makedirs(directory)
 
     infile_print = args.infile[0] + (' ...' if len(args.infile) > 1 else '')
-    print '%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile)
+    print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))
 
     main(args)
     sys.exit(0)

@@ -33,6 +33,7 @@ turmon jan 2019
 '''
 
 from __future__ import division
+from __future__ import print_function
 from operator import itemgetter
 import argparse
 import sys
@@ -102,7 +103,7 @@ def main(args):
     # assign sort key
     args.sortkey = args.key if args.key else table[0].keys()[0]
     if args.sortkey not in table[0]:
-        print "%s: Error: supplied key not in CSV." % args.progname
+        print("%s: Error: supplied key not in CSV." % args.progname)
         sys.exit(1)
     # case analysis to handle selection mode
     if args.mode == 'mix':
@@ -118,18 +119,18 @@ def main(args):
     elif args.mode == 'top':
         reverse = True
     else:
-        print "%s: Error: bad mode." % args.progname
+        print("%s: Error: bad mode." % args.progname)
         sys.exit(1)
     # select some rows
     table_s = select(table, args.n, args.sortkey, reverse)
     # assign output key -- error check now because decorate() added a key
     outkey = args.outkey if args.outkey else table[0].keys()[0]
     if outkey not in table_s[0]:
-        print "%s: Error: supplied output key not in CSV." % args.progname
+        print("%s: Error: supplied output key not in CSV." % args.progname)
         sys.exit(1)
     # output the requested key
     for row in table_s:
-        print row[outkey]
+        print(row[outkey])
 
 
 if __name__ == '__main__':
@@ -155,16 +156,16 @@ if __name__ == '__main__':
     args.progname = os.path.basename(sys.argv[0])
     
     if args.n < 0:
-        print '%s: Error: n must be nonnegative.' % args.progname
+        print('%s: Error: n must be nonnegative.' % args.progname)
         sys.exit(1)
 
     if args.mode not in ('mix', 'bottom', 'top'):
-        print "%s: Error: MODE must be `mix' 'bottom' or `top'." % args.progname
+        print("%s: Error: MODE must be `mix' 'bottom' or `top'." % args.progname)
         sys.exit(1)
 
     if not os.access(args.infile, os.R_OK):
         if not args.quiet:
-            print "%s: Error: Supplied csv file `%s' is not readable." % (args.progname, args.infile)
+            print("%s: Error: Supplied csv file `%s' is not readable." % (args.progname, args.infile))
         sys.exit(0 if args.quiet else 1)
 
     main(args)

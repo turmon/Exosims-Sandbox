@@ -26,6 +26,7 @@
 #   sep 2018, light updates to prevent exceptions when there were 0 slews
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import glob
@@ -253,7 +254,7 @@ class DRMSummary(object):
                         '%.2f' % self.spc_coord[i].distance.value, # [pc]
                         ]
                     f.write(','.join(arr) + '\n')
-                print "Visits written to `%s'" % fn
+                print("Visits written to `%s'" % fn)
             # slew counts
             fn = args.outfile % ('slews', 'csv')
             with open(fn, 'w') as f:
@@ -267,7 +268,7 @@ class DRMSummary(object):
                         '%d' % self.visit2[p1,p2],
                         ]
                     f.write(','.join(arr) + '\n')
-                print "Slews written to `%s'" % fn
+                print("Slews written to `%s'" % fn)
                                
 
 def make_graphics(args, drm_info):
@@ -450,7 +451,7 @@ def make_graphics(args, drm_info):
         if args.outfile:
             anim.save(args.outfile % ('spin', 'mp4'),
                     fps=10, extra_args=['-vcodec', 'libx264'])
-        print 'Animation finished.'
+        print('Animation finished.')
     fig.clf()
 
 
@@ -512,14 +513,14 @@ def make_graphics(args, drm_info):
 
 
 def main(args):
-    print '%s: beginning.' % args.progname
-    print 'Loading %d file patterns.' % len(args.infile)
+    print('%s: beginning.' % args.progname)
+    print('Loading %d file patterns.' % len(args.infile))
     drmI = DRMSummary(args.infile, args)
-    print 'Summarizing.'
+    print('Summarizing.')
     drmI.summarize(args)
-    print 'Making graphics.'
+    print('Making graphics.')
     make_graphics(args, drmI)
-    print 'Plots in', args.outfile % ('*', '*')
+    print('Plots in', args.outfile % ('*', '*'))
 
 
 if __name__ == '__main__':

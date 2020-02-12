@@ -16,6 +16,7 @@
 #  Michael Turmon, JPL, 2017
 #
 
+from __future__ import print_function
 import ipyparallel as ipp
 import argparse
 import sys
@@ -48,7 +49,7 @@ def verify(fn, profile):
 def main(args):
     r'''Main routine.  Returns nonzero for trouble.'''
     message = verify(args.file, args.profile)
-    print message
+    print(message)
     return 0 if 'OK' in message else 1
 
     

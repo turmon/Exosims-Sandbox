@@ -18,6 +18,7 @@ turmon oct 2019
 '''
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import os
@@ -202,7 +203,7 @@ def main(args):
             if args.family and args.family.lower() != e.family.lower():
                 print('Skipping %s, wrong family.' % inbase)
         if not os.access(infile, os.R_OK):
-            print("Not found: %s" % (infile, ))
+            print(("Not found: %s" % (infile, )))
             lost += 1
             # sys.exit(1) # stop now
         else:

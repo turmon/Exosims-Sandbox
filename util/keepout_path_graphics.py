@@ -72,6 +72,7 @@
 # that is way too long and unfactored.
 
 
+from __future__ import print_function
 import sys
 import glob
 import argparse
@@ -191,7 +192,7 @@ class ObserveInfo(object):
         r'''Load the DRM, and star/planet info from a "spc" file given as an argument.
         This drm + spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
-        print 'Loading DRM from', loc
+        print('Loading DRM from', loc)
         self.drm = pickle.load(open(loc))
         # spc file contains a dict with many fields - save them all
         self.spc = pickle.load(open(spc))
@@ -214,7 +215,7 @@ class ObserveInfo(object):
         fn_drm = glob.glob(os.path.join(loc, '*_DRM*.pkl'))[0]
         fn_snm = glob.glob(os.path.join(loc, '*_Starnames*.pkl'))[0]
         fn_sco = glob.glob(os.path.join(loc, '*_Starcoords*.pkl'))[0]
-        print 'Loading DRM from', fn_drm
+        print('Loading DRM from', fn_drm)
         self.drm = pickle.load(open(fn_drm))
         self.snm = pickle.load(open(fn_snm))
         self.sco = pickle.load(open(fn_sco))
@@ -306,7 +307,7 @@ class ObserveInfo(object):
                         '%.2f' % self.distance[i], # [pc]
                         ]
                     f.write(','.join(arr) + '\n')
-                print "Visits written to `%s'" % fn
+                print("Visits written to `%s'" % fn)
             # slew counts
             fn = os.path.join(args.out_cume, 'path-slews.csv')
             with open(fn, 'w') as f:
@@ -325,7 +326,7 @@ class ObserveInfo(object):
                         label_string
                         ]
                     f.write(','.join(arr) + '\n')
-                print "Slews written to `%s'" % fn
+                print("Slews written to `%s'" % fn)
 
     def summary(self):
         s = ('DRM of %d observations, %d stars observed, %d stars total'
@@ -764,7 +765,7 @@ def make_graphics(args, xspecs):
         try:
             fp_position = open(out_position + '/position.csv', 'w')
         except IOError:
-            print "Error: could not write position-file within '%s'" % out_position
+            print("Error: could not write position-file within '%s'" % out_position)
             raise
     else:
         fp_position = None
@@ -806,14 +807,14 @@ def make_graphics(args, xspecs):
     # Provide diagnostic summary on what modes we found
     #  coro: the first observingMode that is a detection mode
     detMode  = filter(lambda mode: mode['detectionMode'] == True,  OS.observingModes)[0]
-    print 'Coronagraph keepout from: %s + %s' % (detMode['systName'], detMode['instName'])
+    print('Coronagraph keepout from: %s + %s' % (detMode['systName'], detMode['instName']))
     #  shade: the first observingMode that has an occulter, or None
     try:
         shadeMode = filter(lambda mode: mode['syst']['occulter'] == True, OS.observingModes)[0]
-        print 'Occulter keepout from: %s + %s' % (shadeMode['systName'], shadeMode['instName'])
+        print('Occulter keepout from: %s + %s' % (shadeMode['systName'], shadeMode['instName']))
     except IndexError:
         shadeMode = None
-        print 'No occulter observingMode, so no occulter keepout will be generated.'
+        print('No occulter observingMode, so no occulter keepout will be generated.')
 
     # for progress indication
     system_t0 = time.time()
@@ -831,7 +832,7 @@ def make_graphics(args, xspecs):
     #if shadeMode:
     #    import pdb; pdb.set_trace()
 
-    print 'Beginning simulation propagation through time...'
+    print('Beginning simulation propagation through time...')
     Ntime = len(currentTimes)
     for i in range(Ntime):
         # print progress if needed
@@ -1068,10 +1069,10 @@ def make_graphics(args, xspecs):
 
     # need to finish the movie now, because it is linked to the current figure
     if out_movie:
-        print 'Movie in %s' % movie.outfile
+        print('Movie in %s' % movie.outfile)
         movie.finish()
     if out_frames:
-        print "Output image sequence in `%s'." % out_frames
+        print("Output image sequence in `%s'." % out_frames)
 
     # cumulative outputs
     if out_cume:
@@ -1217,7 +1218,7 @@ if __name__ == '__main__':
     args.progname = os.path.basename(sys.argv[0])
 
     # announce how we were called, for reproducibility
-    print('%s: Invoked as: %s' % (args.progname, ' '.join(sys.argv)))
+    print(('%s: Invoked as: %s' % (args.progname, ' '.join(sys.argv))))
 
     # set umask in hopes that files/dirs will be group-writable
     os.umask(0o002)
@@ -1232,7 +1233,7 @@ if __name__ == '__main__':
         args.out_position = None
 
     if not args.out_movie and not args.out_frames and not args.out_cume:
-        print 'Reminder: Need one of -m or -f or -c in order to produce output.'
+        print('Reminder: Need one of -m or -f or -c in order to produce output.')
         # sys.exit(1)
     
     # load extra specs, if any
@@ -1243,13 +1244,13 @@ if __name__ == '__main__':
             script = open(args.xspecs).read()
             xspecs = json.loads(script)
         except ValueError as err:
-            print "Error: Input xspec file `%s' improperly formatted." % (args.xspecs,)
-            print "Error: JSON error was: ", err
+            print("Error: Input xspec file `%s' improperly formatted." % (args.xspecs,))
+            print("Error: JSON error was: ", err)
             # re-raise here to suppress the rest of the backtrace.
             # it is only confusing details about the bowels of json.loads()
             raise ValueError(err)
         except:
-            print "Error: %s", (sys.exc_info()[0],)
+            print("Error: %s", (sys.exc_info()[0],))
             raise
     elif args.xspecs and args.xspecs.startswith('!'):
         xspecs = json.loads(args.xspecs[1:])
@@ -1259,13 +1260,13 @@ if __name__ == '__main__':
     # load info about observations (DRM) from given location
     if args.drm_dir:
         args.OI = ObserveInfo(args.drm_dir, args.spc)
-        print args.OI.summary()
+        print(args.OI.summary())
     else:
         args.OI = None
-        print 'Not plotting DRM.'
+        print('Not plotting DRM.')
 
     if args.debug:
-        print 'Debug mode'
+        print('Debug mode')
         import pdb; pdb.set_trace()
 
     make_graphics(args, xspecs)

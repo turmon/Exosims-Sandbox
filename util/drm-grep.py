@@ -43,6 +43,7 @@ turmon apr 2019
 
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import glob
@@ -222,7 +223,7 @@ def outer_load_and_reduce(f, verb=0, args=None):
     This must be present at the outer scope of the file so it can be loaded
     by a separate process that is created by the multiprocessing module.'''
     if verb > 0:
-        print 'Processing <%s> in pid #%d' % (f, os.getpid())
+        print('Processing <%s> in pid #%d' % (f, os.getpid()))
     sim = SimulationRun(f)
     return sim.summarize(args)
 
@@ -325,7 +326,7 @@ def main(args, outfile):
     lazy = True
     ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
     if ensemble.Ndrm_actual == 0:
-        print '%s: Warning: no actual DRMs present.' % (args.progname, )
+        print('%s: Warning: no actual DRMs present.' % (args.progname, ))
     # save a reference to the universe (stars and their attributes)
     # don't want to assume a SPC
     # ensemble.spc = ensemble.sims[0].spc

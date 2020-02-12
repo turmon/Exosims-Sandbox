@@ -1,6 +1,7 @@
 # early script which appears to extract some fields about some targets from 
 # the drm/spc, and export to CSV.
 
+from __future__ import print_function
 import pickle
 import numpy as np
 import csv

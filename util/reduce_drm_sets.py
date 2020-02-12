@@ -29,6 +29,7 @@ turmon nov 2018
 '''
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import glob
@@ -174,7 +175,7 @@ def outer_load_and_reduce(f, verb=0):
     This must be present at the outer scope of the file so it can be loaded
     by a separate process that is created by the multiprocessing module.'''
     if verb > 0:
-        print 'Processing <%s> in pid #%d' % (f, os.getpid())
+        print('Processing <%s> in pid #%d' % (f, os.getpid()))
     ensemble = EnsembleRun(f)
     return ensemble.summarize()
 
@@ -195,7 +196,7 @@ class EnsembleSummary(object):
         r'''Load index mapping experiment name to parameter values.'''
         # load index file, if given
         if args.indexfile:
-            print '%s: Loading index file.' % args.progname
+            print('%s: Loading index file.' % args.progname)
             with open(args.indexfile, 'r') as fp:
                 index = json.load(fp)
         else:
@@ -297,7 +298,7 @@ class EnsembleSummary(object):
         r'''Dump reduced data to files.'''
 
         fn = args.outfile % (extension, 'csv')
-        print '\tDumping to %s' % fn
+        print('\tDumping to %s' % fn)
         # list of field-name in order they should be dumped
         saved_fields = [
             'chars_earth_unique',
@@ -336,7 +337,7 @@ class EnsembleSummary(object):
         r'''Dump overall, one-line summary data to a file.'''
 
         fn = args.outfile % ('info', 'csv')
-        print '\tDumping to %s' % fn
+        print('\tDumping to %s' % fn)
         # list of (field-name-as-output, field-name-here),
         # in order they should be dumped
         saved_field_map = [
@@ -359,18 +360,18 @@ class EnsembleSummary(object):
         
 
 def main(args):
-    print '%s: Loading %d file patterns.' % (args.progname, len(args.infile))
+    print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
     ensemble_set = EnsembleSummary(args.infile, args)
     if ensemble_set.Nens == 0:
-        print '%s: Warning: no actual Ensembles present.' % (args.progname, )
+        print('%s: Warning: no actual Ensembles present.' % (args.progname, ))
     else:
-        print '%s: Found %d ensembles.' % (args.progname, ensemble_set.Nens)
+        print('%s: Found %d ensembles.' % (args.progname, ensemble_set.Nens))
     # save a reference to the universe (stars and their attributes)
-    print '%s: Reducing.' % args.progname
+    print('%s: Reducing.' % args.progname)
     ensemble_set.load_and_reduce()
-    print '%s: Dumping result tabulation.' % args.progname
+    print('%s: Dumping result tabulation.' % args.progname)
     ensemble_set.dump_results(args)
-    print '%s: Dumping capsule summary.' % args.progname
+    print('%s: Dumping capsule summary.' % args.progname)
     ensemble_set.dump_summary(args)
 
 
@@ -399,11 +400,11 @@ if __name__ == '__main__':
     
     args.infile = args.ens
     if len(args.infile) == 0:
-        print '%s: Error: Need at least one input ensemble.' % args.progname
+        print('%s: Error: Need at least one input ensemble.' % args.progname)
         sys.exit(1)
 
     if args.indexfile and not os.access(args.indexfile, os.R_OK):
-        print "%s: Error: Supplied index file `%s' is not readable." % (args.progname, args.indexfile)
+        print("%s: Error: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
         sys.exit(1)
 
     # get the experiment name from the directory - this is brittle,
@@ -414,7 +415,7 @@ if __name__ == '__main__':
     if not args.outfile:
         args.outfile = ('sims/%s/reduce' % args.expt_name) + '-%s.%s'
     if args.outfile.count('%s') != 2:
-        print '%s: Need two instances of %%s in output file template' % args.progname
+        print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)
     # ensure enclosing dir exists
     directory = os.path.dirname(args.outfile % ('dummy', 'txt'))
@@ -422,7 +423,7 @@ if __name__ == '__main__':
         os.makedirs(directory)
 
     infile_print = args.infile[0] + (' ...' if len(args.infile) > 1 else '')
-    print '%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile)
+    print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))
 
     main(args)
     sys.exit(0)

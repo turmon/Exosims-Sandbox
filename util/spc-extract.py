@@ -15,6 +15,7 @@
 #  turmon jun 2019 - created
 
 
+from __future__ import print_function
 import sys
 import glob
 import argparse
@@ -75,7 +76,7 @@ class StarPlanetInfo(object):
         r'''Load the star/planet info from a "spc" file given as an argument.
         This spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
-        print 'Loading SPC from', spc
+        print('Loading SPC from', spc)
         # spc file contains a dict with many fields - save them all
         self.spc = pickle.load(open(spc))
         # seed extracted from filename

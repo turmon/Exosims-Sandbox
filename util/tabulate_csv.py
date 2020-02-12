@@ -33,6 +33,7 @@ turmon jan 2019
 '''
 
 from __future__ import division
+from __future__ import print_function
 import argparse
 import sys
 import os
@@ -185,7 +186,7 @@ def main(args):
             except:
                 sys.stderr.write("%s: Error: Indicated output file `%s' is not writable.\n" % (args.progname, outfile))
                 sys.exit(1)
-            print '\tTabulation to %s' % outfile # only if not to stdout, obviously
+            print('\tTabulation to %s' % outfile) # only if not to stdout, obviously
         # dump the data
         DUMP_DISPATCH_TABLE[mode](out_fp, args, table)
         if output_to_file:
