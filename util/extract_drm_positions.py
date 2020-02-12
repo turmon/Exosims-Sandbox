@@ -195,7 +195,7 @@ def extract_positions(OI, args, xspecs):
     ########################################
     # Output file
     if not os.path.isdir(os.path.dirname(args.outfile)):
-        os.makedirs(os.path.dirname(args.outfile), 0775)
+        os.makedirs(os.path.dirname(args.outfile), 0o775)
     try:
         csv_position = open(args.outfile, 'w')
     except IOError:
@@ -328,7 +328,7 @@ if __name__ == '__main__':
                       dest='out_position', metavar='FILE', default='')
     
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
     # process arguments
     args = parser.parse_args()
     args.progname = os.path.basename(sys.argv[0])

@@ -648,7 +648,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # set umask in hopes that files will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'

@@ -145,7 +145,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     main(args)
 

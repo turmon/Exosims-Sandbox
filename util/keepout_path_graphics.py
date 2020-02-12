@@ -124,7 +124,7 @@ def ensure_dir(directory):
     tries, done = 0, False
     while not os.path.exists(directory) and not done:
         try:
-            os.makedirs(directory, 0775)
+            os.makedirs(directory, 0o775)
             done = True # ensure we exit the while
         except OSError:
             # hope it was just concurrent creation
@@ -1220,7 +1220,7 @@ if __name__ == '__main__':
     print('%s: Invoked as: %s' % (args.progname, ' '.join(sys.argv)))
 
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     # plot movie in (equatorial) ra/dec coordinates vs. (ecliptic) lat/lon coordinates
     args.ra_dec_coord = not args.equatorial

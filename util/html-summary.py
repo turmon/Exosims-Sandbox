@@ -107,7 +107,7 @@ def ensure_permissions(fn):
     r'''Ensure correct permissions on the named data file.  
     We use rw-rw-r-- = 664 (octal), to allow group-write.'''
     try:
-        os.chmod(fn, 0664)
+        os.chmod(fn, 0o664)
     except OSError:
         pass # e.g., don't own the file
 
@@ -709,7 +709,7 @@ def index_ensemble(args, path_sim):
     with ChangeDir(path_sim):
         # ensure the output directory
         if not os.path.isdir(outdir):
-            os.makedirs(outdir, 0775)
+            os.makedirs(outdir, 0o775)
         # gather information
         sim_info = SimSummary('.', name=path_sim)
         for root, dirs, files in os.walk('.'):
@@ -879,7 +879,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     main(args)
     sys.exit(0)

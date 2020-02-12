@@ -122,7 +122,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         r'''Ensure correct permissions on the named data file.  
         We use rw-rw-r-- = 664 (octal), to allow group-write.'''
         try:
-            os.chmod(fn, 0664)
+            os.chmod(fn, 0o664)
         except OSError:
             pass # e.g., don't own the file
 
@@ -301,7 +301,7 @@ def main(args, xpsecs):
     if fp_log:
         fn_log = os.path.join(outpath_log, 'log-%d.init' % seed)
         shutil.move(fp_log.name, fn_log)
-        os.chmod(fn_log, 0664) # ensure group-write
+        os.chmod(fn_log, 0o664) # ensure group-write
 
     subtime = time.ctime()
     print "Beginning run on: %s" % subtime
