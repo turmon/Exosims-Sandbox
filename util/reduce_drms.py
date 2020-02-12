@@ -95,7 +95,8 @@ import re
 import warnings
 from functools import partial
 from collections import defaultdict, Counter, namedtuple, OrderedDict
-import cPickle as pickle
+#import cPickle as pickle
+import six.moves.cPickle as pickle
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
