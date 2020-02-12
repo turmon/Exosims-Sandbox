@@ -539,7 +539,8 @@ class SimulationRun(object):
             return
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
-        drm = pickle.loads(open(f).read())
+        # drm = pickle.loads(open(f).read())
+        drm = pickle.load(open(f))
         gc.enable()
         # sometimes, skip some drms - generally unused.
         #if args.drm1 and len(drm) > 1: continue
