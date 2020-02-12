@@ -538,7 +538,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     # do it like this for now
     args.infile = args.drm
@@ -556,7 +556,7 @@ if __name__ == '__main__':
     # ensure the directory
     outdir = os.path.dirname(args.outfile % ('test', 'test'))
     if not os.path.isdir(outdir):
-        os.makedirs(outdir, 0775)
+        os.makedirs(outdir, 0o775)
 
     # not presently used
     args.matrix_order_attr = 'lon'

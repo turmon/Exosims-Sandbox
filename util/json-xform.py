@@ -319,7 +319,7 @@ if __name__ == '__main__':
     args.progname = os.path.basename(sys.argv[0])
     
     # set umask in hopes that files/dirs will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     if not os.path.exists(args.script):
         raise IOError('Given script file (%s) does not exist.' % args.script)
@@ -329,7 +329,7 @@ if __name__ == '__main__':
         # ensure the directory
         outdir = os.path.dirname(args.outfile % 'test')
         if len(outdir) > 0 and not os.path.isdir(outdir):
-            os.makedirs(outdir, 0775)
+            os.makedirs(outdir, 0o775)
     # do it
     files_written = main(args)
     print('%s: Wrote %d new scripts into %d different files.' %

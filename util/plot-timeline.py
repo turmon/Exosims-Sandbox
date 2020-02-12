@@ -586,7 +586,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # set umask in hopes that files will be group-writable
-    os.umask(0002)
+    os.umask(0o002)
 
     # ensure enclosing dir exists
     directory = os.path.dirname(args.outpath % ('dummy', 'txt'))

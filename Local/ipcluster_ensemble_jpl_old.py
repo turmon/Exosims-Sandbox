@@ -104,7 +104,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts=''):
         r'''Ensure correct permissions on the named data file.  
         We use rw-rw-r-- = 664 (octal), to allow group-write.'''
         try:
-            os.chmod(fn, 0664)
+            os.chmod(fn, 0o664)
         except OSError:
             pass # e.g., don't own the file
 
