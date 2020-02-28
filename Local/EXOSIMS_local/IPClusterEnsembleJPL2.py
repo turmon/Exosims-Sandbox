@@ -61,7 +61,7 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         # these are the imports needed by the run_one()
         with self.dview.sync_imports():
             import EXOSIMS, EXOSIMS.util.get_module, EXOSIMS_local, \
-                time, os, os.path, random, numpy, cPickle, gzip, traceback
+                time, os, os.path, random, numpy, six.moves.cPickle, gzip, traceback
         if 'logger' in specs:
             specs.pop('logger')
         # pop the seed from the specs to force re-seeding
@@ -119,7 +119,7 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
             rewindPlanets=True, kwargs={}):
         
         if not run_one:
-            raise ValueError, 'Require a run_one function to be provided'
+            raise ValueError('Require a run_one function to be provided')
         t1 = time.time()
         async_res = []
         for j in range(nb_run_sim):

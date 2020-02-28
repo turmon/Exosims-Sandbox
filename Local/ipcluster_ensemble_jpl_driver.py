@@ -71,7 +71,7 @@ import EXOSIMS
 import EXOSIMS.MissionSim
 import os
 import os.path
-import cPickle # 'import as' is not allowed by ipyparallel
+import six.moves.cPickle # 'import as' is not allowed by ipyparallel
 import gzip
 import traceback
 
@@ -186,7 +186,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         if not path: continue # no output of that type
         #raise ValueError(' '.join((outname,outpath,outopts,path)))
         with writer(path, 'wb') as f:
-            cPickle.dump(possible_outputs[outname], f)
+            six.moves.cPickle.dump(possible_outputs[outname], f)
 
     # reset simulation object AFTER the above files are written
     # note, reset_sim() will pop the seed from SS.specs, which causes 
