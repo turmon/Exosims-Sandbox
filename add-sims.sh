@@ -5,13 +5,14 @@
 # This is a wrapper around the python driver, ipcluster_ensemble_jpl.py.
 #
 # Usage:
-#   add-sims [-q] [-v VERB] [-S SEEDS] [-P PAR] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT N
+#   add-sims [-3] [-q] [-v VERB] [-S SEEDS] [-P PAR] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT N
 #
 # to use the JSON script SCRIPT (a file) and perform N (an integer) runs.
 #
 # Options:
 #   -h        => show this help message and exit.
 #   -q        => quiet object creation
+#   -3        => run the EXOSIMS sim-runner with python3
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -P PAR    => run without ipython parallel, using PAR independent jobs
@@ -66,8 +67,20 @@ DRIVER_OPT=
 DISPATCH_INPUT=":" # no-op, by default
 DISPATCHER=
 DISPAT_OPT=
-while getopts "hp:x:P:S:neqv:E:O:" opt; do
+# 4: "executive" that choses python2/python3
+PYTHON_EXECUTIVE_2=python
+PYTHON_EXECUTIVE_3=python3
+PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
+while getopts "h23p:x:P:S:neqv:E:O:" opt; do
     case $opt in
+	3)
+	    # set python3 executive
+	    PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_3
+	    ;;
+	2)
+	    # set python2 executive (currently, the default)
+	    PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
+	    ;;
 	n)
 	    # alternate driver program - developer-only
 	    DRIVER=$DRIVER_OLD
@@ -196,13 +209,19 @@ fi
 # export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
 export PYTHONPATH=${EXO_PATH}:$(pwd)/Local
 
-# 6/2019: sometimes we run out of threads?
+# 6/2019: sometimes we run out of threads, if many parallel instances?
 export OPENBLAS_NUM_THREADS=8
 
-
+# Taking this apart, the most critical elements are:
+#   DISPATCH_INPUT | DISPATCHER [opts] PYTHON_EXECUTIVE DRIVER [opts] SCRIPT NRUN
+# where:
+#   DISPATCH_INPUT = optional input stream of newline-separated seeds, for xargs
+#   DISPATCHER [opts] = xargs (which is given appropriate options)
+#   PYTHON_EXECUTIVE = python2 or python3
+#   DRIVER [opts] SCRIPT NRUN = python sim-runner, with opts and 2 args
 $DISPATCH_INPUT | $DISPATCHER $DISPAT_OPT \
-python $DRIVER $EMAIL_OPT $DRIVER_OPT $SEED_OPT \
-       --outpath "sims/$sim_base" --outopts "$OUT_OPT" --controller $IPYCLI $SCRIPT $NRUN
+$PYTHON_EXECUTIVE $DRIVER $EMAIL_OPT $DRIVER_OPT $SEED_OPT \
+  --outpath "sims/$sim_base" --outopts "$OUT_OPT" --controller $IPYCLI $SCRIPT $NRUN
 
 # remove tempfiles, if any - double-checks that the variable is set first
 [ -n "$TMP_ROOT" ] && rm -f ${TMP_ROOT}.*

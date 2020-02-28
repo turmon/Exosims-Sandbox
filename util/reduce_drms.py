@@ -537,9 +537,12 @@ class SimulationRun(object):
             self.name = 'dummy'
             self.Nstar = 0
             return
+        # unpickling python2/numpy pickles within python3 requires this
+        pickle_args = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
-        drm = pickle.loads(open(f).read())
+        # drm = pickle.loads(open(f).read())
+        drm = pickle.load(open(f, 'rb'), **pickle_args)
         gc.enable()
         # sometimes, skip some drms - generally unused.
         #if args.drm1 and len(drm) > 1: continue
@@ -554,7 +557,8 @@ class SimulationRun(object):
         # load a spc file
         g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
         if os.path.isfile(g):
-            spc = pickle.loads(open(g).read())
+            # spc = pickle.loads(open(g).read())
+            spc = pickle.load(open(g, 'rb'), **pickle_args)
         else:
             raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
         # set up object state
