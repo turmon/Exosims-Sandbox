@@ -41,14 +41,16 @@ import argparse
 import sys
 import os
 import os.path
-#import pickle
-import cPickle as pickle
+import six.moves.cPickle as pickle
 from collections import defaultdict
 import bz2, gzip
 import numpy as np
 import astropy.units as u
 #from astropy.time import Time
 
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 # magic numbers at the start of compressed files
 MAGIC_NUMBERS = [
@@ -124,7 +126,7 @@ def load_drm(fn):
             print('Skipped %s (%s)' % (fn, reason))
 
     try:
-        drm = pickle.load(file_accessor(fn))
+        drm = pickle.load(file_accessor(fn), **PICKLE_ARGS)
     except (pickle.UnpicklingError, EOFError, UnknownFileException):
         # vanilla textfiles should route through this path
         # some pickles that are not DRMs will route through this path

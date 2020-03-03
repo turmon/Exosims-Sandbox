@@ -23,10 +23,8 @@ Michael Turmon, JPL, 07/2019
 """
 
 from __future__ import print_function
-try:
-    import cPickle as pickle
-except:
-    import pickle
+from six.moves import range
+import six.moves.cPickle as pickle
 import os
 import sys
 import csv
@@ -58,6 +56,8 @@ from EXOSIMS.util.get_module import get_module_from_specs
 
 SAVEFIG_OPTS = dict(dpi=300)
 
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 ########################################
 ###
@@ -109,7 +109,7 @@ class SimulationRun(object):
         """
         try:
             with open(drmfile, 'rb') as f:
-                DRM = pickle.load(f)
+                DRM = pickle.load(f, **PICKLE_ARGS)
         except:
             sys.stderr.write('Failed to open DRM file "%s"\n' % drmfile)
             raise
@@ -126,7 +126,7 @@ class SimulationRun(object):
         #
         # set up auxiliary quantities
         #
-        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in mode.keys()]
+        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in list(mode.keys())]
         if len(mode_det) > 1:
             t_mult = mode_det[0].get('timeMultiplier', 1.0) # exosims default = 1.0
         else:
@@ -226,7 +226,7 @@ class SimulationRun(object):
         # choose observing modes selected for detection (default marked with a flag)
         # det_mode = list(filter(lambda mode: mode['detectionMode'] == True, allModes))[0]
         # choose obs mode for characterization (default is first spectro/IFS mode)
-        spectroModes = list(filter(lambda mode: 'spec' in mode['inst']['name'], allModes))
+        spectroModes = list([mode for mode in allModes if 'spec' in mode['inst']['name']])
         if np.any(spectroModes):
             char_mode = spectroModes[0]
         # if no spectro mode, default char mode is first observing mode
@@ -554,7 +554,7 @@ def main(args):
         # read the simulation run from cache
         fn = args.outpath % ('sim-cache', 'pkl')
         print('%s: Loading Exosims object from %s.' % (args.progname, fn))
-        sim = pickle.load(open(fn, 'r'))
+        sim = pickle.load(open(fn, 'rb'), **PICKLE_ARGS)
     else:
         # load the simulation run
         sim = SimulationRun(args.drm, args.script)

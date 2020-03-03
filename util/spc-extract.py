@@ -21,10 +21,14 @@ import glob
 import argparse
 import os
 import csv
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import numpy as np
 import astropy.units as u
 import astropy.constants as const
+from six.moves import range
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 
 ############################################################
@@ -78,7 +82,7 @@ class StarPlanetInfo(object):
         # these will fail noisily if there is no file present
         print('Loading SPC from', spc)
         # spc file contains a dict with many fields - save them all
-        self.spc = pickle.load(open(spc))
+        self.spc = pickle.load(open(spc, 'rb'), **PICKLE_ARGS)
         # seed extracted from filename
         self.seed = os.path.splitext(os.path.basename(spc))[0]
 

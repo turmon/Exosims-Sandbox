@@ -33,7 +33,7 @@ import glob
 import gc
 import os
 import math
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import numpy as np
 import astropy.units as u
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
@@ -43,6 +43,8 @@ from matplotlib import animation
 from mpl_toolkits.mplot3d import Axes3D
 
 import EXOSIMS.StarCatalog.EXOCAT1 as EXOCAT1
+from six.moves import range
+from six.moves import zip
 
 ##
 ## Globals
@@ -52,6 +54,9 @@ import EXOSIMS.StarCatalog.EXOCAT1 as EXOCAT1
 # should perhaps be an argument
 MODE = 'char'
 #MODE = 'det'
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 # use great circle paths on path plot?
 GREAT_CIRCLE_PATHS = True
@@ -183,7 +188,7 @@ class DRMSummary(object):
             if f.endswith('.spc'): continue
             # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
             gc.disable()
-            drm = pickle.loads(open(f).read())
+            drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
             gc.enable()
             # allow to filter the events
             if 'char' in MODE:
@@ -197,7 +202,7 @@ class DRMSummary(object):
             if spc is None:
                 g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
                 if os.path.isfile(g):
-                    spc = pickle.loads(open(g).read())
+                    spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
                     Nstar = len(spc['Name'])
         if spc is None and len(drms) > 0:
             raise ValueError('Could not find a .spc file to match the DRMs')
@@ -490,8 +495,8 @@ def make_graphics(args, drm_info):
         # indicate the star names on axes
         if Nslew > 0:
             yticklabels = [r'%s [%.0f$\!^\circ\!$]' % t for t in zip(star_names[slew_stars_perm], attr[perm])]
-            plt.xticks(range(Nslew), star_names[slew_stars_perm], rotation='vertical')
-            plt.yticks(range(Nslew), yticklabels)
+            plt.xticks(list(range(Nslew)), star_names[slew_stars_perm], rotation='vertical')
+            plt.yticks(list(range(Nslew)), yticklabels)
             plt.tick_params(axis='both', which='major', **tick_tight_style)
         plt.title('Frequent Slews: Stars in %s Order: %d DRMs\n%s' %
                       (perm_title, Ndrm, args.exp_name), **title_style)

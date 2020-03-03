@@ -23,13 +23,10 @@ Michael Turmon, JPL, 04/2019 -- created based on an idea by Dean Keithly
 """
 
 from __future__ import print_function
-try:
-    import cPickle as pickle
-except:
-    import pickle
 import os
 import sys
 import csv
+import six.moves.cPickle as pickle
 import argparse
 import json
 import random
@@ -56,6 +53,8 @@ from EXOSIMS.util.get_module import get_module_from_specs
 
 SAVEFIG_OPTS = dict(dpi=300)
 
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 ########################################
 ###
@@ -113,7 +112,7 @@ class SimulationRun(object):
         """
         try:
             with open(drmfile, 'rb') as f:
-                DRM = pickle.load(f)
+                DRM = pickle.load(f, **PICKLE_ARGS)
         except:
             sys.stderr.write('Failed to open DRM file "%s"\n' % drmfile)
             raise

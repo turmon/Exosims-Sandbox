@@ -79,7 +79,7 @@ import argparse
 import os
 import os.path
 import json
-import pickle
+import six.moves.cPickle as pickle
 import random
 import time
 from collections import Counter
@@ -104,6 +104,9 @@ rcParams.update({'figure.autolayout': True})
 axlabel_style = dict(fontsize=10, fontweight='bold')
 title_style = dict(fontsize=12, fontweight='bold')
 tick_style = dict(labelsize=10)
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 ############################################################
 #
@@ -193,9 +196,9 @@ class ObserveInfo(object):
         This drm + spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
         print('Loading DRM from', loc)
-        self.drm = pickle.load(open(loc))
+        self.drm = pickle.load(open(loc, 'rb'), **PICKLE_ARGS)
         # spc file contains a dict with many fields - save them all
-        self.spc = pickle.load(open(spc))
+        self.spc = pickle.load(open(spc, 'rb'), **PICKLE_ARGS)
         # and then extract the ones we need
         self.snm = self.spc['Name']
         #self.sco = self.spc['coords'] # we have the script, so coords are not needed
@@ -216,9 +219,9 @@ class ObserveInfo(object):
         fn_snm = glob.glob(os.path.join(loc, '*_Starnames*.pkl'))[0]
         fn_sco = glob.glob(os.path.join(loc, '*_Starcoords*.pkl'))[0]
         print('Loading DRM from', fn_drm)
-        self.drm = pickle.load(open(fn_drm))
-        self.snm = pickle.load(open(fn_snm))
-        self.sco = pickle.load(open(fn_sco))
+        self.drm = pickle.load(open(fn_drm, 'rb'), **PICKLE_ARGS)
+        self.snm = pickle.load(open(fn_snm, 'rb'), **PICKLE_ARGS)
+        self.sco = pickle.load(open(fn_sco, 'rb'), **PICKLE_ARGS)
         # make these up
         self.L_planet  = np.zeros( (len(self.nm), ) )
         self.Rp_planet = np.zeros( (len(self.nm), ) )

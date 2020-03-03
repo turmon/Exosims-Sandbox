@@ -55,11 +55,13 @@ import csv
 import warnings
 from functools import partial
 from collections import defaultdict, Counter
-import cPickle as pickle
+import six.moves.cPickle as pickle
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
 import astropy.units as u
+from six.moves import map
+from six.moves import range
 
 ##
 ## Globals
@@ -70,6 +72,9 @@ VERBOSITY = 0
 
 # number of CPUs
 N_CPU = mproc.cpu_count()
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 ########################################
 ###
@@ -120,13 +125,13 @@ class SimulationRun(object):
             return
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
-        drm = pickle.loads(open(f).read())
+        drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
         gc.enable()
         # load a spc file - disabled for now
         if False:
             g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
             if os.path.isfile(g):
-                spc = pickle.loads(open(g).read())
+                spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
             else:
                 raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
         # set up object state
@@ -246,7 +251,7 @@ class EnsembleSummary(object):
         else:
             # Load the sims all at once
             # THIS IS NO LONGER THE RECOMMENDED PATH
-            sims = map(SimulationRun, sim_files)
+            sims = list(map(SimulationRun, sim_files))
         # Save the sims in the object
         # As a convenience, we insert a "phony" empty sim (DRM/SPC) even if
         # there were no input DRMs.  This allows all the histograms to be

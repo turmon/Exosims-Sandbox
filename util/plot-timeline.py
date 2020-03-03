@@ -29,10 +29,9 @@ Michael Turmon, JPL, 04/2019 -- created based on an idea by Dean Keithly
 """
 
 from __future__ import print_function
-try:
-    import cPickle as pickle
-except:
-    import pickle
+from six.moves import range
+from six.moves import zip
+import six.moves.cPickle as pickle
 import os
 import sys
 import csv
@@ -49,6 +48,10 @@ import numpy as np
 #matplotlib.use('Agg')
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
+
 
 ########################################
 ###
@@ -201,7 +204,7 @@ class SimulationRun(object):
         """
         try:
             with open(drmfile, 'rb') as f:
-                DRM = pickle.load(f)
+                DRM = pickle.load(f, **PICKLE_ARGS)
         except:
             sys.stderr.write('Failed to open DRM file "%s"\n' % drmfile)
             raise
@@ -225,7 +228,7 @@ class SimulationRun(object):
         #
         # set up auxiliary quantities
         #
-        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in mode.keys()]
+        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in list(mode.keys())]
         if len(mode_det) > 1:
             t_mult = mode_det[0].get('timeMultiplier', 1.0) # exosims default = 1.0
         else:

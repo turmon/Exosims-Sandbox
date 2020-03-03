@@ -6,6 +6,10 @@ import pickle
 import numpy as np
 import csv
 import glob
+import sys
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 targets = ["HIP 37279","HIP 97649","HIP 67927","HIP 2021","HIP 107556",
            "HIP 46853","HIP 22449","HIP 95501","HIP 102422","HIP 86974"]
@@ -47,8 +51,8 @@ def full_summary(spk_dir, drm_dir, hip_list, outfile):
 
 
 def summarize_results(spk_fpath, drm_fpath, hip_list, outfile):
-    spk = pickle.load(open(spk_fpath,'r'))
-    drm = pickle.load(open(drm_fpath,'r'))
+    spk = pickle.load(open(spk_fpath,'rb'), **PICKLE_ARGS)
+    drm = pickle.load(open(drm_fpath,'rb'), **PICKLE_ARGS)
     header = ["Target", "RA", "dec", "distance", "Lstar", "Vmag", "num_visits", 
               "comp", "det_times", "char_times", "total_det_times","total_char_times", 
               "total_all_det_times", "total_all_char_times"]
@@ -68,7 +72,7 @@ def summarize_results(spk_fpath, drm_fpath, hip_list, outfile):
             comp = None
             num_visits = 0
             for d in drm:
-                if 'det_time' in d.keys():
+                if 'det_time' in list(d.keys()):
                     all_det_times.append(d['det_time'].value)
                     if str(d['star_ind']) == str(sInd):
                         det_times.append(d['det_time'].value)
@@ -78,7 +82,7 @@ def summarize_results(spk_fpath, drm_fpath, hip_list, outfile):
                                 comp = d['det_comp']
                             except:
                                 pass
-                if 'char_time' in d.keys():
+                if 'char_time' in list(d.keys()):
                     all_char_times.append(d['char_time'].value)
                     if str(d['star_ind']) == str(sInd):
                         char_times.append(d['char_time'].value)

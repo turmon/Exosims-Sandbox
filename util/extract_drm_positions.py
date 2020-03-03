@@ -60,6 +60,9 @@ import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
 
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
+
 ############################################################
 #
 # Utility Functions
@@ -83,11 +86,11 @@ class ObserveInfo(object):
         This drm + spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
         print('Loading DRM from', loc)
-        self.drm = pickle.load(open(loc))
+        self.drm = pickle.load(open(loc, 'rb'), **PICKLE_ARGS)
         # (for now, this is always False)
         if spc:
             # spc file contains a dict with many fields - save them all
-            self.spc = pickle.load(open(spc))
+            self.spc = pickle.load(open(spc, 'rb'), **PICKLE_ARGS)
             # and then extract the ones we need
             self.snm = self.spc['Name']
             # self.sco = self.spc['coords'] # we have the script, so coords are not needed

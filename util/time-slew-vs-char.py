@@ -38,7 +38,7 @@ import csv
 import warnings
 from functools import partial
 from collections import defaultdict, Counter
-import cPickle as pickle
+import six.moves.cPickle as pickle
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
@@ -49,6 +49,9 @@ import astropy.units as u
 ##
 ## Globals
 ##
+
+# unpickling python2/numpy pickles within python3 requires this
+PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 # global verbosity mode, also usable for debugging print's
 VERBOSITY = 0
@@ -110,7 +113,7 @@ class SimulationRun(object):
             return
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
-        drm = pickle.loads(open(f).read())
+        drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
         gc.enable()
         # sometimes, skip some drms - generally unused.
         #if args.drm1 and len(drm) > 1: continue
@@ -125,7 +128,7 @@ class SimulationRun(object):
         # load a spc file
         g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
         if os.path.isfile(g):
-            spc = pickle.loads(open(g).read())
+            spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
         else:
             raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
         # set up object state
