@@ -82,6 +82,7 @@ turmon jan 2018, oct 2018
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import absolute_import
 import argparse
 import sys
 import glob
@@ -105,6 +106,9 @@ from scipy import stats
 from scipy.interpolate import interp1d
 import astropy.units as u
 import astropy.constants as const
+from six.moves import map
+from six.moves import range
+from functools import reduce
 
 ########################################
 ##
@@ -1204,7 +1208,7 @@ class SimulationRun(object):
             rv['%s_incr' % key] = h1
             rv['%s_cume' % key] = np.cumsum(h1)
         # return value
-        rv_keys = rv.keys() # we're about to add one key, and we don't want it in this list
+        rv_keys = list(rv.keys()) # we're about to add one key, and we don't want it in this list
         rv['_delta_v_keys'] = rv_keys
         return rv
 
@@ -1221,8 +1225,8 @@ class SimulationRun(object):
                 for outcome in ('tries', 'chars'):
                     for count in ('cume', 'uniq'):
                         rv['funnel_%s_%s_%s_%s' % (list_name, outcome, target, count)] = 0.0
-        # record all the above keys for later use
-        rv['_funnel_keys'] = rv.keys()
+        # record all the above keys for later use -- needs to be an explicit list
+        rv['_funnel_keys'] = list(rv.keys())
         # add in the list of earth char attempts
         rv['earth_char_list'] = []
         rv['_earth_char_keys'] = ['earth_char_list']
@@ -1660,8 +1664,8 @@ class SimulationRun(object):
         # [4] Compose return value
         #  -- both of the just-constructed dictionaries
         #  -- "magic" key names for each flavor of result, for use in making reductions + output
-        rv = dict(_promo_count_keys = promo_counts.keys(),
-                  _promo_phist_keys = promo_phists.keys())
+        rv = dict(_promo_count_keys = list(promo_counts.keys()),
+                  _promo_phist_keys = list(promo_phists.keys()))
         rv.update(promo_counts)
         rv.update(promo_phists)
         return rv
@@ -2230,7 +2234,7 @@ class EnsembleSummary(object):
         else:
             # Load the sims all at once
             # THIS IS NO LONGER THE RECOMMENDED PATH
-            sims = map(SimulationRun, sim_files)
+            sims = list(map(SimulationRun, sim_files))
         # Save the sims in the object
         # As a convenience, we insert a "phony" empty sim (DRM/SPC) even if
         # there were no input DRMs.  This allows all the histograms to be
@@ -2484,7 +2488,7 @@ class EnsembleSummary(object):
                     accum[attr].append(place_holder) # fill in later
                     skipped[attr].append(run_num)
         if len(skipped) > 0:
-            skipped_runs = list(reduce(lambda runs, runs_new: runs.union(set(runs_new)), skipped.itervalues(), set()))
+            skipped_runs = list(reduce(lambda runs, runs_new: runs.union(set(runs_new)), six.itervalues(skipped), set()))
             print('Warning: Some attributes (%d of %d) were not present in some runs (%d of %d).' % (
                 len(skipped), len(attrs), len(skipped_runs), len(reductions)))
             if VERBOSITY:
@@ -2947,7 +2951,7 @@ class EnsembleSummary(object):
         earth_char_data = self.summary[earth_char_qoi]
         # compose the names of all fields to be saved
         # initial list
-        earth_char_fields = earth_char_data[0].keys() if earth_char_data else []
+        earth_char_fields = list(earth_char_data[0].keys()) if earth_char_data else []
         # NB: earth_char_* quantities are scalars!
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=earth_char_fields)
