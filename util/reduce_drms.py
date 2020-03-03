@@ -97,6 +97,7 @@ from functools import partial
 from collections import defaultdict, Counter, namedtuple, OrderedDict
 #import cPickle as pickle
 import six.moves.cPickle as pickle
+import six
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
@@ -1520,7 +1521,7 @@ class SimulationRun(object):
         p_count_allplan, p_count_hzone, p_count_earth = [], [], []
         p_span_allplan,  p_span_hzone,  p_span_earth  = [], [], []
         p_promo_allplan, p_promo_hzone, p_promo_earth = [], [], []
-        for p, p_time in p_times.iteritems():
+        for p, p_time in six.iteritems(p_times):
             # accumulate both HZ vs. earthlike
             EARTH = earthlike[p]
             IN_HZONE = hzone[p]
@@ -1569,7 +1570,7 @@ class SimulationRun(object):
         #   spanHZ1:   period = maximal period of a HZ planet (1.67AU)
         #   spanEarth: period = minimal period of an as-realized Earthlike planet
         p_spanPlan_star, p_spanHZ0_star, p_spanHZ1_star, p_spanEarth_star = [], [], [], []
-        for s, s_time in s_times.iteritems():
+        for s, s_time in six.iteritems(s_times):
             # set up p_count_star --
             #   if >= obs_thresh visits: plunk on the time of the obs_thresh'th visit
             if len(s_time) >= obs_thresh:
