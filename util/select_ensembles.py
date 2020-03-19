@@ -101,7 +101,7 @@ def main(args):
     # prevent special cases
     if args.n == 0 or len(table) == 0: return
     # assign sort key
-    args.sortkey = args.key if args.key else table[0].keys()[0]
+    args.sortkey = args.key if args.key else list(table[0].keys())[0]
     if args.sortkey not in table[0]:
         print("%s: Error: supplied key not in CSV." % args.progname)
         sys.exit(1)
@@ -124,7 +124,7 @@ def main(args):
     # select some rows
     table_s = select(table, args.n, args.sortkey, reverse)
     # assign output key -- error check now because decorate() added a key
-    outkey = args.outkey if args.outkey else table[0].keys()[0]
+    outkey = args.outkey if args.outkey else list(table[0].keys())[0]
     if outkey not in table_s[0]:
         print("%s: Error: supplied output key not in CSV." % args.progname)
         sys.exit(1)

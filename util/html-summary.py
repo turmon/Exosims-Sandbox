@@ -65,11 +65,13 @@ import glob
 import re
 import csv
 #import pickle
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import StringIO
 from collections import defaultdict, OrderedDict
 import numpy as np
 import astropy.units as u
+import six
+from six.moves import range
 #from astropy.time import Time
 
 # image to use in case something we expect is not found
@@ -306,14 +308,14 @@ class HTML_helper(object):
     def ul(self, attrs={}):
         self.list_type = 'ul'
         if attrs:
-            self.list_attrs = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attrs.iteritems()])
+            self.list_attrs = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attrs)])
         else:
             self.list_attrs = ''
     def li(self, txt, level, attrs):
         # establish the LI attributes, if any
         attr_txt = ''
         if attrs:
-            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attrs.iteritems()])
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attrs)])
         # close prior LI, etc.
         if level == self.list_level:
             self.f.write(self.indent() + '</li>\n')
@@ -336,7 +338,7 @@ class HTML_helper(object):
     def div(self, txt, **attr):
         attr_txt = ''
         if attr:
-            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attr.iteritems()])
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attr)])
         self.f.write(self.indent(  ) + '<div%s>\n' % attr_txt)
         self.f.write(self.indent( 1) + '%s\n' % txt)
         self.f.write(self.indent(-1) + '</div>\n')
@@ -349,7 +351,7 @@ class HTML_helper(object):
     def script(self, path, literal=False):
         r'''Javascript literal or external file.'''
         if literal:
-            if isinstance(path, basestring):
+            if isinstance(path, six.string_types):
                 path = [path]
             self.f.write(self.indent() + '<script type="text/javascript">\n')
             self.indent(1)
@@ -781,7 +783,7 @@ def sim_summary(d):
     try:
         with open(info_fn) as f:
             info_items = csv.DictReader(f);
-            info = info_items.next() # it is a 1-line csv
+            info = next(info_items) # it is a 1-line csv
         # insert the extra data, just retrieved above
         info['path_count'] = path_count
         info['path_gfx'] = path_gfx
@@ -814,7 +816,7 @@ def index_all(args, startpath, title, uplink=None):
         # table of individual sims
         hh.header('Ensembles')
         # make the table be sortable so that the JS sorter knows about it
-        hh.table_top(['Name'] + sim_summary(None).values(), elem_class='sortable')
+        hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
         for root, dirs, files in os.walk(startpath):
             # break below => loops once => "dirs" is just top-level subdirs of startpath
             for d in sorted(dirs):
@@ -822,12 +824,12 @@ def index_all(args, startpath, title, uplink=None):
                 if d.endswith('.exp'):
                     alink = hh.link('%s/index.html' % d, d, inner=True)
                     properties = exp_summary(os.path.join(root, d))
-                    hh.table_row([alink] + properties.values())
+                    hh.table_row([alink] + list(properties.values()))
                 elif os.path.isdir(os.path.join(root, d, 'drm')):
                     alink = hh.link('%s/html/index.html' % d, d, inner=True)
                     properties = sim_summary(os.path.join(root, d))
                     # format the properties as a row
-                    hh.table_row([alink] + properties.values())
+                    hh.table_row([alink] + list(properties.values()))
                 if args.recurse:
                     # recurse (1 level max) down into sims/d -- no-op if no drm/ there
                     index_ensemble(args, os.path.join(startpath, d))
