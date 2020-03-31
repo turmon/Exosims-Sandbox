@@ -54,9 +54,9 @@ PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 # magic numbers at the start of compressed files
 MAGIC_NUMBERS = [
-    ("\x1f\x8b\x08", gzip.GzipFile),
-    ("\x42\x5a\x68", bz2.BZ2File),
-    ("(lp", open), # "list begin" -- works for python 2.x DRMs, even empty ones
+    (b"\x1f\x8b\x08", gzip.GzipFile),
+    (b"\x42\x5a\x68", bz2.BZ2File),
+    (b"(lp", lambda f: open(f, 'rb')), # "list begin" -- works for python 2.x DRMs, even empty ones
     ]
 MAGIC_MAXLEN = max(len(m[0]) for m in MAGIC_NUMBERS)
 
@@ -105,7 +105,7 @@ def drm_filter(files):
 
 def file_accessor(fn):
     r'''Return an accessor for the filename, depending on the compression type, if any.'''
-    with open(fn) as f:
+    with open(fn, 'rb') as f:
         try:
             file_start = f.read(MAGIC_MAXLEN)
         except EOFError:
