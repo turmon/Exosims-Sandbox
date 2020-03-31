@@ -53,7 +53,7 @@
 # Some options may be described there but not documented here.
 
 # author:
-#  Michael Turmon, JPL, 2018
+#  Michael Turmon, JPL, 2018, 2020
 
 # Apologies: the "business logic" is entwined with the "presentation logic."
 
@@ -66,13 +66,17 @@ import re
 import csv
 #import pickle
 import six.moves.cPickle as pickle
-import StringIO
 from collections import defaultdict, OrderedDict
 import numpy as np
 import astropy.units as u
 import six
 from six.moves import range
-#from astropy.time import Time
+# this is in effect a Py2/Py3 switch: Py2 io.StringIO.write() expects unicode 
+# inputs and raises on str inputs, so could not unify Py2/Py3 on io.StringIO
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
 
 # image to use in case something we expect is not found
 DUMMY_IMAGE = '/Local/www-resources/image-not-found.png'
@@ -184,7 +188,7 @@ class HTML_helper(object):
         self.outfile = outfile
         self.f_external = open(outfile, 'w') if outfile else None
         # a temporary buffer to write all HTML elements into
-        self.f = StringIO.StringIO()
+        self.f = StringIO()
         # counter for HTML element IDs (shared by sub-objects)
         self.id_count = 0
         # indent level
