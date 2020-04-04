@@ -73,6 +73,7 @@
 
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import glob
 import argparse
@@ -96,6 +97,8 @@ import matplotlib.patches as patches
 import matplotlib.lines as lines
 from matplotlib import collections as mplc
 from matplotlib import rcParams
+from six.moves import range
+from six.moves import zip
 
 # keeps xlabel from being chopped off
 rcParams.update({'figure.autolayout': True})
@@ -290,7 +293,7 @@ class ObserveInfo(object):
                 visit_when[d1,d2] = []
         # if only one thing in tour, there was no slew
         if len(tour) > 1:
-            for when, d1, d2 in zip(range(len(tour)-1), tour[0:-1], tour[1:]):
+            for when, d1, d2 in zip(list(range(len(tour)-1)), tour[0:-1], tour[1:]):
                 self.visit2[d1['star_ind'], d2['star_ind']] += 1
                 visit_when[ d1['star_ind'], d2['star_ind']].append(when)
     
@@ -809,11 +812,11 @@ def make_graphics(args, xspecs):
 
     # Provide diagnostic summary on what modes we found
     #  coro: the first observingMode that is a detection mode
-    detMode  = filter(lambda mode: mode['detectionMode'] == True,  OS.observingModes)[0]
+    detMode  = [mode for mode in OS.observingModes if mode['detectionMode'] == True][0]
     print('Coronagraph keepout from: %s + %s' % (detMode['systName'], detMode['instName']))
     #  shade: the first observingMode that has an occulter, or None
     try:
-        shadeMode = filter(lambda mode: mode['syst']['occulter'] == True, OS.observingModes)[0]
+        shadeMode = [mode for mode in OS.observingModes if mode['syst']['occulter'] == True][0]
         print('Occulter keepout from: %s + %s' % (shadeMode['systName'], shadeMode['instName']))
     except IndexError:
         shadeMode = None
