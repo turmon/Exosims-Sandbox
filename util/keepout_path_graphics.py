@@ -53,6 +53,7 @@
 #  turmon may 2017: plot cumulative results
 #  turmon aug 2017: add DRM overlay
 #  turmon nov 2018: add occulter keepout to existing detector keepout
+#  turmon mar 2020: python3, astropy4
 #
 # FIXME: The "cumulative observability" map-format plots are not correct in some cases.
 # This is because the "koMap" returned by Obs.keepout() changed after this code
@@ -73,6 +74,7 @@
 
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import glob
 import argparse
@@ -86,6 +88,7 @@ from collections import Counter
 import EXOSIMS
 import EXOSIMS.MissionSim
 import numpy as np
+import astropy
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
@@ -96,6 +99,8 @@ import matplotlib.patches as patches
 import matplotlib.lines as lines
 from matplotlib import collections as mplc
 from matplotlib import rcParams
+from six.moves import range
+from six.moves import zip
 
 # keeps xlabel from being chopped off
 rcParams.update({'figure.autolayout': True})
@@ -290,7 +295,7 @@ class ObserveInfo(object):
                 visit_when[d1,d2] = []
         # if only one thing in tour, there was no slew
         if len(tour) > 1:
-            for when, d1, d2 in zip(range(len(tour)-1), tour[0:-1], tour[1:]):
+            for when, d1, d2 in zip(list(range(len(tour)-1)), tour[0:-1], tour[1:]):
                 self.visit2[d1['star_ind'], d2['star_ind']] += 1
                 visit_when[ d1['star_ind'], d2['star_ind']].append(when)
     
@@ -809,11 +814,11 @@ def make_graphics(args, xspecs):
 
     # Provide diagnostic summary on what modes we found
     #  coro: the first observingMode that is a detection mode
-    detMode  = filter(lambda mode: mode['detectionMode'] == True,  OS.observingModes)[0]
+    detMode  = [mode for mode in OS.observingModes if mode['detectionMode'] == True][0]
     print('Coronagraph keepout from: %s + %s' % (detMode['systName'], detMode['instName']))
     #  shade: the first observingMode that has an occulter, or None
     try:
-        shadeMode = filter(lambda mode: mode['syst']['occulter'] == True, OS.observingModes)[0]
+        shadeMode = [mode for mode in OS.observingModes if mode['syst']['occulter'] == True][0]
         print('Occulter keepout from: %s + %s' % (shadeMode['systName'], shadeMode['instName']))
     except IndexError:
         shadeMode = None
@@ -872,16 +877,21 @@ def make_graphics(args, xspecs):
             kogoods_shade[:,i+1] = kogood[1,:,0]
 
         # strings for later titles
-        currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output
+        currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
         time_iso = currentTime.iso
+        currentTime.out_subfmt = 'float' # reset for numeric output now
         time_mjd = '%.1f' % currentTime.mjd
         time_day = currentTime.mjd - startTimeMission
         
         # Calculate desired (ra,dec or lon,lat) coordinates of visible targets, kept-out targets, and bright bodies
         # recall that r_targ (the star positions) and r_body (the solar-system
         # body positions) are both in HE (heliocentric equatorial) coordinates.
-        targ = SkyCoord(r_targ[0,:,0], r_targ[0,:,1], r_targ[0,:,2], representation='cartesian')
-        body = SkyCoord(r_body[:,0,0], r_body[:,0,1], r_body[:,0,2], representation='cartesian')
+        if astropy.version.major < 3:
+            skyc_kws = dict(representation='cartesian') # this is deprecated in astropy 3+
+        else:
+            skyc_kws = dict(representation_type='cartesian')
+        targ = SkyCoord(r_targ[0,:,0], r_targ[0,:,1], r_targ[0,:,2], **skyc_kws)
+        body = SkyCoord(r_body[:,0,0], r_body[:,0,1], r_body[:,0,2], **skyc_kws)
 
         if ra_dec_coord:
             # SkyCoord frame to extract ra/dec
@@ -1046,8 +1056,8 @@ def make_graphics(args, xspecs):
             # zorder makes them appear behind the detections/characterizations,
             # to avoid clutter, we don't show the underlying target if dets/chars
             scatter_props = dict(s=5, edgecolors='none', zorder=10)
-            color_ok = (.6, .6, .6) # [visible]  gray
-            color_ko = (.0, .0, .0) # [kept-out] black
+            color_ok = np.array((.6, .6, .6), ndmin=2) # [visible]  gray
+            color_ko = np.array((.0, .0, .0), ndmin=2) # [kept-out] black
             plt.scatter(xT[np.logical_and( kogood[0,0,:], ~star_shown)],
                         yT[np.logical_and( kogood[0,0,:], ~star_shown)], c=color_ok, **scatter_props)
             plt.scatter(xT[np.logical_and(~kogood[0,0,:], ~star_shown)],
