@@ -82,10 +82,17 @@ endif
 # hostname
 HOST_NAME=$(shell hostname -s)
 
+# python interpreter -- if not in environment, it is just "python"
+# Note, it's better to just ask the *user* to set up their shell PATH 
+# so that the right python is run.  The construction below, if used
+# and propagated elsewhere, will eventually cause confusion.
+PYTHON?=python
+# PYTHON=/usr/local/anaconda3/envs/cornell/bin/python
+
 # program used for data reduction
-REDUCE_PROG=util/reduce_drms.py
+REDUCE_PROG=$(PYTHON) util/reduce_drms.py
 # program used for reduction of multi-ensemble experiments
-REDUCE_ENS_PROG=util/reduce_drm_sets.py
+REDUCE_ENS_PROG=$(PYTHON) util/reduce_drm_sets.py
 # programs used for matlab/python graphics
 GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
@@ -95,7 +102,7 @@ TABLES_PROG=util/tabulate_csv.py -q
 #   program for making (per-drm) timelines
 TIMELINE_PROG=util/plot-timeline.py -d
 #   program for making (per-drm) keepout + observation timelines
-KEEPOUT_PROG=PYTHONPATH=EXOSIMS:Local util/plot-keepout-and-obs.py
+KEEPOUT_PROG=PYTHONPATH=EXOSIMS:Local $(PYTHON) util/plot-keepout-and-obs.py
 # drm path-movie maker, generating command lines like:
 #  drm-to-movie.sh -c -l 0 sims/HabEx_4m_TS_dmag26p0_20180206/drm/297992296.pkl
 # -c specifies to make the cumulative plots as well (which does not
@@ -106,10 +113,10 @@ PATH_PROG_FINAL=util/drm-to-movie.sh -F
 PATH_ENS_PROG=util/ens-path-summary.sh -a
 # program used for html summary
 #   -i: to regenerate the global index.html as well as that for $(S)
-HTML_PROG=util/html-summary.py -i
+HTML_PROG=$(PYTHON) util/html-summary.py -i
 # program to select a given number of ensembles within an experiment
 #  also needs a sort key (-k) argument before use
-SELECT_PROG=util/select_ensembles.py -q -o experiment
+SELECT_PROG=$(PYTHON) util/select_ensembles.py -q -o experiment
 # Ensemble counts to select ensembles within an experiment
 EXP_COUNTS:=1 2 5 10 20 50 100
 
@@ -159,7 +166,7 @@ Makefile:;
 
 # list drms that have been made
 status: script-exists
-	util/drm-ls.py -l sims/$(S)/drm
+	$(PYTHON) util/drm-ls.py -l sims/$(S)/drm
 
 ########################################
 ## Data reductions
