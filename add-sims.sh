@@ -69,7 +69,7 @@ DISPATCHER=
 DISPAT_OPT=
 # 4: "executive" that choses python2/python3
 PYTHON_EXECUTIVE_2=python
-PYTHON_EXECUTIVE_3=python3
+PYTHON_EXECUTIVE_3=/usr/local/anaconda3/envs/cornell/bin/python3.7
 PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
 while getopts "h23p:x:P:S:neqv:E:O:" opt; do
     case $opt in
