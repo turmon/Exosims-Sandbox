@@ -57,6 +57,7 @@ Notes:
 from __future__ import print_function
 import numpy as np
 import numpy
+import astropy
 import argparse
 import sys
 import time
@@ -324,6 +325,7 @@ def main(args, xpsecs):
             ('shell_command', args.command),
             ('python_interpreter', ' '.join(sys.version.split())),
             ('numpy_version', np.__version__),
+            ('astropy_version', astropy.__version__),
             ('EXOSIMS_version', EXOSIMS.__version__),
             ('EXOSIMS_path', EXOSIMS.__path__[0])]
         for name, value in file_params:
