@@ -93,6 +93,20 @@ HIPNAME_to_DISPLAYNAME = {
 # common stars to always display in maps, if present
 DISPNAME_show = ['Tau Ceti', 'Eps Indi', 'Eps Eridani', 'Procyon', '61 Cygni A']
 
+def np_force_string(x):
+    r'''Convert np bytes_ array to a string array, if possible.
+
+    Context: When Python3 reads a Python2 pickle with numpy strings, they will be
+    bytes (i.e., encoded).  Before writing these strings (like star names) to CSV,
+    we want them all to be python strings (but not unicode, which the csv-writer
+    does not support).  We need to wrap in try/catch because for Python3 reading 
+    Python3 pickles, these objects are already strings, and there is no decoding.
+    '''
+    try:
+        return np.char.decode(x)
+    except:
+        return x
+
 def name_to_displayname(in_names, translation):
     r'''Translate each string in in_names through a table in translation.'''
     out_names = np.empty_like(in_names)
@@ -206,6 +220,8 @@ class DRMSummary(object):
                     Nstar = len(spc['Name'])
         if spc is None and len(drms) > 0:
             raise ValueError('Could not find a .spc file to match the DRMs')
+        if 'Name' in spc:
+            spc['Name'] = np_force_string(spc['Name'])
         # save the DRMs
         self.drms = drms
         self.spc = spc
@@ -359,7 +375,7 @@ def make_graphics(args, drm_info):
 
     # make aspect ratio close to 2 wide x 1 tall for a lat/lon plot
     plt.gcf().set_size_inches(8,3.8)
-    plt.show(0)
+    plt.show(block=False)
     if args.outfile:
         plt.savefig(args.outfile % ('map', 'png'), dpi=300, transparent=True)
 
@@ -488,7 +504,7 @@ def make_graphics(args, drm_info):
         if Nslew < 50:
             ax.grid(color=color_contrast, linestyle='--')
         else:
-            ax.grid('off')
+            ax.grid(False)
 
         #import pdb; pdb.set_trace()
         
