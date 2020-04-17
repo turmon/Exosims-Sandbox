@@ -182,6 +182,20 @@ def strip_units(x):
     else:
         return x
 
+def np_force_string(x):
+    r'''Convert np bytes_ array to a string array, if possible.
+
+    Context: When Python3 reads a Python2 pickle with numpy strings, they will be
+    bytes (i.e., encoded).  Before writing these strings (like star names) to CSV,
+    we want them all to be python strings (but not unicode, which the csv-writer
+    does not support).  We need to wrap in try/catch because for Python3 reading 
+    Python3 pickles, these objects are already strings, and there is no decoding.
+    '''
+    try:
+        return np.char.decode(x)
+    except:
+        return x
+
 def char_within_band(char, band):
     r'''Does a particular characterization fall within the given notional band?'''
     if band == 'union':
@@ -1325,10 +1339,11 @@ class SimulationRun(object):
                         char_SNR_1 = obs['char_SNR'][earth_inx]
                     else:
                         char_SNR_1 = char_info[0]['char_SNR'][earth_inx]
+                    # spc['Name'][] is a bytes sequence: decode into string for output
                     char_dict = OrderedDict([
                         ('ensemble', ensemble_num),
                         ('obsnum', obs['Obs#'] if 'Obs#' in obs else obs['ObsNum']),
-                        ('name', self.spc['Name'][sind]),
+                        ('name', np_force_string(self.spc['Name'][sind])), # .decode('utf-8')
                         ('sind', sind),
                         ('pind', earth_inx),
                         ('n_earth',    int(np.sum(earths))),
@@ -2250,7 +2265,8 @@ class EnsembleSummary(object):
         attr_set = set()
         for r in reductions:
             attr_set.update(set(r[key]))
-        return list(attr_set)
+        # ensure the order is deterministic
+        return list(sorted(attr_set))
 
     def get_attr_null_value(self, attr, valid_value):
         r'''Utility, return the null value for the attribute named attr.
@@ -2364,17 +2380,19 @@ class EnsembleSummary(object):
         # D: star characteristics
         #    one value will be supplied for each characteristic, for each star
         #    we pass each property through prefixed by "star_"
-        star_attrs = [('Name', 'star_Name'), ('L', 'star_L'), ('dist', 'star_dist'),
-                          ('Spec', 'star_Spec')]
+        star_attrs = [('Name', 'star_Name', np_force_string),
+                      ('L',    'star_L',    strip_units),
+                      ('dist', 'star_dist', strip_units),
+                      ('Spec', 'star_Spec', np_force_string)]
         if self.Ndrm_actual > 0:
             # there was at least one real DRM -> at least one real SPC
             # it was saved within the ensemble
             spc1 = self.spc
-            for attr_old, attr_new in star_attrs:
-                summary[attr_new] = strip_units(spc1[attr_old])
+            for attr_old, attr_new, converter in star_attrs:
+                summary[attr_new] = converter(spc1[attr_old])
         else:
             # put something there
-            for attr_old, attr_new in star_attrs:
+            for attr_old, attr_new, converter in star_attrs:
                 summary[attr_new] = []
         summary['star_sInd'] = np.arange(self.Nstar)
         # place the entries in the root object
@@ -2466,6 +2484,7 @@ class EnsembleSummary(object):
         char_bands_seen = set()
         for r in reductions:
             char_bands_seen.update(r['char_bands_seen'])
+        char_bands_seen = list(sorted(char_bands_seen)) # make the order deterministic
         for band in char_bands_seen:
             # per-band chars
             for attr in ('h_RpL_char_full', 'h_RpL_char_part', 'h_RpL_char_snr'):

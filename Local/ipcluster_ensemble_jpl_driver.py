@@ -57,6 +57,7 @@ Notes:
 from __future__ import print_function
 import numpy as np
 import numpy
+import astropy
 import argparse
 import sys
 import time
@@ -316,8 +317,19 @@ def main(args, xpsecs):
 
     # result is a list of seeds
     with open(os.path.join(outpath_run, 'outseed_%d.txt' % seed), 'w') as f:
-        f.write('# EXOSIMS run list\n# user: %s \n# host: %s\n# time: %s\n# command: %s\n' %
-                    (os.getenv('USER'), socket.gethostname(), subtime, args.command))
+        file_params = [
+            ('file_type', 'EXOSIMS run seed list'),
+            ('user', os.getenv('USER')), 
+            ('host', socket.gethostname()),
+            ('time', subtime),
+            ('shell_command', args.command),
+            ('python_interpreter', ' '.join(sys.version.split())),
+            ('numpy_version', np.__version__),
+            ('astropy_version', astropy.__version__),
+            ('EXOSIMS_version', EXOSIMS.__version__),
+            ('EXOSIMS_path', EXOSIMS.__path__[0])]
+        for name, value in file_params:
+            f.write('# %s: %s\n' % (name, value))
         for r in res:
             f.write('%s\n' % str(r))
 

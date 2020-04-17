@@ -441,7 +441,7 @@ def make_koppa_boxes(args, ax, hist):
     Earth_style = dict(fill=False, facecolor=None, edgecolor='lightgreen', linewidth=2.0, hatch='/')
 
     # L bins are in high...low order; a-bins are in low-high order
-    style_for_L = [dict(facecolor=fc) for fc in 'tomato', 'dodgerblue', 'lightskyblue']
+    style_for_L = [dict(facecolor=fc) for fc in ('tomato', 'dodgerblue', 'lightskyblue')]
     style_for_all = dict(edgecolor='white')
     x_axis_bump = [0.8, 1.0, 1.3] # visual tweak of text label locations
     

@@ -64,7 +64,7 @@ def load_csv(infile):
     # load the CSV, convert some types
     info = []
     try:
-        with open(infile, 'rb') as csvfile:
+        with open(infile, 'r') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
             for row in reader:
                 info.append(row)

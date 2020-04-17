@@ -53,6 +53,7 @@
 #  turmon may 2017: plot cumulative results
 #  turmon aug 2017: add DRM overlay
 #  turmon nov 2018: add occulter keepout to existing detector keepout
+#  turmon mar 2020: python3, astropy4
 #
 # FIXME: The "cumulative observability" map-format plots are not correct in some cases.
 # This is because the "koMap" returned by Obs.keepout() changed after this code
@@ -87,6 +88,7 @@ from collections import Counter
 import EXOSIMS
 import EXOSIMS.MissionSim
 import numpy as np
+import astropy
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
@@ -875,16 +877,21 @@ def make_graphics(args, xspecs):
             kogoods_shade[:,i+1] = kogood[1,:,0]
 
         # strings for later titles
-        currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output
+        currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
         time_iso = currentTime.iso
+        currentTime.out_subfmt = 'float' # reset for numeric output now
         time_mjd = '%.1f' % currentTime.mjd
         time_day = currentTime.mjd - startTimeMission
         
         # Calculate desired (ra,dec or lon,lat) coordinates of visible targets, kept-out targets, and bright bodies
         # recall that r_targ (the star positions) and r_body (the solar-system
         # body positions) are both in HE (heliocentric equatorial) coordinates.
-        targ = SkyCoord(r_targ[0,:,0], r_targ[0,:,1], r_targ[0,:,2], representation='cartesian')
-        body = SkyCoord(r_body[:,0,0], r_body[:,0,1], r_body[:,0,2], representation='cartesian')
+        if astropy.version.major < 3:
+            skyc_kws = dict(representation='cartesian') # this is deprecated in astropy 3+
+        else:
+            skyc_kws = dict(representation_type='cartesian')
+        targ = SkyCoord(r_targ[0,:,0], r_targ[0,:,1], r_targ[0,:,2], **skyc_kws)
+        body = SkyCoord(r_body[:,0,0], r_body[:,0,1], r_body[:,0,2], **skyc_kws)
 
         if ra_dec_coord:
             # SkyCoord frame to extract ra/dec
@@ -1049,8 +1056,8 @@ def make_graphics(args, xspecs):
             # zorder makes them appear behind the detections/characterizations,
             # to avoid clutter, we don't show the underlying target if dets/chars
             scatter_props = dict(s=5, edgecolors='none', zorder=10)
-            color_ok = (.6, .6, .6) # [visible]  gray
-            color_ko = (.0, .0, .0) # [kept-out] black
+            color_ok = np.array((.6, .6, .6), ndmin=2) # [visible]  gray
+            color_ko = np.array((.0, .0, .0), ndmin=2) # [kept-out] black
             plt.scatter(xT[np.logical_and( kogood[0,0,:], ~star_shown)],
                         yT[np.logical_and( kogood[0,0,:], ~star_shown)], c=color_ok, **scatter_props)
             plt.scatter(xT[np.logical_and(~kogood[0,0,:], ~star_shown)],
