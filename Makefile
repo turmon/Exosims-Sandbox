@@ -363,7 +363,7 @@ endef
 $(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-ensemble,top,$N)))
 $(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-ensemble,mix,$N)))
 # default target for above -- supports 2-way parallelism
-.PHONY: exp-path_ensemble
+.PHONY: exp-path-ensemble
 exp-path-ensemble: exp-path-ensemble-top-10 exp-path-ensemble-mix-20
 
 ## path-movie
