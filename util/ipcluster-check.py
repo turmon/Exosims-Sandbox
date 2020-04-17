@@ -32,7 +32,7 @@ def verify(fn, profile):
     c = ipp.Client(**arglist)
     ids = c.ids
     # a trivial computation
-    result = c[:].apply_sync(lambda : "Hello")
+    result = list(c[:]).apply_sync(lambda : "Hello")
     # how many came back ok
     ok = sum([1 for s in result if s == "Hello"])
     message = 'Connected to %d engines, and jobs returned from %d.  %s.' % \
