@@ -85,7 +85,9 @@ def load_csv(infile):
 def decorate(table, key):
     r'''Adds hashed value to table, in-place.'''
     for row in table:
-        val = str(row[key]) # ensure a string
+        # ensure a string, then convert to bytes
+        # note, repr(float) is the same between Py2/Py3, but str(float) is not
+        val = repr(row[key]).encode()
         h = hashlib.md5()
         h.update(val)
         # hash as a hex string, so it can be output with -o if desired
@@ -101,19 +103,22 @@ def main(args):
     # prevent special cases
     if args.n == 0 or len(table) == 0: return
     # assign sort key
-    args.sortkey = args.key if args.key else list(table[0].keys())[0]
+    if args.key:
+        args.sortkey = args.key
+    else:
+        args.sortkey = list(table[0].keys())[0]
     if args.sortkey not in table[0]:
-        print("%s: Error: supplied key not in CSV." % args.progname)
+        print("%s: Error: supplied sort key not in CSV." % args.progname)
         sys.exit(1)
     # case analysis to handle selection mode
     if args.mode == 'mix':
         # decorate the table with a new key, _ + sortkey, which has the md5 hash of
         # the sortkey.  We will sort on the new key to get a "random" but stable
-        # selection of rows.  (By stable, we mean that adding one row will not change
-        # the selection radically.)
+        # selection of rows.  (By stable, we mean that adding a new row in a subsequent
+        # simulation run will not change the selection radically.)
         decorate(table, args.sortkey)
         args.sortkey = '_' + args.sortkey
-        reverse = False # sort order is arbitrary
+        reverse = False # sort order does not matter in this case
     elif args.mode == 'bottom':
         reverse = False
     elif args.mode == 'top':
@@ -124,9 +129,12 @@ def main(args):
     # select some rows
     table_s = select(table, args.n, args.sortkey, reverse)
     # assign output key -- error check now because decorate() added a key
-    outkey = args.outkey if args.outkey else list(table[0].keys())[0]
+    if args.outkey:
+        outkey = args.outkey
+    else:
+        outkey = list(table[0].keys())[0]
     if outkey not in table_s[0]:
-        print("%s: Error: supplied output key not in CSV." % args.progname)
+        print("%s: Error: requested output key not in CSV." % args.progname)
         sys.exit(1)
     # output the requested key
     for row in table_s:
@@ -134,7 +142,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Select Ensembles from Experiment.",
+    parser = argparse.ArgumentParser(description="Select Ensembles from Experiment.  Print the selected keys to stdout.",
                                      epilog='')
     parser.add_argument('mode', metavar='MODE', help='mode: "top" or "mix"')
     parser.add_argument('infile', metavar='FILE', help='mode name')
@@ -142,7 +150,7 @@ if __name__ == '__main__':
                             help='Key for selection.')
     parser.add_argument('-o', type=str, default='',
                             dest='outkey', help='Key for output.')
-    parser.add_argument('-n', help=' # experiments output, default = %(default)d',
+    parser.add_argument('-n', help=' Number of ensemble keys output, default = %(default)d',
                       type=int, dest='n', default=10)
     parser.add_argument('-q', help='quiet', action='store_true', dest='quiet',
                             default=False)
