@@ -82,13 +82,6 @@ endif
 # hostname
 HOST_NAME=$(shell hostname -s)
 
-# python interpreter -- if not in environment, it is just "python"
-# Note, it's better to just ask the *user* to set up their shell PATH 
-# so that the right python is run.  The construction below, if used
-# and propagated elsewhere, will eventually cause confusion.
-PYTHON?=python
-# PYTHON=/usr/local/anaconda3/envs/cornell/bin/python
-
 # program used for data reduction
 REDUCE_PROG=util/reduce_drms.py
 # program used for reduction of multi-ensemble experiments
