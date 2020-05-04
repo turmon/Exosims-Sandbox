@@ -127,8 +127,7 @@ N_CPU = mproc.cpu_count()
 # Temporal binning of mission elapsed time for detection-time plot
 # (also for delta-v plot)
 # np.arange(start_day, end_day, days_per_bin)
-# Note: works for 5-year mission only
-DETECTION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5)
+DETECTION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5) # default is 5-year mission only
 
 # Temporal binning of certain events (slews, chars) -- days
 #   The histograms we compute for these events are normalized to sum to unity, 
@@ -167,6 +166,15 @@ MODE = '*all*'
 
 # bands we are collecting characterization info on
 CHAR_BANDS = ['union', 'blue', 'red']
+
+
+def UPDATE_GLOBALS(sim_info):
+    r'''Update selected global variables upon initialization.'''
+    global DETECTION_TIME_BINS
+    missionLife = sim_info['missionLife']
+    foo = copy.copy(DETECTION_TIME_BINS)
+    DETECTION_TIME_BINS = np.arange(0.0, 366*missionLife, 30.5)
+
 
 ########################################
 ###
@@ -3081,11 +3089,16 @@ def load_exosims_sim(script):
     #  -- 1.0 days is the Exosims default
     settlingTime = specs.get('settlingTime', 1.0) # [days]
     rv['settlingTime'] = settlingTime
+
+    # 3: obtain mission lifetime
+    rv['missionLife'] = specs.get('missionLife', 5.0) # [years]
+
     return rv
 
 def main(args):
     print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
     args.sim_info = load_exosims_sim(args.script_name)
+    UPDATE_GLOBALS(args.sim_info)
     lazy = True
     ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
     if ensemble.Ndrm_actual == 0:
@@ -3104,6 +3117,8 @@ if __name__ == '__main__':
                                      epilog='')
     parser.add_argument('drm', metavar='DRM', nargs='*', default='.',
                             help='drm file, or directory thereof')
+    parser.add_argument('-s', '--script', type=str, default='',
+                            help='Exosims JSON script used for these DRMs.')
     parser.add_argument('-O', '--outfile', type=str, default='',
                             help='Output file template.')
     parser.add_argument('-v', help='verbosity, repeat to escalate', action='count', dest='verbose',
@@ -3152,8 +3167,12 @@ if __name__ == '__main__':
 
     # get the script name from the directory - this relies heavily on Sandbox convention
     # TODO: allow to specify manually?
-    args.script_name = os.path.dirname(args.drm[0]).replace('sims/', 'Scripts/').replace('/drm', '.json')
-    print('%s: Inferring script file: %s' % (args.progname, args.script_name))
+    if not args.script:
+        args.script_name = os.path.dirname(args.drm[0]).replace('sims/', 'Scripts/').replace('/drm', '.json')
+        print('%s: Inferring script file: %s' % (args.progname, args.script_name))
+    else:
+        args.script_name = args.script
+        print('%s: Explicitly given script file: %s' % (args.progname, args.script_name))
 
     # best practice is to explicitly give outfile
     if not args.outfile:
