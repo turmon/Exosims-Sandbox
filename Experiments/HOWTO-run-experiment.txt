@@ -4,7 +4,7 @@ December 18 2018
 
 This is how I currently run parameter sweeps in the Sandbox.  It could
 be made more seamless.  We haven't yet decided if all such sweeps will
-be done in a similar way.
+be done in a similar way.
 
 For more on the "generate derived scripts" step, see the notes on how
 json-xform.py works, currently named "script-expander-2018-11-28.pdf".
@@ -12,50 +12,64 @@ json-xform.py works, currently named "script-expander-2018-11-28.pdf".
 
 [1] Overview
 
-The basic flow is:  Start with a "template script", produce a family of
-"derived scripts" from that.  Check that one of the derived scripts
-works on a single Exosims run.
+The basic flow is as follows.
 
-Then, partition the list of derived scripts (json files) into 3 sets, one
-each for aftac1/2/3, each stored in a per-machine file.  Run simulations
-on each machine.
+[A] Preparation:
+  * Start with a "template script" that invokes Exosims correctly
+  * Produce a family of "derived scripts" from the template using json-xform.py
+  * Check that one of the derived scripts works within a single Exosims run
 
-When the simulations are done, reduce the data (for all of the derived
-scripts).  Make plots and path ensembles for *some* of the derived
-scripts.
+[B] Run:
+  * Optionally, partition the list of derived scripts (json files) into 3
+  sets, one each for aftac1/2/3, each stored in a per-machine file.
+  * Run simulations on each machine.
+
+[C] Analysis:
+  * Reduce the data, for all of the derived scripts, to get yields.
+  * Make plots and path ensembles for *some* of the derived scripts, to get
+  pointwise insight.
 
 
 [2] Step-by-step
 
+The coarse-level steps here match the ones above.
+
+[A] Preparation.
 
 * Start with a working script, say, Scripts/Habex_works_20181201.json
 
 * Make the set of derived scripts from the template script using the
-following transform:
+following transform idiom:
 
 util/json-xform.py -o Habex_works_20181201.exp/s_%s.json Habex_works_20181201.json Experiments/xform-adapt.json Experiments/xform-c4sample.json
 
 Note: xform-adapt plugs in newer driver infrastructure, and xform-sample
-iterates over the LJS coefficients.
+iterates over the LJS coefficients.
 
 * Do a single test run to set up cache files and ensure everything works:
 
 ./add-sims.sh -S 777 -P 1 Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05.json 1
 
-The particular seed does not matter - I used 777.  The particular
-experiment script does not matter either.
+The particular seed does not matter (I used 777).  The particular
+experiment script (i.e., which of the several JSON scripts you use)
+does not matter either.
 
 * Use the execution time of this run to extrapolate a first-cut on how
-long processing will take.  Evaluate if this time is acceptable.  
+long processing will take.  Evaluate if this time is acceptable. 
 
-* Delete the trial run, so the weird seed does not contaminate the results:
+* Delete the trial run, so the one-off seed does not contaminate the results:
 
 rm -r sims/Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05
 
-* Partition the just-created script files into three sets (assuming you
+[B] Run.
+
+* You will do one "add-sims.sh" for each script file in the Experiment.
+  You can do these all on one machine, or spread across all three.
+
+* To spread: Partition the just-created script files into three sets (assuming you
 want runs on aftac1/2/3).  The magic "84" is the number of derived scripts
 divided by the number of machines, rounded up.  The later "Run-exp.sh"
-currently uses files with *these particular names*, which is bad.
+currently uses files with *these particular names*, which is bad.
 
 ls Scripts/HabEx_works_20181201.exp/s_c* | split -l 84 -d -a 1 - Run-exp.aftac
 mv Run-exp.aftac0 Run-exp.aftac3
@@ -66,16 +80,37 @@ nohup ./Run-exp.sh >| Run-c1.log &   [ on aftac1]
 nohup ./Run-exp.sh >| Run-c2.log &   [ on aftac2]
 nohup ./Run-exp.sh >| Run-c3.log &   [ on aftac3]
 
-* Reduce all the data.  This is pretty fast.
+[C] Analysis.
 
-make S=Habex_works_20181201.exp reduce
+* Reduce all the data.  This is fast and should finish within a few
+  seconds.  Note the use of the *experiment* as the S variable in
+  'make exp-reduce'.  This will iterate over all the scripts in the Experiment.
 
-* Make the summary webpage.  *Critical* -- html-only, not html
+make S=Habex_works_20181201.exp exp-reduce
 
-make S=Habex_works_20181201.exp html-only
+* Make the summary webpage.  Again, the *experiment* is the S variable.
+  `make html-only' is just compiling yields and other basic information
+  output by reduction, but does *not* make plots.
 
-* Optionally, for a few specific ensembles, make plots and diagnostics
-in the "per-ensemble" way:
+make S=Habex_works_20181201.exp exp-html-only
+
+* To get deeper insight, make plots and diagnostics for a few specific
+ensembles.  This selects the top 10 (by yield) and another 20 (at random)
+ensembles, and makes all the plots.  It takes a while.  You can add "-j2"
+to the make to run in parallel (the limit being the number of Matlab
+instances you want to have running).
+
+make S=Habex_works_20181201.exp exp-html
+
+* The other familiar targets also have exp versions as follows.  Make
+5 movies, each, within selected ensembles (exp-path-movie); make 5
+observation timelines, each, within selected ensembles (exp-obs-timeline);
+make 5 keepout maps, each, within seleccted ensembles (exp-keepout);
+make the ensemble path/tour graphic for selected ensembles (exp-path-ensemble).
+
+* As a back door, which works but is tedious, you can also make all the
+familiar single-ensemble plots and diagnostics, by making S point to the
+script within the Experiment.
 
 make S=Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05 html
 make S=Habex_works_20181201.exp/s_c1=0.50_c2=0.20_c3=0.10 html
