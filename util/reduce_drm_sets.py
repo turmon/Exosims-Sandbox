@@ -114,10 +114,14 @@ class EnsembleRun(object):
     def convert_sim_summary(self, raw_props):
         # properties we want to convert: key, converter
         # (we don't use all of these now)
+        # for experiment, we need to strip the left-padding because of a hack
+        # I introduced, that left-pads names with a single space to control how they
+        # are ultimately displayed.  This was innocuous when names were just labels,
+        # but here they are meaningful identifiers
         prop_map = [
             ('ensemble_size', int),
             ('runtime', str), # actually a date
-            ('experiment', str), 
+            ('experiment', str.lstrip), # see above
             ('detections_earth_all', float),
             ('detections_earth_unique', float),
             ('detections_unique_mean', float),
