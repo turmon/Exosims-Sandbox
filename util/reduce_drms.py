@@ -921,18 +921,20 @@ class SimulationRun(object):
     def count_events(self):
         r'''Extract event counts (#slew, #char, and #det) from DRM.
 
-        The return value is just a count (integer), making this distinct from 
-        other summaries that are binned by duration, or mission elapsed time.
+        The return value starts out as just a count (integer), and is then
+        converted into a one-bin-on histogram, suitable for averaging
+        across the ensemble.
 
         Algorithm:
         For each event class, keep a count of each event of that
-        type across the DRM.  That count will *later* be made into 
-        a histogram.  In contrast to other routines, we return a dict of scalars.
+        type across the DRM.  That count is then made into a one-bin-on
+        histogram in the last lines.
         '''
 
-        all_fields = ['det', 'char', 'slew', 'detp']
+        all_fields = ['det', 'char', 'slew', 'detp', 'det_rvplan', 'char_rvplan']
         # may not always be in the SPC dict
         promoted_stars = self.spc.get('promoted_stars', [])
+        rv_plans = np.array(self.spc.get('known_earths', [])) # planet indexes
         # keep track of all event counts as a list
         events = Counter()
         # DRM-FMT
@@ -942,9 +944,13 @@ class SimulationRun(object):
                 events['det'] += 1
                 if obs['star_ind'] in promoted_stars:
                     events['detp'] += 1
+                # we don't care if more than 1 planet, or success/fail
+                p_detected = np.array(obs['plan_inds'])
+                if len(np.intersect1d(rv_plans, p_detected)) > 0:
+                    events['det_rvplan'] += 1
             # Process a characterization
             if 'char_mode' in obs or 'char_info' in obs:
-                events['char'] += 1
+                p_detected = np.array(obs['plan_inds'])
                 if 'char_info' in obs:
                     char_info_1 = obs['char_info'][0]
                 else:
@@ -953,16 +959,22 @@ class SimulationRun(object):
                 slew_time = strip_units(char_info_1.get('slew_time', 0.0)) # may not exist
                 # skip "time = 0" chars: they are an artifact
                 if char_time > 0:
-                    events['characterization'] += 1
+                    events['char'] += 1
+                    if len(np.intersect1d(rv_plans, p_detected)) > 0:
+                        events['char_rvplan'] += 1
                 # if slew_time was not there, it will have been set to 0 above
                 if slew_time > 0:
                     events['slew'] += 1
-        # make a set of 0/1 histograms, which is convenient to average over DRMs later
+        # make a dict of 0/1 histograms, which is convenient to average over DRMs later
+        final_fields = []
         rv = {}
         for event_name in all_fields:
             field = 'h_event_count_%s' % event_name
+            final_fields.append(field)
             rv[field] = np.zeros(EVENT_COUNT_NBINS)
             rv[field][min(events[event_name], EVENT_COUNT_NBINS-1)] = 1.0
+        # the list of keys that we're returning ... for use in later steps
+        rv['_event_count_keys'] = final_fields
         # return value = above dict
         return rv
 
@@ -2465,11 +2477,6 @@ class EnsembleSummary(object):
             'h_event_det_b2_duration',
             'h_event_char_b2_duration',
             'h_event_slew_b2_duration',
-            # event counts
-            'h_event_count_det',
-            'h_event_count_char',
-            'h_event_count_slew',
-            'h_event_count_detp',
             # (promotion counts added later)
             ]
         # 0b: add in auto-generated keys, using a key family name convention
@@ -2479,7 +2486,8 @@ class EnsembleSummary(object):
         #     of dynamic keys (multi-band chars).  So we pool keys across all reductions.
         #     This affects '_yield_time_keys', for instance.
         attrs_auto = []
-        for key_family in ('promo_count', 'promo_phist', 'funnel', 'earth_char', 'yield_time', 'radlum', 'earth', 'delta_v'):
+        for key_family in ('event_count', 'promo_count', 'promo_phist', 'funnel',
+                               'earth_char', 'yield_time', 'radlum', 'earth', 'delta_v'):
             # e.g., all 'promo_count' attrs are found by looking up '_promo_count_keys' in reductions
             attrs_new = self.get_key_family_attrs(reductions, '_%s_keys' % key_family)
             attrs_auto.extend(attrs_new)
@@ -2865,19 +2873,14 @@ class EnsembleSummary(object):
                 w.writerow(d)
         ensure_permissions(fn)
 
-        # 5: event durations
+        # 5: event counts (as histograms)
         fn = args.outfile % ('event-counts', 'csv')
         print('\tDumping to %s' % fn)
         # compose the names of all fields to be saved
         # make the bins appear first
         event_count_fields = ['h_event_count_lo', 'h_event_count_hi']
-        # qoi = quantities-of-interest
-        event_count_qoi = (
-            'h_event_count_det',
-            'h_event_count_char',
-            'h_event_count_slew',
-            'h_event_count_detp',
-            )
+        # set up in count_events() and relayed to here
+        event_count_qoi = self.auto_keys.get('event_count', [])
         # add the names of more fields to be saved
         event_count_fields.extend([ (x + '_' + y)
                                 for x in event_count_qoi
