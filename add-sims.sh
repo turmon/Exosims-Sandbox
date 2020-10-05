@@ -2,24 +2,47 @@
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
+# === New version, Spring 2020 ===
+#
 # This is a wrapper around the python driver, ipcluster_ensemble_jpl.py.
 #
 # Usage:
-#   add-sims [-3] [-q] [-v VERB] [-S SEEDS] [-P PAR] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT N
+#   add-sims.sh [-3] [-q] [-A] [-j JOBS] [-v VERB] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT SEEDS
 #
-# to use the JSON script SCRIPT (a file) and perform N (an integer) runs.
+# Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
+# * The runs are done on the local computer, from a pool that depends on machine
+# (aftac1 = 28, aftac2/3 = 44).
+# * If just one SEED is given, Exosims output is send directly to the screen, which
+# is useful for checking validity.  If more than one SEED, the Exosims output is sent
+# to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
+# is sent to the screen.
+#
+# Typical Usage:
+#   (a) Run 64 jobs on aftac*, across 64 deterministic seeds
+#     add-sims.sh -A Scripts/ExampleScript.json Experiments/seed64.txt 
+#   (b) Run a machine-dependent number of jobs on the local machine
+#     add-sims.sh Scripts/ExampleScript.json Experiments/seed64.txt 
+#   (c) Do a test run for a single arbitrary seed (we use 777):
+#     add-sims.sh Scripts/ExampleScript.json =777
+#
+# Arguments:
+#   SCRIPT -- a JSON script suitable for EXOSIMS
+#   SEEDS  -- either:
+#             (1) if a plain integer, that number of randomly-chosen initial seeds.
+#             (2) if of the form =SEED, where SEED is an integer, that one specific integer is used.
+#             (3) otherwise, it is a filename giving a list of integer seeds, one per line.
 #
 # Options:
 #   -h        => show this help message and exit.
-#   -q        => quiet object creation
-#   -3        => run the EXOSIMS sim-runner with python3
+#   -A        => run using All of aftac1, c2, c3 (18 + 23 + 23 jobs = 64 jobs)
+#   -S        => run using Some of aftac1,c2, c3 (10 + 12 + 12 jobs = 34 jobs)
+#   -3        => run the EXOSIMS sim-runner with python3; by default, "python" is used.
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
+#
+# Less-used Options:
+#   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
-#   -P PAR    => run without ipython parallel, using PAR independent jobs
-#   -S SEEDS  => perform one sim for each integer seed, one per line,
-#                in the file SEEDS.  This over-rides "N".
-#                Exception: As a shortcut, if SEEDS is an integer, that integer 
-#                is taken as the literal seed, not a filename.
+#   -q        => quiet object creation
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
 #   -e        => send email to current user at localhost on completion
 #   -E ADDR   => send email to an arbitrary `addr' on completion
@@ -30,7 +53,7 @@
 #       is stored as a pickle with extension .pkl, and the planet parameters
 #       are stored as a pickle with extension .spc.
 # 
-# turmon oct 2017, apr 2018
+# turmon oct 2017, apr 2018, may 2020
 #
 ## [end comment block]
 
@@ -38,20 +61,16 @@
 set -euo pipefail
 
 PROGNAME=$(basename $0)
-TMP_ROOT=/tmp/$USER.addsims.$$ # tempfile root: matching rm at end of file
 
-# assumed ipython parallel setup directory - see also the Makefile
+# Assumed ipython parallel setup directory - see also the Makefile
 # of the form "ipyparallel/aftac1-rhonda", etc.
+# This option is no longer used.
 IPYDIR=ipyparallel/${USER}/$(hostname -s)
 IPYCLI=$IPYDIR/security/ipcontroller-client.json
 
-# ipyparallel ensemble driver program
-# DRIVER=EXOSIMS/run/run_ipcluster_ensemble.py
-# DRIVER=Local/exo_s_ipcluster_ensemble.py
-DRIVER_OLD=Local/ipcluster_ensemble_jpl_old.py
-DRIVER_NEW=Local/ipcluster_ensemble_jpl_driver.py
-# this is the driver we will use
-DRIVER=$DRIVER_NEW
+# ensemble driver program
+# see also EXOSIMS/run/run_ipcluster_ensemble.py
+DRIVER=Local/ipcluster_ensemble_jpl_driver.py
 
 # option processing
 # 0: EXOSIMS path
@@ -64,15 +83,26 @@ SEED_OPT=
 # 2: generic options to the driver
 DRIVER_OPT=
 # 3: "dispatcher" that provides shell-level parallelism
-DISPATCH_INPUT=":" # no-op, by default
-DISPATCHER=
-DISPAT_OPT=
+DISPATCHER=parallel
+# by default, use 4 less than the number of cores
+DISPATCHER_JOBS="--jobs -4"
+BATCH=0
+CHATTY=0
+ALL=0
 # 4: "executive" that choses python2/python3
 PYTHON_EXECUTIVE_2=python
 PYTHON_EXECUTIVE_3=/usr/local/anaconda3/envs/cornell/bin/python3.7
 PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
-while getopts "h23p:x:P:S:neqv:E:O:" opt; do
+while getopts "ASh23bcj:p:x:qv:eE:O:" opt; do
     case $opt in
+	A)
+	    # use remote machines also
+	    ALL=1
+	    ;;
+	S)
+	    # use some remote machines also
+	    ALL=2
+	    ;;
 	3)
 	    # set python3 executive
 	    PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_3
@@ -81,37 +111,21 @@ while getopts "h23p:x:P:S:neqv:E:O:" opt; do
 	    # set python2 executive (currently, the default)
 	    PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
 	    ;;
-	n)
-	    # alternate driver program - developer-only
-	    DRIVER=$DRIVER_OLD
+	b)
+	    # batch mode output to log-files
+	    BATCH=1
+	    ;;
+	c)
+	    # chatty output to console
+	    CHATTY=1
+	    ;;
+	j)
+	    # explicit job number
+	    DISPATCHER_JOBS="--jobs $OPTARG"
 	    ;;
 	p)
 	    # alternate EXOSIMS path
 	    EXO_PATH=$OPTARG
-	    ;;
-	P)
-	    # no ipyparallel => pass stand-alone mode down to python level
-	    DRIVER_OPT="${DRIVER_OPT} --standalone"
-	    DISPAT_OPT="-P $OPTARG"
-	    # set up xargs as dispatcher, unless it was already set elsewhere
-	    if [ -z "$DISPATCHER" ]; then
-		DISPATCHER="xargs -I {}"
-	    fi
-	    ;;
-	S)
-	    # multi-seeds -- assume standalone, use xargs as dispatcher
-	    DRIVER_OPT="${DRIVER_OPT} --standalone"
-	    if expr "$OPTARG" : '[0-9 ]' > /dev/null; then
-		# literal seed -- echoed into xargs at invocation time
-		DISPATCH_INPUT="echo $OPTARG"
-		DISPATCHER="xargs -I{}"
-	    else
-		# file
-		DISPATCHER="xargs -I{} -a $OPTARG"
-	    fi
-            # (removed this, -P defaults to 1 anyway, b/c did not want to make -S override -P)
-	    # DISPAT_OPT="-P 8" # can over-ride with subsequent -P
-	    SEED_OPT="--seed {}"
 	    ;;
 	x)
 	    # x-tra specs - ensure it is quoted
@@ -140,7 +154,7 @@ while getopts "h23p:x:P:S:neqv:E:O:" opt; do
 	h)
 	    # help text
 	    sed 's/^#//' $(which $0) | awk '/^#/{exit};NR>1{print}'
-            echo "Note: Using python at" $(which python)
+            echo "Note: By default, using python at" $(which python)
 	    exit 2
 	    ;;
 	\?)
@@ -158,32 +172,51 @@ if [ $# -ne 2 ]; then
 fi
 
 SCRIPT="$1"
-NRUN=$2
+SEEDS=$2
+
+# files/dirs created by any child commands will be group-writable
+umask 0002
+
+# handle the 3 cases for the SEEDS argument
+if expr "$SEEDS" : '^=[0-9][0-9]*$' > /dev/null; then
+    # literal seed -- echoed into xargs at invocation time
+    SEED_USED=$(echo $SEEDS | sed 's/=//')
+    SEED_INPUT="echo $SEED_USED"
+    NRUN=1
+elif expr "$SEEDS" : '^[0-9][0-9]*$' > /dev/null; then
+    # it is a number-of-runs
+    # draw $SEEDS 9-digit random integers from awk
+    # SEED_INPUT="awk 'BEGIN {srand(); for (i=0; i<$SEEDS; i++) print int(rand()*1000000000+1)}'"
+    SEED_INPUT="seq $SEEDS | awk 'BEGIN {srand()}; {print int(rand()*999999999+1)}'"
+    NRUN=$SEEDS
+else
+    if [ ! -r "$SEEDS" ]; then
+	echo "${PROGNAME}: Error: SEEDS argument looks like a file, but is not readable." >&2
+	exit 1
+    fi
+    # seeds are in file
+    SEED_INPUT="cat $SEEDS"
+    NRUN=$(wc -l < $SEEDS)
+fi
+
+echo "${PROGNAME}: Performing $NRUN EXOSIMS run(s)."
+
+# collapse NRUN, BATCH, CHATTY into just BATCH
+if [ $NRUN -gt 1 ]; then
+    BATCH=1
+fi
+# allow over-ride
+if [ $CHATTY == 1 ]; then
+    BATCH=0
+fi
 
 # ensure EXOSIMS path
-if [[ ! -r $EXO_PATH/EXOSIMS/__init__.py ]]; then
+if [ ! -r $EXO_PATH/EXOSIMS/__init__.py ]; then
    echo "${PROGNAME}: Error: EXOSIMS path seems invalid" >&2
    exit 1
 else
    echo "${PROGNAME}: Using EXOSIMS at \`${EXO_PATH}'."
 fi
-
-# handle ordinary multi-runs by sending $NRUN lines to the
-# standalone dispatcher (xargs) - condition is:
-# DISPATCHER is set, but SEED_OPT is not set
-if [ -n "$DISPATCHER" -a -z "$SEED_OPT" ]; then
-    seq ${NRUN} > ${TMP_ROOT}.seq
-    DISPATCHER="${DISPATCHER} -a ${TMP_ROOT}.seq"
-    NRUN=1
-fi
-# force NRUN=1 if SEED_OPT is set: multi-runs are handled by
-# the xargs mechanism in this case
-if [ -n "$SEED_OPT" ]; then
-    NRUN=1
-fi
-
-# files/dirs created by any child commands will be group-writable
-umask 0002
 
 if [ ! -r $SCRIPT ]; then
     echo "${PROGNAME}: Error: Could not read the file \`${SCRIPT}'"
@@ -191,13 +224,16 @@ if [ ! -r $SCRIPT ]; then
 fi
 
 # basename for sim results is derived from script name: if it's in
-# the "special" Scripts/... dir, just script Scripts/ out, else
-# use the basename less .json
+# the "special" Scripts/... dir, just strip Scripts/ and .json out, 
+# else use the basename less .json
 if [[ "$SCRIPT" =~ ^Scripts/.* ]]; then
     sim_base=$(echo "$SCRIPT" | sed -e 's:Scripts/::' -e 's:\.json$::')
 else
     sim_base=$(basename $SCRIPT .json)
 fi
+sim_base=sims/$sim_base
+logdir=$sim_base/log_sim
+mkdir -p $logdir
 
 # (1) sanity check: DIR/Module/__init__.py should exist, for each
 #     colon-separated DIR in PYTHONPATH, if you want to use "import Module".
@@ -212,6 +248,33 @@ export PYTHONPATH=${EXO_PATH}:$(pwd)/Local
 # 6/2019: sometimes we run out of threads, if many parallel instances?
 export OPENBLAS_NUM_THREADS=8
 
+# options for gnu parallel - rather complex
+#   cores reported: aftac1, 32; aftac2, 48; aftac3, 48.
+#   need PATH exported because otherwise ssh will just get a vanilla PATH
+#   --files ==> put chatter on stdout/stderr into log files instead of showing on stdout
+#   --progress ==> show a progress indication
+PAR_ENV_OPTS="--env PATH --env PYTHONPATH --env OPENBLAS_NUM_THREADS"
+if [ $BATCH == 1 ]; then
+    PAR_LOG_OPTS="--joblog $logdir/Joblog --results $logdir --files --progress"
+else
+    # --line-buffer => allow lines of jobs to intermix
+    PAR_LOG_OPTS="--joblog $logdir/Joblog --line-buffer"
+fi
+#   --sshdelay ==> required because sshd can't accept connections super-fast
+#   -S ==> remote hosts, N/aftac1 means at most 2 jobs to aftac1, etc.
+if [ $ALL == 1 ]; then
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.04 -S 18/aftac1,23/aftac2,23/aftac3"
+    # remove the --jobs option, which interacts with the above
+    DISPATCHER_JOBS=""
+elif [ $ALL == 2 ]; then
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.04 -S 10/aftac1,12/aftac2,12/aftac3"
+    # remove the --jobs option, which interacts with the above
+    DISPATCHER_JOBS=""
+else
+    # local host only
+    PAR_SSH_OPTS="-S :"
+fi
+
 # Taking this apart, the most critical elements are:
 #   DISPATCH_INPUT | DISPATCHER [opts] PYTHON_EXECUTIVE DRIVER [opts] SCRIPT NRUN
 # where:
@@ -219,10 +282,7 @@ export OPENBLAS_NUM_THREADS=8
 #   DISPATCHER [opts] = xargs (which is given appropriate options)
 #   PYTHON_EXECUTIVE = python2 or python3
 #   DRIVER [opts] SCRIPT NRUN = python sim-runner, with opts and 2 args
-$DISPATCH_INPUT | $DISPATCHER $DISPAT_OPT \
-$PYTHON_EXECUTIVE $DRIVER $EMAIL_OPT $DRIVER_OPT $SEED_OPT \
-  --outpath "sims/$sim_base" --outopts "$OUT_OPT" --controller $IPYCLI $SCRIPT $NRUN
-
-# remove tempfiles, if any - double-checks that the variable is set first
-[ -n "$TMP_ROOT" ] && rm -f ${TMP_ROOT}.*
+eval $SEED_INPUT | $DISPATCHER $DISPATCHER_JOBS $PAR_ENV_OPTS $PAR_LOG_OPTS $PAR_SSH_OPTS \
+$PYTHON_EXECUTIVE $DRIVER $EMAIL_OPT $DRIVER_OPT --standalone --seed {} \
+ --outpath "$sim_base" --outopts "$OUT_OPT" --controller $IPYCLI "$SCRIPT" 1
 
