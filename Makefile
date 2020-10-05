@@ -161,6 +161,10 @@ Makefile:;
 status: script-exists
 	util/drm-ls.py -l sims/$(S)/drm
 
+.PHONY: exp-preflight
+exp-preflight:
+	util/exp-preflight.sh Scripts/$(S)
+
 ########################################
 ## Data reductions
 ##
@@ -434,7 +438,6 @@ html-status:
 ########################################
 ## IPython parallel targets
 ##
-## Note: these should be delegated to a shell script as for html-* targets
 
 # create profile - only do this once
 ipp-create: $(IPYDIR)/ipcluster_config.py;
