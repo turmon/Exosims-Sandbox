@@ -136,8 +136,8 @@ clf;
 names = {'h_event_count_det', 'h_event_count_char', 'h_event_count_detp'};
 names_legend = {'Detections', 'Characterizations', 'Detections, Promoted'};
 N_plot = length(names);
-% indexes to plot (time in days)
-inx = [1:800];
+% indexes to plot (event counts)
+inx = [1:500];
 
 % put the above-selected counts on one plot
 for n = 1:N_plot,
@@ -145,8 +145,8 @@ for n = 1:N_plot,
     f_mean = sprintf('%s_%s', f, 'mean');
     f_std  = sprintf('%s_%s', f, 'std');
     % average in bins, standard deviations average in quadrature
-    mean_avg = movmean(t_counts{:,f_mean},   5, 'Endpoints', 'fill');
-    std_avg = sqrt(movmean(t_counts{:,f_std}.^2, 5, 'Endpoints', 'fill'));
+    mean_avg = movmean(t_counts{:,f_mean},       3, 'Endpoints', 'fill');
+    std_avg = sqrt(movmean(t_counts{:,f_std}.^2, 3, 'Endpoints', 'fill'));
     if false,
         h_eb = errorbar(ct_samp_1(inx)+ct_offsets_1(n), ...
                        mean_avg(inx), ...
@@ -167,6 +167,61 @@ style_count_plot('Mean Event Count: Detections and Characterizations', ...
                  'Number of Events [count]', ...
                  'Frequency [density]', names_legend);
 write_plots('event-count-det');
+
+% zoomed
+style_count_plot('Mean Event Count: Detections and Characterizations (Zoomed)', ...
+                 'Number of Events [count]', ...
+                 'Frequency [density]', names_legend);
+axis([-Inf 100 0 Inf]);
+write_plots('event-count-det-zoom');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Detections - RV precursors
+
+clf;
+
+% detections, etc.
+names = {'h_event_count_det_rvplan', 'h_event_count_char_rvplan', 'h_event_count_char'};
+names_legend = {'Detections, RV Targets', 'Characterizations, RV Targets', 'Characterizations, Any'};
+N_plot = length(names);
+% indexes to plot (event counts)
+inx = [1:500];
+
+% this guard is needed for old reductions
+if ismember('h_event_count_det_rvplan_mean', t_counts.Properties.VariableNames),
+
+    % put the above-selected counts on one plot
+    for n = 1:N_plot,
+        f = names{n};
+        f_mean = sprintf('%s_%s', f, 'mean');
+        f_std  = sprintf('%s_%s', f, 'std');
+        % average in bins, standard deviations average in quadrature
+        mean_avg = movmean(t_counts{:,f_mean},       3, 'Endpoints', 'fill');
+        std_avg = sqrt(movmean(t_counts{:,f_std}.^2, 3, 'Endpoints', 'fill'));
+        if false,
+            h_eb = errorbar(ct_samp_1(inx)+ct_offsets_1(n), ...
+                            mean_avg(inx), ...
+                            std_avg(inx));
+            set(h_eb, 'LineWidth', 2);
+        else,
+            plot(ct_samp_1(inx), mean_avg(inx), 'LineWidth', 2);
+            % (skip the error bars)
+            % hold on;
+            % plot(ct_samp_1(inx)+ct_offsets_1(n), ...
+            %                mean_avg(inx) + std_avg(inx), 'LineWidth', 1);
+        end
+        % style the plot
+        hold on;
+    end;
+
+    style_count_plot('Mean Event Count: RV Detections and Characterizations', ...
+                     'Number of Events [count]', ...
+                     'Frequency [density]', names_legend);
+    axis([-Inf 30 0 Inf]);
+    write_plots('event-count-det-rv');
+
+end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Earth Characterization Counts
