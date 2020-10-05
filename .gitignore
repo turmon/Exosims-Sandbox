@@ -20,3 +20,6 @@ ipyparallel/*
 
 # play area for documentation
 util/sandbox
+
+# remove the scripts from source control
+Scripts
