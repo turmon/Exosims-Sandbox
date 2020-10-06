@@ -1,84 +1,87 @@
 Running Parameter Sweeps in the EXOSIMS Sandbox
 Michael Turmon
-December 18 2018
+December 2018, September 2020
 
-This is how I currently run parameter sweeps in the Sandbox.  It could
-be made more seamless.  We haven't yet decided if all such sweeps will
-be done in a similar way.
+This is how I currently run parameter sweeps in the Sandbox. 
 
 For more on the "generate derived scripts" step, see the notes on how
 json-xform.py works, currently named "script-expander-2018-11-28.pdf".
 
 
-[1] Overview
+Overview
+======
 
 The basic flow is as follows.
 
-[A] Preparation:
+[A] Preparation.
   * Start with a "template script" that invokes Exosims correctly
   * Produce a family of "derived scripts" from the template using json-xform.py
-  * Check that one of the derived scripts works within a single Exosims run
+  * Check that one of the derived scripts works for a single Exosims run
 
-[B] Run:
+[B] Run.
   * Optionally, partition the list of derived scripts (json files) into 3
   sets, one each for aftac1/2/3, each stored in a per-machine file.
   * Run simulations on each machine.
 
-[C] Analysis:
+[C] Analysis.
   * Reduce the data, for all of the derived scripts, to get yields.
   * Make plots and path ensembles for *some* of the derived scripts, to get
   pointwise insight.
 
 
-[2] Step-by-step
+Step-by-step
+=========
 
 The coarse-level steps here match the ones above.
 
 [A] Preparation.
 
-* Start with a working script, say, Scripts/Habex_works_20181201.json
+* Start with a working script as a base, say, Scripts/Habex_works_20181120.json
+
+* Create a Script directory for the Experiment -- the name is arbitrary, but
+  end in ".exp".  Put the base script there for convenience later.
+
+mkdir Scripts/Habex_works_20181201.exp
+cp  Scripts/Habex_works_20181120.json Scripts/Habex_works_20181201.exp/base.json
 
 * Make the set of derived scripts from the template script using the
 following transform idiom:
 
-util/json-xform.py -o Habex_works_20181201.exp/s_%s.json Habex_works_20181201.json Experiments/xform-adapt.json Experiments/xform-c4sample.json
+util/json-xform.py -o Habex_works_20181201.exp/s_%s.json Habex_works_20181201.exp/base.json Experiments/xform-adapt.json Experiments/xform-c4sample.json
 
 Note: xform-adapt plugs in newer driver infrastructure, and xform-sample
-iterates over the LJS coefficients.
+iterates over the LJS coefficients.  You will need to use a generator
+script that sweeps out the right set of final Exosims scripts for your purpose.
 
-* Do a single test run to set up cache files and ensure everything works:
+* Do a single test run to set up cache files and ensure everything works.
+  This command selects one script in the experiment and runs it with one seed,
+  cleaning up after itself.
 
-./add-sims.sh -S 777 -P 1 Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05.json 1
-
-The particular seed does not matter (I used 777).  The particular
-experiment script (i.e., which of the several JSON scripts you use)
-does not matter either.
+make S=Habex_works_20181201.exp exp-preflight
 
 * Use the execution time of this run to extrapolate a first-cut on how
 long processing will take.  Evaluate if this time is acceptable. 
 
-* Delete the trial run, so the one-off seed does not contaminate the results:
-
-rm -r sims/Habex_works_20181201.exp/s_c1=0.76_c2=0.10_c3=0.05
 
 [B] Run.
 
-* You will do one "add-sims.sh" for each script file in the Experiment.
-  You can do these all on one machine, or spread across all three.
+* Generate a master shell script for the run.  This complex-looking line
+  just makes one "add-sims.sh" line for each generated Exosims script
 
-* To spread: Partition the just-created script files into three sets (assuming you
-want runs on aftac1/2/3).  The magic "84" is the number of derived scripts
-divided by the number of machines, rounded up.  The later "Run-exp.sh"
-currently uses files with *these particular names*, which is bad.
+ls Scripts/HabEx_works_20181201.exp/s_c*.json | sed -e 's/^/add-sims.sh -A /' -e 's|$| Experiments/seed100.txt|'  > Run-script.cmds
 
-ls Scripts/HabEx_works_20181201.exp/s_c* | split -l 84 -d -a 1 - Run-exp.aftac
-mv Run-exp.aftac0 Run-exp.aftac3
+* Run the script generated script.  Jobs are automatically farmed out
+  across machines by "add-sims.sh -A".
 
-* Begin the runs on each of 3 machines.  The particular log-file does not matter.
+sh < Run-script.cmds 
 
-nohup ./Run-exp.sh >| Run-c1.log &   [ on aftac1]
-nohup ./Run-exp.sh >| Run-c2.log &   [ on aftac2]
-nohup ./Run-exp.sh >| Run-c3.log &   [ on aftac3]
+-or-
+
+nohup nice sh < Run-script.cmds 
+
+If nohup is used, output will go in "nohup.out" instead of to screen.
+If nice is used, everything in the job is niced.
+
 
 [C] Analysis.
 
@@ -102,11 +105,11 @@ instances you want to have running).
 
 make S=Habex_works_20181201.exp exp-html
 
-* The other familiar targets also have exp versions as follows.  Make
-5 movies, each, within selected ensembles (exp-path-movie); make 5
-observation timelines, each, within selected ensembles (exp-obs-timeline);
-make 5 keepout maps, each, within seleccted ensembles (exp-keepout);
-make the ensemble path/tour graphic for selected ensembles (exp-path-ensemble).
+* The other familiar targets also have exp versions as follows.
+  -- make 5 movies, each, within selected ensembles (exp-path-movie)
+  -- make 5 observation timelines, each, within selected ensembles (exp-obs-timeline)
+  -- make 5 keepout maps, each, within seleccted ensembles (exp-keepout)
+  -- make the ensemble path/tour graphic for selected ensembles (exp-path-ensemble)
 
 * As a back door, which works but is tedious, you can also make all the
 familiar single-ensemble plots and diagnostics, by making S point to the
