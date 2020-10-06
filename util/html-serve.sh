@@ -4,9 +4,9 @@
 #
 # This starts or stops the HTTP server that serves up the Exosims
 # table of contents and ensemble-summary files.
-# We run the server on a non-standard port - 8088 by default.  So,
+# We run the server on a non-standard port - 8090 by default.  So,
 # to see the table of contents, navigate to:
-#  http://aftac1.jpl.nasa.gov:8088/sims/
+#  http://aftac1.jpl.nasa.gov:8090/sims/
 #
 # Usage:
 #   html-serve.sh [-h] [-p PORT] MODE
@@ -18,13 +18,13 @@
 #   init: check that server status files work: should be unneeded.
 #
 # and:
-#  -p PORT => gives the HTTP port number.  Default is 8088.
+#  -p PORT => gives the HTTP port number.  Default is 8090.
 #  -h      => shows this help text.
 #
 # Implementation note: Status files are kept in files called:
 #   Local/www-service/http.PORT.*
-# where PORT is typically 8088.
-# There is a server log, a process ID of the server, and a fifo that
+# where PORT is typically 8090.  (Formerly 8088.)
+# There is a server error log, a process ID of the server, and a fifo that
 # is used to signal the running server to exit.  If the basic "stop" 
 # MODE of this command does not work, you can kill the server by the
 # process ID (pid) in that directory.
@@ -48,8 +48,8 @@ SERVER_GROUP=exosims
 SERVER_DIR=Local/www-service
 # current working directory - httpd needs absolute pathnames
 CURR_DIR=$(pwd)
-# default port
-DEFAULT_PORT=8088
+# default port -- formerly 8088
+DEFAULT_PORT=8090
 
 
 port=$DEFAULT_PORT
@@ -58,6 +58,7 @@ while getopts "hp:" opt; do
 	p)
 	    # port number
 	    port="$OPTARG"
+            echo "${PROGNAME}: Operating on port $port"
 	    ;;
 	h)
 	    # help text
