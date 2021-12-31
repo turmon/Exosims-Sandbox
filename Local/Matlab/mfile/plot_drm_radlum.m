@@ -348,7 +348,7 @@ h_eb_alt2 = errorbar(x_bin+0.2, H_counts+H_counts_alt, H_stds_alt2, '.');
 set(h_eb_alt2, style_eb{:});
 
 % Establish plot/axis styles + labels
-style_bar_plot(gca, 'All Detections');
+style_bar_plot(gca, 'All Detections [With Repeats]');
 
 % explanatory legend
 block = {'Lower Segment: Blue Detection Mode', 'Upper Segment: Combo Detection Mode', 'Error Bar: \pm 1 sigma'};
@@ -368,29 +368,32 @@ write_plots('radlum-det-all');
 
 %% Controls the characterization plots we make.
 % Variable format in each row below:
-%  (1) segment of variable name in the t_radlum variable
-%  (2) word for title of plot
-%  (3) full/partial w/ stacked bars (dual) vs. solo (no stacked bars)
-%  (4) output filename component
+%  (1) 'x' or '' if xchar (with-repeats) vs. ordinary char is used
+%  (2) segment of variable name in the t_radlum variable
+%  (3) word for title of plot
+%  (4) full/partial w/ stacked bars (dual) vs. solo (no stacked bars)
+%  (5) output filename component
 % We chose the "union" version as the default version, so we leave its
 % descriptive title-word blank, to signal that this qualifier is omitted 
 % in the plot title as shown.
 char_plot_menu = {...
-    {'_',        'Legacy', 'dual', 'radlum-char'}, ...
-    {'strict_',  'Strict', 'solo', 'radlum-char-strict'}, ...
-    {'_union_',  '',       'dual', 'radlum-char-union'}, ...
-    {'_blue_',   'Blue',   'dual', 'radlum-char-blue'}, ...
-    {'_red_',    'Red',    'dual', 'radlum-char-red'}, ...
+    {'',  '_',        'Legacy', 'dual', 'radlum-char'}, ...
+    {'x', '_',        'With Repeats', 'dual', 'radlum-char-all'}, ...
+    {'',  'strict_',  'Strict', 'solo', 'radlum-char-strict'}, ...
+    {'',  '_union_',  '',       'dual', 'radlum-char-union'}, ...
+    {'',  '_blue_',   'Blue',   'dual', 'radlum-char-blue'}, ...
+    {'',  '_red_',    'Red',    'dual', 'radlum-char-red'}, ...
     };
 
 for plot_num = 1:length(char_plot_menu),
-    if length(char_plot_menu{plot_num}) ~= 4, 
+    if length(char_plot_menu{plot_num}) ~= 5, 
         error(sprintf('Plot selector %d has too few elements', plot_num));
     end;
-    plot_prop      = char_plot_menu{plot_num}{1};
-    plot_title_raw = char_plot_menu{plot_num}{2};
-    plot_mode      = char_plot_menu{plot_num}{3};
-    plot_file      = char_plot_menu{plot_num}{4};
+    plot_prop_x    = char_plot_menu{plot_num}{1};
+    plot_prop      = char_plot_menu{plot_num}{2};
+    plot_title_raw = char_plot_menu{plot_num}{3};
+    plot_mode      = char_plot_menu{plot_num}{4};
+    plot_file      = char_plot_menu{plot_num}{5};
 
     if isempty(plot_title_raw),
         plot_title = '';
@@ -404,19 +407,21 @@ for plot_num = 1:length(char_plot_menu),
     else,
         plot_prop_root = '_'; % (strict)
     end
-    test_name = sprintf('h_RpL_char%s%smean', plot_prop_root, plot_prop);
+    test_name = sprintf('h_RpL_%schar%s%smean', plot_prop_x, plot_prop_root, plot_prop);
     if ~any(strcmp(test_name, t_radlum.Properties.VariableNames)),
+        fprintf('%s: Property %s not in CSV, skipping the %s plot.', ...
+                mfilename, test_name, plot_file);
         continue;
     end
 
     % data, for convenience
     %   full and partial characterizations
     %   it is just coincidence that there are again two types of stacked bars
-    H_counts     = t_radlum{:, sprintf('h_RpL_char%s%smean', plot_prop_root, plot_prop)};
-    H_stds       = t_radlum{:, sprintf('h_RpL_char%s%sstd',  plot_prop_root, plot_prop)};
+    H_counts     = t_radlum{:, sprintf('h_RpL_%schar%s%smean', plot_prop_x, plot_prop_root, plot_prop)};
+    H_stds       = t_radlum{:, sprintf('h_RpL_%schar%s%sstd',  plot_prop_x, plot_prop_root, plot_prop)};
     if strcmp(plot_mode, 'dual'),
-        H_counts_alt = t_radlum{:, sprintf('h_RpL_char_part%smean', plot_prop)};
-        H_stds_alt   = t_radlum{:, sprintf('h_RpL_char_part%sstd',  plot_prop)};
+        H_counts_alt = t_radlum{:, sprintf('h_RpL_%schar_part%smean', plot_prop_x, plot_prop)};
+        H_stds_alt   = t_radlum{:, sprintf('h_RpL_%schar_part%sstd',  plot_prop_x, plot_prop)};
         % pooled standard error of the sum: std = sqrt(std^2 + std^2)
         H_stds_alt2  = hypot(H_stds, H_stds_alt);
     else,
@@ -450,16 +455,16 @@ for plot_num = 1:length(char_plot_menu),
     %   the "nan" construct is a work-around to allow stacked bars when the
     %   x range consists of only a scalar
     if strcmp(plot_mode, 'dual'),
-        ct_e = [t_earth{:, sprintf('exoE_char_full%smean', plot_prop)}, ...
-                t_earth{:, sprintf('exoE_char_part%smean', plot_prop)}];
-        eb_e = hypot(t_earth{:, sprintf('exoE_char_full%sstd', plot_prop)},...
-                     t_earth{:, sprintf('exoE_char_part%sstd', plot_prop)});
+        ct_e = [t_earth{:, sprintf('exoE_%schar_full%smean', plot_prop_x, plot_prop)}, ...
+                t_earth{:, sprintf('exoE_%schar_part%smean', plot_prop_x, plot_prop)}];
+        eb_e = hypot(t_earth{:, sprintf('exoE_%schar_full%sstd', plot_prop_x, plot_prop)},...
+                     t_earth{:, sprintf('exoE_%schar_part%sstd', plot_prop_x, plot_prop)});
         bar([nan -x_bin_xtra], [nan(1,2); ct_e], ...
             'Stacked', 'FaceColor', [0.1 0.7 0.3]);
         h_ebe = errorbar(-x_bin_xtra, sum(ct_e), eb_e, '.');
     else,
-        ct_e = t_earth{:, sprintf('exoE_char_%smean', plot_prop)};
-        eb_e = t_earth{:, sprintf('exoE_char_%sstd',  plot_prop)};
+        ct_e = t_earth{:, sprintf('exoE_%schar_%smean', plot_prop_x, plot_prop)};
+        eb_e = t_earth{:, sprintf('exoE_%schar_%sstd',  plot_prop_x, plot_prop)};
         bar(-x_bin_xtra, ct_e, ...
             'FaceColor', [0.1 0.7 0.3]);
         h_ebe = errorbar(-x_bin_xtra, ct_e, eb_e, '.');
@@ -480,10 +485,15 @@ for plot_num = 1:length(char_plot_menu),
 
     % Establish plot/axis styles + labels
     % This will apply to the left axis
-    style_bar_plot(gca, sprintf('Unique Characterizations%s', plot_title));
+    if isempty(plot_prop_x), 
+        qualifier = 'Unique'; 
+    else, 
+        qualifier = 'All'; 
+    end
+    style_bar_plot(gca, sprintf('%s Characterizations%s', qualifier, plot_title));
 
     % explanatory legend
-    block_top = sprintf('Unique Characterizations%s', plot_title);
+    block_top = sprintf('%s Characterizations%s', qualifier, plot_title);
     block_eb = '  Error Bar: \pm 1 sigma';
     if ~isempty(H_counts_alt),
         block = {block_top, ...
