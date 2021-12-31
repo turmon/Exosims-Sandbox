@@ -8,6 +8,7 @@ EXOSIMS
 # this can be remade with "make ipp-create"
 ipyparallel/*
 
+# python byte-compiled files
 *.pyc
 
 # vi backup files
@@ -17,6 +18,9 @@ ipyparallel/*
 
 # mac metadata files (sometimes _. is doubled)
 .*DS_Store
+
+# network file system (NFS) hidden files
+.nfs*
 
 # play area for documentation
 util/sandbox
