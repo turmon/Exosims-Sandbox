@@ -59,9 +59,10 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         self.dview = self.rc[:]
         self.dview.block = True
         # these are the imports needed by the run_one()
+        # (cannot use import ... as ... for this purpose)
         with self.dview.sync_imports():
             import EXOSIMS, EXOSIMS.util.get_module, EXOSIMS_local, \
-                time, os, os.path, random, numpy, six.moves.cPickle, gzip, traceback
+                time, os, os.path, random, numpy, cPickle, gzip, traceback
         if 'logger' in specs:
             specs.pop('logger')
         # pop the seed from the specs to force re-seeding
