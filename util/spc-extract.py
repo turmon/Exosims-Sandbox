@@ -1,18 +1,31 @@
 #!/usr/bin/env python
 #
-# spc-extract: Extract info from SPC files -- somewhat ad hoc
+# spc-extract: Extract info from SPC files into CSV
 #
 # For usage, use the -h option.  Some options may be described there but not here.
 #
 # Typical usage:
 #   spc-extract.py sims/script/spc/*.spc
-# where:
+# or:
+#   spc-extract.py -k .len sims/script/spc/*.spc
+#
+# where -k can be used more than once to name particular keys to output,
+# or can take a handful of special values:
+#   .len  => give key names and the corresponding vector lengths
+#   .name => give just key names
+#   .all  => output as many keys as possible in one CSV
+#            (outputs the keys that correspond to the most-commonly-seen
+#             vector length, e.g., stars)
+#   .next => output the keys corresponding to the second-most-seen vector length
+#            (e.g., planets).  Not implemented.
+#
 # optionally:
 #  -o FILE -- output file
 
 
 # history:
 #  turmon jun 2019 - created
+#  turmon sep 2020 - refined
 
 
 from __future__ import print_function
@@ -21,6 +34,7 @@ import glob
 import argparse
 import os
 import csv
+from collections import defaultdict
 import six.moves.cPickle as pickle
 import numpy as np
 import astropy.units as u
@@ -80,11 +94,15 @@ class StarPlanetInfo(object):
         r'''Load the star/planet info from a "spc" file given as an argument.
         This spc file transfer is compatible the Exosims ipyparallel output.'''
         # these will fail noisily if there is no file present
-        print('Loading SPC from', spc)
+        if False:
+            print('Loading SPC from', spc)
         # spc file contains a dict with many fields - save them all
         self.spc = pickle.load(open(spc, 'rb'), **PICKLE_ARGS)
         # seed extracted from filename
         self.seed = os.path.splitext(os.path.basename(spc))[0]
+        # filename
+        self.filename = spc
+        self.basename = os.path.basename(spc)
 
     def __init__(self, spc):
         # load DRM and Star-Planet info
@@ -106,27 +124,118 @@ def process(args, info):
     info.spc['earth'] = info.is_earthlike_all().astype(int)
     
 
-def dump(args, n, info):
-    # dump some info
+def open_output(args):
+    r'''Prepare the output file.'''
     if not args.outfile:
-        return
-    # first-file
+        # skip it
+        args.out_fp = None
+    elif args.outfile == '-':
+        # use stdout
+        args.out_fp = sys.stdout
+    else:
+        # truncate output file
+        args.out_fp = open(args.outfile, 'w')
+
+
+def get_length(qty):
+    r'''Get length of a certain quantity, 1 if scalar.'''
+    try:
+        l = len(qty)
+    except TypeError:
+        l = 1
+    # not OK for bytes, maybe that's good
+    if isinstance(qty, str):
+        l = 1
+    return l
+    
+
+def majority_key(spc, keys):
+    r'''Get the keys sharing the most common field length.
+
+    E.g., if T, Mp, and Rp have a common length, and two other fields
+    have length 1, return these keys.'''
+    # 
+    key_by_len = defaultdict(list)
+    for k in keys:
+        if k not in spc:
+            sys.stderr.write("Could not find key=`%s', skipping.\n" % k)
+            continue
+        key_by_len[get_length(spc[k])].append(k)
+    # find most common length
+    l_max = 0
+    for l, klist in key_by_len.items():
+        if len(klist) > l_max:
+            l_max = l
+        # in general, longer vector wins ties
+        #    and in particular, vector keys win ties with scalars
+        if len(klist) == l_max and l > l_max:
+            l_max = l
+    # get the keys...determine the fields for scalars, too
+    if l_max == 1:
+        fields = []
+        fields_scalar = key_by_len[l_max]
+    else:
+        fields = key_by_len[l_max]
+        fields_scalar = key_by_len[1]
+    # return both
+    return fields, fields_scalar
+
+
+def dump_names(args, n, info):
+    r'''Just write the field names to the output.
+
+    Don't use CSV-writer, because there are no headings, and the field names
+    may in principle vary across lines.'''
+    # make the ordering invariant, esp. over calls
+    keys = sorted(info.spc.keys())
+    args.out_fp.write('%s' % info.seed)
+    for f in keys:
+        args.out_fp.write(',%s' % f)
+    args.out_fp.write('\n')
+    
+
+def dump_lengths(args, n, info):
+    r'''Just write the field names to the output.
+
+    Don't use CSV-writer, because there are no headings, and the field names
+    may in principle vary across lines.'''
+    # make the ordering invariant, esp. over calls
+    keys = sorted(info.spc.keys())
+    # note, appending to output file
+    # header
     if n == 0:
-        with open(args.outfile, 'w') as _:
-            pass
-    # fields to dump
-    vector_fields = ['Rp', 'T', 'Mp', 'a', 'Lp', 'earth']
+        args.out_fp.write('seed')
+        for f in keys:
+            args.out_fp.write(',%s' % f)
+        args.out_fp.write('\n')
+    args.out_fp.write('%s' % info.seed)
+    for f in keys:
+        args.out_fp.write(',%s' % get_length(info.spc[f]))
+    args.out_fp.write('\n')
+    
+
+def dump(args, n, info):
+    # allow parse-only usage
+    if not args.out_fp: return
+    # support all keys
+    if '.all' in args.key:
+        fields, fields_scalar = majority_key(info.spc, info.spc.keys())
+    else:
+        # fields, fields_scalar = args.key, []
+        fields, fields_scalar = majority_key(info.spc, args.key)
+    # extra field(s) to dump
     extra_fields = ['seed']
-    # note, appending
-    with open(args.outfile, 'a') as csvfile:
-        # OK to have extra fields in dict-for-row
-        w = csv.DictWriter(csvfile, fieldnames=(extra_fields+vector_fields), extrasaction='ignore')
-        if n == 0: w.writeheader()
-        # make a dictionary mapping field -> value
-        for i in range(len(info.spc['Rp'])):
-            d = {key:strip_units(info.spc[key][i]) for key in vector_fields}
-            d['seed'] = info.seed
-            w.writerow(d)
+    # (note, appending to output file)
+    # OK to have extra fields in dict-for-row
+    w = csv.DictWriter(args.out_fp, fieldnames=(extra_fields+fields+fields_scalar), extrasaction='ignore')
+    if n == 0: w.writeheader()
+    # make a dictionary mapping field -> value
+    num_entries = len(info.spc[fields[0]]) if fields else 1
+    for i in range(num_entries):
+        d  = {key:strip_units(info.spc[key][i]) for key in fields}
+        d.update({key:strip_units(info.spc[key]) for key in fields_scalar})
+        d['seed'] = info.seed
+        w.writerow(d)
 
 ############################################################
 #
@@ -135,22 +244,37 @@ def dump(args, n, info):
 ############################################################
 
 def main(args):
+    if '.name' in args.key:
+        dumper = dump_names
+    elif '.len' in args.key:
+        dumper = dump_lengths
+    else:
+        dumper = dump
+
+    open_output(args)
     for n, fn in enumerate(args.spcs):
         info = StarPlanetInfo(fn)
         process(args, info)
-        dump(args, n, info)
+        dumper(args, n, info)
 
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Pull SPC info.")
-    parser.add_argument('spcs', metavar='SPCs', nargs='*', help='SPC file(s)')
-    parser.add_argument('-o', '--outfile', help='name of output file',
-                      dest='outfile', metavar='FILE', default='spc.out')
+    parser = argparse.ArgumentParser(
+        description="Extract star-planet configuration (SPC) info and output as CSV.",
+        epilog="Use KEY of .all for as many fields as possible, .name for fieldnames only, .len for field lengths")
+    parser.add_argument('spcs', metavar='SPC', nargs='*', help='SPC file(s)')
+    parser.add_argument('-o', '--outfile', help='name of output file, default stdout',
+                      dest='outfile', metavar='FILE', default='-')
+    parser.add_argument('-k', '--key', action='append', default=[], help='repeat to get multiple keys', type=str)
     
     args = parser.parse_args()
     
     # set umask in hopes that files/dirs will be group-writable
     os.umask(0o002)
+
+    default_fields = ['Rp', 'T', 'Mp', 'a', 'I', 'Lp', 'earth']
+    if '.std' in args.key or len(args.key) == 0:
+        args.key += default_fields
 
     main(args)
 
