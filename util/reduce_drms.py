@@ -1768,14 +1768,22 @@ class SimulationRun(object):
         exoE_char_strict = 0 # no SNR for strict
         exoE_char_full = 0
         exoE_char_part = 0
+        exoE_xchar_full = 0 # xchar -> counts repeat chars (like xdet)
+        exoE_xchar_part = 0
         SNR_exoE_char_full = []
         SNR_exoE_char_part = []
+        SNR_exoE_xchar_full = []
+        SNR_exoE_xchar_part = []
         # radius/luminosity for characterized targets, binned
         RpL_char_strict = []
         RpL_char_full   = []
         RpL_char_part   = []
+        RpL_xchar_full  = []
+        RpL_xchar_part  = []
         SNR_char_full   = []
         SNR_char_part   = []
+        SNR_xchar_full   = []
+        SNR_xchar_part   = []
         # list of times where detections were made
         # TODO: move to event_analysis(), so that this function only does yield
         det_time_all = []
@@ -1911,6 +1919,20 @@ class SimulationRun(object):
                         if binner.is_earthlike(self.spc, plan_id, obs['star_ind']):
                             exoE_char_part += 1
                             SNR_exoE_char_part.append(plan_SNR[plan_id])
+                    # binned chars (new or repeat at this obs), full + partial
+                    # (note, xchar is analogous to xdet)
+                    for plan_id in charized_full:
+                        RpL_xchar_full.append(binner.quantize(self.spc, plan_id, obs['star_ind']))
+                        SNR_xchar_full.append(plan_SNR[plan_id])
+                        if binner.is_earthlike(self.spc, plan_id, obs['star_ind']):
+                            exoE_xchar_full += 1
+                            SNR_exoE_xchar_full.append(plan_SNR[plan_id])
+                    for plan_id in charized_part:
+                        RpL_xchar_part.append(binner.quantize(self.spc, plan_id, obs['star_ind']))
+                        SNR_xchar_part.append(plan_SNR[plan_id])
+                        if binner.is_earthlike(self.spc, plan_id, obs['star_ind']):
+                            exoE_xchar_part += 1
+                            SNR_exoE_xchar_part.append(plan_SNR[plan_id])
                     # keep a running tabulation of all characterizations so far
                     set_chars_uniq.update(set(charized_full))
                     set_chars_uniq.update(set(charized_part))
@@ -1926,6 +1948,8 @@ class SimulationRun(object):
 
         # Earth histograms -- just a single count, actually
         h_earth_char_all    = np.histogram(np.array([exoE_char_full + exoE_char_part]),
+                                            EARTH_CHAR_COUNT_BINS)[0]
+        h_earth_xchar_all   = np.histogram(np.array([exoE_xchar_full + exoE_xchar_part]),
                                             EARTH_CHAR_COUNT_BINS)[0]
         h_earth_char_strict = np.histogram(np.array([exoE_char_strict]),
                                             EARTH_CHAR_COUNT_BINS)[0]
@@ -1978,31 +2002,46 @@ class SimulationRun(object):
         h_RpL_char_strict = np.histogram(RpL_char_strict, RpL_bin_edges)[0]
         h_RpL_char_full   = np.histogram(RpL_char_full,   RpL_bin_edges)[0]
         h_RpL_char_part   = np.histogram(RpL_char_part,   RpL_bin_edges)[0]
+        h_RpL_xchar_full  = np.histogram(RpL_xchar_full,  RpL_bin_edges)[0]
+        h_RpL_xchar_part  = np.histogram(RpL_xchar_part,  RpL_bin_edges)[0]
         # throughput: #(char) / #(there)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning) # ignore 0/0 -> nan
             h_RpL_char_tput_strict = h_RpL_char_strict / (1.0*self.Nstar*h_RpL_population)
             h_RpL_char_tput_full   = h_RpL_char_full   / (1.0*self.Nstar*h_RpL_population)
-            exoE_char_tput_strict  = exoE_char_strict  / (1.0 * np.sum(earthlike)) # scalar, nan OK
-            exoE_char_tput_full    = exoE_char_full    / (1.0 * np.sum(earthlike)) # scalar, nan OK
+            h_RpL_xchar_tput_full  = h_RpL_xchar_full  / (1.0*self.Nstar*h_RpL_population)
+            # 10/2020: 0/0 has been promoted from RuntimeWarning to ZeroDivisionError, must special-case
+            if np.sum(earthlike) > 0:
+                exoE_char_tput_strict  = exoE_char_strict  / (1.0 * np.sum(earthlike)) # scalar, nan OK
+                exoE_char_tput_full    = exoE_char_full    / (1.0 * np.sum(earthlike)) # scalar, nan OK
+                exoE_xchar_tput_full   = exoE_xchar_full   / (1.0 * np.sum(earthlike)) # scalar, nan OK
+            else:
+                exoE_char_tput_strict  = np.nan * exoE_char_strict
+                exoE_char_tput_full    = np.nan * exoE_char_full
+                exoE_xchar_tput_full   = np.nan * exoE_xchar_full
         # compute the mean of SNRs within each of the RpL characterization bins
         #   Note: empty bins are filled with NaN
-        #   Note: this is using only full characterizations, is that correct?
-        #   Note: the explicit range cutoff seems unnecessary, but the docs are ambiguous.
+        #   Note: this is using only full characterizations
+        #   Note: the explicit range cutoff seems unnecessary, but the python docs are ambiguous
         #   Note: Later on, we find the mean (across DRMs) of *these* means.
         h_RpL_char_snr = stats.binned_statistic(x=RpL_char_full,
                                                     values=SNR_char_full,
                                                     statistic='mean',
                                                     bins=RpL_bin_edges,
                                                     range=(RpL_bin_edges[0],RpL_bin_edges[-1]))[0]
+        h_RpL_xchar_snr = stats.binned_statistic(x=RpL_xchar_full,
+                                                    values=SNR_xchar_full,
+                                                    statistic='mean',
+                                                    bins=RpL_bin_edges,
+                                                    range=(RpL_bin_edges[0],RpL_bin_edges[-1]))[0]
         # scalar for exo-earths
-        exoE_char_snr = np.mean(SNR_exoE_char_full) if SNR_exoE_char_full else np.nan
+        exoE_char_snr  = np.mean(SNR_exoE_char_full)  if SNR_exoE_char_full  else np.nan
+        exoE_xchar_snr = np.mean(SNR_exoE_xchar_full) if SNR_exoE_xchar_full else np.nan
 
         # bin the detection-times ("h_" is mnemonic for histogrammed)
         h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
         h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
         h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
-
 
         # some portions of the return value are automated
         namespace = locals()
@@ -2016,9 +2055,13 @@ class SimulationRun(object):
             'h_RpL_char_full',
             'h_RpL_char_part',
             'h_RpL_char_snr',
+            'h_RpL_xchar_full',
+            'h_RpL_xchar_part',
+            'h_RpL_xchar_snr',
             'h_RpL_population',
             'h_RpL_char_tput_strict',
             'h_RpL_char_tput_full',
+            'h_RpL_xchar_tput_full',
             ]
         rv_radlum = {qoi: namespace[qoi] for qoi in qoi_radlum}
         rv.update(rv_radlum)
@@ -2032,10 +2075,14 @@ class SimulationRun(object):
             'exoE_char_strict',
             'exoE_char_full',
             'exoE_char_part',
+            'exoE_xchar_full',
+            'exoE_xchar_part',
             'exoE_char_snr',
+            'exoE_xchar_snr',
             'exoE_population',
             'exoE_char_tput_strict',
             'exoE_char_tput_full',
+            'exoE_xchar_tput_full',
             ]
         rv_earth = {qoi: namespace[qoi] for qoi in qoi_earth}
         rv.update(rv_earth)
@@ -2052,7 +2099,8 @@ class SimulationRun(object):
         # more yield figures - reduced like everything else
         rv1 = {
             # histogram for exo-Earths -- earth_char_count family
-            'h_earth_char_all': h_earth_char_all,
+            'h_earth_char_all':    h_earth_char_all,
+            'h_earth_xchar_all':   h_earth_xchar_all,
             'h_earth_char_strict': h_earth_char_strict,
             # times -- part of  "times" family, but other things there too
             'h_det_time_all': h_det_time_all,
@@ -2436,7 +2484,7 @@ class EnsembleSummary(object):
             'h_time_det_incr', 'h_time_char_incr', 'h_time_slew_incr',
             'h_time_fuel_slew', 'h_time_fuel_keep', 'h_time_fuel_all',
             # earth-char histograms as a function of #chars
-            'h_earth_char_all', 'h_earth_char_strict',
+            'h_earth_char_all', 'h_earth_xchar_all', 'h_earth_char_strict',
             # visit counts
             'h_visit_all', 'h_visit_earth',
             # per-star: h_star detection
@@ -2748,6 +2796,7 @@ class EnsembleSummary(object):
         # more fields to save
         earth_char_count_qoi = [
             'h_earth_char_all',
+            'h_earth_xchar_all',
             'h_earth_char_strict',
             ]
         earth_char_count_fields.extend([ (x + '_' + y)
