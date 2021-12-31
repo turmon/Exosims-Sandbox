@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
@@ -7,7 +7,7 @@
 # This is a wrapper around the python driver, ipcluster_ensemble_jpl.py.
 #
 # Usage:
-#   add-sims.sh [-3] [-q] [-A] [-j JOBS] [-v VERB] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT SEEDS
+#   add-sims.sh [-3] [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT SEEDS
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
@@ -36,6 +36,7 @@
 #   -h        => show this help message and exit.
 #   -A        => run using All of aftac1, c2, c3 (18 + 23 + 23 jobs = 64 jobs)
 #   -S        => run using Some of aftac1,c2, c3 (10 + 12 + 12 jobs = 34 jobs)
+#   -Z        => run using all of mustang2/3/4 and aftac1/2/3 (total of 100 jobs)
 #   -3        => run the EXOSIMS sim-runner with python3; by default, "python" is used.
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
 #
@@ -93,15 +94,19 @@ ALL=0
 PYTHON_EXECUTIVE_2=python
 PYTHON_EXECUTIVE_3=/usr/local/anaconda3/envs/cornell/bin/python3.7
 PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
-while getopts "ASh23bcj:p:x:qv:eE:O:" opt; do
+while getopts "ASZh23bcj:p:x:qv:eE:O:" opt; do
     case $opt in
 	A)
-	    # use remote machines also
+	    # use remote machines
 	    ALL=1
 	    ;;
 	S)
-	    # use some remote machines also
+	    # use remote machines, but only some jobs
 	    ALL=2
+	    ;;
+	Z)
+	    # use even more remote machines
+	    ALL=3
 	    ;;
 	3)
 	    # set python3 executive
@@ -268,6 +273,10 @@ if [ $ALL == 1 ]; then
     DISPATCHER_JOBS=""
 elif [ $ALL == 2 ]; then
     PAR_SSH_OPTS="--workdir . --sshdelay 0.04 -S 10/aftac1,12/aftac2,12/aftac3"
+    # remove the --jobs option, which interacts with the above
+    DISPATCHER_JOBS=""
+elif [ $ALL == 3 ]; then
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.08 -S 12/aftac1,12/aftac2,12/aftac3,24/mustang2,24/mustang3,16/mustang4"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 else
