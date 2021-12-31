@@ -1,0 +1,39 @@
+[
+    {
+	"xform_type": "update",
+	"xform_name": "",
+	"coeffs_comment": "turmon: varying C1, C4, C5; C0 reference; C2, C3 fixed",
+	"coeffs": [0.15, 0.05, 0.00, 0.00, 0.30, 0.30]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c1={coeffs[1]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, 0.01, NaN, NaN, NaN, NaN],
+		   [NaN, 0.02, NaN, NaN, NaN, NaN],
+		   [NaN, 0.04, NaN, NaN, NaN, NaN]
+		  ]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c4={coeffs[4]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, NaN, NaN, NaN, 0.20, NaN],
+		   [NaN, NaN, NaN, NaN, 0.30, NaN],
+		   [NaN, NaN, NaN, NaN, 0.35, NaN],
+		   [NaN, NaN, NaN, NaN, 0.40, NaN],
+		   [NaN, NaN, NaN, NaN, 0.50, NaN]
+		  ]
+    },
+    {
+	"xform_type": "sequence",
+	"xform_name": "c5={coeffs[5]:.2f}",
+	"xform_action": {"coeffs": "masked"},
+	"coeffs": [[NaN, NaN, NaN, NaN, NaN, 0.20],
+		   [NaN, NaN, NaN, NaN, NaN, 0.30],
+		   [NaN, NaN, NaN, NaN, NaN, 0.35],
+		   [NaN, NaN, NaN, NaN, NaN, 0.40],
+		   [NaN, NaN, NaN, NaN, NaN, 0.50]
+		  ]
+    }
+ ]

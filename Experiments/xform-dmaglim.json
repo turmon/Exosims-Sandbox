@@ -1,0 +1,7 @@
+{
+    "xform_type": "sequence",
+    "xform_name": "dmag{dMagLim:.1f}",
+    "dMagLim": [25.0, 25.5, 26.0],
+    "ppFact": [0.5357, 0.338, 0.2133],
+    "ppFact_char": [0.75, 0.4732, 0.2986]
+}
