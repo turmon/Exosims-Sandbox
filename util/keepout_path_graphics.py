@@ -37,6 +37,7 @@
 #  -d is the delta-t between frames in days
 #  -m is the name of the movie
 # optionally:
+#  -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
 #  -f DIR -- the directory name for .png frame-by-frame output
 #  -c DIR -- the directory name for cumulative keepout output
 #  --drm DIR -- the directory where pickles containing a DRM are
@@ -54,23 +55,22 @@
 #  turmon aug 2017: add DRM overlay
 #  turmon nov 2018: add occulter keepout to existing detector keepout
 #  turmon mar 2020: python3, astropy4
+#  turmon dec 2020: updated to handle starshade-only cases better
 #
-# FIXME: The "cumulative observability" map-format plots are not correct in some cases.
-# This is because the "koMap" returned by Obs.keepout() changed after this code
-# was written.  It formerly contained 1 map (Stars X Times), but now contains
-# NS such maps, where NS is the number of StarlightSuppressionSystems.  In practice,
-# sometimes NS=1 (coronagraph-only, or starshade-only) and sometimes NS=2
-# (coronagraph + starshade).  The code here isn't smart about this.  It currently
-# does not allow for the starshade-only cases -- it assumes if there is a starshade,
-# then it's OK to look in koMap[1,:,:], which is not present for starshade-only cases.
-# In those cases, the starshade is all that's there, and it's in koMap[0,:,:].
-# This code should be looking at the JSON script and seeing if it has a separate coronagraph,
-# and if so, making that plot, and likewise for starshade, and if starshade-only,
-# it should look in the 0'th index of the returned keepout map.
+# Note: The "cumulative observability" map-format plots are fragile, because
+# the "koMap" returned by Obs.keepout() changed after this code was
+# written.  It formerly contained 1 map (Stars X Times), but now contains
+# NS such maps, where NS is the number of StarlightSuppressionSystems.  
+# Sometimes NS=1 (coronagraph-only, or starshade-only) and sometimes NS=2
+# (coronagraph + starshade).
+# The code here isn't as smart as it could be about this.  It assumes 
+# if there is a starshade, then koMap[-1,:,:] has its keepout.  Our starshades 
+# happen to be the last observing mode, so this works, but it's fragile.
+# I think this would be fixed by looking at observingModes to find the right index.
 #
 # TODO: This was the first keepout-extracting code we wrote.  It does not separate
 # compilation-of-information from generation-of-graphics.  So it has a main loop 
-# that is way too long and unfactored.
+# that is lengthy and unfactored.
 
 
 from __future__ import print_function
@@ -265,6 +265,12 @@ class ObserveInfo(object):
             self.was_det[i] = was_det
             # we query detections/characterizations for status in the same way
             st_key = Dkey if was_det else 'char_status'
+            # FIXME: 03-Nov-2021, turmon
+            # inserted due to some DRM's containing records that are neither det nor char
+            if st_key not in obs:
+                print('Masked error: set DRM[%d][%s] = 0 because key is absent (star_ind = %d)' %
+                          (i, st_key, obs['star_ind']))
+                obs[st_key] = np.zeros(obs['plan_inds'].shape) # correct size zeros
             # was the observation successful?
             self.success[i] = np.any(np.array(obs[st_key]) > 0)
             # was any successful observation done on a HZ planet?
@@ -272,8 +278,9 @@ class ObserveInfo(object):
             success_plan_inds = np.array(obs['plan_inds'],dtype=np.int)[np.where(obs[st_key] > 0)[0]]
             # 2/ indicator for each successful planet, Is the planet in the HZ?
             #    Note: can do similar logic on self.Rp_planet[...] to restrict by planet size
+            #    turmon 11/2021: changed the upper boundary of L_planet from 1.55 to 1.67
             hab_zone = np.logical_and(self.L_planet[success_plan_inds] >= 0.40,
-                                      self.L_planet[success_plan_inds] <= 1.55)
+                                      self.L_planet[success_plan_inds] <= 1.67)
             # 3/ was any successful planet observation in the HZ?
             #    Note: perhaps we actually want a count?
             self.hab_zone[i] = np.any(hab_zone)
@@ -761,7 +768,10 @@ def make_graphics(args, xspecs):
     if out_movie:
         # movie hooked to "fig"
         #plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
-        FFMpegWriter = animation.writers['ffmpeg']
+        #FFMpegWriter = animation.writers['ffmpeg']
+        # turmon 12/2021: this is fragile: path to ffmpeg on the sec383 systems
+        plt.rcParams['animation.ffmpeg_path'] = '/usr/local/anaconda3/envs/python39/bin/ffmpeg'
+        FFMpegWriter = animation.FFMpegWriter
         movie = FFMpegWriter(fps=15, bitrate=2500)
         movie.setup(fig, out_movie, 200) # last arg is dpi
     if out_frames:
@@ -855,16 +865,17 @@ def make_graphics(args, xspecs):
         final_frame = (i == Ntime-1)
         
         # Build evergood array, detections
-        # note: kogood is s x Ntime x Ntarg, where s = number of systems; Ntime = 1 here
+        # note: kogood is s x Ntarg x Ntime, where s = number of systems; Ntime = 1 here
         # note: koangleArr is used below, but its arrangement has changed
         currentTime = currentTimes[i]
         kogood, r_body, r_targ, _, koangleArr = Obs.keepout(TL, sInds, currentTime, koangles, returnExtra=True)
         koangleArr = koangleArr.to('deg').value
-        evergood_coro += kogood[0,0,:]
+        evergood_coro += kogood[0,:,0]
         # NB: separate call not needed in new EXOSIMS
-        # FIXME: this fails for starshade-only cases
+        # FIXME: this is awkward for starshade-only cases (one system, used for both det + char)
         if shadeMode:
-            evergood_shade += kogood[1,0,:]
+            # -1 picks out starshade system
+            evergood_shade += kogood[-1,:,0]
 
         # maintain kogoods
         if kogoods_coro is None:
@@ -874,7 +885,8 @@ def make_graphics(args, xspecs):
             kogoods_shade = np.zeros((kogood.shape[1], Ntime+2), dtype=bool)
         kogoods_coro[ :,i+1] = kogood[0,:,0]
         if shadeMode:
-            kogoods_shade[:,i+1] = kogood[1,:,0]
+            # -1 picks out starshade system
+            kogoods_shade[:,i+1] = kogood[-1,:,0]
 
         # strings for later titles
         currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
@@ -925,6 +937,12 @@ def make_graphics(args, xspecs):
                                        body[1].distance.to(p_unit).value))
             fp_position.close()
 
+        # index of the "system" used by the starshade
+        # (if no starshade, i.e. OS.haveOcculter == False, doesn't matter)
+        # FIXME: if starshade-only, koangleArr is 1x?x?, if hybrid, is 2x?x?
+        # shade_sys = 1 if (koangleArr.shape[0] == 2) else 0
+        shade_sys = -1 # instead of if(...), take the last entry!
+        
         if out_frames or out_movie:
             # create figure
             plt.clf()
@@ -950,11 +968,11 @@ def make_graphics(args, xspecs):
 
                 # starshade is largely drawn as transparent, other bodies are not
                 alpha = 0.17 if j <= 2 else 0.9
-                # special case: if occulter, show the (large) keepout-region due to the Sun
-                if OS.haveOcculter and (j == 0) and koangleArr[1,j,1] < 180:
+                # special case: if occulter, show the (large) keepout-region due to Sun (j=0)
+                if OS.haveOcculter and (j == 0) and koangleArr[shade_sys,j,1] < 180:
                     # [1,j,1] => first index is for system (shade = 1), second for body (j=0 for Sun),
                     # last is for the max angle (0 for min KO, 1 for max KO)
-                    koMax = koangleArr[1,j,1]
+                    koMax = koangleArr[shade_sys,j,1]
                     # lola = longitude and latitude path of circle of size koMax around xB,yB
                     lola, closed = spherical_cap(xB[j], yB[j], koMax)
                     opts = dict(facecolors='white', alpha=0.9)  # fill with white
@@ -1036,7 +1054,7 @@ def make_graphics(args, xspecs):
             # set background color of plot to gray in the case of a starshade plot
             #    if starshade: background of plot is gray, within-shade is white, other keepouts are gray
             #    no starshade: main plot is white (and no within-shade area is shown, obviously)
-            if OS.haveOcculter and koangleArr[1,0,1] < 180:
+            if OS.haveOcculter and koangleArr[shade_sys,0,1] < 180:
                 axis_color_fixed = True
                 ax.patch.set_facecolor((0.92, 0.92, 0.92))
             else:
@@ -1058,10 +1076,10 @@ def make_graphics(args, xspecs):
             scatter_props = dict(s=5, edgecolors='none', zorder=10)
             color_ok = np.array((.6, .6, .6), ndmin=2) # [visible]  gray
             color_ko = np.array((.0, .0, .0), ndmin=2) # [kept-out] black
-            plt.scatter(xT[np.logical_and( kogood[0,0,:], ~star_shown)],
-                        yT[np.logical_and( kogood[0,0,:], ~star_shown)], c=color_ok, **scatter_props)
-            plt.scatter(xT[np.logical_and(~kogood[0,0,:], ~star_shown)],
-                        yT[np.logical_and(~kogood[0,0,:], ~star_shown)], c=color_ko, **scatter_props)
+            plt.scatter(xT[np.logical_and( kogood[0,:,0], ~star_shown)],
+                        yT[np.logical_and( kogood[0,:,0], ~star_shown)], c=color_ok, **scatter_props)
+            plt.scatter(xT[np.logical_and(~kogood[0,:,0], ~star_shown)],
+                        yT[np.logical_and(~kogood[0,:,0], ~star_shown)], c=color_ko, **scatter_props)
             # Need to skip transparent=True if the starshade keepout is shown,
             # otherwise the gray axis background will be turned transparent.
             # the gray axis background to transparent, which conflicts
@@ -1161,12 +1179,13 @@ def make_graphics(args, xspecs):
                                    os.path.join(out_cume, 'max-obstime-map-shade.png'))
 
         ### 3: map-format plot of observability, plain
-        make_observability_map(xa, ya, 100*cume_good_coro, 18, 'plasma',
+        cmap_obs = 'plasma' if True else 'viridis' # experimenting with colormaps
+        make_observability_map(xa, ya, 100*cume_good_coro, 18, cmap_obs,
                                    'Cumulative Observability Map: Coronagraph',
                                    'Observability [%]', 
                                    os.path.join(out_cume, 'cume-obs-map-corona.png'))
         if shadeMode:
-            make_observability_map(xa, ya, 100*cume_good_shade, 18, 'plasma',
+            make_observability_map(xa, ya, 100*cume_good_shade, 18, cmap_obs,
                                    'Cumulative Observability Map: With Occulter',
                                    'Observability [%]', 
                                    os.path.join(out_cume, 'cume-obs-map-shade.png'))
@@ -1176,12 +1195,12 @@ def make_graphics(args, xspecs):
         idx = np.argsort(TL.Vmag)
         sz_sort = np.sqrt(1e4*10**(-0.4*TL.Vmag[idx])) # sqrt() compresses vmag for size plot
         # make the plot
-        make_observability_map(xa[idx], ya[idx], 100*cume_good_coro[idx], sz_sort, 'plasma',
+        make_observability_map(xa[idx], ya[idx], 100*cume_good_coro[idx], sz_sort, cmap_obs,
                                    'Cumulative Observability Map: Coronagraph (Size: Vmag)', 
                                    'Observability [%]', 
                                    os.path.join(out_cume, 'cume-obs-map-vmag-corona.png'))
         if shadeMode:
-            make_observability_map(xa[idx], ya[idx], 100*cume_good_shade[idx], sz_sort, 'plasma',
+            make_observability_map(xa[idx], ya[idx], 100*cume_good_shade[idx], sz_sort, cmap_obs,
                                    'Cumulative Observability Map: With Occulter (Size: Vmag)', 
                                    'Observability [%]', 
                                    os.path.join(out_cume, 'cume-obs-map-vmag-shade.png'))
@@ -1249,6 +1268,9 @@ if __name__ == '__main__':
         print('Reminder: Need one of -m or -f or -c in order to produce output.')
         # sys.exit(1)
     
+    if args.ra_dec_coord:
+        print('WARNING: outputs in poorly-tested ra/dec coords, use -e for equatorial.')
+
     # load extra specs, if any
     # argument is a filename, or if argument begins with "!", a literal.
     if args.xspecs and not args.xspecs.startswith('!'):
