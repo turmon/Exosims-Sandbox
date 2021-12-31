@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 
 # Top-level sh driver for certain drm plots.
 #
@@ -75,7 +75,8 @@ rootDir=$PWD/Local/Matlab
 export MATLABPATH="$rootDir/mfile:$rootDir/export_fig"
 
 # Matlab version
-matlab_binary=/usr/local/matlab-9.2/bin/matlab
+#matlab_binary=/usr/local/matlab-9.2/bin/matlab
+matlab_binary=matlab
 # needed for R2010b (see above)
 OSCHECK_ENFORCE_LIMITS=0; export OSCHECK_ENFORCE_LIMITS
 

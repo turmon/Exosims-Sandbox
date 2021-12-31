@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # extract_drm_positions_driver.sh: extract observer (etc) positions from DRM
 #

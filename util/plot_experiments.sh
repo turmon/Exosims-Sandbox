@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 
 # Top-level sh driver for certain "experiment", or multi-ensemble drm plots
 #

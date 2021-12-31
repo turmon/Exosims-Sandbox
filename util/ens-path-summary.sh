@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # ens-path-summary: Convert DRM ensemble to plot set summarizing paths
 #

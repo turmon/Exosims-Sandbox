@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # drm-to-movie: Convert DRM to movie
 #
