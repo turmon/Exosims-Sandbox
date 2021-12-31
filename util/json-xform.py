@@ -68,11 +68,13 @@
 #       XSCRIPT = {"+scienceInstruments": [{"Name": "new-imager", "QE": 0.6}]}
 #     adds a new science instrument to the existing list of instruments.
 #   sequence:
-#     If multiple fields are specified, the sequence is drawn from each, wrapping
+#     - If multiple fields are specified, the sequence is drawn from each, wrapping
 #     around if lengths are unequal.  Example:
 #       XSCRIPT = {"dMagLim": [23, 24, 25], "minComp": [0, 0.1]}
 #     generates three SCRIPTs, with (23, 0), (24, 0.1), (25, 0).  In particular,
 #     a length-1 list will act like a scalar constant of that value.
+#     - If a fieldname like starlightSuppressionSystems.0.IWA is given, the
+#     corresponding nested entry within the script will be altered.
 #
 # Transforms can be chained.  For instance, the first transform ("update") adds a
 # field, and a subsequent transform ("sequence") then generates a sequence of scripts,
@@ -227,8 +229,10 @@ def apply_one_xform(d, xform):
             for f in x_fields:
                 d_up[f] = xform[f][i % len(xform[f])]
             d_new_1 = copy.deepcopy(d)
-            d_new_1.update(d_up)
-            d_new_1['xform_name'] = d_name + x_name.format(index=i, **d_new_1)
+            # d_new_1.update(d_up)
+            key_abbrevs = dict_update(d_new_1, d_up)
+            key_abbrevs.update(d_new_1)
+            d_new_1['xform_name'] = d_name + x_name.format(index=i, **key_abbrevs)
             d_new.append(d_new_1)
         f_new = set(x_fields)
     elif x_type == 'cross':
@@ -247,6 +251,30 @@ def apply_one_xform(d, xform):
         raise ValueError('Do not know the transform type "%s"' % xform_type)
     return d_new, f_new
 
+def dict_update(d, d_up):
+    r'''Update d in-place with d_up, where d_up can imply updates to nested structures.
+
+    Return the mapping from final (terminal) field name to the new value.
+    That is, dict_update(d, {'a.5.b.-1.c': 10}) alters d['a'][5]['b'][-1]['c'], and
+    returns {'c': 10}.
+    '''
+    def dict_update_one(d, key_seq, val):
+        r'''Descend within d via a sequence of keys, key_seq, and update the nested value.'''
+        try:
+            index = int(key_seq[0])
+        except ValueError:
+            index = key_seq[0]
+        if len(key_seq) == 1:
+            d[index] = val
+        else:
+            dict_update_one(d[index], key_seq[1:], val)
+    key_abbrevs = {} # short names 
+    for key, val in d_up.items():
+        key_seq = key.split('.')
+        key_abbrevs[key_seq[-1]] = val
+        dict_update_one(d, key_seq, val)
+    return key_abbrevs
+
 def apply_xforms(d_list, xforms):
     r'''Apply the list of transforms to each script in d_list.
     Return the list of transformed scripts, and the set of fields within
@@ -262,6 +290,25 @@ def apply_xforms(d_list, xforms):
             f_now.update(f_new_1)
         d_now = d_new
     return d_now, f_now
+
+def getitem_nested(s, f):
+    r'''Get field "f" from script "s", allowing dots in "f" for nested access into "s".
+
+    Return the final (terminal) field name within f, and the field value.
+    That is, getitem_nested(s, 'a.5.b.-1.c') returns 'c', s['a'][5]['b'][-1]['c'].
+    '''
+    def getitem_nested_inner(s, f_seq):
+        r'''Descend within s via a sequence of keys, f_seq, and return the nested value.'''
+        try:
+            index = int(f_seq[0])
+        except ValueError:
+            index = f_seq[0]
+        if len(f_seq) == 1:
+            return s[index]
+        else:
+            return getitem_nested_inner(s[index], f_seq[1:])
+    f_seq = f.split('.')
+    return f_seq[-1], getitem_nested_inner(s, f_seq)
 
 def dump_scripts(args, scripts, fields):
     r'''Dump the list of scripts to the designated outfile template.'''
@@ -283,19 +330,20 @@ def dump_scripts(args, scripts, fields):
         summ1['script_name'] = os.path.basename(outname)
         summ1['run_name'] = os.path.splitext(os.path.basename(outname))[0]
         for f in fields:
-            summ1[f] = s[f]
+            f_abbrev, value = getitem_nested(s, f)
+            summ1[f_abbrev] = value
         script_summary.append(summ1)
         # write the file
-        with open(outname, 'w') as f:
+        with open(outname, 'w') as fp:
             if args.verbose:
                 print('Dumping to: %s' % outname)
-            json.dump(s, f, indent=2)
+            json.dump(s, fp, indent=2)
     # write the summary file
     outname = args.outfile % 'index'
-    with open(outname, 'w') as f:
+    with open(outname, 'w') as fp:
         if args.verbose:
             print('Dumping index to: %s' % outname)
-        json.dump(script_summary, f, indent=2)
+        json.dump(script_summary, fp, indent=2)
     return files_written
         
 def main(args):
