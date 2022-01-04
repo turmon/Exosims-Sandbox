@@ -32,7 +32,7 @@
 # MODE of this command does not work, you can kill the server by sending TERM
 # to process ID (pid) named in that file.
 # 
-# turmon sep 2018, dec 2021
+# turmon sep 2018, dec 2021, jan 2022
 #
 ## [end comment block]
 
@@ -142,6 +142,7 @@ if [ "$mode" == start ]; then
 	httpd -f "$CURR_DIR/$SERVER_CONFIG" \
 	      -c "PidFile $CURR_DIR/$SERVER_PID" \
 	      -c "ErrorLog $CURR_DIR/$SERVER_LOG" \
+	      -c "ServerName $(hostname)" \
 	      -c "Listen $port"
     else
 	# python SimpleHTTPServer: single-threaded, does not support returning
