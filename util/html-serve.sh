@@ -24,7 +24,7 @@
 #
 # Implementation:
 # -- Status files are kept in these files:
-#   Local/www-service/http-HOST.PORT.*
+#   Local/www-service/var/http-HOST.PORT.*
 # where PORT is typically 8090.  (Formerly 8088.)
 # There is a server error log (.log) and a file containing the process ID (PID)
 # of the server (.pid).
@@ -47,8 +47,11 @@ umask 002
 # some defaults
 #  group allowed to kill the server
 SERVER_GROUP=exosims
-#  directory for log files
-SERVER_DIR=Local/www-service
+# httpd config file
+SERVER_CONFIG=Local/www-service/config/httpd-apache2.4.conf
+# directory for log and PID files produced by httpd
+SERVER_VARDIR=Local/www-service/var
+
 # current working directory - httpd needs absolute pathnames
 CURR_DIR=$(pwd)
 # default port -- formerly 8088
@@ -87,7 +90,7 @@ fi
 
 # enforce 1 argument
 if [ $# -ne 1 ]; then
-   echo "${PROGNAME}: Error: Need exactly one argument" >&2
+   echo "${PROGNAME}: Error: Need exactly one argument, use -h for help." >&2
    exit 1
 fi
 
@@ -95,19 +98,16 @@ mode="$1"
 
 host=$(hostname -s)
 
-# specific filenames we need
-SERVER_LOG=$SERVER_DIR/http-$host.$port.log
-SERVER_PID=$SERVER_DIR/http-$host.$port.pid
+# specific filenames, now that we know $port
+SERVER_LOG=$SERVER_VARDIR/http-$host.$port.log
+SERVER_PID=$SERVER_VARDIR/http-$host.$port.pid
 
 
-# set up the server state dir
+# set up the server state files
 function setup {
-    # (assume it is already created and has right mode)
-    ## mkdir -m 775 -p "$SERVER_DIR"
-    ## chgrp $SERVER_GROUP "$SERVER_DIR"
     # copy and reset the server log
     [ -f "$SERVER_LOG" ] && cp -pf "$SERVER_LOG" "$SERVER_LOG".old
-    rm -f "$SERVER_LOG" && touch "$SERVER_LOG"
+    echo > "$SERVER_LOG"
     echo "${PROGNAME}: HTTP file setup OK." >> "$SERVER_LOG"
     chgrp $SERVER_GROUP "$SERVER_LOG"
     chmod 664 "$SERVER_LOG"
@@ -139,24 +139,22 @@ if [ "$mode" == start ]; then
     if true; then
 	# apache httpd - multi-threaded, serves movies properly
 	# minimal config, PID and logging configured on command line
-	httpd -f "$CURR_DIR/$SERVER_DIR/config/httpd-apache2.4.conf" \
+	httpd -f "$CURR_DIR/$SERVER_CONFIG" \
 	      -c "PidFile $CURR_DIR/$SERVER_PID" \
 	      -c "ErrorLog $CURR_DIR/$SERVER_LOG" \
 	      -c "Listen $port"
-	# capture server PID -- httpd forks, so the pid changes
-	server_pid_var=$(sleep 0.1 && cat "$CURR_DIR/$SERVER_PID")
     else
 	# python SimpleHTTPServer: single-threaded, does not support returning
 	# byte ranges, which makes .mp4s not render in Safari.
 	# mostly-daemonized: nohup, stdout to /dev/null, sterrr to logfile
 	# (12/2021: this has not been tested recently)
-	nohup python -m SimpleHTTPServer "$port" 1>/dev/null 2>>$SERVER_LOG &
+	nohup python -m http.server "$port" 1>/dev/null 2>>$SERVER_LOG &
 	# capture server PID - last backgrounded command
 	server_pid_var=$!
     fi
     # status update to stdout
-    [ $port != $DEFAULT_PORT ] && p_text="-p $port" || p_text=""
-    echo "${PROGNAME}: Started the server.  Stop with: \`${PROGNAME} $p_text stop'" 
+    [ $port != $DEFAULT_PORT ] && p_text=" -p $port " || p_text=" "
+    echo "${PROGNAME}: Started the server.  Stop with: \`${PROGNAME}${p_text}stop'" 
 
 elif [ "$mode" == stop ]; then
     #
@@ -164,7 +162,7 @@ elif [ "$mode" == stop ]; then
     #
     if [ ! -r $SERVER_PID ]; then
 	echo "${PROGNAME}: No server is running on $host on port number $port." >&2
-	echo "${PROGNAME}: Try \`${PROGNAME} status', or check $SERVER_DIR for another port number?" >&2
+	echo "${PROGNAME}: Try \`${PROGNAME} status', or check $SERVER_VARDIR for another port number?" >&2
 	exit 1
     fi
     echo "${PROGNAME}: Killing server at $SERVER_PID."
@@ -174,8 +172,9 @@ elif [ "$mode" == status ]; then
     #
     # which servers are running?
     #
-    filepat="$SERVER_DIR/http-*.pid"
+    filepat="$SERVER_VARDIR/http-*.pid"
     if ls $filepat &> /dev/null; then
+	echo "Looking in: $SERVER_VARDIR"
 	echo "Found server(s):" 
 	for pfile in $filepat; do
 	    echo "$pfile"

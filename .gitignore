@@ -22,6 +22,10 @@ ipyparallel/*
 # network file system (NFS) hidden files
 .nfs*
 
+# exclude web server log files, except the README placeholder
+Local/www-service/var/*
+!Local/www-service/var/README
+
 # play area for documentation
 util/sandbox
 
