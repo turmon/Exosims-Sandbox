@@ -187,9 +187,9 @@ elif [ "$mode" == status ]; then
 	    echo "  " "$p_info"
 	    echo "  " "View at this URL: http://${x_host}.jpl.nasa.gov:${x_port}/sims"
 	    if wget -q -t 1 -O /dev/null "http://${x_host}.jpl.nasa.gov:${x_port}/sims/"; then
-		echo "  " "Server seems to respond OK."
+		echo "  " "Server seems to respond OK to requests over HTTP."
 	    else
-		echo "  " "Server does not respond."
+		echo "  " "Server does not respond to requests over HTTP."
 	    fi
 	done
     else
