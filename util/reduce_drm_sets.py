@@ -141,7 +141,7 @@ class EnsembleRun(object):
         try:
             with open(info_fn) as f:
                 info_items = csv.DictReader(f);
-                info = self.convert_sim_summary(info_items.next()) # it is a 1-line csv
+                info = self.convert_sim_summary(next(info_items)) # it is a 1-line csv
             info['path_count'] = path_count
         except IOError:
             info = {}
@@ -208,14 +208,14 @@ class EnsembleSummary(object):
         # copy index into a dict-of-dicts, EXP_NAME -> {param1:value1, param2:value2, ...}
         self.index = dict()
         for s in index:
-            s1 = {k:v for k,v in s.iteritems() if not k.endswith('_name')}
+            s1 = {k:v for k,v in s.items() if not k.endswith('_name')}
             self.index[s['run_name']] = s1
         # also create a scalarized version of the index, for CSV output
         # this is the same mapping as "index", but it expands value-lists into sequences of named scalars
         index_csv = dict()
-        for exp_name, d in self.index.iteritems():
+        for exp_name, d in self.index.items():
             index_csv[exp_name] = OrderedDict()
-            for param, value in d.iteritems():
+            for param, value in d.items():
                 if isinstance(value, list):
                     # expand the vector parameter "value" element-by-element
                     for inx, v1 in enumerate(value):
