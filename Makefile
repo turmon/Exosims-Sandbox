@@ -135,25 +135,6 @@ experiment-exists:
 # do not try to remake Makefile
 Makefile:;
 
-# ##
-# ## Playground: invoking python simulations
-# ##  --- not currently used ---
-
-# # NB, the -1 option does not exist now
-# RUNSIMS_PROG=add-sims.sh -1
-
-# NSIMS := 10
-# NUMBERS := $(shell seq 1 ${NSIMS})
-# SIMS := $(addprefix sim,${NUMBERS})
-# .PHONY: all-sims ${SIMS}
-# all-sims: ${SIMS}
-# 	@ echo "$@ success: made all sims"
-
-# ${SIMS}: sim%:
-# 	@ echo Running: ${RUNSIMS_PROG} $*
-
-# ##### (end playground)
-
 ########################################
 ## Simulation status
 
@@ -181,7 +162,7 @@ exp-reduce: experiment-exists
 	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
 
 # delegate to the 'reduce' for the named script
-reduce: script-exists sims/$(S)/reduce-info.csv 
+reduce: script-exists sims/$(S)/reduce-info.csv
 
 # perform one reduction
 sims/$(S)/reduce-info.csv: sims/$(S)/drm
