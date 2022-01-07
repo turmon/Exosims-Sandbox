@@ -411,9 +411,16 @@ if __name__ == '__main__':
         print("%s: Error: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
         sys.exit(1)
 
-    # get the experiment name from the directory - this is brittle,
-    # but have to do something
-    args.expt_name = os.path.dirname(args.infile[0]).split('/')[-1]
+    # get the experiment name from the directory - brittle, but expedient.
+    # examples of operation:
+    #  sims/example.exp/script_001  -> example.exp
+    #  sims/a.fam/b.fam/script_001  -> a.fam/b.fam
+    #  sims/a.fam/b.fam/script_001/ -> a.fam/b.fam
+    # Note, this may be used below to fill in args.outfile
+    infile0 = args.infile[0]
+    if infile0.endswith('/'):
+        infile0 = infile0[:-1] # kill trailing / if supplied
+    args.expt_name = '/'.join(os.path.dirname(infile0).split('/')[1:])
 
     # best practice is to explicitly give outfile
     if not args.outfile:
