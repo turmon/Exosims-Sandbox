@@ -106,7 +106,7 @@ if exist(sprintf(in_tmpl, 'promote', 'csv'), 'file'),
 else,
     t_promote = [];
     t_phist   = [];
-    fprintf('%s: Using null target promotion table: run reduce script to fix.\n', ...
+    fprintf('%s: Using null target promotion table: "make reduce" should fix.\n', ...
             mfilename);
 end
 % earth char list - can phase out the if/else as processing catches up (3/2019)
@@ -114,7 +114,7 @@ if exist(sprintf(in_tmpl, 'earth-char-list', 'csv'), 'file'),
     t_earth_chars = readtable(sprintf(in_tmpl, 'earth-char-list', 'csv'));
 else,
     t_earth_chars = [];
-    fprintf('%s: Using null earth-char table: run reduce script to fix.\n', ...
+    fprintf('%s: Using null earth-char table: "make reduce" should fix.\n', ...
             mfilename);
 end
 % yield-vs-time list - can phase out the if/else as processing catches up (4/2019)
@@ -123,7 +123,7 @@ if exist(sprintf(in_tmpl, 'yield-time', 'csv'), 'file'),
     t_yield_time = readtable(sprintf(in_tmpl, 'yield-time', 'csv'));
 else,
     t_yield_time = [];
-    fprintf('%s: Using null yield-vs-time table: run reduce script to fix.\n', ...
+    fprintf('%s: Using null yield-vs-time table: "make reduce" should fix.\n', ...
             mfilename);
 end
 % earth char counts - can phase out the if/else as processing catches up (6/2019)
@@ -131,7 +131,7 @@ if exist(sprintf(in_tmpl, 'earth-char-count', 'csv'), 'file'),
     t_earth_char_count = readtable(sprintf(in_tmpl, 'earth-char-count', 'csv'));
 else,
     t_earth_char_count = [];
-    fprintf('%s: Using null earth-char-count: run reduce script to fix.\n', ...
+    fprintf('%s: Using null earth-char-count: "make reduce" should fix.\n', ...
             mfilename);
 end
 

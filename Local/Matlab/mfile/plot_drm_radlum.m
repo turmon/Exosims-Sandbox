@@ -409,7 +409,7 @@ for plot_num = 1:length(char_plot_menu),
     end
     test_name = sprintf('h_RpL_%schar%s%smean', plot_prop_x, plot_prop_root, plot_prop);
     if ~any(strcmp(test_name, t_radlum.Properties.VariableNames)),
-        fprintf('%s: Property %s not in CSV, skipping the %s plot.', ...
+        fprintf('%s: Property %s not in CSV, skipping the %s plot.\n', ...
                 mfilename, test_name, plot_file);
         continue;
     end

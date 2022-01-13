@@ -253,7 +253,7 @@ for n = 1:N_plot,
     f_std  = sprintf('%s_%s', f, 'std');
     % guard against out-of-date csv files for strict mode
     if ~any(strcmp(f_mean, t_earth_counts.Properties.VariableNames)),
-        fprintf('Skipping earth chars (%s): redo make reduce to fix', f_mean);
+        fprintf('Skipping earth chars (%s): redo make reduce to fix.\n', f_mean);
         continue;
     end
     h_eb = plot(ct_samp_1+ct_offsets_1(n), ...
