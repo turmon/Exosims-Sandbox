@@ -85,7 +85,7 @@ shift $((OPTIND-1))
 # enforce argument count
 if [ $# -ne 1 ]; then
    echo "${PROGNAME}: Error: Script filename required." >&2
-   exit 1
+   exit 2
 fi
 
 # original, as-supplied, script name
@@ -95,9 +95,18 @@ script_orig="$1"
 if [ ! -r "$script_orig" ]; then
     echo "${PROGNAME}: Error: Given script \`$script_orig' not readable, exiting." >&2
     exit 1
-fi    
+elif [[ ! $script_orig == Scripts/* ]]; then
+    echo "${PROGNAME}: Error: Given script \`$script_orig' should be in the Scripts/ directory." >&2
+    exit 1
+fi
 
 ################################################################################
+
+# make script name into an ensemble name
+#  $(basename $1 .json) is OK for Scripts/sample.json but not for Scripts/dir/sample.json
+script2ensemble () {
+   echo "$1" | sed -e 's|Scripts/||' -e 's|.json||'
+}
 
 ## Generate the script to use
 
@@ -107,7 +116,7 @@ if [ $literal -eq 1 ]; then
     script="$script_orig"
 else
     # generate new script name
-    script=Scripts/$(basename "$script_orig" .json)-testrun.json
+    script=Scripts/$(script2ensemble $script_orig)-testrun.json
     cp -f "$script_orig" "$script"
     echo "${PROGNAME}: Copying the supplied script \`$script_orig' for the test."
 fi
@@ -127,7 +136,7 @@ fi
 ## Process the simulation directory
 
 # the name
-sim_dir=sims/$(basename $script .json)
+sim_dir=sims/$(script2ensemble $script)
 
 # guard against some fail of basename
 if [ $sim_dir == sims/ ]; then
@@ -138,7 +147,7 @@ fi
 ## Empty the sim directory if needed
 if [ $remove -eq 1 ]; then
     # in this case, work backward to ensure the file is there, so we know name-mangling worked
-    test_script=Scripts/$(basename $sim_dir).json
+    test_script=Scripts/$(echo "$sim_dir" | sed 's|sims/||').json
     if [ ! -r $test_script ]; then
 	echo "${PROGNAME}: Name mangling failed, should not happen." >&2
 	echo "${PROGNAME}: We think the simulation directory is \`$sim_dir' but cannot find \`$test_script'"
@@ -249,30 +258,30 @@ announce_progress 4 "Parallel add-sims"
 add-sims.sh -Z $script 100
 
 # the target for make
-script_base=$(basename $script .json)
+ensemble_name=$(script2ensemble $script)
 
 announce_progress 4 "Reductions"
-make S=$script_base reduce
+make S=$ensemble_name reduce
 announce_progress 5 "Plots (make html)"
-make S=$script_base html
+make S=$ensemble_name html
 
 announce_progress 6 "Path Ensemble"
-make -j 10 S=$script_base path-ensemble
+make -j 10 S=$ensemble_name path-ensemble
 announce_progress 7a "Path Movies"
-make -j 5 S=$script_base path-movie-5
+make -j 5 S=$ensemble_name path-movie-5
 announce_progress 7b "Path Final Frames"
-make -j 10 S=$script_base path-final-10
+make -j 10 S=$ensemble_name path-final-10
 
 announce_progress 8 "HTML page re-make"
-make S=$script_base html-only
+make S=$ensemble_name html-only
 
 announce_progress 9a "Observing-target timelines"
-make -j 5 S=$script_base obs-timeline-5
+make -j 5 S=$ensemble_name obs-timeline-5
 announce_progress 9b "Keepout vs. time"
-make -j 5 S=$script_base keepout-5
+make -j 5 S=$ensemble_name keepout-5
 
 announce_progress 10 "HTML page re-make (final)"
-make S=$script_base html-only
+make S=$ensemble_name html-only
 
 echo ""
 echo "${PROGNAME}: Finished running ($(date))."

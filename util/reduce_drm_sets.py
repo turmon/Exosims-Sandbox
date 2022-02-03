@@ -112,25 +112,25 @@ class EnsembleRun(object):
             self.Nens = 0 # (can be empty)
     
     def convert_sim_summary(self, raw_props):
-        # properties we want to convert: key, converter
+        # For each property that we want to convert: (key, converter, default_value)
         # (we don't use all of these now)
-        # for experiment, we need to strip the left-padding because of a hack
-        # I introduced, that left-pads names with a single space to control how they
-        # are ultimately displayed.  This was innocuous when names were just labels,
-        # but here they are meaningful identifiers
+        # for 'experiment', we must strip the left-padding because of a 
+        # hack that left-pads names with a single space to control how they
+        # are ultimately displayed.  This was innocuous when names were just 
+        # labels, but here they are meaningful identifiers
         prop_map = [
-            ('ensemble_size', int),
-            ('runtime', str), # actually a date
-            ('experiment', str.lstrip), # see above
-            ('detections_earth_all', float),
-            ('detections_earth_unique', float),
-            ('detections_unique_mean', float),
-            ('chars_unique_mean', float),
-            ('chars_earth_unique', float),
+            ('ensemble_size', int, 0),
+            ('runtime', str, '2000-01-01'), # actually a date
+            ('experiment', str.lstrip, 'Un-Named'), # see above
+            ('detections_earth_all', float, 0.0),
+            ('detections_earth_unique', float, 0.0),
+            ('detections_unique_mean', float, 0.0),
+            ('chars_unique_mean', float, 0.0),
+            ('chars_earth_unique', float, 0.0),
             ]
         props = {}
-        for key, converter in prop_map:
-            props[key] = converter(raw_props[key])
+        for key, converter, nullval in prop_map:
+            props[key] = converter(raw_props.get(key, nullval))
         return props
 
     def read_sim_summary(self, d):
@@ -189,8 +189,8 @@ class EnsembleSummary(object):
         '''Load an ensemble of simulations.'''
         # load index file, if given
         self.load_index(args)
-        # filter: only retain directories with DRM-sets
-        ens_files = [f for f in in_files if os.path.isdir(os.path.join(f, 'drm'))]
+        # filter: only retain input directories with reduced DRM-sets
+        ens_files = [f for f in in_files if os.path.isfile(os.path.join(f, 'reduce-info.csv'))]
         # save some useful state
         self.args = args
         self.ens_files = ens_files
@@ -290,7 +290,7 @@ class EnsembleSummary(object):
         extra_info = dict(
             user=os.environ['USER'],
             runtime=time.strftime("%Y-%m-%d_%H:%M"),
-            experiment=args.expt_name,
+            experiment=args.expt_name_readable,
             experiment_size=len(reductions), # only already-reduced ensembles
             )
         summary.update(extra_info)
@@ -369,7 +369,7 @@ def main(args):
     if ensemble_set.Nens == 0:
         print('%s: Warning: no actual Ensembles present.' % (args.progname, ))
     else:
-        print('%s: Found %d ensembles.' % (args.progname, ensemble_set.Nens))
+        print('%s: Found %d summarized ensembles.' % (args.progname, ensemble_set.Nens))
     # save a reference to the universe (stars and their attributes)
     print('%s: Reducing.' % args.progname)
     ensemble_set.load_and_reduce()
@@ -413,6 +413,8 @@ if __name__ == '__main__':
 
     # get the experiment name from the directory - brittle, but expedient.
     # examples of operation:
+    #  sims/exampleScript  -> <empty>
+    #  sims/exampleScript/ -> <empty>
     #  sims/example.exp/script_001  -> example.exp
     #  sims/a.fam/b.fam/script_001  -> a.fam/b.fam
     #  sims/a.fam/b.fam/script_001/ -> a.fam/b.fam
@@ -422,9 +424,12 @@ if __name__ == '__main__':
         infile0 = infile0[:-1] # kill trailing / if supplied
     args.expt_name = '/'.join(os.path.dirname(infile0).split('/')[1:])
 
-    # best practice is to explicitly give outfile
+    # readable version of expt_name
+    args.expt_name_readable = args.expt_name if args.expt_name else 'Root'
+
+    # best practice is to explicitly give outfile, this is the backup
     if not args.outfile:
-        args.outfile = ('sims/%s/reduce' % args.expt_name) + '-%s.%s'
+        args.outfile = os.path.join('sims', args.expt_name, 'reduce-%s.%s')
     if args.outfile.count('%s') != 2:
         print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)

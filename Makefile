@@ -40,7 +40,7 @@
 #   exp-movie-M-*      /   For movie, can make M movies in each of N ensembles.
 # (3) Ipython-parallel ("ipp") targets --
 #   Note: targets apply only to the machine where the "make" is run (e.g., aftac1).
-#   ipp-create: create an ipython-parallel profile for this ensemble (use just once).
+#   ipp-create: create an ipython-parallel profile for this user (use just once).
 #       Copies several files into the ipyparallel directory.
 #       To undo, see ipp-nuke, below.
 #   ipp-start: start the ipython-parallel controller + engines
@@ -64,8 +64,18 @@
 #
 ## turmon oct 2017, mar 2018
 
-# clear builtin suffix rules (e.g., for .c, etc.)
+# set the default shell
+SHELL:=/bin/sh
+
+# clear builtin suffix rules (for .c, etc.)
 .SUFFIXES:
+
+# clear builtin pattern rules to get files out of source control
+%: %,v
+%: RCS/%,v
+%: RCS/%
+%: s.%
+%: SCCS/s.%
 
 ## # debugging: echo rule chains
 # $(warning Debug mechanism on)
@@ -161,13 +171,43 @@ exp-reduce: experiment-exists
 	@ echo "Make: Reducing overall experiment..."
 	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
 
-# delegate to the 'reduce' for the named script
-reduce: script-exists sims/$(S)/reduce-info.csv
+# 'make reduce' flows from sims/ down to $S/ through DIR/reduce-info.csv targets
+# in all intermediate dirs: see the PROPAGATE_REDUCTION_UPWARD mechanism below
+reduce: script-exists sims/reduce-info.csv
 
-# perform one reduction
+# dependence for a bottom-level reduction in sims/$S
 sims/$(S)/reduce-info.csv: sims/$(S)/drm
 	@ echo "Make: Reducing $< ..."
 	$(REDUCE_PROG) -O sims/$(S)/reduce-%s.%s sims/$(S)/drm/*.pkl
+
+## Below: a variable, a macro, and a foreach link the top-level reduction
+## target (sims/reduce-info.csv) to the base-level one (sims/$S/reduce-info.csv)
+## This complexity is unfortunate but it allows subdirectories of scripts.
+
+# this awk one-liner transforms sims/$S into a chain of intermediate directories, e.g.,
+# S=HabExSample [drms are in sims/HabExSample/drm/...] -->
+#   sims/HabExSample/reduce-info.csv
+# S=test.fam/Subdirectory_Test [drms are in sims/test.fam/Subdirectory_Test/drm/...] -->
+#   sims/test.fam/reduce-info.csv
+#   sims/test.fam/Subdirectory_Test/reduce-info.csv
+REDUCE_CHAIN:=$(shell echo sims/$S | awk -F/ '{for(i=2; i<=NF; i++) {for (j=1; j<=i; j++) printf "%s/", $$j; printf "reduce-info.csv\n";}}')
+
+# ensemble reduction uses rules of the form:
+# ParentDir(dirname(PATH/reduce-info.csv)): PATH/reduce-info.csv
+# (the dirname construct is inelegant but make's own $(dir ...) leaves trailing /)
+# TODO: remove /reduce-info.csv from REDUCE_CHAIN, then use $(dir ...) on naked dirname
+# TODO: rule gives syntax error target contains an = sign -- as for many current experiments
+define PROPAGATE_REDUCTION_UPWARD
+$(shell dirname $$(dirname $1))/reduce-info.csv: $1
+	@ echo "Make: Reducing parent: $$(@D)"
+	$(REDUCE_ENS_PROG) -O $$(@D)/reduce-%s.%s $$(@D)/*/
+
+endef
+
+# expand the above rule into one transformation for each intermediate directory
+# e.g., for a script at top-level, this generates just one rule --
+#   sims/reduce-info.csv: sims/ExampleScript/reduce-info.csv
+$(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(LINK))))
 
 ########################################
 ## Graphics - detections, fuel use
@@ -239,10 +279,11 @@ sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
 # as a ceiling on the number of path movie targets requested.  The .mp4 targets,
 # in turn, are made by $(PATH_PROG) as shown above.
 # The obs-timelines are not movies, but piggy-back on this same setup.
-## Note: if sims/$(S)/drm/ does not exist, e.g. for an "experiment", we get
-## an error that seems to be caused by syntactic mis-construction of the make 
-## rule in this case.  The extra "path-dummy" target fixes this.
+## Note: if sims/$(S)/drm/ does not exist, e.g., an "experiment", we get
+## an error that seems caused by syntactic mis-construction of the (empty)
+## dependent clause in this case. The extra "path-dummy" target fixes this.
 path-dummy:;
+.PHONY: path-dummy
 
 define MAKE_N_MOVIES
 .PHONY: path-movie-$1 path-final-$1 obs-timeline-$1
@@ -271,7 +312,7 @@ $(foreach N,$(MOVIE_COUNTS),$(eval $(call MAKE_N_MOVIES,$N)))
 .PHONY: html html-all html-only
 
 # delegate to the 'html/index.html' for the named script
-html: script-exists sims/$(S)/html/index.html;
+html: script-exists reduce sims/$(S)/html/index.html;
 
 # same as html, but omit re-making the graphics
 #   for experiments, generates the top-level index only

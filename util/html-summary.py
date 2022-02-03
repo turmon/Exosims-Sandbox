@@ -8,7 +8,9 @@
 #   html-summary.py [-r] [-i] [SIM ...]
 #
 # Optionally (-i), a top-level index.html will be updated as a table of contents
-# for all the simulations.  You generally want this.
+# for all the simulations. You generally want this.
+# Also for "-i", any intermediate index.html's between sims/index.html and
+# sims/SIM/index.html will be created; this is needed when SIM is nested ("families").
 #
 # Options are:
 #  -i => generate the top-level index.html after generating any named SIM's.
@@ -735,11 +737,16 @@ def index_ensemble(args, path_sim):
             sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
 
 def exp_summary(d):
-    r'''Summarize one experiment directory as an OrderedDict of strings.'''
+    r'''Summarize one experiment directory as an OrderedDict of strings.
+
+    TODO: Make sure all info that summarizes an Experiment or Family is
+    present in the Experiment reduce-info.csv file (or another such file). 
+    In particular, the count of graphics would be nice, so it can be 
+    propagated upward. See also reduce-drm-sets.py.'''
     # For now, this summary (for multi-ensembles) just uses the same
     # summary file as the single-ensemble case.
     rv = sim_summary(d)
-    # could glob for these, but not worth the time
+    # no time to glob for these ... should put in the reduce-info.csv
     unknown_value = '(N/A)' # ()'s help sort order
     rv['path_count'] = unknown_value
     rv['gfx_count'] = unknown_value
@@ -825,7 +832,7 @@ def index_all(args, startpath, title, uplink=None):
             # break below => loops once => "dirs" is just top-level subdirs of startpath
             for d in sorted(dirs):
                 # link to the sim below, summarize the sim in a list of a few properties
-                if d.endswith('.exp'):
+                if d.endswith('.exp') or d.endswith('.fam'):
                     alink = hh.link('%s/index.html' % d, d, inner=True)
                     properties = exp_summary(os.path.join(root, d))
                     hh.table_row([alink] + list(properties.values()))
@@ -838,6 +845,8 @@ def index_all(args, startpath, title, uplink=None):
                     # recurse (1 level max) down into sims/d -- no-op if no drm/ there
                     index_ensemble(args, os.path.join(startpath, d))
             break # important: goes only one level deep!
+        # TODO: put in one more hh.table_row() ... or a bit of text ... for the
+        # summary over the whole set of ensembles in the table
         hh.table_end()
 
 ############################################################
@@ -845,6 +854,39 @@ def index_all(args, startpath, title, uplink=None):
 # Main routine
 #
 ############################################################
+
+def get_sims_and_indexes(do_index, sim_orig):
+    '''Return a list of all parent paths of a list of input paths sim_orig.
+
+    If indexing is turned on (-i option), then this code should index the given
+    argument sims (sim_orig) as well as all parent sim directories. So if 
+    sim_orig = ['test.fam/ExampleScript'], then ExampleScript should be indexed,
+    and then test.fam, and finally sims. This code returns a list of all 
+    such parent sims.'''
+    def parent_sims(s):
+        '''Return a list of all parent paths of a single input path s.'''
+        subdirs = os.path.normpath(s).split(os.sep)
+        return [(depth+1, os.path.join(*subdirs[:depth+1])) for depth in range(len(subdirs))]
+
+    if not do_index:
+        return sim_orig
+    else:
+        sim_index = dict()
+        for s in sim_orig:
+            for depth, s in parent_sims(s):
+                if s not in sim_orig:
+                    sim_index[s] = depth
+        depth_max = max([0] + list(sim_index.values()))
+        # ensure the original paths appear first
+        sim_new = sim_orig[:]
+        # if   sim_orig  = ['test.fam/f1.fam/f2.fam/ExampleScript']
+        # then sim_index = {'test.fam': 1, 'test.fam/f1.fam': 2, 'test.fam/f1.fam/f2.fam': 3}
+        # below loop runs depth_max...1, but not 0
+        for d in range(depth_max, 0, -1):
+            # extract and append all sims at depth == d
+            sim_adds = [k for k in sim_index if sim_index[k] == d]
+            sim_new.extend(sim_adds)
+        return sim_new
 
 def main(args):
     r'''Main routine: Summarize files below a given location to HTML.'''
@@ -855,12 +897,21 @@ def main(args):
     global DIAGNOSE
     DIAGNOSE = args.DIAGNOSE
 
-    # this supports running with: CMD -i SIM, which will generate the
+    # TODO: transform this to get a list of sims and iterate over them.
+    # How: move the "if" below into its own "dispatcher" subroutine, and handle
+    # the final index_all() of the root sims by adding the root dir to sim_list.
+    
+    # this call supports running with: CMD -i SIM, which will generate the
     # index for SIM, and then regenerate the global index
-    for sim in args.sim:
+    sim_list = get_sims_and_indexes(args.index, args.sim[:])
+    #print(sim_list)
+    for sim in sim_list:
         sim_dir = os.path.join('sims', sim)
         if sim.endswith('.exp'):
             index_all(args, sim_dir, 'Experiment Root: ' + sim.split('/')[-1], uplink='Sandbox')
+        elif sim.endswith('.fam'):
+            index_all(args, sim_dir, 'Family Root: ' + sim.split('/')[-1], uplink='Sandbox')
+            print('    [index_all branch, sim_dir = {}]'.format(sim_dir))
         else:
             index_ensemble(args, sim_dir)
     # re-do top-level index to sync with results of loop above
