@@ -40,7 +40,7 @@ PROGNAME=$(basename $0)
 
 # make2graph program
 #  a short C program from github with only standard dependencies
-MAKE2GRAPH=~turmon/makefile2graph/makefile2graph/make2graph
+MAKE2GRAPH=~turmon/unix/bin/x86_64/make2graph
 
 # default script names
 # the .exp is special, its ensembles have no = signs
