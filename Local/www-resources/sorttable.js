@@ -151,6 +151,9 @@ sorttable = {
 	        //sorttable.shaker_sort(row_array, this.sorttable_sortfunction);
 	        /* and comment out this one */
 	        row_array.sort(this.sorttable_sortfunction);
+		/* turmon following advise at source webpage, put this 
+                 * in so the initial sort is high-to-low not low-to-high */
+                row_array.reverse();
 
 	        tb = this.sorttable_tbody;
 	        for (var j=0; j<row_array.length; j++) {
