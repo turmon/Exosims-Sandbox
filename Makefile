@@ -1,52 +1,50 @@
 # Makefile for EXOSIMS data reduction and plot generation.
 #
 # Usage:
-#    $ make <target>
-#  or
-#    $ make S=SCENARIO <target>
-# where <target> is one of the below.  Use "make -B" to force a target to be
-# regenerated, e.g., when the underlying plot code changes.
-# In general, the S=SCENARIO argument is unused for ipython-parallel targets,
-# but required for data reduction or plotting.  The SCENARIO is the base name
-# of the relevant script file, i.e., for Scripts/HabEx_4m_TS_20180201.json,
-# use S=HabEx_4m_TS_20180201
+#    $ make [ -B ] S=SCENARIO TARGET
+#    $ make TARGET
+# where TARGET is one of the below.
 #
-# Simulations are added using the `add-sim.sh' command, separate from "make".
+# * make -B forces the action, e.g., when the plot code changes.
+# * The S=SCENARIO argument is required for data reduction, plots, and html
+#   SCENARIO is the base name of the relevant script file, e.g., for
+#   Scripts/HabEx_4m_TS_20180201.json, use S=HabEx_4m_TS_20180201
+# * Alternately: set S to the json script, or the sim directory, so that
+#   shell filename completion can fill in the name.
+# * Simulations are added by the `add-sim.sh' command, separate from "make".
 #
 # Targets:
-# (1) Data reduction and plotting targets --
-#   Note, all these targets require a scenario name.
-#   status: list the current contents of DRMs for this scenario (like "ls")
-#   reduce: reduce DRMs to tabulated CSV files for later plotting
-#   graphics: make detections-vs-time plots, and radius-luminosity bar plots.
+# (1) Data reduction and plotting
+#   All these targets require a scenario name.
+#   reduce:        reduce DRMs to tabulated CSV files for later plotting
+#   graphics:      make detections-vs-time plots, and radius-luminosity bar plots.
+#   html:          re-generate the index.html that summarizes the given scenario
+#   html-only:     same as html, but do not re-reduce the data or remake graphics.
 #   path-ensemble: make lon/lat plots of slews taken by an ensemble.
-#   path-movie-N: make "N" path-movies and final frames 
-#   path-final-N: make "N" final frames, only
-#   obs-timeline-N: make "N" observing-target timelines
-#   keepout-N: make "N" keepout-vs-time plots
-#     (above targets make selected graphics for N sims chosen from those present,
-#     for N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
-#   html: re-generate the index.html that summarizes the given scenario
-#   html-only: same as html, but do not re-reduce the data or remake graphics.
-# (2) Multi-script reduction and plotting targets --
+#   path-movie-N:  make "N" path-movies and final frames 
+#   path-final-N:  make "N" final frames, only
+#   obs-timeline-N:make "N" observing-target timelines
+#   keepout-N:     make "N" keepout-vs-time plots
+#     (above targets make graphics for N arbitrary sims from the scenario, 
+#      N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
+#   status:        list the current contents of DRMs for this scenario (like "ls")
+# (2) Multi-script reduction and plotting
 #   Note, all these targets require an *experiment* name.
-#   exp-reduce: makes "reduce" for all ensembles within the experiment
-#   exp-html-top-N: makes html (inc. graphics) for the N top (by yield) ensembles
-#   exp-html-mix-N: makes html (inc. graphics) for N selected-arbitrarily ensembles
-#   exp-html: makes html for 10 top + 20 selected ensembles - can use make -j2
+#   exp-reduce:      makes "reduce" for all ensembles within the experiment
+#   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
+#   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
+#   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -j2
 #   exp-path-ensemble* \   Same pattern as html above with -mix or -top, and a
 #   exp-graphics*       \  number saying how many.  Also, can leave off -top-N
 #   exp-html-only*      /  and just make 10 top + 20 selected.
 #   exp-movie-M-*      /   For movie, can make M movies in each of N ensembles.
-# (3) Ipython-parallel ("ipp") targets --
+# (3) Ipython-parallel ("ipp")
 #   Note: targets apply only to the machine where the "make" is run (e.g., aftac1).
 #   ipp-create: create an ipython-parallel profile for this user (use just once).
-#       Copies several files into the ipyparallel directory.
 #       To undo, see ipp-nuke, below.
 #   ipp-start: start the ipython-parallel controller + engines
-#       Note: If EXOSIMS_ENGINE_N (an integer) is exported from the environment,
-#       this many engines will be started up, otherwise, the system-default
-#       will be used.  To use this, run, from the shell:
+#       Note: If EXOSIMS_ENGINE_N is exported from the environment, this many
+#       engines will be started, otherwise, the default is used. From shell:
 #         $ EXOSIMS_ENGINE_N=8 make ipp-start
 #   ipp-stop: stop the above.  See also ipp-kill, below.
 #   ipp-status: report status of the controller + engines
@@ -57,12 +55,12 @@
 #       are orphaned.  ipp-kill identifies these by process id, and kills them.
 #   ipp-nuke: deletes your ipython-parallel profile.  The inverse of ipp-create.
 #       (Note: attempts to "ipp-kill" first, so as to not leave engines running.)
-# (4) Web-server targets:
+# (4) Web-server
 #   html-start: start Apache httpd web-server
 #   html-stop: stop Apache httpd web-server
 #   html-status: show running web-servers, if any
 #
-## turmon oct 2017, mar 2018
+## turmon oct 2017, mar 2018, feb 2022
 
 # set the default shell
 SHELL:=/bin/sh
@@ -81,6 +79,31 @@ SHELL:=/bin/sh
 # $(warning Debug mechanism on)
 # OLD_SHELL := $(SHELL)
 # SHELL = $(warning Building $@$(if $<, (from $<))$(if $?, ($? newer)))$(OLD_SHELL)
+
+## Normalize the S input from a (possible) file/dir name -> script name
+# 1: ensure S is simply-expanded variable, so it can be redefined
+ifdef S
+ # S_COPY serves as an indicator that S was supplied
+ S_COPY:=$(S)
+ override undefine S
+ S:=$(S_COPY)
+else
+ S:=ScriptNotDefined
+endif
+# 2: remove some pathname components, if present
+# 2a: get script basename if given as a file (S=Scripts/foo.json -> S=foo)
+S := $(patsubst Scripts/%.json,%,$(S)) 
+# 2b: pull off leading sims/, if present (S=sims/foo -> S=foo)
+S := $(patsubst sims/%,%,$(S)) 
+# 2b: strip trailing / which could be present (S=sims/foo/ -> S=foo)
+S := $(patsubst %/,%,$(S))
+# 2c: strip added space at the end of S
+S := $(strip $(S))
+# 3: repeat script value back, if supplied
+ifdef S_COPY
+ $(info Make: Scenario name: "$(S)")
+endif
+
 
 # options for ipcluster startup
 IPCLUSTER_OPT:=--daemonize --clean-logs=True
