@@ -1,6 +1,9 @@
 # skip DRM output, graphics, csv's
 sims
 
+# skip focused analysis/experiments/results
+Analyses
+
 # skip EXOSIMS source code
 EXOSIMS
 
