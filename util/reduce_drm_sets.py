@@ -407,9 +407,14 @@ if __name__ == '__main__':
         print('%s: Error: Need at least one input ensemble.' % args.progname)
         sys.exit(1)
 
+    # the code for "make exp-reduce" supplies the index filename, which flows to here
+    # bona fide experiments should have the s_index.json file, but families will not
+    # expedient solution: don't insist on it, so that families can be reduced
     if args.indexfile and not os.access(args.indexfile, os.R_OK):
-        print("%s: Error: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
-        sys.exit(1)
+        print("%s: Warning: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
+        print("%s: Proceeding without supplied index file." % (args.progname, ))
+        args.indexfile = None
+        # sys.exit(1)
 
     # get the experiment name from the directory - brittle, but expedient.
     # examples of operation:
