@@ -104,6 +104,8 @@ ifdef S_COPY
  $(info Make: Scenario name: "$(S)")
 endif
 
+# needed to escape equal signs in some Experiments, alas
+EQUAL:= =
 
 # options for ipcluster startup
 IPCLUSTER_OPT:=--daemonize --clean-logs=True
@@ -183,7 +185,7 @@ exp-preflight:
 ## Data reductions
 ##
 .PHONY: reduce exp-reduce
-# (there may be a non-for-loop way to do this)
+# (TODO: a non-for-loop way to do this)
 exp-reduce: experiment-exists
 	@ for d in sims/$(S)/s_*; do \
 	        [ -d $$d/drm ] || continue; \
@@ -203,34 +205,41 @@ sims/$(S)/reduce-info.csv: sims/$(S)/drm
 	@ echo "Make: Reducing $< ..."
 	$(REDUCE_PROG) -O sims/$(S)/reduce-%s.%s sims/$(S)/drm/*.pkl
 
-## Below: a variable, a macro, and a foreach link the top-level reduction
-## target (sims/reduce-info.csv) to the base-level one (sims/$S/reduce-info.csv)
-## This complexity is unfortunate but it allows subdirectories of scripts.
+# Below: a variable, a macro, and a foreach link the top-level reduce
+# target (sims/reduce-info.csv) to the base-level one (sims/$S/reduce-info.csv)
+# This allows subdirectories of scripts.
 
-# this awk one-liner transforms sims/$S into a chain of intermediate directories, e.g.,
-# S=HabExSample [drms are in sims/HabExSample/drm/...] -->
-#   sims/HabExSample/reduce-info.csv
-# S=test.fam/Subdirectory_Test [drms are in sims/test.fam/Subdirectory_Test/drm/...] -->
-#   sims/test.fam/reduce-info.csv
-#   sims/test.fam/Subdirectory_Test/reduce-info.csv
-REDUCE_CHAIN:=$(shell echo sims/$S | awk -F/ '{for(i=2; i<=NF; i++) {for (j=1; j<=i; j++) printf "%s/", $$j; printf "reduce-info.csv\n";}}')
+# awk one-liner -- transforms $S into a chain of intermediate directories:
+#   S=HabExSample [drms in sims/HabExSample/drm/...] -->
+#     HabExSample
+#   S=a.fam/b.fam/sub [drms in sims/a.fam/b.fam/sub/drm/...] -->
+#     a.fam
+#     a.fam/b.fam
+#     a.fam/b.fam/sub
+REDUCE_CHAIN:=$(shell echo $S | awk -F/ '{for(i=1; i<=NF; i++) {for (j=1; j<i; j++) printf "%s/", $$j; printf "%s\n", $$i;}}')
 
-# ensemble reduction uses rules of the form:
-# ParentDir(dirname(PATH/reduce-info.csv)): PATH/reduce-info.csv
-# (the dirname construct is inelegant but make's own $(dir ...) leaves trailing /)
-# TODO: remove /reduce-info.csv from REDUCE_CHAIN, then use $(dir ...) on naked dirname
-# TODO: rule gives syntax error target contains an = sign -- as for many current experiments
+# The chain of REDUCE_ENS_PROG invocations uses rules of the form:
+#   ParentDir(LINK)/reduce-info.csv: LINK/reduce-info.csv
+# where LINK (a.k.a. $1 here) is, for example: sims/HabExSample
+# below, note $(dir $1) preserves the trailing slash on the enclosing dir
 define PROPAGATE_REDUCTION_UPWARD
-$(shell dirname $$(dirname $1))/reduce-info.csv: $1
+$(dir $1)reduce-info.csv: $1/reduce-info.csv
 	@ echo "Make: Reducing parent: $$(@D)"
 	$(REDUCE_ENS_PROG) -O $$(@D)/reduce-%s.%s $$(@D)/*/
-
 endef
 
-# expand the above rule into one transformation for each intermediate directory
-# e.g., for a script at top-level, this generates just one rule --
-#   sims/reduce-info.csv: sims/ExampleScript/reduce-info.csv
-$(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(LINK))))
+# Expand the above rule into one transformation for each intermediate dir.
+#   for S=HabExSample, just one rule --
+#     sims/reduce-info.csv: sims/HabExSample/reduce-info.csv
+#   for S=a.fam/b.fam/sub, three rules, such as:
+#     sims/a.fam/reduce-info.csv: sims/a.fam/b.fam/reduce-info.csv
+# Some instances of LINK below can have embedded = signs (Experiments), and
+# these will cause a make parse error in the define above. (The = will
+# make the "targ=et: depende=ncy" look like a variable being set.)
+# Thus, the reduction rule line will seem to not be connected to a rule.
+# Solution: sub in $(EQUAL) for every literal = in the target and dependency.
+$(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(subst =,$$(EQUAL),sims/$(LINK)))))
+
 
 ########################################
 ## Graphics - detections, fuel use
