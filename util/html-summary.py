@@ -203,8 +203,8 @@ class HTML_helper(object):
         self.list_level = 0
         self.list_type = 'UnknownList' # ul, etc.
         self.list_attrs = {}
-        # are we in the middle of a table?
-        self.in_table = False
+        # where are we in a table? (0=outside; 1=thead; 2=tbody; 3=tfoot)
+        self.in_table = 0
     def __enter__(self):
         r'''Support with ... as usage pattern.'''
         return self
@@ -250,7 +250,7 @@ class HTML_helper(object):
             self.f.write(self.indent(  ) + '</li>\n')
             self.f.write(self.indent(-1) + '</%s>\n' % self.list_type)
             self.list_level -= 1
-        assert not self.in_table, 'Terminated HTML construction within a table'
+        assert self.in_table == 0, 'Terminated HTML construction within a table'
     def toc_here(self, txt):
         r'''Insert TOC marker here, later to be replaced with a header-based TOC.'''
         # mark where the toc will be inserted later, once finished
@@ -275,25 +275,53 @@ class HTML_helper(object):
     ##
     def table_top(self, cols, elem_class=None):
         # allows multiple calls for multi-line table header (<th> elements)
-        # by maintaining "in_table" property
+        # by maintaining "in_table" => 0=outside; 1=thead; 2=tbody; 3=tfoot
         attrs = ['']*len(cols) # unused at present
         class_text = ' class="%s"' % elem_class if elem_class else ''
-        if not self.in_table:
+        if self.in_table == 0:
             self.f.write(self.indent() + ('<table%s>\n' % class_text) )
-            self.indent(1)
-            self.in_table = True
+            self.f.write(self.indent(1) + '<thead>\n')
+            self.in_table = 1
+        elif self.in_table != 1:
+            assert False, 'Got table_top within a table body or foot'
         self.f.write(self.indent() + '<tr>\n')
         self.f.write(''.join(['%s<th%s>%s</th>\n' %
                                   (self.indent(), attrs[i], cols[i]) for i in range(len(cols))]))
         self.f.write(self.indent() + '</tr>\n')
     def table_end(self):
-        assert self.in_table, 'Mismatched table_top/table_end sequence'
+        if self.in_table == 0:
+            assert False, 'Mismatched table_top/table_end sequence'
+        elif self.in_table == 1:
+            self.f.write(self.indent() + '</thead>\n') # empty is OK
+        elif self.in_table == 2:
+            self.f.write(self.indent() + '</tbody>\n')
+        elif self.in_table == 3:
+            self.f.write(self.indent() + '</tfoot>\n')
         self.f.write(self.indent(-1) + '</table>\n')
-        self.in_table = False
+        self.in_table = 0
     def table_row(self, cols):
+        if self.in_table == 0:
+            assert False, 'Got table_row outside table_top/table_end'
+        elif self.in_table == 1:
+            self.f.write(self.indent() + '</thead>\n')
+            self.f.write(self.indent() + '<tbody>\n')
+            self.in_table = 2 # thead -> tbody
+        elif self.in_table == 2:
+            pass # <tr> within tbody
+        elif self.in_table == 3:
+            pass # <tr> within tfoot is OK
         self.f.write(self.indent() + '<tr>\n')
         self.f.write(''.join(['%s<td>%s</td>\n' % (self.indent(), col) for col in cols]))
         self.f.write(self.indent() + '  </tr>\n')
+    def table_foot(self):
+        if self.in_table == 1:
+            self.f.write(self.indent() + '</thead>\n') # head->foot OK
+        elif self.in_table == 2:
+            self.f.write(self.indent() + '</tbody>\n') # body->foot
+        else:
+            assert False, 'Unexpected table_foot'
+        self.f.write(self.indent() + '<tfoot>\n')
+        self.in_table = 3
     def header(self, txt, level=2):
         self.id_count += 1
         marker = ('sec_%d' % self.id_count) if (self.toc or self.nav) else '' # toc id's would clash w/ outer id's
@@ -814,7 +842,8 @@ def sim_summary(d):
 def index_all(args, startpath, title, uplink=None):
     r'''Make a summary table of all ensembles below startpath.
 
-    If args.recursive, descend recursively and summarize child directories.'''
+    If args.recursive, descend recursively and summarize child directories
+    to a depth of one level.'''
     print('Indexing:', startpath)
     # output HTML
     filename = os.path.join(startpath, 'index.html')
@@ -828,6 +857,7 @@ def index_all(args, startpath, title, uplink=None):
         hh.header('Ensembles')
         # make the table be sortable so that the JS sorter knows about it
         hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
+        item_num = 0
         for root, dirs, files in os.walk(startpath):
             # break below => loops once => "dirs" is just top-level subdirs of startpath
             for d in sorted(dirs):
@@ -836,18 +866,24 @@ def index_all(args, startpath, title, uplink=None):
                     alink = hh.link('%s/index.html' % d, d, inner=True)
                     properties = exp_summary(os.path.join(root, d))
                     hh.table_row([alink] + list(properties.values()))
+                    item_num += 1
                 elif os.path.isdir(os.path.join(root, d, 'drm')):
                     alink = hh.link('%s/html/index.html' % d, d, inner=True)
                     properties = sim_summary(os.path.join(root, d))
                     # format the properties as a row
                     hh.table_row([alink] + list(properties.values()))
+                    item_num += 1
+                # descend into sims/d -- no-op if no sims/d/drm/ directory
                 if args.recurse:
-                    # recurse (1 level max) down into sims/d -- no-op if no drm/ there
                     index_ensemble(args, os.path.join(startpath, d))
             break # important: goes only one level deep!
-        # TODO: put in one more hh.table_row() ... or a bit of text ... for the
-        # summary over the whole set of ensembles in the table
+        # summary over the whole set of ensembles in the table (root/reduce-info.csv)
+        properties = exp_summary(root)
+        #properties = sim_summary(None)
+        hh.table_foot()
+        hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
         hh.table_end()
+
 
 ############################################################
 #
@@ -864,18 +900,20 @@ def get_sims_and_indexes(do_index, sim_orig):
     and then test.fam, and finally sims. This code returns a list of all 
     such parent sims.'''
     def parent_sims(s):
-        '''Return a list of all parent paths of a single input path s.'''
+        '''Return a list of (depth, path) for all parent paths of a single input path s.'''
         subdirs = os.path.normpath(s).split(os.sep)
         return [(depth+1, os.path.join(*subdirs[:depth+1])) for depth in range(len(subdirs))]
 
     if not do_index:
         return sim_orig
     else:
+        # get a dict mapping sim_directories -> depth
+        # (but only include dirs not in sim_orig)
         sim_index = dict()
         for s in sim_orig:
             for depth, s in parent_sims(s):
                 if s not in sim_orig:
-                    sim_index[s] = depth
+                    sim_index[s] = depth # collisions: don't care
         depth_max = max([0] + list(sim_index.values()))
         # ensure the original paths appear first
         sim_new = sim_orig[:]
