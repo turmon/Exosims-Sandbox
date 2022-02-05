@@ -363,8 +363,10 @@ class HTML_helper(object):
         if txt:
             self.f.write(self.indent() + '%s\n' % txt)
         self.list_level = level
-    def paragraph(self, txt=''):
+    def paragraph(self, txt='', br=False):
         self.f.write(self.indent() + '<p>' + txt + '\n')
+        if br:
+            self.f.write(self.indent() + '<br>\n')
     def text(self, txt, br=False):
         self.f.write(self.indent() + '%s\n' % txt)
         if br:
@@ -883,6 +885,10 @@ def index_all(args, startpath, title, uplink=None):
         hh.table_foot()
         hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
         hh.table_end()
+        hh.paragraph('In the summary, ensemble size is cumulative.', br=True)
+        hh.text('Reduction date and user reflect the most recent reduction.', br=True)
+        hh.text('Yields reflect the maximum over all ensembles.', br=True)
+    return
 
 
 ############################################################
