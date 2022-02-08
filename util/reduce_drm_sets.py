@@ -120,7 +120,8 @@ class EnsembleRun(object):
         # labels, but here they are meaningful identifiers
         prop_map = [
             ('ensemble_size', int, 0),
-            ('runtime', str, '2000-01-01'), # actually a date
+            ('runtime', str, '2000-01-01_00:00'), # actually a date
+            ('simtime', str, '2000-01-01_00:01'), # actually a date
             ('experiment', str.lstrip, 'Un-Named'), # see above
             ('detections_earth_all', float, 0.0),
             ('detections_earth_unique', float, 0.0),
@@ -266,6 +267,10 @@ class EnsembleSummary(object):
             for r in reductions:
                 accum[attr].append(r[attr])
 
+        # prepare to get the latest simtime -- be somewhat robust if absent
+        simtimes = [r['simtime'] for r in reductions if 'simtime' in r]
+        simtimes.sort()
+
         # 2: take means, std's, quantiles of the various attributes
         #    some QOIs can have NaNs (eg, char_snr => from empty RpL bins;
         #    h_star_det_earth_frac => from stars without Earths)
@@ -290,6 +295,7 @@ class EnsembleSummary(object):
         extra_info = dict(
             user=os.environ['USER'],
             runtime=time.strftime("%Y-%m-%d_%H:%M"),
+            simtime=simtimes[-1],
             experiment=args.expt_name_readable,
             experiment_size=len(reductions), # only already-reduced ensembles
             )
@@ -347,6 +353,7 @@ class EnsembleSummary(object):
         saved_field_map = [
             ('user', 'user'),
             ('runtime', 'runtime'),
+            ('simtime', 'simtime'),
             ('experiment_size', 'experiment_size'),
             ('chars_earth_unique', 'chars_earth_unique_max'),
             ('detections_earth_all', 'detections_earth_all_max'),

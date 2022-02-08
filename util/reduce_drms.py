@@ -2675,9 +2675,16 @@ class EnsembleSummary(object):
         # 0: metadata and scalars
         fn = args.outfile % ('info', 'csv')
         print('\tDumping to %s' % fn)
+        # time of newest simulation (modtime of drm directory)
+        simtime = '2000-01-02_03:04'
+        if len(args.infile) > 0:
+            drm0 = os.path.dirname(args.infile[0])
+            if os.path.isdir(drm0):
+                simtime = time.strftime("%Y-%m-%d_%H:%M", time.localtime(os.path.getmtime(drm0)))
         info = dict(user=os.environ['USER'],
                     runtime=time.strftime("%Y-%m-%d_%H:%M"),
-                    experiment=(args.expt_name),
+                    simtime=simtime,
+                    experiment=args.expt_name,
                     ensemble_size=self.Ndrm_actual,
                     detections_unique_mean=self.summary['dets_unique_mean'],
                     chars_unique_mean=self.summary['chars_unique_mean'],
@@ -2688,7 +2695,7 @@ class EnsembleSummary(object):
                                           self.summary['exoE_xdet_alt_mean']),
                     chars_earth_unique=(self.summary['exoE_char_full_mean'] +
                                         self.summary['exoE_char_part_mean']),
-                    chars_earth_strict=(self.summary['exoE_char_strict_mean']),
+                    chars_earth_strict=self.summary['exoE_char_strict_mean'],
                         )
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=sorted(info.keys()))
@@ -3195,7 +3202,8 @@ if __name__ == '__main__':
         # the wildcard appears here when invoked with arg .../drm/*.pkl, and there are no .pkl's
         # this fix is a bit hacky (there "could" be a drm with a star in its name),
         # but it helps do the right thing with automatic invocation by make
-        print('%s: Wildcard in input drm, assuming empty.' % args.progname)
+        print('%s: Wildcard appears in input drm, assuming empty.' % args.progname)
+        print('%s: Subsequent reduction error is likely.' % args.progname)
         args.infile = []
     if len(args.infile) == 0:
         print('%s: No input DRMs.' % args.progname)
@@ -3215,7 +3223,6 @@ if __name__ == '__main__':
             print('%s: New ensemble name is "%s".' % (args.progname, args.expt_name))
     except:
         pass
-
 
     # get the script name from the directory - this relies heavily on Sandbox convention
     # TODO: allow to specify manually?

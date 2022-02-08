@@ -796,6 +796,7 @@ def sim_summary(d):
     # properties we want to record: key, label, formatter
     props = [
         ('ensemble_size', 'Ens. Size', fmt_str),
+        ('simtime', 'Simulation Date', fmt_str),
         ('runtime', 'Reduction Date', fmt_str),
         ('user', 'User', fmt_str),
         ('detections_earth_unique', 'Earths (Det.)', fmt_float),
