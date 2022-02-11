@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r'''
-reduce_drm_sets.py: reduce a set of simulation-ensembles to a summary CSV file
+reduce_drm_sets.py: reduce a set of simulation-ensembles to summary CSV files
 
 usage:
   reduce_drm_sets.py [ -O outfile ] [ -j N ] [ -i indexfile] ENS [...]
@@ -12,20 +12,24 @@ and:
      file outputs.  This is optional - output will go to the sims/SCRIPT/...
      directory if not given.
   -j N means to use N parallel workers to process the files.  By default,
-     about 2/3 of the available cores will be used (20 on aftac1, 30 on aftac2).
+     about 2/3 of the available cores will be used.
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
   -i indexfile names a JSON index file that associates experiment names with
      parameter values for that experiment.  Giving this allows output of 
      summary information that is also labeled with the corresponding parameter values.
 
-Note, ENS/drm should exist for each given ENS, and ENS/reduce_info.csv is 
-read for each ENS.  If these directories/files do not exist, for example if
-"make ... reduce" has not been run, then the ENS will be skipped.
+This program rolls up the summary information in ENS/reduce_info.csv, for each 
+named ENS, and places the cumulative summary in a CSV file following the
+given filename template. It also tabulates some yield metrics and places in related CSV files.
+
+Typically a given ENS will be either a simulation ensemble (and ENS/drm will exist),
+or ENS will be a family or experiment (without ENS/drm). 
+In either case, the required information will be in ENS/reduce-info.csv.
 
 Typical usage:
   util/reduce_drm_sets.py sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408.exp/*
 
-turmon nov 2018
+turmon nov 2018, feb 2022
 '''
 
 from __future__ import division
@@ -125,9 +129,11 @@ class EnsembleRun(object):
             ('experiment', str.lstrip, 'Un-Named'), # see above
             ('detections_earth_all', float, 0.0),
             ('detections_earth_unique', float, 0.0),
-            ('detections_unique_mean', float, 0.0),
-            ('chars_unique_mean', float, 0.0),
             ('chars_earth_unique', float, 0.0),
+            ('chars_earth_strict', float, 0.0),
+            # not used in the roll-up
+            ('detections_unique_mean', float, 0.0),
+            ('chars_unique_mean', float, 0.0), 
             ]
         props = {}
         for key, converter, nullval in prop_map:
@@ -136,14 +142,12 @@ class EnsembleRun(object):
 
     def read_sim_summary(self, d):
         r'''Summarize one simulation directory (ensemble) into a dict.'''
-        path_count = len(glob.glob(os.path.join(d, 'path/[0-9]*-cume/')))
         # grab the summary data for d
         info_fn = os.path.join(d, 'reduce-info.csv')
         try:
             with open(info_fn) as f:
                 info_items = csv.DictReader(f);
                 info = self.convert_sim_summary(next(info_items)) # it is a 1-line csv
-            info['path_count'] = path_count
         except IOError:
             info = {}
         # Number of paths generated
@@ -255,8 +259,8 @@ class EnsembleSummary(object):
         # list of attributes to accumulate
         attrs = [
             'detections_earth_all', 'detections_earth_unique', 'detections_unique_mean',
-            'chars_unique_mean', 'chars_earth_unique',
-            'ensemble_size', 'path_count',
+            'chars_unique_mean', 'chars_earth_unique', 'chars_earth_strict',
+            'ensemble_size', 
             ]
 
         # 1: flatten the reductions from [ens][attribute] to [attribute]
@@ -355,11 +359,11 @@ class EnsembleSummary(object):
             ('runtime', 'runtime'),
             ('simtime', 'simtime'),
             ('experiment_size', 'experiment_size'),
-            ('chars_earth_unique', 'chars_earth_unique_max'),
+            ('ensemble_size', 'ensemble_size_sum'),
             ('detections_earth_all', 'detections_earth_all_max'),
             ('detections_earth_unique', 'detections_earth_unique_max'),
-            ('path_count', 'path_count_sum'),
-            ('ensemble_size', 'ensemble_size_sum'),
+            ('chars_earth_unique', 'chars_earth_unique_max'),
+            ('chars_earth_strict', 'chars_earth_strict_max'),
             ]
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=[f for f,_ in saved_field_map])
@@ -415,13 +419,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # the code for "make exp-reduce" supplies the index filename, which flows to here
-    # bona fide experiments should have the s_index.json file, but families will not
+    # bona fide experiments should have the s_index.json file, but families will not.
     # expedient solution: don't insist on it, so that families can be reduced
     if args.indexfile and not os.access(args.indexfile, os.R_OK):
         print("%s: Warning: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
         print("%s: Proceeding without supplied index file." % (args.progname, ))
         args.indexfile = None
-        # sys.exit(1)
 
     # get the experiment name from the directory - brittle, but expedient.
     # examples of operation:
@@ -442,6 +445,7 @@ if __name__ == '__main__':
     # best practice is to explicitly give outfile, this is the backup
     if not args.outfile:
         args.outfile = os.path.join('sims', args.expt_name, 'reduce-%s.%s')
+        print("%s: Inferring output file pattern: %s." % (args.progname, args.outfile))
     if args.outfile.count('%s') != 2:
         print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)

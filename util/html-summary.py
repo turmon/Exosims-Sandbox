@@ -1,32 +1,32 @@
 #!/usr/bin/env python
 #
 # The given directory (or directories) within sims/, containing an ensemble of DRMs 
-# and corresponding graphical outputs, is summarized to HTML.  Note: invoke without
-# the sim/ prefix.
+# and corresponding graphical outputs, is summarized to HTML.
+# Note: arguments should not contain the sims/ prefix.
 #
 # Usage:
 #   html-summary.py [-r] [-i] [SIM ...]
 #
-# Optionally (-i), a top-level index.html will be updated as a table of contents
-# for all the simulations. You generally want this.
+# Optionally (-i), a top-level index.html is updated as a table of contents
+# for all the simulations. You typically want this.
 # Also for "-i", any intermediate index.html's between sims/index.html and
-# sims/SIM/index.html will be created; this is needed when SIM is nested ("families").
+# sims/SIM/index.html will also be made; this is needed when SIM is nested ("families").
 #
 # Options are:
-#  -i => generate the top-level index.html after generating any named SIM's.
-#  -r => performs recursive descent (otherwise, only named files/dirs are examined)
+#  -i => generate intermediate index.html's after generating any named SIM indexes.
+#  -r => performs recursive descent (otherwise, only named SIMS are indexed)
 #  -h => help
 #
 # Simplest usage:
 #  $ html-summary.py -i SIM
-#   where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD_top200DD.
-#   Re-generate the HTML and (with -i) the top-level index pointing to the HTML.
+#   where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD.
+#   Re-generates the HTML for this ensemble and the top-level index.
 # Other usage:
 #  $ html-summary.py -i SIM.exp
 #   vs.
 #  $ html-summary.py -r -i SIM.exp
-#   where SIM.exp is a multi-ensemble experiment.  The call with -r summarizes
-#   all ensembles under SIM.exp; without, it generates only the top-level summary
+#   where SIM.exp is a multi-ensemble experiment.  The usage with "-r" summarizes
+#   all ensembles under SIM.exp; without "-r", it generates only the top-level summary
 #   file, which lists a one-line overview of each ensemble.
 #  $ html-summary.py -r
 #   regenerates *all* indexes for everything in sims/*.
@@ -34,28 +34,24 @@
 # Notes and Specifics
 # * The output is written to the file:
 #     sims/SIM/index.html
-#   This file can then be viewed by starting an HTTP server on an unused port,
-#   as explained below under "server".
+#   This file can be viewed by starting an HTTP server on an unused port, see below.
 # * The generated HTML file links directly to whatever graphical outputs are present
-#   below the sims/SIM/... directory, so "make S=SIM graphics" should be run before
-#   running this script.  On the other hand, if the graphics are re-made *after*
-#   running this script, then a re-load of the HTML will show the new graphic files,
-#   because the referenced files are new.
+#   below the sims/SIM/... directory.  Use "make S=SIM html" to make the graphics files
+#   and then call this script to make the graphics viewable through the webpage.
 #
 # HTTP Server: To see the HTML files and the images they point to, an HTTP server
-# must be started to send them to a browser.  The method we use is to start a server 
-# that listens on a non-standard port, and the browser can be directed to that port
-# by giving a special URL qualifier.
+# must be started to send them to a browser.  We start a server listening on a
+# non-standard port, and the browser is directed to that port with a special URL qualifier.
 # The server invocation wrapper is html-serve.sh, and it can be invoked by:
-#   util/html-serve.sh status   -- to see if there is one already running
-#   util/html-serve.sh start    -- to start one if not
-# See that file for more.
+#   make html-status   -- to see if there is one already running
+#   make html-start    -- to start one if not
+# See the Makefile, or util/html-serve.sh, for more.
 # 
 # For more on usage, use the -h option.
 # Some options may be described there but not documented here.
 
 # author:
-#  Michael Turmon, JPL, 2018, 2020
+#  Michael Turmon, JPL, 2018, 2020, 2022
 
 # Apologies: the "business logic" is entwined with the "presentation logic."
 
@@ -131,9 +127,14 @@ class ChangeDir:
         os.chdir(self.savedPath)
         
 
+############################################################
+#
+# HTML Generation
+#
 # This class is used for the overall index page, the single-sim 
 # summary page, the per-path summary pages, and (recursively) 
 # for TOC's within these pages.
+############################################################
 
 class HTML_helper(object):
     r'''Primitive HTML-writer.
@@ -411,8 +412,24 @@ class HTML_helper(object):
         self.f.write(self.indent(-1) + '</video>\n')
 
 
+############################################################
+#
+# Summarize one Ensemble Simulation to HTML
+#
+############################################################
 
 class SimSummary(object):
+    r'''Summarize one ensemble to HTML.
+
+    Algorithm: First step, load all "interesting" files into various
+    dictionaries depending on their filename (the "add" method), following
+    the patterns in the graphics_map variable.
+    Second step, the "render" method, iterates over a list of HTML-page sections, 
+    encoded in the graphics_show variable, extracting any graphics files that 
+    were added above and inserting those files into an HTML template 
+    for the ensemble.'''
+    # do not index content of dirs having these names
+    sim_dir_no_index = set(('export', 'log', 'spc', 'sys', 'log_sim', 'run', 'html'))
     # NOTE: The following two lists are the main hook for adding new plot families to the
     # generated HTML:
     #  -- The "graphics_map" associates a file pattern (e.g., /det-radlum*) to
@@ -437,20 +454,20 @@ class SimSummary(object):
                         ('/det-earth-char-count', 'earth-char'),
                         ('/path-ens/path-', 'path')]
     # (tag, str, target) means the as-shown-in-html name for graphics of type 'tag' is 'str',
-    # and it can be remade with "make target"
+    # and it can be remade with "make S=... target"
     # this is a list because it is in order of presentation
     graphics_show = [
-        ('radlum', 'Radius/Luminosity', 'reduce'),
-        ('rad-sma', 'Radius/SMA', 'reduce'),
-        ('duration', 'Event Duration', 'reduce'),
-        ('event-count', 'Event Count', 'reduce'),
-        ('yield', 'Mission Yield vs. Time', 'reduce'),
-        ('cume', 'Mission Resources vs. Time', 'reduce'),
-        ('perstar-det',  'Per-Star Detection', 'reduce'),
-        ('perstar-char', 'Per-Star Characterization', 'reduce'),
-        ('promote', 'Target Promotion', 'reduce'),
-        ('earth-char', 'Earth Characterizations', 'reduce'),
-        ('path', 'Full-Ensemble Path', 'path-ensemble')]
+        ('radlum',      'Radius/Luminosity',          'graphics'),
+        ('rad-sma',     'Radius/SMA',                 'graphics'),
+        ('duration',    'Event Duration',             'graphics'),
+        ('event-count', 'Event Count',                'graphics'),
+        ('yield',       'Mission Yield vs. Time',     'graphics'),
+        ('cume',        'Mission Resources vs. Time', 'graphics'),
+        ('perstar-det', 'Per-Star Detection',         'graphics'),
+        ('perstar-char','Per-Star Characterization',  'graphics'),
+        ('promote',     'Target Promotion',           'graphics'),
+        ('earth-char',  'Earth Characterizations',    'graphics'),
+        ('path',        'Full-Ensemble Path',         'path-ensemble')]
     # list-of-pairs: (str,tag) means if filename contains 'str', it is a table of type 'tag'
     tables_map = [('/table-funnel', 'promote'),
                       ]
@@ -466,6 +483,9 @@ class SimSummary(object):
         self.csvs = []
 
     def add(self, filename):
+        r'''Dispatcher: adds filename to the correct category of item.'''
+        # see also: self.sim_dir_no_index for skipped dirs that
+        # do not reach this routine
         if '/path/' in filename:
             self.add_path_graphic(filename)
         elif filename.endswith('.png') or filename.endswith('.pdf'):
@@ -476,15 +496,6 @@ class SimSummary(object):
             self.add_drm(filename)
         elif filename.endswith('.csv'):
             self.add_csv(filename)
-        # skip some explicitly
-        elif '/log/' in filename:
-            pass
-        elif '/spc/' in filename:
-            pass
-        elif '/sys/' in filename:
-            pass
-        elif '/run/' in filename:
-            pass
         
     def add_path_graphic(self, filename):
         r'''Separate path graphics into types.  Unlike add_graphic, this is not table-driven.
@@ -590,15 +601,17 @@ class SimSummary(object):
             if in_table > 0:
                 hh.table_end()            
 
-    def render(self, filename, uplink='Sandbox'):
-        #print self.name
-        with HTML_helper(filename, self.name) as hh:
+    def render(self, filename, uplink):
+        r'''Main driver for rendering a directory to HTML files.'''
+        # print('Rendering', self.name)
+        # second argument to the class is the HTML doc title
+        with HTML_helper(filename, 'Sim: ' + os.path.basename(self.name)) as hh:
             # nav-bar
             hh.nav_here()
             # title - h1 tag
             hh.header(os.path.basename(self.name), level=1)
             # navigation link
-            hh.link('../../', 'Up to %s Root' % uplink)
+            hh.link('../../', 'Up to %s' % uplink)
             # summary
             hh.header('Ensemble Summary')
             hh.paragraph('Ensemble: %s' % self.name)
@@ -739,77 +752,38 @@ class SimSummary(object):
         for seed in self.path_graphics.keys():
             self.render_path(seed, filename_tmpl % seed)
                     
-def index_ensemble(args, path_sim):
-    r'''Make an index for one ensemble.'''
-    if not os.path.isdir(os.path.join(path_sim, 'drm')):
-        return # not an ensemble -- e.g., a recursive call into an arb. dir
-    outdir = 'html'
-    print('Indexing:', path_sim)
-    with ChangeDir(path_sim):
-        # ensure the output directory
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir, 0o775)
-        # gather information
-        sim_info = SimSummary('.', name=path_sim)
-        for root, dirs, files in os.walk('.'):
-            level = root.replace(path_sim, '').count(os.sep)
-            # (delete certain "dirs" to avoid walking them)
-            for fn in files:
-                fn_full = os.path.join(root, fn)
-                if fn.startswith('.'):
-                    continue # metadata files often of form ._FOO
-                #print 'Processing', fn_full
-                sim_info.add(fn_full)
-        # render information
-        fn = os.path.join(outdir, 'index.html')
-        sim_info.render(fn)
-        for seed in sim_info.path_graphics.keys():
-            sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
+############################################################
+#
+# One-line Sim Summaries
+#
+############################################################
 
 def exp_summary(d):
-    r'''Summarize one experiment directory as an OrderedDict of strings.
+    r'''Summarize one Experiment/Family directory as an OrderedDict of strings.
 
-    TODO: Make sure all info that summarizes an Experiment or Family is
-    present in the Experiment reduce-info.csv file (or another such file). 
-    In particular, the count of graphics would be nice, so it can be 
-    propagated upward. See also reduce-drm-sets.py.'''
-    # For now, this summary (for multi-ensembles) just uses the same
-    # summary file as the single-ensemble case.
-    rv = sim_summary(d)
-    # no time to glob for these ... should put in the reduce-info.csv
-    unknown_value = '(N/A)' # ()'s help sort order
-    rv['path_count'] = unknown_value
-    rv['gfx_count'] = unknown_value
+    If d is None: instead, return the header corresponding to the summary.
+
+    TODONT: It is *not worthwhile* to attempt to roll up graphics file counts
+    from ensembles in to the tables covering Experiments/Families. Note, 
+    these counts cannot be known at the time of reduction, only after all 
+    graphics have been added, or at HTML generation time. 
+    Because HTML generation only *sometimes* recurses into subdirectories, 
+    the rolled-up count is in general not known and kept up-to-date. So 
+    the rolled-up count can only sometimes be known at HTML-generation time. 
+    Further, it mostly provides value at the ensemble-summary level, and this 
+    is where the count is tractable to glob for. Let. It. Go.'''
+    # Load the reduction summary file, reduce-info.csv
+    rv = reduce_info_summary(d)
     return rv
 
 def sim_summary(d):
     r'''Summarize one simulation directory as an OrderedDict of strings.
 
-    If the argument is None, instead, return the header corresponding to the list.'''
-    # do not display floats to 12 digits of precision
-    def fmt_float(x):
-        return ('%.3f' % float(x));
-    def fmt_int(x):
-        return ('%d' % int(x));
-    def fmt_str(x):
-        return x
-    # properties we want to record: key, label, formatter
-    props = [
-        ('ensemble_size', 'Ens. Size', fmt_str),
-        ('simtime', 'Simulation Date', fmt_str),
-        ('runtime', 'Reduction Date', fmt_str),
-        ('user', 'User', fmt_str),
-        ('detections_earth_unique', 'Earths (Det.)', fmt_float),
-        ('chars_earth_unique', 'Earths (Char.)', fmt_float),
-        ('chars_earth_strict', 'Earths (Strict)', fmt_float),
-        ('gfx_count', 'Ens. Graphs', fmt_int),
-        ('path_count', "Path Summ's", fmt_int),
-        ('path_gfx', "Path Graphs", fmt_int),
-        ]
-    # Return the header columns if None was input
+    If d is None: instead, return the header corresponding to the summary.'''
+    # Load the reduction summary file, reduce-info.csv
+    rv = reduce_info_summary(d)
+    # the quick-out for header info
     if d is None:
-        rv = OrderedDict()
-        for dtag, dname, _ in props: rv[dtag] = dname
         return rv
     # number of unique paths that were indexed in any way (fn = SEED-foo-bar.png)
     path_count = len(set(fn.split('-')[0] for fn in glob.glob(os.path.join(d, 'path/[0-9]*-*.*'))))
@@ -819,17 +793,48 @@ def sim_summary(d):
     # total graphic file counts (non-path)
     gfx_count  = (len(glob.glob(os.path.join(d, 'gfx/*.png'))) +
                   len(glob.glob(os.path.join(d, 'path-ens/*.png'))))
-    # grab the metadata for d from the CSV written by reduce-drms.py
+    # insert the extra data, just retrieved above
+    rv['path_count'] = path_count
+    rv['path_gfx']   = path_gfx
+    rv['gfx_count']  = gfx_count
+    return rv
+
+def reduce_info_summary(d):
+    r'''Summarize one simulation directory as an OrderedDict of strings.
+
+    If the argument is None, instead, return the header corresponding to the summary.'''
+    # do not display floats to 12 digits of precision
+    def fmt_float(x):
+        return ('%.3f' % float(x))
+    def fmt_int(x):
+        return ('%d' % int(x))
+    def fmt_str(x):
+        return x
+    # properties we want to maintain: key, label, formatter
+    props = [
+        ('ensemble_size',          'Ens. Size',       fmt_str),
+        ('simtime',                'Last Sim. Date',  fmt_str),
+        ('runtime',                'Reduction Date',  fmt_str),
+        ('user',                   'User',            fmt_str),
+        ('detections_earth_unique','Earths (Det.)',   fmt_float),
+        ('chars_earth_unique',     'Earths (Char.)',  fmt_float),
+        ('chars_earth_strict',     'Earths (Strict)', fmt_float),
+        ('gfx_count',              'Ens. Graphs',     fmt_int),
+        ('path_count',             "Path Summ's",     fmt_int),
+        ('path_gfx',               'Path Graphs',     fmt_int),
+        ]
+    # Return just header columns if None was input
+    if d is None:
+        rv = OrderedDict()
+        for dtag, dname, _ in props: rv[dtag] = dname
+        return rv
+    # grab the metadata for d from the CSV written by reduce_drms.py
     info_fn = os.path.join(d, 'reduce-info.csv')
-    unknown_value = '(N/A)' # ()'s help sort order
+    unknown_value = '(n/a)' # ()'s help sort order
     try:
         with open(info_fn) as f:
             info_items = csv.DictReader(f);
             info = next(info_items) # it is a 1-line csv
-        # insert the extra data, just retrieved above
-        info['path_count'] = path_count
-        info['path_gfx'] = path_gfx
-        info['gfx_count'] = gfx_count
         # make the return value
         rv = OrderedDict()
         for dtag, dname, dfmt in props:
@@ -839,32 +844,70 @@ def sim_summary(d):
                 rv[dtag] = unknown_value
     except IOError:
         # order does not matter
-        return {dtag: unknown_value for dtag, _, _ in props}
+        rv = {dtag: unknown_value for dtag, _, _ in props}
     return rv
 
-def index_all(args, startpath, title, uplink=None):
-    r'''Make a summary table of all ensembles below startpath.
 
-    If args.recursive, descend recursively and summarize child directories
-    to a depth of one level.'''
-    print('Indexing:', startpath)
-    # output HTML
+############################################################
+#
+# Handlers for Indexing Sims
+#  (ensembles/experiments/families)
+#
+############################################################
+
+def index_ensemble(args, path_sim, uplink):
+    r'''Make an index.html for one ensemble.'''
+    if not os.path.isdir(os.path.join(path_sim, 'drm')):
+        return # not an ensemble -- e.g., a recursive call into an arb. dir
+    outdir = 'html'
+    with ChangeDir(path_sim):
+        # ensure the output directory
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir, 0o775)
+        # gather information from all files present
+        sim_info = SimSummary('.', name=path_sim)
+        for root, dirs, files in os.walk('.'):
+            level = root.replace(path_sim, '').count(os.sep)
+            # delete some "dirs" to avoid walking them
+            dirs[:] = [d for d in dirs if d not in sim_info.sim_dir_no_index]
+            # examine all files
+            for fn in files:
+                fn_full = os.path.join(root, fn)
+                if fn.startswith('.'):
+                    continue # metadata files often of form ._FOO
+                # print('Processing: ', fn_full)
+                sim_info.add(fn_full)
+        # render information
+        fn = os.path.join(outdir, 'index.html')
+        sim_info.render(fn, uplink)
+        for seed in sim_info.path_graphics.keys():
+            sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
+
+def index_group(args, startpath, title, uplink):
+    r'''Make an index.html with a table summarizing all ensembles below startpath.
+
+    This function corresponds to Experiments and Families: groups of sims.
+    If args.recurse, descend recursively and summarize all child directories
+    as well. This may imply a recursive call to this routine.'''
+    # output HTML file
     filename = os.path.join(startpath, 'index.html')
     with HTML_helper(filename, title) as hh:
         # title as H1
         hh.header(title, level=1)
         # navigation link
         if uplink:
-            hh.link('../', 'Up to %s Root' % uplink)
+            hh.link('../', 'Up to %s' % uplink)
         # table of individual sims
         hh.header('Ensembles')
         # make the table be sortable so that the JS sorter knows about it
         hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
         item_num = 0
         for root, dirs, files in os.walk(startpath):
-            # break below => loops once => "dirs" is just top-level subdirs of startpath
+            # loop over dirs (i.e., sims enclosed by startpath)
             for d in sorted(dirs):
-                # link to the sim below, summarize the sim in a list of a few properties
+                #print('I_G:   looping on {}'.format(d))
+                # 1: make table row with: link to the sim html + sim summary
+                #     no recursive descent in this block
                 if d.endswith('.exp') or d.endswith('.fam'):
                     alink = hh.link('%s/index.html' % d, d, inner=True)
                     properties = exp_summary(os.path.join(root, d))
@@ -876,20 +919,68 @@ def index_all(args, startpath, title, uplink=None):
                     # format the properties as a row
                     hh.table_row([alink] + list(properties.values()))
                     item_num += 1
-                # descend into sims/d -- no-op if no sims/d/drm/ directory
+                else:
+                    pass # dir name not recognized, skip it
+                # 2: recursively descend into sims/d (no-op if d not recognized)
                 if args.recurse:
-                    index_ensemble(args, os.path.join(startpath, d))
-            break # important: goes only one level deep!
+                    # d already has the sims/ prefix
+                    #print('I_G:   recursive call {}'.format(d))
+                    index_one_sim(args, os.path.join(root, d))
+            # finished all dirs below startpath -- do not descend further with os.walk()
+            break
         # summary over the whole set of ensembles in the table (root/reduce-info.csv)
-        properties = exp_summary(root)
+        properties = exp_summary(startpath)
         #properties = sim_summary(None)
         hh.table_foot()
         hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
         hh.table_end()
         hh.paragraph('In the summary, ensemble size is cumulative.', br=True)
-        hh.text('Reduction date and user reflect the most recent reduction.', br=True)
-        hh.text('Yields reflect the maximum over all ensembles.', br=True)
+        hh.text('Simulation date reflects the most recent simulation run below this level.', br=True)
+        hh.text('Reduction date and user reflect the most recent reduction below this level.', br=True)
+        hh.text('Yields reflect the maximum over all ensembles below this level.', br=True)
     return
+
+
+############################################################
+#
+# Delegation of sims to handlers
+#
+############################################################
+
+def index_one_sim(args, sim):
+    r'''Index one simulation, with the specific action depending on its type.
+
+    Note: the input argument is the simulation *directory* (with sims/ prefix).'''
+    # remove trailing / if any (currently only happens with sim='sims/')
+    sim = sim[:-1] if sim.endswith('/') else sim
+    print('Indexing:', sim)
+    # establish parent sim
+    try:
+        sim_up = sim.split(os.sep)[-2]
+        sim_up_path = os.sep.join(sim.split(os.sep)[:-1])
+    except IndexError:
+        # sim = 'sims' -- these will be unused
+        sim_up = ''
+        sim_up_path = ''
+    # text for HTML link to parent sim
+    if sim_up.endswith('.exp'):
+        uplink = 'Experiment'
+    elif sim_up.endswith('.fam'):
+        uplink = 'enclosing Family'
+    elif sim_up == 'sims':
+        uplink = 'Sandbox Root'
+    else:
+        uplink = 'Unknown'
+    uplink_label = '{} ({})'.format(uplink, sim_up_path)
+    # switch the index type depending on sim name
+    if sim == 'sims':
+        index_group(args, sim, 'Simulation Ensemble Root', '')
+    elif sim.endswith('.exp'):
+        index_group(args, sim, 'Experiment Root: ' + sim.split('/')[-1], uplink_label)
+    elif sim.endswith('.fam'):
+        index_group(args, sim, 'Family: '          + sim.split('/')[-1], uplink_label)
+    else:
+        index_ensemble(args, sim, uplink_label)
 
 
 ############################################################
@@ -898,84 +989,92 @@ def index_all(args, startpath, title, uplink=None):
 #
 ############################################################
 
-def get_sims_and_indexes(do_index, sim_orig):
+def sims_and_parents(sim_orig):
     '''Return a list of all parent paths of a list of input paths sim_orig.
 
-    If indexing is turned on (-i option), then this code should index the given
-    argument sims (sim_orig) as well as all parent sim directories. So if 
-    sim_orig = ['test.fam/ExampleScript'], then ExampleScript should be indexed,
-    and then test.fam, and finally sims. This code returns a list of all 
-    such parent sims.'''
+    When indexing is turned on (-i option), then this code should index the given
+    argument sims (sim_orig) as well as all parent sim directories. 
+    That is, if sim_orig = ['test.fam/HabEx'], then test.fam/HabEx should be indexed,
+    and then test.fam, and finally sims. 
+    This code returns a list of all such parent sims, for a list of sims.
+    The ordering in the returned list is by depth, so that the indexing 
+    will proceed from leaves to root.'''
+
     def parent_sims(s):
         '''Return a list of (depth, path) for all parent paths of a single input path s.'''
-        subdirs = os.path.normpath(s).split(os.sep)
+        # normpath turns '' into '.', undesirable here
+        subdirs = os.path.normpath(s).split(os.sep) if s else ''
         return [(depth+1, os.path.join(*subdirs[:depth+1])) for depth in range(len(subdirs))]
 
-    if not do_index:
-        return sim_orig
-    else:
-        # get a dict mapping sim_directories -> depth
-        # (but only include dirs not in sim_orig)
-        sim_index = dict()
-        for s in sim_orig:
-            for depth, s in parent_sims(s):
-                if s not in sim_orig:
-                    sim_index[s] = depth # collisions: don't care
-        depth_max = max([0] + list(sim_index.values()))
-        # ensure the original paths appear first
-        sim_new = sim_orig[:]
-        # if   sim_orig  = ['test.fam/f1.fam/f2.fam/ExampleScript']
-        # then sim_index = {'test.fam': 1, 'test.fam/f1.fam': 2, 'test.fam/f1.fam/f2.fam': 3}
-        # below loop runs depth_max...1, but not 0
-        for d in range(depth_max, 0, -1):
-            # extract and append all sims at depth == d
-            sim_adds = [k for k in sim_index if sim_index[k] == d]
-            sim_new.extend(sim_adds)
-        return sim_new
+    # get a dict mapping sim_directories -> depth
+    #   if sim_orig  = ['t.fam/f1.fam/f2.fam/HabEx']
+    #   then sim_index = {
+    #    't.fam': 1,
+    #    't.fam/f1.fam': 2,
+    #    't.fam/f1.fam/f2.fam': 3,
+    #    't.fam/f1.fam/f2.fam/HabEx': 4}
+    sim_index = dict()
+    for s in sim_orig:
+        for depth, s in parent_sims(s):
+            sim_index[s] = depth # collisions are of same depth
+    depth_max = max([0] + list(sim_index.values()))
+    # compile a leaves-to-root list of sims
+    sim_new = []
+    # below loop runs depth_max...1, but not 0
+    for d in range(depth_max, 0, -1):
+        # extract and append all sims at depth == d
+        sim_adds = [k for k in sim_index if sim_index[k] == d]
+        sim_new.extend(sim_adds)
+    # add the root
+    sim_new.append('')
+    return sim_new
 
 def main(args):
-    r'''Main routine: Summarize files below a given location to HTML.'''
+    r'''Main routine: Summarize files below a given location to HTML.
 
-    # This DIAGNOSE is intended to be for error-reporting to diagnose
-    # issues deep within this code, but not for ordinary use
-    # We want to be able to get to it anywhere, so it's global.
+    In our usage, a "sim" is the name of a simulation scenario, whether
+    an ensemble, an Experiment, or a Family.
+    Algorithm: If -i was supplied, add the parents of each given SIM
+    to the list of sims_to_visit. The ordering is such that branches/leaves 
+    are visited first, and then the path from the branch/leaf up to the root.
+    Conceptually -i augments the path upward from SIM to root.
+    If -r was supplied, we also recurse downward from each supplied SIM to
+    all child SIM's. Conceptually, -r augments the path downward from SIM to
+    branches and leaves below SIM.
+    Note that the SIM's added by giving the [-i] option are NOT recursed into
+    due to the [-r] option. Only the original sims supplied on the command line
+    are recursed into due to [-r].'''
+
+    # a global for debugging issues deep within this code
     global DIAGNOSE
     DIAGNOSE = args.DIAGNOSE
-
-    # TODO: transform this to get a list of sims and iterate over them.
-    # How: move the "if" below into its own "dispatcher" subroutine, and handle
-    # the final index_all() of the root sims by adding the root dir to sim_list.
-    
-    # this call supports running with: CMD -i SIM, which will generate the
-    # index for SIM, and then regenerate the global index
-    sim_list = get_sims_and_indexes(args.index, args.sim[:])
-    #print(sim_list)
-    for sim in sim_list:
-        sim_dir = os.path.join('sims', sim)
-        if sim.endswith('.exp'):
-            index_all(args, sim_dir, 'Experiment Root: ' + sim.split('/')[-1], uplink='Sandbox')
-        elif sim.endswith('.fam'):
-            index_all(args, sim_dir, 'Family Root: ' + sim.split('/')[-1], uplink='Sandbox')
-            print('    [index_all branch, sim_dir = {}]'.format(sim_dir))
-        else:
-            index_ensemble(args, sim_dir)
-    # re-do top-level index to sync with results of loop above
+    # sims_to_visit = args.sims + parents if indexing is on
     if args.index:
-        # don't let index_all() recurse into sims/* if args were named; if args given,
-        # the call here is only to generate the overall root-level index.
-        if len(args.sim) > 0: args.recurse = False
-        index_all(args, 'sims', 'Simulation Ensemble Root')
-    
+        sims_to_visit = sims_and_parents(args.sim)
+    else:
+        sims_to_visit = args.sim
+    #print('Visiting: ' + ','.join(sims_to_visit))
+    # copy the as-supplied argument
+    can_recurse = args.recurse
+    # visit all the desired sims, leaves-to-root
+    for sim in sims_to_visit:
+        # don't recurse beneath parent dirs that we're just indexing
+        # (the below line re-uses the convenient god object, args.recurse)
+        args.recurse = can_recurse and (sim in args.sim)
+        # generate the desired index
+        index_one_sim(args, os.path.join('sims', sim))
+
     
 # not all options are currently used
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Summarize EXOSIMS sims to HTML.",
                                      epilog='')
-    parser.add_argument('sim', metavar='SIM', nargs='*', default=[],
-                            help='sim ensemble directory or directories')
-    parser.add_argument('-i', '--index', help='generate index (non-recursive by default)',
+    # default argument is the empty sim, a/k/a the root
+    parser.add_argument('sim', metavar='SIM', nargs='*', default=[''],
+                            help='''sim ensemble directory, no sims/ prefix (default = '' corresponds to sandbox root)''')
+    parser.add_argument('-i', '--index', help='also generate index(es) within all sims enclosing each SIM',
                       dest='index', action='store_true', default=False)
-    parser.add_argument('-r', '--recurse', help='recursive over all sims',
+    parser.add_argument('-r', '--recurse', help='recursive over all sims below each named SIM',
                       dest='recurse', action='store_true', default=False)
     parser.add_argument('-D', '--diagnose', help='diagnostic (debugging) output',
                       dest='DIAGNOSE', action='count', default=0)
