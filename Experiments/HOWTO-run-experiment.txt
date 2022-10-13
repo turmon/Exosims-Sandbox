@@ -1,6 +1,6 @@
 Running Parameter Sweeps in the EXOSIMS Sandbox
 Michael Turmon
-December 2018, September 2020
+December 2018, September 2020, July 2022
 
 This is how I currently run parameter sweeps in the Sandbox. 
 
@@ -39,19 +39,26 @@ The coarse-level steps here match the ones above.
 * Start with a working script as a base, say, Scripts/Habex_works_20181120.json
 
 * Create a Script directory for the Experiment -- the name is arbitrary, but
-  end in ".exp".  Put the base script there for convenience later.
+  end in ".exp".  Create a book-keeping subdirectory, Sources/, and put
+  the base script there for traceability. Add a README in Sources/ if you wish.
 
-mkdir Scripts/Habex_works_20181201.exp
-cp  Scripts/Habex_works_20181120.json Scripts/Habex_works_20181201.exp/base.json
+mkdir Scripts/Habex_works_20181201.exp  
+mkdir Scripts/Habex_works_20181201.exp/Sources
+cp  Scripts/Habex_works_20181120.json Scripts/Habex_works_20181201.exp/Sources/base.json
+
+* Create a transform script, in JSON, that iterates over the right parameters, and
+  (for traceability) place it in:
+  Scripts/Habex_works_20181201.exp/Sources/xform-v1.json
+  Some example scripts are also in the Experiments/ subdirectory.
 
 * Make the set of derived scripts from the template script using the
 following transform idiom:
 
-util/json-xform.py -o Habex_works_20181201.exp/s_%s.json Habex_works_20181201.exp/base.json Experiments/xform-adapt.json Experiments/xform-c4sample.json
+util/json-xform.py -o Scripts/Habex_works_20181201.exp/s_%s.json Scripts/Habex_works_20181201.exp/Sources/base.json Experiments/xform-v1.json
 
-Note: xform-adapt plugs in newer driver infrastructure, and xform-sample
-iterates over the LJS coefficients.  You will need to use a generator
-script that sweeps out the right set of final Exosims scripts for your purpose.
+Note: xform-v1.json is the script you wrote to iterates over the LJS
+coefficients. You will need to use a generator script that sweeps out
+the right set of final Exosims parameters for your purpose.
 
 * Do a single test run to set up cache files and ensure everything works.
   This command selects one script in the experiment and runs it with one seed,
@@ -70,7 +77,7 @@ long processing will take.  Evaluate if this time is acceptable.
 
 ls Scripts/HabEx_works_20181201.exp/s_c*.json | sed -e 's/^/add-sims.sh -A /' -e 's|$| Experiments/seed100.txt|'  > Run-script.cmds
 
-* Run the script generated script.  Jobs are automatically farmed out
+* Run the generated script.  Jobs are automatically farmed out
   across machines by "add-sims.sh -A".
 
 sh < Run-script.cmds 
