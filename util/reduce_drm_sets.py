@@ -226,7 +226,7 @@ class EnsembleSummary(object):
                     for inx, v1 in enumerate(value):
                         index_csv[exp_name]['%s%d' % (param, inx+1)] = v1
                 else:
-                    index_csv[k][param] = value
+                    index_csv[exp_name][param] = value
         # save it in the object
         self.index_csv = index_csv
 
@@ -322,7 +322,7 @@ class EnsembleSummary(object):
             ]
         # take parameter-list, if any, from first param entry in self.index_csv
         has_index = len(self.index_csv) > 0
-        param_fields = self.index_csv[self.index_csv.keys()[0]].keys() if has_index else []
+        param_fields = list(self.index_csv[list(self.index_csv.keys())[0]].keys()) if has_index else []
         # fields to dump includes both
         all_fields = first_fields + param_fields + saved_fields
         # TODO: Extend field map with varying parameters
