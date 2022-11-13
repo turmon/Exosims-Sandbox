@@ -34,9 +34,9 @@
 #
 # Options:
 #   -h        => show this help message and exit.
-#   -A        => run using All of aftac1, c2, c3 (18 + 23 + 23 jobs = 64 jobs)
-#   -S        => run using Some of aftac1,c2, c3 (10 + 12 + 12 jobs = 34 jobs)
-#   -Z        => run using all of mustang2/3/4 and aftac1/2/3 (total of 100 jobs)
+#   -A        => run using Afta's (aftac1/2/3 -- 18 + 23 + 23 jobs = 64 jobs)
+#   -S        => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
+#   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
 #   -3        => run the EXOSIMS sim-runner with python3; by default, "python" is used.
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
 #
@@ -94,19 +94,23 @@ ALL=0
 PYTHON_EXECUTIVE_2=python
 PYTHON_EXECUTIVE_3=/usr/local/anaconda3/envs/cornell/bin/python3.7
 PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
-while getopts "ASZh23bcj:p:x:qv:eE:O:" opt; do
+while getopts "ASZDh23bcj:p:x:qv:eE:O:" opt; do
     case $opt in
 	A)
 	    # use remote machines
 	    ALL=1
 	    ;;
 	S)
-	    # use remote machines, but only some jobs
+	    # use only "speedy" remote machines
 	    ALL=2
 	    ;;
 	Z)
 	    # use even more remote machines
 	    ALL=3
+	    ;;
+	D)
+	    # fewer jobs on all remote machines (for Dakota)
+	    ALL=4
 	    ;;
 	3)
 	    # set python3 executive
@@ -268,15 +272,19 @@ fi
 #   --sshdelay ==> required because sshd can't accept connections super-fast
 #   -S ==> remote hosts, N/aftac1 means at most 2 jobs to aftac1, etc.
 if [ $ALL == 1 ]; then
-    PAR_SSH_OPTS="--workdir . --sshdelay 0.04 -S 18/aftac1,23/aftac2,23/aftac3"
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.06 -S 18/aftac1,23/aftac2,23/aftac3"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 elif [ $ALL == 2 ]; then
-    PAR_SSH_OPTS="--workdir . --sshdelay 0.04 -S 10/aftac1,12/aftac2,12/aftac3"
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.10 -S 24/mustang2,24/mustang3,16/mustang4"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 elif [ $ALL == 3 ]; then
-    PAR_SSH_OPTS="--workdir . --sshdelay 0.08 -S 12/aftac1,12/aftac2,12/aftac3,24/mustang2,24/mustang3,16/mustang4"
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.12 -S 14/aftac1,11/aftac2,11/aftac3,26/mustang2,24/mustang3,18/mustang4"
+    # remove the --jobs option, which interacts with the above
+    DISPATCHER_JOBS=""
+elif [ $ALL == 4 ]; then
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.10 -S 6/aftac1,6/aftac2,6/aftac3,12/mustang2,12/mustang3,8/mustang4"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 else
