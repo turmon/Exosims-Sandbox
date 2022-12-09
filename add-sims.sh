@@ -18,18 +18,21 @@
 # is sent to the screen.
 #
 # Typical Usage:
-#   (a) Run 64 jobs on aftac*, across 64 deterministic seeds
-#     add-sims.sh -A Scripts/ExampleScript.json Experiments/seed64.txt 
-#   (b) Run a machine-dependent number of jobs on the local machine
+#   (a) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
+#     add-sims.sh -Z Scripts/ExampleScript.json Experiments/seed100.txt 
+#   (b) Run a machine-dependent number of jobs spanning 64 seeds on the local machine
 #     add-sims.sh Scripts/ExampleScript.json Experiments/seed64.txt 
 #   (c) Do a test run for a single arbitrary seed (we use 777):
 #     add-sims.sh Scripts/ExampleScript.json =777
+#   (d) Write cache files for a new script, but do not run a sim:
+#     add-sims.sh Scripts/ExampleScript.json =0
 #
 # Arguments:
 #   SCRIPT -- a JSON script suitable for EXOSIMS
 #   SEEDS  -- either:
 #             (1) if a plain integer, that number of randomly-chosen initial seeds.
-#             (2) if of the form =SEED, where SEED is an integer, that one specific integer is used.
+#             (2) if of the form =SEED, where SEED is an integer, that single integer 
+#                 is the seed. If SEED is 0, only cache warming is done (no run_sim).
 #             (3) otherwise, it is a filename giving a list of integer seeds, one per line.
 #
 # Options:

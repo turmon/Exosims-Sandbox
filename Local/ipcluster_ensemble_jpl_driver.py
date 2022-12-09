@@ -22,15 +22,19 @@ where:
     --outpath PATH        Path to output directory.  Created if not present.
                           Default: basename of scriptfile.
     --outopts OPTS        Output result-file mode. Default: 'drm'.  See below.
-    --controller CONTROLLER
-                          Controller name (as used in ipcluster) for ipython
-                          engines.
+    --standalone          Standalone mode, no ipyparallel
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
+
+  archaic arguments:
+    --controller CONTROLLER
+                          Controller name (as used in ipyparallel) engines.
     --email EMAIL         Email address to notify when run is complete.a
     --toemail TOEMAIL     Additional email to notify when run is complete.
 
 Notes:  
-  * An ipcluster instance must be running and accessible in order
+  * At present (2020), this script is typically used without ipyparallel,
+    that is, --standalone is given.
+  * If not standalone, an ipcluster instance must be running and accessible 
     to use this script.  If everything is already set up properly,
     this is usually a matter of executing, from the shell, a command like:
        $ ipcluster start
@@ -299,6 +303,9 @@ def main(args, xpsecs):
     with RedirectStdStreams(stdout=fp_log):
         sim = EXOSIMS.MissionSim.MissionSim(args.scriptfile, **xspecs)
     seed = sim.SurveySimulation.seed
+    if args.seed is not None and args.seed == 0:
+        print('Seed given as 0. Cache warming only. Instantiation complete and caches in place.')
+        return 'Cache-warming complete. No run performed.'
     res = sim.genOutSpec(tofile = os.path.join(outpath_run, 'outspec_%d.json' % seed))
     # place the output in a properly-named file
     if fp_log:
@@ -348,7 +355,7 @@ if __name__ == "__main__":
     parser.add_argument('numruns', type=int, metavar='N_RUNS', help='Number of ensemble runs.')
     # options
     parser.add_argument('--verbose', type=int, default=None, help='Verbosity (0/1).')
-    parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int).')
+    parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int); 0 for cache-warming only.')
     parser.add_argument('-q', '--quiet', default=False, action='store_true', help='Send object creation messages to a log file.')
     parser.add_argument('--standalone', default=False, action='store_true', help='Stand-alone mode (no ipyparallel).')
     parser.add_argument('--outpath', type=str, metavar='PATH',
