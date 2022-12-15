@@ -240,8 +240,9 @@ class EnsembleSummary(object):
         with WorkerMap(self.args.jobs) as map_function:
             # map the load-and-reduce function over each file
             # reductions is a list of dicts containing summaries
-            reductions = map_function(partial(outer_load_and_reduce, verb=self.args.verbose),
-                                      self.ens_files)
+            # py3: ensure the list is materialized
+            reductions = list(map_function(partial(outer_load_and_reduce, verb=self.args.verbose),
+                                      self.ens_files))
         # hacky fix for no-drm case
         if len(self.ens_files) == 0:
             reductions = outer_load_and_reduce(None)
