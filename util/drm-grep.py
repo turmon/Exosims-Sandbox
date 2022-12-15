@@ -10,6 +10,8 @@ where:
 and:
   -a ATTR means: output the keyword ATTR (repeat -a for multiple keywords,
      or separate their names by commas)
+  -S ATTR means: output the SPC attribute ATTR for obs[star_ind]
+  -P ATTR means: output the SPC attribute ATTR for obs[plan_inds[0]]
   -m MATCH means: only produce output if MATCH is a keyword in the observation
   -1 means: output the CSV header ("line 1")
   -s means: output the DRM seed number
@@ -41,6 +43,11 @@ Typical usage:
 turmon apr 2019
 '''
 
+#####
+#####
+#####  THIS FILE HAS BEEN SUPERSEDED BY drm-tabulate.py
+#####
+#####
 
 from __future__ import division
 from __future__ import print_function
@@ -100,8 +107,8 @@ class WorkerMap(object):
         if jobs <= 1:
             # no worker pool: just use this process
             self.pool = None
-            # map function is the python map() builtin
-            self.map_function = map
+            # map function is the python map() builtin (forced to materialize the list)
+            self.map_function = lambda f,x: list(map(f,x))
         else:
             # the multiprocessing pool-of-workers
             self.pool = mproc.Pool(processes=jobs)
@@ -115,7 +122,7 @@ class WorkerMap(object):
 
 class SimulationRun(object):
     r'''Load and summarize a simulation: one DRM and its corresponding SPC.'''
-    def __init__(self, f):
+    def __init__(self, f, args):
         # allow creating a dummy object so that its properties may be queried
         if f is None:
             self.drm = []
@@ -127,18 +134,20 @@ class SimulationRun(object):
         gc.disable()
         drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
         gc.enable()
-        # load a spc file - disabled for now
-        if False:
+        # load a spc file - only if needed to lookup -S, -P attrs
+        if args.load_spc:
             g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
             if os.path.isfile(g):
                 spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
             else:
                 raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
+        else:
+            spc = None
         # set up object state
         self.name = f
         self.seed = int(os.path.splitext(os.path.basename(f))[0])
         # self.Nstar = len(spc['Name'])
-        # self.spc = spc
+        self.spc = spc # is None, if SPC not needed
         self.drm = drm
         self.summary = None # place-holder
     
@@ -165,9 +174,10 @@ class SimulationRun(object):
                 seg0 = int(segments[0])
             except:
                 seg0 = segments[0]
+            # recursive extract
             return self.extract_value(obs[seg0], '.'.join(segments[1:]))
 
-    def extract_attrs(self, match, attrs):
+    def extract_attrs(self, match, attrs, sattrs, pattrs):
         r'''Extract attributes from DRM.
 
         Algorithm:
@@ -176,7 +186,7 @@ class SimulationRun(object):
         '''
 
         # keep track of all event counts as a list
-        attr_vals = {attr: [] for attr in attrs}
+        attr_vals = {attr: [] for attr in (attrs + sattrs + pattrs)}
         obs_num = []
         # DRM-FMT
         for obs in self.drm:
@@ -185,6 +195,14 @@ class SimulationRun(object):
                 continue
             for attr in attrs:
                 attr_val_1 = self.extract_value(obs, attr)
+                attr_vals[attr].append(attr_val_1)
+            for attr in sattrs:
+                sind = obs['star_ind']
+                attr_val_1 = strip_units(self.spc[attr][sind])
+                attr_vals[attr].append(attr_val_1)
+            for attr in pattrs:
+                plan_ind = obs['plan_inds'][0]
+                attr_val_1 = strip_units(self.spc[attr][plan_ind])
                 attr_vals[attr].append(attr_val_1)
             # obtain this for possible use later
             if 'ObsNum' in obs:
@@ -197,9 +215,11 @@ class SimulationRun(object):
             obs_num=obs_num,
             seed=[self.seed]*len(attr_vals[attrs[0]]))
         # add the dynamic fields
-        for attr in attrs:
+        # NB: we could instead tensorize over planets here (?)
+        for attr in (attrs + sattrs + pattrs):
             rv[attr] = attr_vals[attr]
         return rv
+
 
     def summarize(self, args, econo=True):
         r'''Find the summary of the sim as a dictionary held within the object.
@@ -208,10 +228,8 @@ class SimulationRun(object):
         routines, each of which returns a dictionary of summary information.  The overall
         summary dictionary is a union of each individual summary.
         If econo, delete the DRM and keep only the summary.'''
-        # this dict holds reductions for the current sim
-        summary = {}
-        # fold in event counts
-        summary.update(self.extract_attrs(args.match, args.attrs))
+        # this dict holds attribute-lists for the current sim
+        summary = self.extract_attrs(args.match, args.attrs, args.sattrs, args.pattrs)
         # delete the base data if asked
         if econo:
             self.drm = None
@@ -229,38 +247,19 @@ def outer_load_and_reduce(f, verb=0, args=None):
     by a separate process that is created by the multiprocessing module.'''
     if verb > 0:
         print('Processing <%s> in pid #%d' % (f, os.getpid()))
-    sim = SimulationRun(f)
+    sim = SimulationRun(f, args)
     return sim.summarize(args)
 
 class EnsembleSummary(object):
     r'''Compute, store, and dump summary information for an ensemble of many simulations.'''
-    def __init__(self, in_files, args, lazy=True):
-        '''Load an ensemble of simulations.'''
+    def __init__(self, in_files, args):
+        '''Prepare to load an ensemble of simulations.'''
         # filter the .spc files out: some dirs contain both
         sim_files = [f for f in in_files if not f.endswith('.spc')]
         # save some useful state
         self.args = args
         self.sim_files = sim_files
         self.Ndrm_actual = len(sim_files) # = 0 if no sims
-        # load on __init__ vs. load on reduce
-        if lazy:
-            # lazy => load the sims only when doing the reduce()
-            # just get one run, for the SPC
-            if len(sim_files) > 0:
-                sims = [SimulationRun(sim_files[0])]
-        else:
-            # Load the sims all at once
-            # THIS IS NO LONGER THE RECOMMENDED PATH
-            sims = list(map(SimulationRun, sim_files))
-        # Save the sims in the object
-        # As a convenience, we insert a "phony" empty sim (DRM/SPC) even if
-        # there were no input DRMs.  This allows all the histograms to be
-        # initialized to their correct length, etc.
-        # NB: Ndrm_actual can = 0, but self.sims will still contain 1 element
-        if len(sim_files) == 0:
-            self.sims = [SimulationRun(None)]
-        else:
-            self.sims = sims
 
     def load_and_reduce(self):
         r'''Load sim drm/spc, reduce each sim, accumulate summaries across sims.
@@ -274,12 +273,13 @@ class EnsembleSummary(object):
             # reductions is a list of dicts containing summaries
             reductions = map_function(partial(outer_load_and_reduce, args=args, verb=self.args.verbose),
                                       self.sim_files)
+        
         # hacky fix for no-drm case
         if len(self.sim_files) == 0:
             reductions = outer_load_and_reduce(None)
         # re-group the above reductions across sims
         # result is a dict containing reduced data, stored as self.summary
-        self.regroup_and_accum(reductions, args.attrs)
+        self.regroup_and_accum(reductions, (args.attrs + args.sattrs + args.pattrs))
 
     def regroup_and_accum(self, reductions, attrs):
         r'''Accumulate various summaries across the ensemble.
@@ -311,6 +311,8 @@ class EnsembleSummary(object):
         if args.obs_num:
             saved_fields.append('obs_num')
         saved_fields.extend(args.attrs)
+        saved_fields.extend(args.sattrs)
+        saved_fields.extend(args.pattrs)
         Nrow = len(self.summary[saved_fields[0]])
 
         csv_opts = {}
@@ -328,14 +330,9 @@ class EnsembleSummary(object):
 def main(args, outfile):
     if VERBOSITY:
         sys.stderr.write('%s: Loading %d file patterns.\n' % (args.progname, len(args.infile)))
-    lazy = True
-    ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
+    ensemble = EnsembleSummary(args.infile, args)
     if ensemble.Ndrm_actual == 0:
         print('%s: Warning: no actual DRMs present.' % (args.progname, ))
-    # save a reference to the universe (stars and their attributes)
-    # don't want to assume a SPC
-    # ensemble.spc = ensemble.sims[0].spc
-    # ensemble.Nstar = ensemble.sims[0].Nstar
     if VERBOSITY:
         sys.stderr.write('%s: Reducing.\n' % args.progname)
     ensemble.load_and_reduce()
@@ -353,7 +350,11 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--match', type=str, default='',
                             help='Attribute to match.')
     parser.add_argument('-a', '--attrs', type=str, action='append', required=True, 
-                            dest='attrs_orig', help='Attribute to extract and output, one for each -a given.')
+                            dest='attrs_orig', help='Attribute to extract, one for each -a.')
+    parser.add_argument('-S', '--star', type=str, action='append', default=[],
+                            dest='sattrs_orig', help='Star attribute to extract, one for each -S.')
+    parser.add_argument('-P', '--plans', type=str, action='append', default=[],
+                            dest='pattrs_orig', help='Planet attribute to extract, one for each -P.')
     parser.add_argument('-v', help='verbosity', action='count', dest='verbose',
                             default=0)
     parser.add_argument('-1', help='Supply header line', action='store_true', dest='header',
@@ -376,11 +377,24 @@ if __name__ == '__main__':
     # do it like this for now
     args.infile = args.drm
 
-    # allow comma-separated attr lists
+    # allow comma-separated attr/sattr/pattr lists
     attrs = []
     for attr in args.attrs_orig:
         attrs.extend(attr.split(','))
     args.attrs = attrs
+
+    attrs = []
+    for attr in args.sattrs_orig:
+        attrs.extend(attr.split(','))
+    args.sattrs = attrs
+
+    attrs = []
+    for attr in args.pattrs_orig:
+        attrs.extend(attr.split(','))
+    args.pattrs = attrs
+
+    # do we need to load the SPC file?
+    args.load_spc = args.sattrs or args.pattrs
 
     # get the experiment name from the directory - this is brittle,
     # but have to do something
