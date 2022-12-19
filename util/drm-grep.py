@@ -133,7 +133,6 @@ class SimulationRun(object):
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
         drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
-        gc.enable()
         # load a spc file - only if needed to lookup -S, -P attrs
         if args.load_spc:
             g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
@@ -143,6 +142,7 @@ class SimulationRun(object):
                 raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
         else:
             spc = None
+        gc.enable()
         # set up object state
         self.name = f
         self.seed = int(os.path.splitext(os.path.basename(f))[0])
