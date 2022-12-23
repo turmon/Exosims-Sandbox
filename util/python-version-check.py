@@ -7,17 +7,21 @@
 # of an EXOSIMS object.
 #
 # Usage:
-#   ...
+#   python-version-check.py [-x] [-i] [-r] [-s SCRIPT] [-c CACHEDIR] [-R [sdet|conda|FILE|URL]]
+#   
 # Simplest usage:
 #   python-version-check.py
 #
+# More complex usage:
+#   python-version-check.py -R https://raw.githubusercontent.com/dsavransky/EXOSIMS/photometryUpdate/requirements.txt -x
+#
 # For more on usage, use the -h option.
-# Some options may be described there but not documented here.
+# Some options are described there but not documented here.
 #
 
 # author:
-#  Michael Turmon, JPL, 2021
-#
+#  Michael Turmon, JPL, 2021, 2022
+
 
 from __future__ import print_function
 import argparse
@@ -25,19 +29,44 @@ import os
 import time
 import sys
 import subprocess
+import shutil
+import tempfile
 import importlib
+import pkg_resources
 import warnings
+import urllib.request
 
-PACKAGES = (
-    'numpy',
-    'matplotlib',
-    'scipy',
-    'scipy.optimize',
-    'astropy',
-    'h5py',
-    'ipyparallel',
-    'jplephem',
-    )
+
+# dictionary mapping input "requirements flavor" keys to
+# a list of requirements
+# Note, this is almost in requirements.txt format as-is
+PACKAGES = {
+    'sdet': (
+        'numpy',
+        'matplotlib',
+        'scipy',
+        'scipy.optimize',
+        'astropy',
+        'h5py',
+        'ipyparallel',
+        'jplephem',
+        ),
+    'conda-v2': (
+        'numpy>=1.2.0',
+        'scipy>=1.7.2',
+        'astropy>=4.3.1',
+        'jplephem>=2.18',
+        'ortools>=9.0',
+        'h5py',
+        'astroquery',
+        'exodetbox', # NB: killed the dashes
+        'tqdm',
+        'pandas>=1.3',
+        'MeanStars>=3.3.1',
+        'synphot>=1.1.1',
+        'ipyparallel>=8.0.0',
+        )
+    }
 
 # want MissionSim also because we use it in the test run
 X_PACKAGES = (
@@ -53,8 +82,60 @@ def verify_platform(args):
     print('{}interpreter path: {}'.format(args.prefix, sys.executable))
     return True
 
-def verify_packages(args, pkgs):
-    print('Packages')
+
+def get_package_list(args):
+    r'''Use args.require to return either a package list, or a file-pointer to
+    a requirements.txt file.'''
+    req = args.require
+    # try for old-style basic list first
+    if req in PACKAGES:
+        pack_list = [r.split('>=')[0] for r in PACKAGES[req]]
+        return 'old', pack_list
+    # otherwise, try for URL or file
+    if req.startswith('http'):
+        # there are other ways to do this that don't use a tempfile
+        with urllib.request.urlopen(req) as response:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                shutil.copyfileobj(response, tmp_file)
+        pack_fp = open(tmp_file.name)
+        args.tempfile = tmp_file.name
+    else:
+        pack_fp = open(req)
+    return 'new', pack_fp
+        
+
+def verify_packages_new(args, pack_fp):
+    r'''Packages are verified from a file pointer to a requirements.txt file.
+
+    The file consists of lines like: numpy >= 1.2.0, and the pkg_resources
+    checker is used to validate the version.'''
+    # TODO: this was put together quickly, and might not be using pkg_resources
+    # in the best-practices way
+    print('Packages from <{}>'.format(args.require))
+    fails = 0
+    reqs = list(pkg_resources.parse_requirements(pack_fp))
+    print('  Got {} requirements'.format(len(reqs)))
+    for req in reqs:
+        with warnings.catch_warnings():
+            # h5py has an annoying FutureWarning, not our focus here
+            warnings.simplefilter("ignore")
+            try:
+                p = pkg_resources.require(str(req))[0]
+            except pkg_resources.VersionConflict:
+                # print('Failed to load "{}".'.format(pkg))
+                p = None
+        if p is not None:
+            version = str(p)
+        else:
+            version = 'N/A'
+        msg = '{}: {} (version = {})'.format(str(req), ('ok' if p else 'FAILED'), version)
+        print(args.prefix + msg)
+        if not p: fails += 1
+    return (fails == 0)
+
+def verify_packages_old(args, pkgs):
+    r'''Old-style package verification by iterating through a list of named modules.'''
+    print('Package requirements from a stored literal')
     fails = 0
     for pkg in pkgs:
         with warnings.catch_warnings():
@@ -63,8 +144,8 @@ def verify_packages(args, pkgs):
             try:
                 p = importlib.import_module(pkg)
             except:
-                p = None
                 # print('Failed to load "{}".'.format(pkg))
+                p = None
         if p and '__version__' in p.__dict__:
             version = p.__version__
         else:
@@ -129,6 +210,14 @@ def verify_script(args):
         print('')
     return True
     
+def verify_packages(args, method, pkg_list):
+    r'''Return True if the pkg_list is satisfied with loadable modules.
+
+    Switching on "method", which is either old or new.'''
+    if method == 'old':
+        return verify_packages_old(args, pkg_list)
+    else:
+        return verify_packages_new(args, pkg_list)
 
 
 ############################################################
@@ -141,10 +230,11 @@ def main(args):
     r'''Main routine.  Returns nonzero for trouble.'''
     if not verify_platform(args):
         return False
-    if not verify_packages(args, PACKAGES):
+    # *get_package_list is a 2-tuple of a method and a requirements list
+    if not verify_packages(args, *get_package_list(args)):
         return False
     if args.exosims:
-        if not verify_packages(args, X_PACKAGES):
+        if not verify_packages(args, 'old', X_PACKAGES):
             return False
         verify_commit(args) # ok for this to fail
     if args.init:
@@ -166,6 +256,8 @@ if __name__ == '__main__':
                             help='Script filename for object initialization and (optionally) run, to replace the default basic script.')
     parser.add_argument('-c', '--cachedir', type=str, default=None, 
                             help='Cache file directory to use instead of EXOSIMS default. Name any non-existing directory to force an EXOSIMS cache rebuild.')
+    parser.add_argument('-R', '--requirements', type=str, default='sdet', dest='require', metavar="[sdet|conda|FILE|URL]",
+                            help='Requirements to check (literal abbreviations "sdet" or "conda-v2", or requirements.txt-format FILE, or URL of same, beginning with http[s]://).')
     args = parser.parse_args()
 
     # run implies object init
@@ -185,37 +277,19 @@ if __name__ == '__main__':
     # prefix for some stdout displays
     args.prefix = '    '
 
-    ok = main(args)
-    print('Overall: {}.'.format('OK' if ok else 'FAILED'))
+    # tempfile slot in case of -R http://...
+    args.tempfile = ''
 
+    ok = main(args)
+
+    # delete the tempfile we might have needed for -R
+    if args.tempfile and os.path.isfile(args.tempfile):
+        try:
+            os.remove(args.tempfile)
+        except FileNotFoundError:
+            pass
+
+    print('Overall: {}.'.format('OK' if ok else 'FAILED'))
     sys.exit(0 if ok else 1)
 
 
-############################################################
-#
-# holding zone
-#
-
-
-
-'''
-        # add in the SVN/Git revision^M
-        path = os.path.split(inspect.getfile(self.__class__))[0]
-        path = os.path.split(os.path.split(path)[0])[0]
-        #handle case where EXOSIMS was imported from the working directory^M
-        if path is '':
-            path = os.getcwd()
-        #comm = "git -C " + path + " log -1"^M
-        comm = "git --git-dir=%s --work-tree=%s log -1"%(os.path.join(path,".git"),path)
-        rev = subprocess.Popen(comm, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,shell=True)
-        (gitRev, err) = rev.communicate()
-        if sys.version_info[0] > 2:
-            gitRev = gitRev.decode("utf-8")
-        if isinstance(gitRev, basestring) & (len(gitRev) > 0):
-            tmp = re.compile('\S*(commit [0-9a-fA-F]+)\n[\s\S]*Date: ([\S ]*)\n') \
-                    .match(gitRev)
-            if tmp:
-                out['Revision'] = "Github " + tmp.groups()[0] + " " + tmp.groups()[1]
-
-'''
