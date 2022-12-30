@@ -21,6 +21,7 @@ Match a subset of observations with:
 Output special pseudo-attributes:
   -s: output the DRM seed number (__seed__, boolean)
   -n: output the DRM observation number (__obs_num__, boolean)
+  --plan_num: output the planet number (__plan_num__, boolean)
   -1: print line 1, the CSV header (__header__, boolean)
 
 Take the above options from a file with:
@@ -296,7 +297,7 @@ class SimulationRun(object):
         self.summary = None # place-holder
     
 
-    def extract_value(self, obs, attr, just_peeking=False):
+    def extract_value_obs(self, obs, attr, just_peeking=False):
         r'''Extract a value, attr, from an observation, obs, allowing recursive lookup.'''
         if not attr:
             # recursion base case:
@@ -331,9 +332,9 @@ class SimulationRun(object):
                 sys.stderr.write('No "{}" found in obs object (or sub-object).\n'.format(seg0))
                 sys.stderr.write('Object or sub-object is a {}:\n{}\n'.format(type(obs), repr(obs)))
             # recursive extraction from obs[seg0]
-            return self.extract_value(obs[seg0], '.'.join(segments[1:]), just_peeking=just_peeking)
+            return self.extract_value_obs(obs[seg0], '.'.join(segments[1:]), just_peeking=just_peeking)
 
-    def extract_pseudo(self, obs, nobs, attr):
+    def extract_pseudo(self, obs, attr, nobs=None):
         r'''Extract pseudo-attribute, which can have special naming conventions.'''
         if attr == 'obs_num':
             if 'ObsNum' in obs:
@@ -344,6 +345,8 @@ class SimulationRun(object):
                 return nobs + 1
         elif attr == 'seed':
             return self.seed
+        elif attr == 'plan_num':
+            return 0 # likely altered later, depending on #planets
         else:
             assert False, 'Should not be reached (attr = {})'.format(attr)
             
@@ -375,17 +378,51 @@ class SimulationRun(object):
         r'''Extract planet-related attribute by evaluating attr in the context of obs.'''
         assert self.spc, 'No SPC info loaded for lookup of {}\n'.format(attr)
         try:
-            plan_ind = obs['plan_inds']
-            # TODO: len(plan_ind) == 0? len(plan_ind) > 1?
-            val = strip_units(self.spc[attr][plan_ind[0]])
+            plan_inds = obs['plan_inds']
+            val = [strip_units(self.spc[attr][p]) for p in plan_inds]
         except:
             sys.stderr.write('Error: Did not find {} in SPC for planet index {}.\n'.format(attr, repr(plan_inds)))
             sys.stderr.write('Properties available:\n{}\n'.format('\t\n'.join(self.spc.keys())))
             raise
+        # val is always a list from this function, we'll process further later
         return val
 
-    def extract_value_planets(self, obs, attr):
-        return np.nan
+    def extract_value_any(self, obs, attr, **kwargs):
+        r'''Selector function that switches on the attribute flavor to extract a value.'''
+        flavor, text = attr.flavor, attr.text
+        if flavor == 'attr':
+            val = self.extract_value_obs(obs, text)
+        elif flavor == 'eval':
+            val = self.perform_eval(obs, text)
+        elif flavor == 'star':
+            val = self.extract_value_star(obs, text)
+        elif flavor == 'planet':
+            # val is a length=#planets list
+            val = self.extract_value_planet(obs, text)
+        elif flavor == 'planets':
+            # value (which is expected to already be a list here)
+            # is boxed into a len = 1 list
+            val = self.extract_value_planet(obs, text)
+        elif flavor == 'pseudo':
+            val = self.extract_pseudo(obs, text, **kwargs)
+        else:
+            assert False, 'Statement should not be reached: unrecognized flavor'
+        # box everything but 'planet' into a len = 1 list
+        if flavor != 'planet':
+            val = [val]
+        val_len = len(val)
+        if 0:
+            # to vectorize later, we need the length. length=1 if scalar or string.
+            # else, allow for lists that are np vectors or python lists
+            try:
+                # this can be a boxed list of length=1
+                val_len = len(val)
+            except TypeError:
+                # e.g., scalars
+                val_len = 1
+            if isinstance(val, str):
+                val_len = 1 # str alone is OK for py3 or np.str
+        return val_len, val
 
     def extract_attrs(self, match, attrs):
         r'''Extract attributes from each obs in the DRM.
@@ -393,28 +430,51 @@ class SimulationRun(object):
         Returns a dictionary mapping attributes to lists, one list entry
         per DRM observation.
         '''
-        # accumulate values in these lists
-        vals = {a.name: [] for a in attrs}
+        # accumulate values in these lists, one per attribute
+        vals = {name: [] for name in attrs.keys()}
         for nobs, obs in enumerate(self.drm):
-            if match and not self.extract_value(obs, match, just_peeking=True):
-                continue # no obs[match] => skip this observation
-            for attr in attrs:
-                flavor, name, text = attr.flavor, attr.name, attr.text
-                if flavor == 'eval':
-                    val_1 = self.perform_eval(obs, text)
-                elif flavor == 'attr':
-                    val_1 = self.extract_value(obs, text)
-                elif flavor == 'star':
-                    val_1 = self.extract_value_star(obs, text)
-                elif flavor == 'planet':
-                    val_1 = self.extract_value_planet(obs, text)
-                elif flavor == 'planets':
-                    val_1 = self.extract_value_planets(obs, text)
-                elif flavor == 'pseudo':
-                    val_1 = self.extract_pseudo(obs, nobs, text)
-                else:
-                    assert False, 'Statement should not be reached.'
-                vals[name].append(val_1)
+            # 1: no obs[match] => skip this observation
+            if match and not self.extract_value_obs(obs, match, just_peeking=True):
+                continue
+            # 2: extract all needed values -- vals_1 exists for every name
+            #OLD:vals_1 = {name:extract_value(obs, attr, nobs=nobs) for name, attr in attrs.items()}
+            val_lens, vals_1 = dict(), dict()
+            for name, attr in attrs.items():
+                val_lens[name], vals_1[name] = self.extract_value_any(obs, attr, nobs=nobs)
+            # 3A: detect #planets
+            planet_guesses = set(val_lens.values()) - set([1])
+            assert len(planet_guesses) <= 1, 'Two attributes have incommensurate non-scalar lengths: should not happen'
+            if planet_guesses:
+                Nplan = planet_guesses.pop()
+            else:
+                Nplan = 1
+            ### print('EXA: nobs = {}, Nplan = {}'.format(nobs, Nplan))
+            # 3B: extend vals_1 along planets if needed
+            # 3B.1 -- Nplan = 0 case
+            #   skip this record if there was a planet attribute selected, but no planets
+            #   otherwise, we continue and the PlanetNum will tabulate as 0
+            if Nplan == 0 and args.empty_skipped:
+                continue
+            else:
+                # TODO: we can't have untouched slots...but what happens for #plan = 0?
+                # pad untouched slots with NaN -- not our problem
+                for name in vals_1.keys():
+                    if vals_1[name] == None:
+                        vals_1[name] = np.nan()
+            # 3B.2 -- Nplan >= 1 case
+            #   pad the other fields downward to match the planet vector
+            #   set plan_num field if needed -- [1:Nplan], excluding 0
+            #   need >= 1 here to set plan_num for Nplan == 1
+            if Nplan >= 1:
+                for name in vals_1.keys():
+                    vals_1[name].extend([vals_1[name][-1]] * (Nplan - val_lens[name]))
+                if 'plan_num' in vals_1:
+                    # set plan_num correctly ... its bogey value is [0]
+                    vals_1['plan_num'] = [(index + 1) for index in range(Nplan)]
+            # 4: vals += vals_1 (both are lists)
+            for name in vals_1.keys():
+                vals[name].extend(vals_1[name])
+            ### print('EXA/ vals_1 = {}'.format(vals_1))
         # return the dictionary-of-lists
         return vals
 
@@ -477,8 +537,7 @@ class EnsembleSummary(object):
             reductions = outer_load_and_reduce(None)
         # re-group the above reductions across sims
         # result is a dict containing reduced data, stored as self.summary
-        attr_names = [attr.name for attr in args.all_attrs]
-        self.regroup_and_accum(reductions, attr_names)
+        self.regroup_and_accum(reductions, args.all_attrs.keys())
 
     def regroup_and_accum(self, reductions, attr_names):
         r'''Accumulate various summaries across the ensemble.
@@ -496,8 +555,11 @@ class EnsembleSummary(object):
 
     def dump(self, args, outfile):
         r'''Dump reduced data to output.'''
-        saved_fields = [attr.name for attr in args.all_attrs]
-        Nrow = len(self.summary[saved_fields[0]])
+        saved_fields = args.all_attrs.keys()
+        Nrows = set(len(self.summary[fname]) for fname in saved_fields)
+        if len(Nrows) != 1:
+            warning('Attribute lists have differing lengths') # shouldn't happen
+        Nrow = max(Nrows)
         # dump to CSV  or JSON
         if not args.json:
             csv_opts = {}
@@ -526,7 +588,7 @@ class EnsembleSummary(object):
 ###
 ########################################
 
-def load_attrs_json(args):
+def json_to_object(args):
     r'''Load a JSON dictionary, extract any program flags, return the remainder.'''
     # 1: attempt to load a dict from a JSON file
     try:
@@ -550,7 +612,7 @@ def load_attrs_json(args):
     # Insert container duplicating top-level attributes, for later
     d['__attr__'] = {key:val for key, val in d.items() if not key.startswith('_')}
     # Insert container of each pseudo-attribute that is present and truthy
-    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num') if d.get('__{}__'.format(key))}
+    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num', 'plan_num') if d.get('__{}__'.format(key))}
     return d
 
 
@@ -573,7 +635,7 @@ def argtexts_to_object(args):
         argtexts = []
         for argtext in vars(args)[flavor]:
             # split argtext on commas, unless it was eval (-e)
-            if flavor is not 'evals':
+            if flavor != 'eval':
                 argtext_split = argtext.split(',')
             else:
                 argtext_split = [argtext]
@@ -586,8 +648,11 @@ def argtexts_to_object(args):
             if name_colon_value:
                 # save the name, and the actual attr
                 attr_name, attr_text = name_colon_value.groups()
-            elif flavor in ('attr', 'star', 'planet', 'planets'):
+            elif flavor in ('pseudo', 'attr', 'star', 'planet'):
                 attr_name, attr_text = argtext, argtext
+            elif flavor == 'planets':
+                # otherwise, attribute name-clash (-P/-p) is invited
+                attr_name, attr_text = argtext + '_list', argtext
             else:
                 # will generate a name below
                 attr_name, attr_text = generated_name(flavor), argtext
@@ -598,13 +663,15 @@ def argtexts_to_object(args):
 def process_attr_program_inputs(args):
     r'''Process given attribute inputs, whether arguments or in a file.
 
-    Inputs and outputs by the args.___ namespace.'''
+    The args.___ namespace is updated by the JSON file contents.
+    The return value is a dict of Attribute objects, indexed
+    by the attribute name ("column name") in the output tablulation.'''
     # Strategy: under either the JSON-file or command-line setup, convert
     # attribute specification into a common-denominator object: a dict-of-dicts
     # mapping flavor -> {name1:text1, name2:text2, ...}
     if args.file:
         # dictionary of the JSON file
-        d = load_attrs_json(args)
+        d = json_to_object(args)
         # make dict-of-dicts object
         obj = {}
         for flavor in AttrFlavors:
@@ -614,10 +681,11 @@ def process_attr_program_inputs(args):
         obj = argtexts_to_object(args)
     # Compose the list of all attributes we will extract (across all
     # flavors) by collecting attributes over flavors and names
-    all_attrs = []
+    # Output field order preserved b/c dict is ordered (py 3.7+)
+    all_attrs = dict()
     for flavor, attr_dict in obj.items():
         for name, attr_text in attr_dict.items():
-            all_attrs.append(Attribute(flavor, name, attr_text))
+            all_attrs[name] = Attribute(flavor, name, attr_text)
     return all_attrs
 
 
@@ -656,33 +724,38 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Extract attributes from DRMs and send to stdout.",
                                      epilog='')
     # either -a or -f must be given, not both
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_argument_group('Attributes via command line')
     group.add_argument('-a', '--attr', type=str, action='append', default=[], metavar='ATTR',
-                           dest='attr', help='Repeat -a for more attributes')
-    parser.add_argument('-e', '--eval', type=str, action='append', default=[], metavar='CODE',
-                           dest='eval', help='Repeat -e for more code evaluations')
-    parser.add_argument('-S', '--star', type=str, action='append', default=[],
-                            dest='star', help='Star attribute to extract, one for each -S.')
-    parser.add_argument('-P', '--planet', type=str, action='append', default=[],
-                            dest='planet', help='Planet attribute to extract, one for each -P.')
-    parser.add_argument('-p', '--planets', type=str, action='append', default=[],
-                            dest='planets', help='Planet attribute to extract as lists.')
+                           dest='attr', help='Named attribute within obs (e.g., arrival_time)')
+    group.add_argument('-e', '--eval', type=str, action='append', default=[], metavar='CODE',
+                           dest='eval', help='Evaluate expression within obs namespace')
+    group.add_argument('-S', '--star', type=str, action='append', default=[], metavar='ATTR',
+                            dest='star', help='Star attribute name within SPC via sind, e.g. Spec')
+    group.add_argument('-P', '--planet', type=str, action='append', default=[], metavar='ATTR',
+                            dest='planet', help='Planet attribute within SPC via plan_inds, e.g. Mp')
+    group.add_argument('-p', '--planets', type=str, action='append', default=[], metavar='ATTR',
+                            dest='planets', help='Planet attribute, as above, as a list per obs')
+    group = parser.add_argument_group('Pseudo-attributes')
+    # -s and -n put a pseudo-attribute into that list
+    group.add_argument('-s', '--seed', dest='pseudo', help='Output the DRM seed', action='append_const', const='seed', default=[])
+    group.add_argument('-n', '--obs_num', dest='pseudo', help='Output the observation number', action='append_const', const='obs_num')
+    group.add_argument('--plan_num', dest='pseudo', help='Output the planet number', action='append_const', const='plan_num')
+    group = parser.add_argument_group('Attributes by JSON file')
     group.add_argument('-f', '--file', type=argparse.FileType('r'), help='JSON file of attributes')
 
     parser.add_argument('drm', metavar='DRM', nargs='+', default=[], help='drm file list')
-    parser.add_argument('-m', '--match', type=str, default='',
-                            help='Attribute to match')
-    parser.add_argument('-v', help='Verbosity', action='count', dest='verbose',
+    parser.add_argument('-m', '--match', type=str, default='', metavar='ATTR',
+                            help='Attribute within obs to match, else, skip the obs')
+    group = parser.add_argument_group('Output format')
+    group.add_argument('-1', help='Supply CSV header line', action='store_true', dest='header',
+                            default=False)
+    group.add_argument('--delimiter', help='CSV field delimiter', metavar='STR', type=str)
+    group.add_argument('--json', help='JSON output format', action='store_true', dest='json',
+                            default=False)
+    group = parser.add_argument_group('Seldom used')
+    group.add_argument('-v', help='Verbosity', action='count', dest='verbose',
                             default=0)
-    parser.add_argument('-1', help='Supply header line', action='store_true', dest='header',
-                            default=False)
-    parser.add_argument('--json', help='JSON output format', action='store_true', dest='json',
-                            default=False)
-    parser.add_argument('-d', '--delimiter', help='CSV field delimiter', type=str)
-    # -s and -n put a pseudo-attribute into that list
-    parser.add_argument('-s', '--seed', dest='pseudo', help='Output the DRM seed', action='append_const', const='seed', default=[])
-    parser.add_argument('-n', '--obs_num', dest='pseudo', help='Output the observation number', action='append_const', const='obs_num')
-    parser.add_argument('-j', '--jobs', help='Number of parallel jobs (default = %(default)d)',
+    group.add_argument('-j', '--jobs', help='Number of parallel jobs (default = %(default)d)',
                       type=int, dest='jobs', default=int(N_CPU*0.65))
     args = parser.parse_args()
     
@@ -694,18 +767,25 @@ if __name__ == '__main__':
     # program name, for convenience
     args.progname = os.path.basename(sys.argv[0])
     
+    # TODO: add as option
+    args.empty_skipped = True
+
     # do it like this for now
     args.infile = args.drm
 
     # do we need to load the SPC file?
     args.load_spc = args.star or args.planet or args.planets
 
+    # Enforce that -P => --plan_num
+    if args.planet and 'plan_num' not in args.pseudo:
+        args.pseudo.append('plan_num')
+
     # process attr args here, before calling main
     args.all_attrs = process_attr_program_inputs(args)
     if VERBOSITY > 0:
         sys.stderr.write('Attributes to be retrieved:\n')
-        for attr in args.all_attrs:
-            sys.stderr.write('  retrieving "{}" type attribute: {} <- {}\n'.format(attr.flavor, attr.name, attr.text))
+        for name, attr in args.all_attrs.items():
+            sys.stderr.write('  retrieving "{}" type attribute: {} <- {}\n'.format(attr.flavor, name, attr.text))
 
     # no reason to complicate this for now
     outfile = sys.stdout
