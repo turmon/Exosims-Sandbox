@@ -639,8 +639,9 @@ class SimulationRun(object):
             if np.any(binner.is_earthlike(self.spc, np.array(obs['plan_inds']), obs['star_ind'])):
                 stars_visited_earth.append(obs['star_ind'])
         # visit count, indexed by star (star index starts at 0)
-        visit_by_star_all   = np.bincount(np.array(stars_visited_all,   dtype=np.int), minlength=self.Nstar)
-        visit_by_star_earth = np.bincount(np.array(stars_visited_earth, dtype=np.int), minlength=self.Nstar)
+        #  (replaced former np.int->np.int32 to silence warnings from np v1.19)
+        visit_by_star_all   = np.bincount(np.array(stars_visited_all,   dtype=np.int32), minlength=self.Nstar)
+        visit_by_star_earth = np.bincount(np.array(stars_visited_earth, dtype=np.int32), minlength=self.Nstar)
         # stars visited zero times, once, twice, etc., index from 0 to N_visit_max
         h_visit_all   = np.histogram(visit_by_star_all,   visit_bins)[0]
         h_visit_earth = np.histogram(visit_by_star_earth, visit_bins)[0]
