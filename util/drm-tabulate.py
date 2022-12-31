@@ -29,6 +29,7 @@ Take the above options from a file with:
 
 Some less-useful options:
   --json: output is JSON, rather than standard CSV
+  --empty: output a record when planet attributes selected, even if no planets present
   -v: increase verbosity (output is to stderr)
   -j N: use N parallel workers (default = ~2/3 of cores)
         If N = 0 or 1, no parallelism: needed for debugging.
@@ -82,23 +83,26 @@ STAR-PLANET ATTRIBUTES
     -P ATTR means to look up the named ATTR for each planet in 
     obs['plan_inds'] in the SPC file, e.g.
       -P Mp => spc['Mp'][obs['plan_inds']]
-    Note that obs['plan_inds'] is in general a vector. In fact, we
-    write one row of output *for each plan_ind in plan_inds*. 
+    Note that obs['plan_inds'] is in general a vector. 
+    So, if you give -P, this program "scalar-expands" the vector
+    to write one row of output *for each plan_ind in plan_inds*. 
     This facilitates row-by-row processing.
-    Note that if plan_inds = [], no record will be written.
+    Note that if plan_inds = [], no record will be written. 
+    To write a record in the zero-planet case anyway, specify --empty.
 
 -p => shortcut for alternate Planet attributes
     This is the same lookup as -P, but the vector is output to
     that *one* column in the row. This would be more useful for 
     the JSON output; the CSV format looks like:
-       <TBD>
+       "[0.282, 1.044]"
 
 For all of the above, an optional column-name can be given just as
-for -a and -e. If not given, the attribete name will be used.
+for -a and -e. If not given, the attribute name, or a generated
+string, will be used.
 
 The SPC file is loaded using the filename convention that 
   .../drm/NAME.pkl -> .../spc/NAME.spc
-If no -S/-P/-s is given, the SPC is not loaded, to allow use of 
+If no -S/-P/-p is given, the SPC is not loaded, to allow use of 
 this program when only the DRM is present. If the SPC file is needed
 to support spc[...] within "-e" constructs above, load of the SPC 
 can be forced by giving -S "".
@@ -148,6 +152,9 @@ Typical usage:
 
   # number of successful chars, only for chars
   util/drm-tabulate.py -m char_info -a "np.sum(char_info[0]['char_status'] == 1)" sims/HabEx_4m_dmag26/drm/*
+
+  # planet-by-planet output of: char_status, planet mass, star spectral class, etc.
+  util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm/*.pkl
 
 turmon apr 2019, feb 2022, dec 2022
 '''
@@ -407,10 +414,24 @@ class SimulationRun(object):
             val = self.extract_pseudo(obs, text, **kwargs)
         else:
             assert False, 'Statement should not be reached: unrecognized flavor'
-        # box everything but 'planet' into a len = 1 list
-        if flavor != 'planet':
+        # np.ndarrays -> lists (so we can use .extend later on any returned value)
+        if isinstance(val, np.ndarray):
+            val = val.tolist()
+        # box everything but 'planet' and 'eval' into a len = 1 list
+        # this len=1 list may be extended later. Here are the exceptions:
+        #  planet -> returns a list anyway (b/c spc[attr][plan_inds] is a list)
+        #  eval -> if we box "val" here, a list returned by eval would be double-boxed
+        #          and could not be extended later; OTOH, if boxing a non-planet result
+        #          is desired, eval can be made to return a list by surrounding in [...]
+        if flavor not in ('planet', 'eval'):
             val = [val]
         val_len = len(val)
+        # below code disabled for now - issue is that we want to vectorize -e attributes
+        # like char_status along the planet dimension, same as the -P attributes
+        # the code below is trying to recognize Py/NP vectors and separate them from
+        # strings (which also have a len), so we can vectorize correctly later
+        # correct behavior would be that -P Mp and -e char_status both vectorize, but
+        # -S Spec does not. the if() constructs above are doing this work for now
         if 0:
             # to vectorize later, we need the length. length=1 if scalar or string.
             # else, allow for lists that are np vectors or python lists
@@ -436,8 +457,7 @@ class SimulationRun(object):
             # 1: no obs[match] => skip this observation
             if match and not self.extract_value_obs(obs, match, just_peeking=True):
                 continue
-            # 2: extract all needed values -- vals_1 exists for every name
-            #OLD:vals_1 = {name:extract_value(obs, attr, nobs=nobs) for name, attr in attrs.items()}
+            # 2: extract all needed values -- note, vals_1 is set for every name
             val_lens, vals_1 = dict(), dict()
             for name, attr in attrs.items():
                 val_lens[name], vals_1[name] = self.extract_value_any(obs, attr, nobs=nobs)
@@ -448,23 +468,24 @@ class SimulationRun(object):
                 Nplan = planet_guesses.pop()
             else:
                 Nplan = 1
-            ### print('EXA: nobs = {}, Nplan = {}'.format(nobs, Nplan))
+            ### print('EX_ATTR: nobs = {}, Nplan = {}'.format(nobs, Nplan))
             # 3B: extend vals_1 along planets if needed
             # 3B.1 -- Nplan = 0 case
-            #   skip this record if there was a planet attribute selected, but no planets
+            #   skip this record if there was a planet attribute selected, but no planets there
             #   otherwise, we continue and the PlanetNum will tabulate as 0
-            if Nplan == 0 and args.empty_skipped:
-                continue
-            else:
-                # TODO: we can't have untouched slots...but what happens for #plan = 0?
-                # pad untouched slots with NaN -- not our problem
-                for name in vals_1.keys():
-                    if vals_1[name] == None:
-                        vals_1[name] = np.nan()
+            if Nplan == 0:
+                if args.empty_skipped:
+                    continue
+                else:
+                    # Nplan == 0 case, but not empty_skipped
+                    # ==> we will finish the loop, and output a record for this obs
+                    # fields will contain whatever extract_value() returned above
+                    # plan_num, if requested, will be 0
+                    pass
             # 3B.2 -- Nplan >= 1 case
             #   pad the other fields downward to match the planet vector
             #   set plan_num field if needed -- [1:Nplan], excluding 0
-            #   need >= 1 here to set plan_num for Nplan == 1
+            #   test is ">= 1" here to set plan_num for Nplan == 1
             if Nplan >= 1:
                 for name in vals_1.keys():
                     vals_1[name].extend([vals_1[name][-1]] * (Nplan - val_lens[name]))
@@ -474,7 +495,6 @@ class SimulationRun(object):
             # 4: vals += vals_1 (both are lists)
             for name in vals_1.keys():
                 vals[name].extend(vals_1[name])
-            ### print('EXA/ vals_1 = {}'.format(vals_1))
         # return the dictionary-of-lists
         return vals
 
@@ -753,6 +773,8 @@ if __name__ == '__main__':
     group.add_argument('--json', help='JSON output format', action='store_true', dest='json',
                             default=False)
     group = parser.add_argument_group('Seldom used')
+    group.add_argument('--empty', help='output records despite having 0 planets', action='store_false', dest='empty_skipped',
+                            default=True)
     group.add_argument('-v', help='Verbosity', action='count', dest='verbose',
                             default=0)
     group.add_argument('-j', '--jobs', help='Number of parallel jobs (default = %(default)d)',
@@ -767,9 +789,6 @@ if __name__ == '__main__':
     # program name, for convenience
     args.progname = os.path.basename(sys.argv[0])
     
-    # TODO: add as option
-    args.empty_skipped = True
-
     # do it like this for now
     args.infile = args.drm
 
