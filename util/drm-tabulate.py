@@ -28,6 +28,7 @@ Take the above options from a file with:
   -f FILE: take ATTRs from FILE *instead of* -a/-S/-P/-p options (see below)
 
 Some less-useful options:
+  -A: list available DRM and SPC attributes and values on stderr, for reference
   --json: output is JSON, rather than standard CSV
   --empty: output a record when planet attributes selected, even if no planets present
   -v: increase verbosity (output is to stderr)
@@ -170,6 +171,7 @@ import os
 import re
 import gc
 import csv
+import pprint
 import warnings
 import collections
 from functools import partial
@@ -195,6 +197,9 @@ N_CPU = mproc.cpu_count()
 
 # unpickling python2/numpy pickles within python3 requires this
 PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
+
+# used to limit multiple attribute-printing under -A
+RECORD_WAS_SHOWN = False
 
 ########################################
 ###
@@ -333,13 +338,16 @@ class SimulationRun(object):
                 # TypeError: list/dict confusion
                 if just_peeking:
                     return False
-                # announce the cause now, exception triggered below
-                sys.stderr.write('Fatal: Value extraction failed while trying {}.\n'.format(
-                    'list indexing' if type(seg0) is int else 'dict lookup'))
-                sys.stderr.write('No "{}" found in obs object (or sub-object).\n'.format(seg0))
-                sys.stderr.write('Object or sub-object is a {}:\n{}\n'.format(type(obs), repr(obs)))
+                pp = pprint.PrettyPrinter(indent=4)
+                # announce the cause now, exception will raise below
+                print('Fatal: Value extraction failed during {}.'.format(
+                    'list indexing' if type(seg0) is int else 'dict lookup'), file=sys.stderr)
+                print('No "{}" found in obs object (or sub-object). Attribute naming error?'.format(seg0), file=sys.stderr)
+                print('Object or sub-object ({}) = '.format(type(obs)), file=sys.stderr)
+                print(pp.pformat(obs), file=sys.stderr)
             # recursive extraction from obs[seg0]
-            return self.extract_value_obs(obs[seg0], '.'.join(segments[1:]), just_peeking=just_peeking)
+            sub_object = obs[seg0]
+            return self.extract_value_obs(sub_object, '.'.join(segments[1:]), just_peeking=just_peeking)
 
     def extract_pseudo(self, obs, attr, nobs=None):
         r'''Extract pseudo-attribute, which can have special naming conventions.'''
@@ -376,8 +384,10 @@ class SimulationRun(object):
             sind = obs['star_ind']
             val = strip_units(self.spc[attr][sind])
         except:
-            sys.stderr.write('Error: Did not find {} in SPC for star index {}.\n'.format(attr, sind))
-            sys.stderr.write('Properties available:\n{}\n'.format('\t\n'.join(self.spc.keys())))
+            print('Error: Did not find "{}" in SPC for star index {}.'.format(attr, sind), file=sys.stderr)
+            print('Properties available for -S include:', file=sys.stderr)
+            print('\t' + '\n\t'.join(self.spc.keys()), file=sys.stderr)
+            print('Consider using -A for more information.', file=sys.stderr)
             raise
         return val
 
@@ -388,8 +398,10 @@ class SimulationRun(object):
             plan_inds = obs['plan_inds']
             val = [strip_units(self.spc[attr][p]) for p in plan_inds]
         except:
-            sys.stderr.write('Error: Did not find {} in SPC for planet index {}.\n'.format(attr, repr(plan_inds)))
-            sys.stderr.write('Properties available:\n{}\n'.format('\t\n'.join(self.spc.keys())))
+            print('Error: Did not find "{}" in SPC for planet index {}.'.format(attr, repr(plan_inds)), file=sys.stderr)
+            print('Properties available for -P/-p include:', file=sys.stderr)
+            print('\t' + '\n\t'.join(self.spc.keys()), file=sys.stderr)
+            print('Consider using -A for more information.', file=sys.stderr)
             raise
         # val is always a list from this function, we'll process further later
         return val
@@ -414,38 +426,78 @@ class SimulationRun(object):
             val = self.extract_pseudo(obs, text, **kwargs)
         else:
             assert False, 'Statement should not be reached: unrecognized flavor'
-        # np.ndarrays -> lists (so we can use .extend later on any returned value)
-        if isinstance(val, np.ndarray):
+        # convert np.ndarrays -> lists (so we can use .extend later on any returned value)
+        # (but: ndim == 0 -> scalar -> leave it)
+        if isinstance(val, np.ndarray) and val.ndim > 0:
             val = val.tolist()
         # box everything but 'planet' and 'eval' into a len = 1 list
         # this len=1 list may be extended later. Here are the exceptions:
         #  planet -> returns a list anyway (b/c spc[attr][plan_inds] is a list)
-        #  eval -> if we box "val" here, a list returned by eval would be double-boxed
-        #          and could not be extended later; OTOH, if boxing a non-planet result
-        #          is desired, eval can be made to return a list by surrounding in [...]
+        #  eval -> if we /always/ box "val" here, a list returned by eval will be 
+        #          double-boxed and can't be extended later. OTOH, if boxing 
+        #          a non-planet result is desired, eval can be forced to return 
+        #          a list by surrounding in [...]
         if flavor not in ('planet', 'eval'):
             val = [val]
-        val_len = len(val)
-        # below code disabled for now - issue is that we want to vectorize -e attributes
-        # like char_status along the planet dimension, same as the -P attributes
-        # the code below is trying to recognize Py/NP vectors and separate them from
+        # - the code below recognizes Py/NP vectors and separates them from
         # strings (which also have a len), so we can vectorize correctly later
-        # correct behavior would be that -P Mp and -e char_status both vectorize, but
-        # -S Spec does not. the if() constructs above are doing this work for now
-        if 0:
+        # - it prevents returning non-boxed values, because values are vectorized later
+        # with val.extend(...)
+        # - correct behavior is that -P Mp and -e char_status both vectorize, but
+        # -S Spec (string) does not.
+        if True:
             # to vectorize later, we need the length. length=1 if scalar or string.
             # else, allow for lists that are np vectors or python lists
             try:
                 # this can be a boxed list of length=1
                 val_len = len(val)
             except TypeError:
-                # e.g., scalars
+                # believe this triggers only on scalars from -e, must always box val once
+                val = [val]
                 val_len = 1
             if isinstance(val, str):
                 val_len = 1 # str alone is OK for py3 or np.str
         return val_len, val
 
-    def extract_attrs(self, match, attrs):
+    def show_attributes(self, obs):
+        r'''Pretty-print available attributes to stderr.'''
+        # global-var synchronization scheme only works with -j 1: adequate
+        global RECORD_WAS_SHOWN
+        if RECORD_WAS_SHOWN:
+            return
+        RECORD_WAS_SHOWN = True
+        pp = pprint.PrettyPrinter(indent=4)
+        # obs attributes
+        print('DRM observation attributes [use -a]:', file=sys.stderr)
+        # loop over keys => attributes appear as you'd name them with -a
+        for k in sorted(obs.keys()):
+            value_pp = pp.pformat(obs[k])
+            print('  {}: {}'.format(k, value_pp), file=sys.stderr)
+        if self.spc:
+            print('', file=sys.stderr)
+            print('SPC attributes [use -S or -P]:', file=sys.stderr)
+            # loop over keys => attributes appear as you'd name with -S/-P
+            for k in sorted(self.spc.keys()):
+                try:
+                    xtra = 'array' + str(self.spc[k].shape)
+                    if self.spc[k].size < 10:
+                        # if it's short, give its values
+                        xtra = xtra + ' = ' + pp.pformat(self.spc[k])
+                    else:
+                        # otherwise, give its first few values only
+                        num_show = min(self.spc[k].size, 3)
+                        xtra = xtra + ' = ' + ', '.join([pp.pformat(x) for x in (self.spc[k][:num_show])])
+                        if num_show < self.spc[k].size:
+                            xtra = xtra + ', ...'
+                except AttributeError:
+                    # (no .shape -> not numpy)
+                    xtra = pp.pformat(self.spc[k])
+                print('  {}: {}'.format(k, xtra), file=sys.stderr)
+        else:
+            print('Note: SPC not loaded. Use -S "" to force load.', file=sys.stderr)
+
+
+    def extract_attrs(self, match, attrs, show_attrs):
         r'''Extract attributes from each obs in the DRM.
 
         Returns a dictionary mapping attributes to lists, one list entry
@@ -453,10 +505,14 @@ class SimulationRun(object):
         '''
         # accumulate values in these lists, one per attribute
         vals = {name: [] for name in attrs.keys()}
+        not_yet_shown = True
         for nobs, obs in enumerate(self.drm):
             # 1: no obs[match] => skip this observation
             if match and not self.extract_value_obs(obs, match, just_peeking=True):
                 continue
+            if show_attrs and not_yet_shown:
+                not_yet_shown = False
+                self.show_attributes(obs)
             # 2: extract all needed values -- note, vals_1 is set for every name
             val_lens, vals_1 = dict(), dict()
             for name, attr in attrs.items():
@@ -506,7 +562,7 @@ class SimulationRun(object):
         summary dictionary is a union of each individual summary.
         If econo, delete the DRM and keep only the summary.'''
         # this dict holds reductions for the current sim
-        summary = self.extract_attrs(args.match, args.all_attrs)
+        summary = self.extract_attrs(args.match, args.all_attrs, args.show_attributes)
         # delete the base data if asked
         if econo:
             self.drm = None
@@ -775,8 +831,8 @@ if __name__ == '__main__':
     group = parser.add_argument_group('Seldom used')
     group.add_argument('--empty', help='output records despite having 0 planets', action='store_false', dest='empty_skipped',
                             default=True)
-    group.add_argument('-v', help='Verbosity', action='count', dest='verbose',
-                            default=0)
+    group.add_argument('-A', help='Show list of Available Attributes on stderr', action='store_true', dest='show_attributes')
+    group.add_argument('-v', help='Verbosity', action='count', dest='verbose', default=0)
     group.add_argument('-j', '--jobs', help='Number of parallel jobs (default = %(default)d)',
                       type=int, dest='jobs', default=int(N_CPU*0.65))
     args = parser.parse_args()
@@ -794,6 +850,10 @@ if __name__ == '__main__':
 
     # do we need to load the SPC file?
     args.load_spc = args.star or args.planet or args.planets
+
+    # enforce that -A => -j 1
+    if args.show_attributes:
+        args.jobs = 1
 
     # Enforce that -P => --plan_num
     if args.planet and 'plan_num' not in args.pseudo:
