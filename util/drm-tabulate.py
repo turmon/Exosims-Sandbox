@@ -370,12 +370,17 @@ class SimulationRun(object):
         try:
             val = eval(attr, {"np": np, "spc": self.spc, **obs})
         except:
-            sys.stderr.write('Error: Failed to eval() the given attribute.\n')
-            sys.stderr.write('Evaluated string is surrounded by || below:\n|{}|\n'.format(attr))
-            sys.stderr.write('Context is:\n')
-            sys.stderr.write(repr(obs) + '\n')
+            pp = pprint.PrettyPrinter(indent=4)
+            print('Error: Failed to eval() the given attribute.', file=sys.stderr)
+            print('String we attempted to eval() is below inside ||:', file=sys.stderr)
+            print('\t|{}|'.format(attr), file=sys.stderr)
+            self.show_attributes(obs, msg_obs='eval context is:', msg_spc=' spc: {')
+            print(' }', file=sys.stderr)
+            print('\nTraceback follows.', file=sys.stderr)
+            # print(pp.pformat(context), file=sys.stderr)
             raise
-        return val
+        # for parallelism with other value-getters, strip the units now
+        return strip_units(val)
 
     def extract_value_star(self, obs, attr):
         r'''Extract star-related attribute by evaluating attr in the context of obs.'''
@@ -445,21 +450,21 @@ class SimulationRun(object):
         # with val.extend(...)
         # - correct behavior is that -P Mp and -e char_status both vectorize, but
         # -S Spec (string) does not.
-        if True:
-            # to vectorize later, we need the length. length=1 if scalar or string.
-            # else, allow for lists that are np vectors or python lists
-            try:
-                # this can be a boxed list of length=1
-                val_len = len(val)
-            except TypeError:
-                # believe this triggers only on scalars from -e, must always box val once
-                val = [val]
-                val_len = 1
-            if isinstance(val, str):
-                val_len = 1 # str alone is OK for py3 or np.str
+
+        # to vectorize later, we need the length. length=1 if scalar or string.
+        # else, allow for lists that are np vectors or python lists
+        try:
+            # this can be a boxed list of length=1
+            val_len = len(val)
+        except TypeError:
+            # believe this triggers only on scalars from -e, must always box val once
+            val = [val]
+            val_len = 1
+        if isinstance(val, str):
+            val_len = 1 # str alone is OK for py3 or np.str
         return val_len, val
 
-    def show_attributes(self, obs):
+    def show_attributes(self, obs, msg_obs=None, msg_spc=None):
         r'''Pretty-print available attributes to stderr.'''
         # global-var synchronization scheme only works with -j 1: adequate
         global RECORD_WAS_SHOWN
@@ -468,14 +473,20 @@ class SimulationRun(object):
         RECORD_WAS_SHOWN = True
         pp = pprint.PrettyPrinter(indent=4)
         # obs attributes
-        print('DRM observation attributes [use -a]:', file=sys.stderr)
+        if msg_obs is None:
+            print('DRM observation attributes [use -a]:', file=sys.stderr)
+        else:
+            print(msg_obs, file=sys.stderr)
         # loop over keys => attributes appear as you'd name them with -a
         for k in sorted(obs.keys()):
             value_pp = pp.pformat(obs[k])
             print('  {}: {}'.format(k, value_pp), file=sys.stderr)
         if self.spc:
             print('', file=sys.stderr)
-            print('SPC attributes [use -S or -P]:', file=sys.stderr)
+            if msg_spc is None:
+                print('SPC attributes [use -S or -P]:', file=sys.stderr)
+            else:
+                print(msg_spc, file=sys.stderr)
             # loop over keys => attributes appear as you'd name with -S/-P
             for k in sorted(self.spc.keys()):
                 try:
