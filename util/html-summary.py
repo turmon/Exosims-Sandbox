@@ -84,27 +84,33 @@ SECTION_HEADS = {
         'radlum': '',
         'rad-sma': '',
         'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
-        to accomodate large variations in duration.
-        Frequency values between plots when x-axis units are the same are comparable,
-        but if units change, the frequencies are not directly comparable.
-        Off-scale durations are not shown.''',
-        'event-count': '',
-        'yield': '''Time axis is mission clock time.''',
-        'cume': '''Time axis is mission clock time.''',
+            to accomodate large variations in duration.
+            Frequency values between plots when x-axis units are the same are comparable,
+            but if units change, the frequencies are not directly comparable.
+            Off-scale durations are not shown.''',
+        'event-count': '''All detection and characterization counts are attempts, 
+             without regard to success.''',
+        'visit-time': '''Counts in these plots represent the number of target stars visited or re-visited. 
+             <p>Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
+             reduce overplotting of multiple time series.''',
+        'yield': '''Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
+             reduce overplotting of multiple time series.''',
+        'cume': '''Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
+             reduce overplotting of multiple time series.''',
         'perstar-det':  '',
         'perstar-char': '',
         'promote': '''Funnel analysis from detection to characterization, 
-        separated into deep dive targets and promoted targets.  
-        <p>Promotions in the
-        <em>table</em> are determined
-        using the promoted_stars variable output at the end of the simulation.
-        Those in the <em>plots</em> are determined using detection results
-        aggregated by the reduction code as the simulation proceeds.
-        <p>
-        Some x-axis units in this section are in terms of cumulative
-        detection integration time rather than mission clock time.''',
+            separated into deep dive targets and promoted targets.  
+            <p>Promotions in the
+            <em>table</em> are determined
+            using the promoted_stars variable output at the end of the simulation.
+            Those in the <em>plots</em> are determined using detection results
+            aggregated by the reduction code as the simulation proceeds.
+            <p>
+            Some x-axis units in this section are in terms of cumulative
+            detection integration time rather than mission clock time.''',
         'earth-char': '''Promotions here are all determined 
-        using the promoted_stars variable output at the end of the simulation.''',
+            using the promoted_stars variable output at the end of the simulation.''',
         'path': '',
          }
 
@@ -443,6 +449,7 @@ class SimSummary(object):
                         ('/det-rad-sma', 'rad-sma'),
                         ('/det-duration', 'duration'),
                         ('/det-event-count', 'event-count'),
+                        ('/det-visit-time', 'visit-time'),
                         ('/det-time', 'yield'),
                         ('/det-cume', 'cume'), ('/det-detects', 'cume'), # these plots are now in yield
                         ('/det-fuel', 'cume'),
@@ -461,6 +468,7 @@ class SimSummary(object):
         ('rad-sma',     'Radius/SMA',                 'graphics'),
         ('duration',    'Event Duration',             'graphics'),
         ('event-count', 'Event Count',                'graphics'),
+        ('visit-time',  'Visits vs. Time',            'graphics'),
         ('yield',       'Mission Yield vs. Time',     'graphics'),
         ('cume',        'Mission Resources vs. Time', 'graphics'),
         ('perstar-det', 'Per-Star Detection',         'graphics'),

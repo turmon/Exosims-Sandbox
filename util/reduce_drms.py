@@ -558,6 +558,7 @@ class SimulationRun(object):
     r'''Load and summarize a simulation: one DRM and its corresponding SPC.'''
     def __init__(self, f, sim_info={}):
         # allow creating a dummy object so that its properties may be queried
+        # (this is used in a couple of places)
         if f is None:
             self.drm = []
             self.spc = defaultdict(list)
@@ -596,14 +597,6 @@ class SimulationRun(object):
         self.drm = drm
         self.summary = None # place-holder
     
-    def find_fuel_present(self):
-        '''Return True if fuel usage info is present in the DRMs.'''
-        # TODO: this is currently unused
-        for obs in self.drm:
-            if 'slew_mass_used' in obs or 'char_mass_used' in obs:
-                return True
-        return False
-
     def summarize_revisits(self):
         r'''Compute revisit-count summary statistics (for one DRM).
 
@@ -650,10 +643,16 @@ class SimulationRun(object):
         h_visit_all  [-1] += len(visit_by_star_all  [visit_by_star_all   > visit_bins[-1]])
         h_visit_earth[-1] += len(visit_by_star_earth[visit_by_star_earth > visit_bins[-1]])
         # return a dict of results
-        return {'h_visit_all':   h_visit_all,
-                'h_visit_earth': h_visit_earth,
-                'h_visit_bins':  visit_bins[:-1],
-               }
+        rv = {
+            'h_visit_all':   h_visit_all,
+            'h_visit_earth': h_visit_earth,
+            }
+        rv['_summarize_revisits_keys'] = list(rv.keys())
+        # statistics are not found over the bins: it's a trick to report binning
+        # concept is to try to keep binning internal to this function if possible
+        # TODO: report out these values differently!
+        rv['h_visit_bins'] = visit_bins[:-1]
+        return rv
 
     def per_star_yield(self):
         r'''Compute yield, tInt, etc., binned by target star (for one DRM).
@@ -809,8 +808,8 @@ class SimulationRun(object):
             char_earth_frac  = yield_char_earth_uniq / earth_per_star
 
         # return a dict of results for this DRM
-        # Note: we have enforced consistency with naming conventions from here forward
-        return {
+        # Note: names from here forward do not change
+        rv = {
             # det
             'h_star_det_visit':        tried_det_ctr,
             'h_star_det_tobs1':        tried_det_obs_time,
@@ -841,6 +840,8 @@ class SimulationRun(object):
             'h_star_plan_per_star':    plan_per_star,
             'h_star_earth_per_star':   earth_per_star,
             }
+        rv['_per_star_yield_keys'] = list(rv.keys())
+        return rv
 
     def event_analysis(self):
         r'''Extract certain event information (slew, char, and det integration times) from DRM.
@@ -917,7 +918,10 @@ class SimulationRun(object):
             'h_event_det_b2_duration',
             'h_event_char_b2_duration',
             'h_event_slew_b2_duration']
-        return {qoi: namespace[qoi] for qoi in qois}
+        rv = {qoi: namespace[qoi] for qoi in qois}
+        # the list of keys that we're returning ... for use in later steps
+        rv['_event_analysis_keys'] = qois
+        return rv
 
     def count_events(self):
         r'''Extract event counts (#slew, #char, and #det) from DRM.
@@ -997,7 +1001,7 @@ class SimulationRun(object):
         # (if any!) and then fix the main code, as needed, for current DRMs.
         if False:
             zero = np.zeros(len(DETECTION_TIME_BINS))
-            return {'n_slew': 0,
+            return {
                 'h_time_det_cume':  zero,
                 'h_time_det_incr':  zero,
                 'h_time_char_cume': zero,
@@ -1144,44 +1148,25 @@ class SimulationRun(object):
         h_time_fuel_keep = sk_fuel_interp_func(DETECTION_TIME_BINS)
         # combined fuel use
         h_time_fuel_all = h_time_fuel_slew + h_time_fuel_keep
-
-        ## -- variables used in yield_analysis which should be here, or
-        ##    in yield_time_analysis
-        ## # times
-        ## # record detection times [day]
-        ##        arrival_time = strip_units(obs['arrival_time'])
-        ##        # all detections made
-        ##        det_time_all.extend([arrival_time] * len(detected))
-        ##        # new unique detections
-        ##        det_time_unq.extend([arrival_time] * len(dets_new))
-        ##        # revisits
-        ##        det_time_rev.extend([arrival_time] * (len(detected) - len(dets_new)))
-        # bin the detection-times ("h_" is mnemonic for histogrammed)
-        ## h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
-        ## h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
-        ## h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
-        ## (...)
-        ## 'h_det_time_all': h_det_time_all,
-        ## 'h_det_time_unq': h_det_time_unq,
-        ## 'h_det_time_rev': h_det_time_rev, 
-
         # return value
-        return {'n_slew':           n_slew,
-                'h_time_det_cume':  h_time_det,
-                'h_time_det_incr':  np.ediff1d(h_time_det, to_begin=0.0),
-                'h_time_char_cume': h_time_char,
-                'h_time_char_incr': np.ediff1d(h_time_char, to_begin=0.0),
-                'h_time_slew_cume': h_time_slew,
-                'h_time_slew_incr': np.ediff1d(h_time_slew, to_begin=0.0),
-                'h_time_fuel_slew': h_time_fuel_slew,
-                'h_time_fuel_keep': h_time_fuel_keep,
-                'h_time_fuel_all':  h_time_fuel_all,
-                }
+        rv = {
+            'h_time_det_cume':  h_time_det,
+            'h_time_det_incr':  np.ediff1d(h_time_det, to_begin=0.0),
+            'h_time_char_cume': h_time_char,
+            'h_time_char_incr': np.ediff1d(h_time_char, to_begin=0.0),
+            'h_time_slew_cume': h_time_slew,
+            'h_time_slew_incr': np.ediff1d(h_time_slew, to_begin=0.0),
+            'h_time_fuel_slew': h_time_fuel_slew,
+            'h_time_fuel_keep': h_time_fuel_keep,
+            'h_time_fuel_all':  h_time_fuel_all,
+            }
+        rv['_resource_analysis_keys'] = list(rv.keys())
+        return rv
 
     def delta_v_analysis(self):
         r'''Extract time-binned delta-V information.
 
-        This analysis is handled differently than the earlier fuel_analysis() algorithm.
+        This analysis is handled differently than the earlier resource_analysis() algorithm.
         That setup used a linear ramp of fuel expenditure across the observation window,
         which proved difficult to manage because sometimes windows could overlap or be
         very narrow.  So here, we parcel delta-v into a discrete number of chunks that 
@@ -1317,7 +1302,8 @@ class SimulationRun(object):
             hzones = binner.is_hab_zone( self.spc, plan_inds, sind) # vector
 
             if ('yield' in DEBUG) and (sind in top_sInds):
-                print('Observed a DD target %3d -- #EEC = %d -- chartime = %g ' % (sind, np.sum(earths), get_char_time(obs).value))
+                print('Observed a DD target %3d -- #EEC = %d -- chartime = %g ' % (
+                    sind, np.sum(earths), get_char_time(obs).value))
 
             # make "char_info" or a proxy of it ["char_info" is used in newer DRMs]
             #  char_info = [dict(char_time = X, char_status = Y) ...]
@@ -1734,11 +1720,14 @@ class SimulationRun(object):
 
         # return a dict of results for this DRM
         # Note: enforce consistency with naming conventions from here forward
-        return {
+        rv = {
             'h_star_promo_allplan':  promo_allplan,
             'h_star_promo_hzone':    promo_hzone,
             'h_star_promo_earth':    promo_earth,
             }
+        rv['_per_star_promotion_keys'] = list(rv.keys())
+        return rv
+
 
     def yield_analysis(self):
         r'''Extracts yield information from a DRM structure, for a SINGLE Exosims run.
@@ -2225,6 +2214,20 @@ class SimulationRun(object):
                         yac['set_chars_full_uniq'+_band].update(set(charized_full))
                         yac['set_chars_part_uniq'+_band].update(set(charized_part))
 
+        ## FIXME: attributes now found in yield_analysis() which should be here
+        ## # record detection times [day]
+        ##        arrival_time = strip_units(obs['arrival_time'])
+        ##        # all detections made
+        ##        det_time_all.extend([arrival_time] * len(detected))
+        ##        # new unique detections
+        ##        det_time_unq.extend([arrival_time] * len(dets_new))
+        ##        # revisits
+        ##        det_time_rev.extend([arrival_time] * (len(detected) - len(dets_new)))
+        # bin the detection-times ("h_" is mnemonic for histogrammed)
+        ## h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
+        ## h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
+        ## h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
+
         # name of each time-list within yac[] to convert to a histogram
         names = []
         names.extend(['time_det_%s_%s' % (target, status)
@@ -2246,6 +2249,58 @@ class SimulationRun(object):
         # return the pooled result
         return rv
 
+    def visit_time_analysis(self):
+        r'''Extracts visits-vs-time information from a DRM structure, for a SINGLE Exosims run.
+
+        Method handles mission-time-related detection/characterization information,
+        counting by stars (visits) not counting by planets (yield).'''
+        global VERBOSITY
+
+        # visit accumulator - a dictionary of lists of arrival-times
+        names = [f'{typ}_{status}'
+                     for typ in ('det', 'char')
+                     for status in ('visit', 'revi', 'uniq')]
+        vac = {key: [] for key in names}
+
+        # allow us to track revisits
+        stars_visited_det  = set()
+        stars_visited_char = set()
+
+        for obs_num, obs in enumerate(self.drm):
+            sind = obs['star_ind']
+            plan_inds = np.array(obs['plan_inds'])
+            arrival_time = strip_units(obs['arrival_time']) # [day]
+            # Process a detection:
+            #   condition: 'det_time' for starshade DRMs, 'det_info' for coronagraph-only
+            if 'det_time' in obs or 'det_info' in obs:
+                # record cumulative, unique, and revisits
+                vac['det_visit'].append(arrival_time)
+                if sind in stars_visited_det:
+                    vac['det_revi'].append(arrival_time)
+                else:
+                    vac['det_uniq'].append(arrival_time)
+                    stars_visited_det.add(sind)
+            # Process a characterization
+            if 'char_mode' in obs or 'char_info' in obs:
+                # record cumulative, unique, and revisits
+                vac['char_visit'].append(arrival_time)
+                if sind in stars_visited_char:
+                    vac['char_revi'].append(arrival_time)
+                else:
+                    vac['char_uniq'].append(arrival_time)
+                    stars_visited_char.add(sind)
+
+        # accumulate the returned value (rv) by binning the visit-times
+        # ("h_" is mnemonic for histogrammed)
+        rv = {}
+        for n in names:
+            rv['h_visit_' + n] = np.histogram(vac[n], DETECTION_TIME_BINS)[0]
+        # the list of keys that we're returning ... for use in later steps
+        rv['_visit_time_keys'] = list(rv.keys())
+        # return the pooled result
+        return rv
+
+
     def summarize(self, econo=True):
         r'''Find the summary of the sim as a dictionary held within the object.
 
@@ -2263,6 +2318,8 @@ class SimulationRun(object):
         summary.update(self.resource_analysis())
         # fold in delta-v vs time (related to fuel)
         summary.update(self.delta_v_analysis())
+        # fold in star-visit timeline
+        summary.update(self.visit_time_analysis())
         # fold in summary of revisits-vs-time
         summary.update(self.summarize_revisits())
         # fold in per-star summary of yield, tInt
@@ -2473,69 +2530,27 @@ class EnsembleSummary(object):
         Nothing is returned: result is placed in the object state.'''
         
         # 0a: Make the list of attributes to accumulate
+        # TODO: eliminate the copy-pasted key-lists such as below
+        # by using the auto-keys mechanism in (0b) below
         attrs = [
-            # yield vs. time
-            #  -- NB: may also be computed elsewhere:
-            #     yield_time_analysis -> h_time_det_allplan_{cume,uniq,revi}?
-            #     resource_analysis -> h_time_det_cume? (but not unq/rev)
-            # yield_time_analysis() is the place where these fields should live
+            # NB: these 3 attr's are computed in yield_analysis()
+            #    they should be/are computed in yield_time_analysis() 
+            #    see yield_time_analysis -> h_time_det_allplan_{cume,uniq,revi}?
             'h_det_time_all', 'h_det_time_unq', 'h_det_time_rev',
-            # resources (int-time, fuel) vs. time
-            'h_time_det_cume', 'h_time_char_cume', 'h_time_slew_cume', 
-            'h_time_det_incr', 'h_time_char_incr', 'h_time_slew_incr',
-            'h_time_fuel_slew', 'h_time_fuel_keep', 'h_time_fuel_all',
+            # attr's computed in yield_analysis
             # earth-char histograms as a function of #chars
             'h_earth_char_all', 'h_earth_xchar_all', 'h_earth_char_strict',
-            # visit counts
-            'h_visit_all', 'h_visit_earth',
-            # per-star: h_star detection
-            'h_star_det_visit', 'h_star_det_tobs1', 'h_star_det_tInt',
-            'h_star_det_comp',
-            'h_star_det_plan_cume',
-            'h_star_det_plan_uniq',
-            'h_star_det_plan_value',
-            'h_star_det_plan_frac',
-            'h_star_det_earth_cume',
-            'h_star_det_earth_uniq',
-            'h_star_det_earth_value',
-            'h_star_det_earth_frac',
-            # (promotion-related per-star quantities - found separately)
-            'h_star_promo_allplan',
-            'h_star_promo_hzone',
-            'h_star_promo_earth',
-            # per-star: h_star characterization
-            'h_star_char_visit', 'h_star_char_tobs1', 'h_star_char_tInt',
-            'h_star_char_comp',
-            'h_star_char_plan_cume',
-            'h_star_char_plan_uniq',
-            'h_star_char_plan_value',
-            'h_star_char_plan_frac',
-            'h_star_char_earth_cume',
-            'h_star_char_earth_uniq',
-            'h_star_char_earth_value',
-            'h_star_char_earth_frac',
-            # per-star: other
-            'h_star_plan_per_star',
-            'h_star_earth_per_star',
-            # event durations
-            'h_event_char_b0_duration',
-            'h_event_slew_b0_duration',
-            'h_event_det_b1_duration',
-            'h_event_char_b1_duration',
-            'h_event_slew_b1_duration',
-            'h_event_det_b2_duration',
-            'h_event_char_b2_duration',
-            'h_event_slew_b2_duration',
-            # (promotion counts added later)
             ]
         # 0b: add in auto-generated keys, using a key family name convention
         #     - this flows information from reductions into attrs and self.auto_keys
         #     - The "auto_keys" property is used later, when writing values out.
-        #     - Note: not all keys may be within all reductions, because
+        #     - Note: not all keys may be common across all reductions, because
         #     of dynamic keys (multi-band chars).  So we pool keys across all reductions.
         #     This affects '_yield_time_keys', for instance.
         attrs_auto = []
-        for key_family in ('event_count', 'promo_count', 'promo_phist', 'funnel',
+        for key_family in ('event_count', 'event_analysis', 'promo_count', 'promo_phist', 'funnel',
+                               'per_star_yield', 'per_star_promotion', 'resource_analysis',
+                               'summarize_revisits', 'visit_time', 
                                'earth_char', 'yield_time', 'radlum', 'earth', 'delta_v'):
             # e.g., all 'promo_count' attrs are found by looking up '_promo_count_keys' in reductions
             attrs_new = self.get_key_family_attrs(reductions, '_%s_keys' % key_family)
@@ -2739,13 +2754,11 @@ class EnsembleSummary(object):
         # make the bins appear first
         time_fields = ['h_det_time_lo', 'h_det_time_hi']
         # qoi = quantities-of-interest
-        time_qoi = self.auto_keys.get('delta_v', []) + [
+        time_qoi = (
+            self.auto_keys.get('delta_v', []) +
             # yield vs. mission time
-            'h_det_time_all', 'h_det_time_unq', 'h_det_time_rev',
-            # resources (int-time, fuel) vs. mission time
-            'h_time_det_cume', 'h_time_char_cume', 'h_time_slew_cume', 
-            'h_time_det_incr', 'h_time_char_incr', 'h_time_slew_incr',
-            'h_time_fuel_slew', 'h_time_fuel_keep', 'h_time_fuel_all']
+            ['h_det_time_all', 'h_det_time_unq', 'h_det_time_rev'] +
+            self.auto_keys.get('resource_analysis', []))
         # compose the names of all other fields to be saved
         time_fields.extend([ (x + '_' + y)
                            for x in time_qoi
@@ -2828,7 +2841,7 @@ class EnsembleSummary(object):
         # make the bins appear first
         visit_fields = ['h_visit_bins']
         # qoi = quantities-of-interest
-        visit_qoi = ('h_visit_all', 'h_visit_earth' )
+        visit_qoi = self.auto_keys.get('summarize_revisits', [])
         # add the names of more fields to be saved
         visit_fields.extend([ (x + '_' + y)
                               for x in visit_qoi
@@ -2850,37 +2863,10 @@ class EnsembleSummary(object):
         # make the names and other star properties appear first
         star_target_fields = ['star_sInd', 'star_Name', 'star_L', 'star_dist', 'star_Spec']
         # qoi = quantities-of-interest
+        # set up in two routines, per_star_yield()/..._promotion(), and relayed to here
         star_target_qoi = (
-            # h_star detection
-            'h_star_det_visit', 'h_star_det_tobs1', 'h_star_det_tInt',
-            'h_star_det_comp',
-            'h_star_det_plan_cume',
-            'h_star_det_plan_uniq',
-            'h_star_det_plan_value',
-            'h_star_det_plan_frac',
-            'h_star_det_earth_cume',
-            'h_star_det_earth_uniq',
-            'h_star_det_earth_value',
-            'h_star_det_earth_frac',
-            # h_star char
-            'h_star_char_visit', 'h_star_char_tobs1', 'h_star_char_tInt',
-            'h_star_char_comp',
-            'h_star_char_plan_cume',
-            'h_star_char_plan_uniq',
-            'h_star_char_plan_value',
-            'h_star_char_plan_frac',
-            'h_star_char_earth_cume',
-            'h_star_char_earth_uniq',
-            'h_star_char_earth_value',
-            'h_star_char_earth_frac',
-            # per-star: other
-            'h_star_plan_per_star',
-            'h_star_earth_per_star',
-            # (promotion-related per-star quantities - found separately)
-            'h_star_promo_allplan',
-            'h_star_promo_hzone',
-            'h_star_promo_earth',
-            )
+            self.auto_keys.get('per_star_yield', []) +
+            self.auto_keys.get('per_star_promotion', []))
         # add the names of more fields to be saved
         # (now using std in javascript plot widget)
         star_target_fields.extend([ (x + '_' + y)
@@ -2905,16 +2891,8 @@ class EnsembleSummary(object):
                         'h_event_b1_duration_lo', 'h_event_b1_duration_hi',
                         'h_event_b2_duration_lo', 'h_event_b2_duration_hi']
         # qoi = quantities-of-interest
-        event_qoi = (
-            'h_event_char_b0_duration',
-            'h_event_slew_b0_duration',
-            'h_event_det_b1_duration',
-            'h_event_char_b1_duration',
-            'h_event_slew_b1_duration',
-            'h_event_det_b2_duration',
-            'h_event_char_b2_duration',
-            'h_event_slew_b2_duration',
-            )
+        # set up in event_analysis() and relayed to here
+        event_qoi = self.auto_keys.get('event_analysis', [])
         # add the names of more fields to be saved
         # add quantiles for durations, which may have large values
         event_fields.extend([ (x + '_' + y)
@@ -3070,6 +3048,29 @@ class EnsembleSummary(object):
             for i in range(time_len):
                 # dictionary mapping field -> value
                 d = {f:self.summary[f][i] for f in yield_time_fields}
+                w.writerow(d)
+        ensure_permissions(fn)
+
+        # 10: visits-vs-time analysis
+        fn = args.outfile % ('visit-time', 'csv')
+        print('\tDumping to %s' % fn)
+        # compose the names of all fields to be saved
+        # initial list, will appear first in output
+        visit_time_fields = ['h_det_time_lo', 'h_det_time_hi']
+        # qoi = quantities-of-interest
+        #   these are created by visit_time_analysis() and relayed to here
+        visit_time_qoi = self.auto_keys.get('visit_time', [])
+        # add the names of more fields to be saved
+        visit_time_fields.extend([ (x + '_' + y)
+                                for x in visit_time_qoi
+                                for y in basic_stats])
+        visit_time_len = len(self.summary[visit_time_fields[0]])
+        with open(fn, 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=visit_time_fields)
+            w.writeheader()
+            for i in range(time_len):
+                # dictionary mapping field -> value
+                d = {f:self.summary[f][i] for f in visit_time_fields}
                 w.writerow(d)
         ensure_permissions(fn)
 

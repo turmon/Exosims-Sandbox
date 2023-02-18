@@ -99,7 +99,14 @@ t_star_targ = readtable(sprintf(in_tmpl, 'star-target', 'csv'));
 t_events = readtable(sprintf(in_tmpl, 'events', 'csv'));
 % event count table
 t_event_counts = readtable(sprintf(in_tmpl, 'event-counts', 'csv'));
-% target promotion table - can phase out the if/else as processing catches up (1/2019)
+% earth char list
+t_earth_chars = readtable(sprintf(in_tmpl, 'earth-char-list', 'csv'));
+% yield-vs-time table
+%   yield-vs-time is a superset of old det-vs-time info
+t_yield_time = readtable(sprintf(in_tmpl, 'yield-time', 'csv'));
+% earth char counts
+t_earth_char_count = readtable(sprintf(in_tmpl, 'earth-char-count', 'csv'));
+% target promotion table (left if/else because promotion may not always be universal)
 if exist(sprintf(in_tmpl, 'promote', 'csv'), 'file'),
     t_promote = readtable(sprintf(in_tmpl, 'promote', 'csv'));
     t_phist   = readtable(sprintf(in_tmpl, 'promote-hist', 'csv'));
@@ -109,29 +116,12 @@ else,
     fprintf('%s: Using null target promotion table: "make reduce" should fix.\n', ...
             mfilename);
 end
-% earth char list - can phase out the if/else as processing catches up (3/2019)
-if exist(sprintf(in_tmpl, 'earth-char-list', 'csv'), 'file'),
-    t_earth_chars = readtable(sprintf(in_tmpl, 'earth-char-list', 'csv'));
+% visits-vs-time list - can phase out the if/else as processing catches up (2/2023)
+if exist(sprintf(in_tmpl, 'visit-time', 'csv'), 'file'),
+    t_visit_time = readtable(sprintf(in_tmpl, 'visit-time', 'csv'));
 else,
-    t_earth_chars = [];
-    fprintf('%s: Using null earth-char table: "make reduce" should fix.\n', ...
-            mfilename);
-end
-% yield-vs-time list - can phase out the if/else as processing catches up (4/2019)
-% yield-vs-time is a superset of old det-vs-time info
-if exist(sprintf(in_tmpl, 'yield-time', 'csv'), 'file'),
-    t_yield_time = readtable(sprintf(in_tmpl, 'yield-time', 'csv'));
-else,
-    t_yield_time = [];
-    fprintf('%s: Using null yield-vs-time table: "make reduce" should fix.\n', ...
-            mfilename);
-end
-% earth char counts - can phase out the if/else as processing catches up (6/2019)
-if exist(sprintf(in_tmpl, 'earth-char-count', 'csv'), 'file'),
-    t_earth_char_count = readtable(sprintf(in_tmpl, 'earth-char-count', 'csv'));
-else,
-    t_earth_char_count = [];
-    fprintf('%s: Using null earth-char-count: "make reduce" should fix.\n', ...
+    t_visit_time = [];
+    fprintf('%s: Using null visit-vs-time table: "make reduce" should fix.\n', ...
             mfilename);
 end
 
@@ -144,6 +134,7 @@ end
 plot_drm_det_times(      dest_tmpl, mode_param, t_info, t_det_time, t_yield_time);
 plot_drm_fuel_use(       dest_tmpl, mode_param, t_info, t_det_time);
 plot_drm_yield_times(    dest_tmpl, mode_param, t_info, t_yield_time);
+plot_drm_visit_times(    dest_tmpl, mode_param, t_info, t_visit_time);
 plot_drm_radlum(         dest_tmpl, mode_param, t_info, t_radlum, t_earth);
 plot_drm_star_targets(   dest_tmpl, mode_param, t_info, t_star_targ);
 plot_drm_events(         dest_tmpl, mode_param, t_info, t_events);
