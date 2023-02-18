@@ -605,7 +605,8 @@ def plot_rects(args, field):
 
     # dump the plot
     plt.tight_layout()
-    plt.show()
+    if False:
+        plt.show() # OK for interactive, not for scripted
     short_name = get_short_name(field)
     for file_type in ('png', 'pdf'):
         fn = args.outpath % (short_name, file_type)
