@@ -1,20 +1,20 @@
-function plot_drm_det_times(dest_tmpl, mode, t_info, t_det_time, t_yield_time)
-%plot_drm_det_times	plot detection times in a drm-set
+function plot_drm_time_used(dest_tmpl, mode, t_info, t_det_time)
+%plot_drm_time_used	plot time-used in a drm-set
 % 
-% plot_drm_det_times(dest_tmpl, mode, t_info, t_det_time, t_yield_time)
-% * Time-series plots of detections
-% * Note: This plot family originally included only detections (cume,
+% plot_drm_time_used(dest_tmpl, mode, t_info, t_det_time)
+% * Time-series plots of time-used by detections, chars, slews, 
+% both cumulatively over the mission, and month-by-month.
+% * Note: This plot family originally included detection counts (cume,
 % uniq, revisit) vs. time - within the t_det_time table.  We later created 
 % a newer table (t_yield_time) that has det/char, and allplanets/earth,
-% and multiband char info.  If this table exists, the present code can
-% skip the plotting of that duplicate information.
+% and multiband char info.  That plot family has superseded some of the
+% plots that used to be here.
 %
 % Inputs:
 %   string dest_tmpl
 %   string mode
 %   table t_info
 %   table t_det_time
-%   table t_yield_time
 % 
 % Outputs:
 %   (to disk)
@@ -145,65 +145,6 @@ style_det_plot('Mission Observation Scheduling (Incremental) vs. Mission Time', 
                'Incremental Time Used [days/month]', names_legend);
 write_plots('obstime-incr');
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% An early-return here, if t_yield_time is nontrivial, will skip 
-% the detection-vs-time plots below in deference to those created
-% by plot_drm_yield_times
-
-if ~isempty(t_yield_time), return; end;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Detections vs. time
-
-%% A: Monthly plot
-clf; set(gcf, 'Position', [100 100 850 500]);
-   
-names = {'h_det_time_all', 'h_det_time_unq', 'h_det_time_rev'};
-names_legend = {'All Detections', 'Unique Detections', 'Revisits'};
-N_plot = length(names);
-
-% put each of the above detection-times on one plot
-h_eb = cell(N_plot, 1);
-for n = 1:N_plot,
-    f = names{n};
-    f_mean = sprintf('%s_%s', f, 'mean');
-    f_std  = sprintf('%s_%s', f, 'std');
-    h_eb{n} = errorbar(tsamp+t_offsets(n), t_det_time{:,f_mean}, t_det_time{:,f_std});
-    % style the plot
-    set(h_eb{n}, 'LineWidth', 1); % NB: skinny
-    hold on;
-end;
-
-style_det_plot('Monthly Detections vs. Mission Time', ...
-               'Detections [count/month]', names_legend);
-write_plots('detects');
-
-
-%% B: Cumulative plot
-% Note: we derive the error bars here
-
-clf; set(gcf, 'Position', [100 100 850 500]);
-
-% put each of the above detection-times on one plot
-h_eb = cell(N_plot, 1);
-for n = 1:N_plot,
-    f = names{n};
-    f_mean = sprintf('%s_%s', f, 'mean');
-    f_std  = sprintf('%s_%s', f, 'std');
-    % cumulative mean, plus cumulative std error (adding in quadrature,
-    % i.e., sqrt-sum-of-squares)
-    h_eb{n} = errorbar(tsamp+t_offsets(n), ...
-                       cumsum(t_det_time{:,f_mean}), sqrt(cumsum(t_det_time{:,f_std}.^2)));
-    % style the plot
-    set(h_eb{n}, 'LineWidth', 2);
-    hold on;
-end;
-
-style_det_plot('Cumulative Detections vs. Mission Time', ...
-               'Detections [count]', names_legend);
-write_plots('cume-detects');
 
 return
 end % of main function

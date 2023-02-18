@@ -2028,10 +2028,11 @@ class SimulationRun(object):
         exoE_char_snr  = np.mean(SNR_exoE_char_full)  if SNR_exoE_char_full  else np.nan
         exoE_xchar_snr = np.mean(SNR_exoE_xchar_full) if SNR_exoE_xchar_full else np.nan
 
+        # FIXME: NO LONGER USED, REMOVE
         # bin the detection-times ("h_" is mnemonic for histogrammed)
-        h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
-        h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
-        h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
+        ## h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
+        ## h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
+        ## h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
 
         # some portions of the return value are automated
         namespace = locals()
@@ -2093,9 +2094,9 @@ class SimulationRun(object):
             'h_earth_xchar_all':   h_earth_xchar_all,
             'h_earth_char_strict': h_earth_char_strict,
             # times -- part of  "times" family, but other things there too
-            'h_det_time_all': h_det_time_all,
-            'h_det_time_unq': h_det_time_unq,
-            'h_det_time_rev': h_det_time_rev, 
+            ## 'h_det_time_all': h_det_time_all,
+            ## 'h_det_time_unq': h_det_time_unq,
+            ## 'h_det_time_rev': h_det_time_rev, 
             }
         # return the pooled result
         rv.update(rv1)
@@ -2213,20 +2214,6 @@ class SimulationRun(object):
                         # keep a running tabulation of all characterizations so far in this band
                         yac['set_chars_full_uniq'+_band].update(set(charized_full))
                         yac['set_chars_part_uniq'+_band].update(set(charized_part))
-
-        ## FIXME: attributes now found in yield_analysis() which should be here
-        ## # record detection times [day]
-        ##        arrival_time = strip_units(obs['arrival_time'])
-        ##        # all detections made
-        ##        det_time_all.extend([arrival_time] * len(detected))
-        ##        # new unique detections
-        ##        det_time_unq.extend([arrival_time] * len(dets_new))
-        ##        # revisits
-        ##        det_time_rev.extend([arrival_time] * (len(detected) - len(dets_new)))
-        # bin the detection-times ("h_" is mnemonic for histogrammed)
-        ## h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
-        ## h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
-        ## h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
 
         # name of each time-list within yac[] to convert to a histogram
         names = []
@@ -2534,9 +2521,7 @@ class EnsembleSummary(object):
         # by using the auto-keys mechanism in (0b) below
         attrs = [
             # NB: these 3 attr's are computed in yield_analysis()
-            #    they should be/are computed in yield_time_analysis() 
-            #    see yield_time_analysis -> h_time_det_allplan_{cume,uniq,revi}?
-            'h_det_time_all', 'h_det_time_unq', 'h_det_time_rev',
+            # 'h_det_time_all', 'h_det_time_unq', 'h_det_time_rev',
             # attr's computed in yield_analysis
             # earth-char histograms as a function of #chars
             'h_earth_char_all', 'h_earth_xchar_all', 'h_earth_char_strict',
@@ -2756,8 +2741,6 @@ class EnsembleSummary(object):
         # qoi = quantities-of-interest
         time_qoi = (
             self.auto_keys.get('delta_v', []) +
-            # yield vs. mission time
-            ['h_det_time_all', 'h_det_time_unq', 'h_det_time_rev'] +
             self.auto_keys.get('resource_analysis', []))
         # compose the names of all other fields to be saved
         time_fields.extend([ (x + '_' + y)

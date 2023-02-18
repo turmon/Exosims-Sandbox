@@ -1,7 +1,7 @@
-function plot_drm_fuel_use(dest_tmpl, mode, t_info, t_fuel)
-%plot_drm_fuel_use	plot fuel use versus time in a drm-set
+function plot_drm_fuel_used(dest_tmpl, mode, t_info, t_fuel)
+%plot_drm_fuel_used	plot fuel use versus time in a drm-set
 % 
-% plot_drm_fuel_use(dest_tmpl, mode, t_info, t_fuel)
+% plot_drm_fuel_used(dest_tmpl, mode, t_info, t_fuel)
 % * Time-series plots of fuel use.  The "t_fuel" input is the same as
 % "t_det_time" elsewhere -- it contains more than just fuel.
 % 

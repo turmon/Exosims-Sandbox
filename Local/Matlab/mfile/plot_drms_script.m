@@ -87,7 +87,7 @@ warning('off','MATLAB:prnRenderer:opengl');
 
 % reduction-info table (basic metadata)
 t_info = readtable(sprintf(in_tmpl, 'info', 'csv'));
-% detection-time table
+% time-used table (dets/char/slew/fuel)
 t_det_time = readtable(sprintf(in_tmpl, 'times', 'csv'));
 % planetary radius/luminosity table
 t_radlum = readtable(sprintf(in_tmpl, 'radlum', 'csv'));
@@ -126,13 +126,13 @@ else,
 end
 
 % 2: read the JSON pooled-data file
-%    data is available as fields within pool,
-%    e.g., pool.h_det_time_all_mean
+%    data is available as fields within pool, such as
+%        pool.h_xxx_mean, pool.h_xxx_std, ...
 %pool = jsondecode(fileread(sprintf(in_tmpl, 'pool', 'json')));
 
 % 3: make the graphics
-plot_drm_det_times(      dest_tmpl, mode_param, t_info, t_det_time, t_yield_time);
-plot_drm_fuel_use(       dest_tmpl, mode_param, t_info, t_det_time);
+plot_drm_time_used(      dest_tmpl, mode_param, t_info, t_det_time);
+plot_drm_fuel_used(      dest_tmpl, mode_param, t_info, t_det_time);
 plot_drm_yield_times(    dest_tmpl, mode_param, t_info, t_yield_time);
 plot_drm_visit_times(    dest_tmpl, mode_param, t_info, t_visit_time);
 plot_drm_radlum(         dest_tmpl, mode_param, t_info, t_radlum, t_earth);
