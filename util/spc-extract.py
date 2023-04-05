@@ -18,6 +18,8 @@
 #             vector length, e.g., stars)
 #   .next => output the keys corresponding to the second-most-seen vector length
 #            (e.g., planets).  Not implemented.
+#   .default-star, .default-planet => output typically-present keys for stars
+#            and planets, respectively
 #
 # optionally:
 #  -o FILE -- output file
@@ -118,7 +120,8 @@ def process(args, info):
     info.spc['T'] = T.to('d')
     # determine effective luminosity
     L_star = spc['L'][spc['plan2star']]
-    L_plan = L_star / ((spc['a'].value)**2) # adjust star luminosity by distance^2 in AU
+    # adjust star luminosity by distance^2 in AU
+    L_plan = L_star / ((spc['a'].value)**2)
     info.spc['Lp'] = L_plan
     # insert earthlike info - as an int, not a boolean
     info.spc['earth'] = info.is_earthlike_all().astype(int)
@@ -237,6 +240,7 @@ def dump(args, n, info):
         d['seed'] = info.seed
         w.writerow(d)
 
+
 ############################################################
 #
 # Main routine
@@ -272,9 +276,15 @@ if __name__ == '__main__':
     # set umask in hopes that files/dirs will be group-writable
     os.umask(0o002)
 
-    default_fields = ['Rp', 'T', 'Mp', 'a', 'I', 'Lp', 'earth']
-    if '.std' in args.key or len(args.key) == 0:
-        args.key += default_fields
+    # special keys
+    default_fields_star = ['Name', 'Spec', 'L', 'MsTrue', 'comp0', 'dist', 's']
+    default_fields_planet = ['Rp', 'T', 'Mp', 'a', 'I', 'Lp', 'earth', 'plan2star']
+    if '.default-star' in args.key or len(args.key) == 0:
+        args.key = [k for k in args.key if k != '.default-star']
+        args.key += default_fields_star
+    elif '.default-planet' in args.key:
+        args.key = [k for k in args.key if k != '.default-planet']
+        args.key += default_fields_planet
 
     main(args)
 
