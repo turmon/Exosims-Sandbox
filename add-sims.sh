@@ -48,6 +48,7 @@
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -q        => quiet object creation
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
+#   -c        => chatty console output to aid debugging
 #   -e        => send email to current user at localhost on completion
 #   -E ADDR   => send email to an arbitrary `addr' on completion
 #   -O OPTS   => output options, a string of comma-separated tags telling
@@ -92,6 +93,7 @@ DISPATCHER=parallel
 DISPATCHER_JOBS="--jobs -4"
 BATCH=0
 CHATTY=0
+ECHO_CMD=0
 ALL=0
 # 4: "executive" that choses python2/python3
 PYTHON_EXECUTIVE_2=python
@@ -295,6 +297,10 @@ else
     PAR_SSH_OPTS="-S :"
 fi
 
+# this can enable debugging a failing invocation
+if [ $CHATTY == 1 ]; then
+    set -x
+fi
 # Taking this apart, the most critical elements are:
 #   DISPATCH_INPUT | DISPATCHER [opts] PYTHON_EXECUTIVE DRIVER [opts] SCRIPT NRUN
 # where:
