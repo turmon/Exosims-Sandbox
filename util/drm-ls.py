@@ -207,7 +207,7 @@ def summarize_print(fn, s, verbosity, fmt='%.0f', first_call=[]):
         fmt0 = '{0:<31}\t'.format
         delim1 = '\t'
     # print header, if desired - uses mutable argument to detect first call
-    if len(first_call) is 0:
+    if len(first_call) == 0:
         first_call.append('called') # header is done
         line = delim1.join(['%s' % (k,) for k in key_print_order(s)])
         if verbosity:
