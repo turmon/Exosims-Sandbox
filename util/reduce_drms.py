@@ -1849,14 +1849,22 @@ class SimulationRun(object):
                     char_SNR = char['char_SNR']
                     # map from planet-id -> characterization SNR
                     plan_SNR = {p:char_SNR[i] for (i,p) in enumerate(plan_inds)}
-                    ### earth-char-count uses the exoE_char_full variable below
-                    ### it will increment when *any* char_status in the char_info list has a "1"
-                    ### -> need charizations_strict var which insists that *all* char_status have a "1"
-                    ### -> implies several new vars to keep track, it's analogous to "full/part" distinction
-                    ### exoE_char_strict counts them
-                    ### there is no strict_snr, b/c snr will differ across bands
-                    ### need a set_chars_strict - strict is always unique/full only
-                    ### make an indicator histogram, h_earth_char_strict, as well
+                    # 1: The reported variable:
+                    #     chars_earth_unique = exoE_char_full + exoE_char_part
+                    #    it includes both full and partial chars
+                    # 2: exoE_char_full will increment when *any* char_status in the char_info list
+                    #    (i.e., any spectral band) has a "1"
+                    #    remark: so, in multi-mode char, sometimes the red char will be partial
+                    #    but a blue one would be full; this still counts as a "full" char
+                    # 3: charizations_strict var insists that *all* bands (entries in char_info)
+                    #    have char_status == "1"
+                    #    exoE_char_strict counts these "strict" chars
+                    #    So in the above scenario, a partial red char but successful blue char would
+                    #    not +1 to exoE_char_strict
+                    # 4: there is no strict_snr, b/c snr will differ across bands
+                    # 5: set_chars_strict - strict is always "unique" and "full"
+                    # strict takes the "full/part" distinction to the next level of strictness --
+                    #   exoE_char_strict <= exoE_char_full <= chars_earth_unique
                     
                     charizations_strict = charizations_strict + (np.array(char_status) == 1)
                     charizations_full = np.where(np.array(char_status) ==  1)[0]
