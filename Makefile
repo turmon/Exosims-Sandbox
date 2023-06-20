@@ -186,9 +186,10 @@ exp-preflight:
 ##
 .PHONY: reduce exp-reduce
 # (TODO: a non-for-loop way to do this)
+# the presence of sims/X/drm is the cue that X is an ensemble
 exp-reduce: experiment-exists
-	@ for d in sims/$(S)/s_*; do \
-	        [ -d $$d/drm ] || continue; \
+	@ for d in sims/$(S)/*; do \
+	        [ -d $$d/drm -a -d $$d/spc ] || continue; \
 		d_prime=$$(echo $$d | sed 's:sims/::'); \
 		echo $(MAKE) S=$$d_prime reduce; \
 		$(MAKE) --no-print-directory S=$$d_prime reduce || exit $$?; \
