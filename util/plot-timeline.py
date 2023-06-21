@@ -449,8 +449,9 @@ class plotTimelineContainer(object):
                 fn = self.args.outpath % (fname, 'csv')
                 with open(fn, 'w') as f:
                     f.write(infos)
-        # show the plot
-        plt.show(block=False)
+        # show the plot (disabled, emits warning b/c currently non-interactive backend)
+        if False:
+            plt.show(block=False)
         fname = 'obs-timeline'
         plt.savefig(self.args.outpath % (fname, 'png'))
         # plt.savefig(self.args.outpath % (fname, 'pdf'))
@@ -478,7 +479,9 @@ class plotTimelineContainer(object):
             self.plot_timeline(ax, plot_attributes, sim, 'Segment ' + t_str,
                                    (t_first+n_plot*t_cover, t_first+(n_plot+1)*t_cover))
             # show the plot
-            plt.show(block=False)
+            # show the plot (disabled, emits warning b/c currently non-interactive backend)
+            if False:
+                plt.show(block=False)
             fname = 'day-in-the-life-seg-' + t_str
             plt.savefig(self.args.outpath % (fname, 'png'))
             # plt.savefig(self.args.outpath % (fname, 'pdf'))
