@@ -29,6 +29,7 @@ Take the above options from a file with:
 
 Some less-useful options:
   -A: list available DRM and SPC attributes and values on stderr, for reference
+      this honors match (-m), if given. supply -S '' to get SPC attributes.
   --json: output is JSON, rather than standard CSV
   --empty: output a record when planet attributes selected, even if no planets present
   -v: increase verbosity (output is to stderr)
@@ -67,7 +68,7 @@ using either of two notations. Below, suppose "obs" is one entry in the DRM.
 For either -a or -e, the resulting column can be custom-named with 
 a label:attr construct, such as
           -a "lambda:char_mode.lam"
-          -a "det_count:np.sum(det_status == 1)"
+          -e "det_count:np.sum(det_status == 1)"
 otherwise a basic generated name is used.
 (But: Attributes in comma-separated expressions cannot be custom-named.)
 
@@ -106,7 +107,8 @@ The SPC file is loaded using the filename convention that
 If no -S/-P/-p is given, the SPC is not loaded, to allow use of 
 this program when only the DRM is present. If the SPC file is needed
 to support spc[...] within "-e" constructs above, load of the SPC 
-can be forced by giving -S "".
+can be forced by giving --load_spc (or if using External File,
+"load_spc": true).
 
 
 EXTERNAL FILE
@@ -139,6 +141,11 @@ self-contained. The full list is:
 Other program flags (like -s) can be given by Booleans in the 
 JSON file as well. See the top of this usage note for the __attribute_name__
 controlling each flag.
+
+As on the command line, the SPC file is loaded if __star__, __planet__, 
+or __planets__ is present. To force the load if an __eval__ construct needs
+the SPC file, use --load_spc, or the Boolean directive "__load_spc__": true
+within the JSON.
 
 
 USAGE
@@ -213,15 +220,13 @@ AttrFlavors = ['pseudo', 'attr', 'eval', 'star', 'planet', 'planets']
 # container for a single Attribute (field to tabulate)
 @dataclass
 class Attribute:
-    names_used: ClassVar = set()
     flavor: str
     name: str
     text: str
-    # raises if name is duplicated -- better now than later
+    expand: bool
     def __post_init__(self):
-        assert self.flavor in set(AttrFlavors), 'Unrecognized flavor <{}>'.format(self.flavor)
-        assert self.name not in self.names_used, 'Duplicate name <{}>'.format(self.name)
-        self.names_used.add(self.name)
+        assert self.flavor in set(AttrFlavors), f'Unrecognized flavor <{self.flavor}>'
+        assert '+' not in self.name, f'Illegal character in attribute name {self.name}'
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -279,7 +284,7 @@ class WorkerMap(object):
 
 class SimulationRun(object):
     r'''Load and summarize a simulation: one DRM and its corresponding SPC.'''
-    def __init__(self, f):
+    def __init__(self, f, load_spc=False):
         # allow creating a dummy object so that its properties may be queried
         if f is None:
             self.drm = []
@@ -291,7 +296,7 @@ class SimulationRun(object):
         gc.disable()
         drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
         # load a spc file - only if needed to lookup -S, -P attrs
-        if args.load_spc:
+        if load_spc:
             g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
             if os.path.isfile(g):
                 spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
@@ -435,6 +440,10 @@ class SimulationRun(object):
         # (but: ndim == 0 -> scalar -> leave it)
         if isinstance(val, np.ndarray) and val.ndim > 0:
             val = val.tolist()
+            # record that we boxed it already
+            is_list = True
+        else:
+            is_list = False
         # box everything but 'planet' and 'eval' into a len = 1 list
         # this len=1 list may be extended later. Here are the exceptions:
         #  planet -> returns a list anyway (b/c spc[attr][plan_inds] is a list)
@@ -442,7 +451,7 @@ class SimulationRun(object):
         #          double-boxed and can't be extended later. OTOH, if boxing 
         #          a non-planet result is desired, eval can be forced to return 
         #          a list by surrounding in [...]
-        if flavor not in ('planet', 'eval'):
+        if flavor not in ('planet', 'eval') and not is_list:
             val = [val]
         # - the code below recognizes Py/NP vectors and separates them from
         # strings (which also have a len), so we can vectorize correctly later
@@ -505,7 +514,7 @@ class SimulationRun(object):
                     xtra = pp.pformat(self.spc[k])
                 print('  {}: {}'.format(k, xtra), file=sys.stderr)
         else:
-            print('Note: SPC not loaded. Use -S "" to force load.', file=sys.stderr)
+            print('Note: SPC not loaded. Use --load_spc to force load.', file=sys.stderr)
 
 
     def extract_attrs(self, match, attrs, show_attrs):
@@ -535,7 +544,11 @@ class SimulationRun(object):
                 Nplan = planet_guesses.pop()
             else:
                 Nplan = 1
-            ### print('EX_ATTR: nobs = {}, Nplan = {}'.format(nobs, Nplan))
+            if VERBOSITY and Nplan > 1:
+                print('----------')
+                print(f'EX_ATTR: nobs = {nobs}, Nplan = {Nplan}')
+                print(vals_1)
+                #print(val_lens)
             # 3B: extend vals_1 along planets if needed
             # 3B.1 -- Nplan = 0 case
             #   skip this record if there was a planet attribute selected, but no planets there
@@ -545,10 +558,25 @@ class SimulationRun(object):
                     continue
                 else:
                     # Nplan == 0 case, but not empty_skipped
-                    # ==> we will finish the loop, and output a record for this obs
-                    # fields will contain whatever extract_value() returned above
                     # plan_num, if requested, will be 0
-                    pass
+                    # ==> we will finish the loop, and output a record for this obs
+                    #   fields will contain whatever extract_value() returned above
+                    # fix up vals_1 for output
+                    for name, attr in attrs.items():
+                        # below: force all asked-for planet attributes to be [NaN]
+                        # (at this point, they will be [])
+                        # this singleton will be extend'ed onto vals below
+                        if attr.flavor == 'planet':
+                            vals_1[name] = [np.nan]
+                        # further: correct a [] to [NaN]
+                        elif len(vals_1[name]) == 0:
+                            vals_1[name] = [np.nan]
+                        # further: correct any [[]] to [NaN]
+                        #   heuristic - planet attributes like SNR will be [[]]
+                        elif len(vals_1[name]) == 1 and vals_1[name][0] == []:
+                            vals_1[name] = [np.nan]
+                    #print('Empty planets')
+                    #print(vals_1)
             # 3B.2 -- Nplan >= 1 case
             #   pad the other fields downward to match the planet vector
             #   set plan_num field if needed -- [1:Nplan], excluding 0
@@ -592,7 +620,7 @@ def outer_load_and_reduce(f, verb=0, args=None):
     by a separate process that is created by the multiprocessing module.'''
     if verb > 1:
         print('Processing <%s> in pid #%d' % (f, os.getpid()))
-    sim = SimulationRun(f)
+    sim = SimulationRun(f, load_spc=args.load_spc)
     return sim.summarize(args)
 
 
@@ -617,14 +645,14 @@ class EnsembleSummary(object):
         with WorkerMap(self.args.jobs) as map_function:
             # map the load-and-reduce function over each file
             # reductions is a list of dicts containing summaries
-            reductions = map_function(partial(outer_load_and_reduce, args=args, verb=self.args.verbose),
+            reductions = map_function(partial(outer_load_and_reduce, args=self.args, verb=self.args.verbose),
                                       self.sim_files)
         # hacky fix for no-drm case
         if len(self.sim_files) == 0:
             reductions = outer_load_and_reduce(None)
         # re-group the above reductions across sims
         # result is a dict containing reduced data, stored as self.summary
-        self.regroup_and_accum(reductions, args.all_attrs.keys())
+        self.regroup_and_accum(reductions, self.args.all_attrs.keys())
 
     def regroup_and_accum(self, reductions, attr_names):
         r'''Accumulate various summaries across the ensemble.
@@ -644,29 +672,34 @@ class EnsembleSummary(object):
         r'''Dump reduced data to output.'''
         saved_fields = args.all_attrs.keys()
         Nrows = set(len(self.summary[fname]) for fname in saved_fields)
-        if len(Nrows) != 1:
-            warning('Attribute lists have differing lengths') # shouldn't happen
-        Nrow = max(Nrows)
-        # dump to CSV  or JSON
-        if not args.json:
-            csv_opts = {}
-            if args.delimiter:
-                csv_opts['delimiter'] = args.delimiter
-            w = csv.DictWriter(outfile, fieldnames=saved_fields, **csv_opts)
-            if args.header:
-                w.writeheader()
-            for i in range(Nrow):
-                # dictionary mapping field -> value -- everything is a scalar here
-                d = {f:self.summary[f][i] for f in saved_fields}
-                w.writerow(d)
-        else:
-            # make an object, then dump it to JSON
-            dumpable = []
-            for i in range(Nrow):
-                # dictionary mapping field -> value -- everything is a scalar here
-                d = {f:self.summary[f][i] for f in saved_fields}
-                dumpable.append(d)
-            json.dump(dumpable, outfile, indent=2, cls=NumpyEncoder)
+        # Nrows will be a singleton set if all fields were in all DRMs
+        # Nrows will be empty if no fields (e.g., -A)
+        if len(Nrows) > 1:
+            sys.stderr.write(f'Warning: DRMs have different attr counts: {sorted(Nrows)}\n')
+        Nrow = max(Nrows, default=0)
+        # make list-of-dicts to dump
+        dumpable = []
+        for i in range(Nrow):
+            # dictionary mapping field -> value -- everything is a scalar here
+            d = {f:self.summary[f][i] for f in saved_fields}
+            dumpable.append(d)
+        # place it in CSV or JSON
+        if outfile:
+            # default LW ~= 70, so small vectors would be line-wrapped in the CSV
+            np.set_printoptions(linewidth=1000)
+            if args.json:
+                json.dump(dumpable, outfile, indent=2, cls=NumpyEncoder)
+            else:
+                csv_opts = {}
+                if args.delimiter:
+                    csv_opts['delimiter'] = args.delimiter
+                w = csv.DictWriter(outfile, fieldnames=saved_fields, **csv_opts)
+                if args.header:
+                    w.writeheader()
+                for d in dumpable:
+                    w.writerow(d)
+        # list-of-dicts
+        return dumpable
 
 
 ########################################
@@ -682,19 +715,22 @@ def json_to_object(args):
         # ensure the load preserves order
         d = json.load(args.file, object_pairs_hook=collections.OrderedDict)
     except:
-        sys.stdout.write('{}: Error loading json script from file "{}"\n'.format(args.progname, args.file.name))
-        sys.stdout.write('{}: Traceback follows.\n'.format(args.progname))
+        sys.stderr.write(f'{args.progname}: Error loading json-format args from file "{args.file.name}"\n')
+        sys.stderr.write(f'{args.progname}: Traceback follows.\n')
         raise
-    # close file; remember only the name so "args" can be serialized
+    # close file
+    # remember only the name so "args" can be serialized by multiprocessing library
     args.file.close()
     args.file = args.file.name
     assert isinstance(d, collections.abc.Mapping), 'JSON "{}" must translate to a dictionary'.format(args.file)
     # 2: Propagate simple flags from d -> args
-    # allow existing args.match to override
+    # an args.match within given args overrides JSON
     if not args.match:
         args.match = d.get('__match__', args.match)
     # update args.header if present in d
     args.header = bool(d.get('__header__', args.header))
+    # update args.load_spc if present in d
+    args.load_spc = bool(d.get('__load_spc__', args.load_spc))
     # 3: Make containers for __attr__ and __pseudo__
     # Insert container duplicating top-level attributes, for later
     d['__attr__'] = {key:val for key, val in d.items() if not key.startswith('_')}
@@ -731,13 +767,15 @@ def argtexts_to_object(args):
         for argtext in argtexts:
             # pull away the field name, if it was given (name:...)
             # pattern: whitespace(name)whitespace:whitespace(TEXT)whitespace
-            name_colon_value = re.search(r'\s*(\w+)\s*:\s*(.*\S)\s*', argtext)
+            name_colon_value = re.search(r'\s*(\w+[+]?)\s*:\s*(.*\S)\s*', argtext)
             if name_colon_value:
                 # save the name, and the actual attr
                 attr_name, attr_text = name_colon_value.groups()
             elif flavor in ('pseudo', 'attr', 'star', 'planet'):
-                attr_name, attr_text = argtext, argtext
+                attr_name, attr_text = argtext, argtext.replace('+','')
             elif flavor == 'planets':
+                if '+' in argtext:
+                    raise ValueError(f'Vectorized attribute ({argtext}) illegal in "{flavor}"')
                 # otherwise, attribute name-clash (-P/-p) is invited
                 attr_name, attr_text = argtext + '_list', argtext
             else:
@@ -755,14 +793,14 @@ def process_attr_program_inputs(args):
     by the attribute name ("column name") in the output tablulation.'''
     # Strategy: under either the JSON-file or command-line setup, convert
     # attribute specification into a common-denominator object: a dict-of-dicts
-    # mapping flavor -> {name1:text1, name2:text2, ...}
+    # mapping, namely: flavor -> {name1:text1, name2:text2, ...}
     if args.file:
         # dictionary of the JSON file
         d = json_to_object(args)
         # make dict-of-dicts object
         obj = {}
         for flavor in AttrFlavors:
-            obj[flavor] = d.get('__{}__'.format(flavor), {})
+            obj[flavor] = d.get(f'__{flavor}__', {})
     else:
         # attributes-to-print are in argument-lists from the command line
         obj = argtexts_to_object(args)
@@ -772,7 +810,15 @@ def process_attr_program_inputs(args):
     all_attrs = dict()
     for flavor, attr_dict in obj.items():
         for name, attr_text in attr_dict.items():
-            all_attrs[name] = Attribute(flavor, name, attr_text)
+            if name in all_attrs:
+                sys.stderr.write(f'Warning: duplicate attribute {name}\n')
+            p_expand = name.endswith('+')
+            all_attrs[name] = Attribute(flavor, name.replace('+', ''), attr_text, p_expand)
+    # the SPC must be loaded if any attributes requested it
+    # (args.load_spc may already be True due to explicit CLI/JSON option)
+    needs_spc = any(attr.flavor in ('star', 'planet', 'planets') for attr in all_attrs.values())
+    if needs_spc:
+        args.load_spc = True
     return all_attrs
 
 
@@ -782,32 +828,22 @@ def process_attr_program_inputs(args):
 ###
 ########################################
 
-def main(args, outfile):
+def main(args, infiles, outfile=None):
+    # not going to allow for this case
+    if len(infiles) == 0:
+        sys.stderr.write(f'{args.progname}: No input files.\n')
+        return {}
     if VERBOSITY:
-        sys.stderr.write('%s: Loading %d file patterns.\n' % (args.progname, len(args.infile)))
-    ensemble = EnsembleSummary(args.infile, args)
-    if ensemble.Ndrm_actual == 0:
-        print('%s: Warning: no actual DRMs present.' % (args.progname, ))
-    # save a reference to the universe (stars and their attributes)
-    # don't want to assume a SPC
-    # ensemble.spc = ensemble.sims[0].spc
-    # ensemble.Nstar = ensemble.sims[0].Nstar
+        sys.stderr.write(f'{args.progname}: Loading {len(infiles)} files.\n')
+    ensemble = EnsembleSummary(infiles, args)
     if VERBOSITY:
-        sys.stderr.write('%s: Tabulating.\n' % args.progname)
+        sys.stderr.write(f'{args.progname}: Tabulating.\n')
     ensemble.load_and_reduce()
-    # print '%s: Dumping.' % args.progname
-    # default is ~70, which means small-sized vectors are line-wrapped in the CSV
-    np.set_printoptions(linewidth=1000)
-    ensemble.dump(args, outfile)
+    d = ensemble.dump(args, outfile)
+    return d
 
 
-########################################
-###
-###  Program Entry
-###
-########################################
-
-if __name__ == '__main__':
+def parse_arglist(arglist):
     parser = argparse.ArgumentParser(description="Extract attributes from DRMs and send to stdout.",
                                      epilog='')
     # either -a or -f must be given, not both
@@ -828,9 +864,9 @@ if __name__ == '__main__':
     group.add_argument('-n', '--obs_num', dest='pseudo', help='Output the observation number', action='append_const', const='obs_num')
     group.add_argument('--plan_num', dest='pseudo', help='Output the planet number', action='append_const', const='plan_num')
     group = parser.add_argument_group('Attributes by JSON file')
-    group.add_argument('-f', '--file', type=argparse.FileType('r'), help='JSON file of attributes')
+    group.add_argument('-f', '--file', type=argparse.FileType('r'), help='JSON program file naming attributes')
 
-    parser.add_argument('drm', metavar='DRM', nargs='+', default=[], help='drm file list')
+    parser.add_argument('drm', metavar='DRM', nargs='*', default=[], help='drm file list')
     parser.add_argument('-m', '--match', type=str, default='', metavar='ATTR',
                             help='Attribute within obs to match, else, skip the obs')
     group = parser.add_argument_group('Output format')
@@ -840,13 +876,34 @@ if __name__ == '__main__':
     group.add_argument('--json', help='JSON output format', action='store_true', dest='json',
                             default=False)
     group = parser.add_argument_group('Seldom used')
+    group.add_argument('--load_spc', help='Force load of SPC file', action='store_true', dest='load_spc',
+                            default=False)
     group.add_argument('--empty', help='output records despite having 0 planets', action='store_false', dest='empty_skipped',
                             default=True)
     group.add_argument('-A', help='Show list of Available Attributes on stderr', action='store_true', dest='show_attributes')
     group.add_argument('-v', help='Verbosity', action='count', dest='verbose', default=0)
     group.add_argument('-j', '--jobs', help='Number of parallel jobs (default = %(default)d)',
                       type=int, dest='jobs', default=int(N_CPU*0.65))
-    args = parser.parse_args()
+    # return the "args" namespace produced by parse_args()
+    args = parser.parse_args(arglist)
+    # for informative warnings, can be over-ridden
+    args.progname = 'drm_tabulate'
+    # Enforce that -P => --plan_num (only for CLI)
+    if args.planet and 'plan_num' not in args.pseudo:
+        args.pseudo.append('plan_num')
+    # process all attr args into a unified list, args.all_attrs
+    args.all_attrs = process_attr_program_inputs(args)
+    return args
+
+
+########################################
+###
+###  Program Entry
+###
+########################################
+
+if __name__ == '__main__':
+    args = parse_arglist(sys.argv[1:])
     
     # set umask in hopes that files will be group-writable
     os.umask(0o002)
@@ -856,29 +913,14 @@ if __name__ == '__main__':
     # program name, for convenience
     args.progname = os.path.basename(sys.argv[0])
     
-    # do it like this for now
-    args.infile = args.drm
-
-    # do we need to load the SPC file?
-    args.load_spc = args.star or args.planet or args.planets
-
-    # enforce that -A => -j 1
+    # enforce that -A => -j 1 so stdout is not scrambled
     if args.show_attributes:
         args.jobs = 1
 
-    # Enforce that -P => --plan_num
-    if args.planet and 'plan_num' not in args.pseudo:
-        args.pseudo.append('plan_num')
-
-    # process attr args here, before calling main
-    args.all_attrs = process_attr_program_inputs(args)
     if VERBOSITY > 0:
         sys.stderr.write('Attributes to be retrieved:\n')
         for name, attr in args.all_attrs.items():
-            sys.stderr.write('  retrieving "{}" type attribute: {} <- {}\n'.format(attr.flavor, name, attr.text))
+            sys.stderr.write(f'  retrieving "{attr.flavor}" type attribute: {name} <- {attr.text}\n')
 
-    # no reason to complicate this for now
-    outfile = sys.stdout
-
-    main(args, outfile)
+    main(args, args.drm, sys.stdout)
     sys.exit(0)
