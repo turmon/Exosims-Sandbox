@@ -124,11 +124,13 @@ if [ "$mode" == start ]; then
     if [ -r $SERVER_PID ]; then
 	echo "${PROGNAME}: Server may be running on $port already." >&2
 	echo "${PROGNAME}: Attempting to shut down cleanly and restart." >&2
-	kill -TERM $(cat $SERVER_PID)
+	kill -TERM $(cat $SERVER_PID) || true
 	sleep 0.1
-	# if the PID file was removed, that's a good sign
+	# if the PID file was not removed, the server is apparently not 
+        # responding ... proceed anyway (e.g., host machine restart)
 	if [ -r "$SERVER_PID" ]; then
-	    echo "${PROGNAME}: Could not shut down cleanly." >&2
+	    echo "${PROGNAME}: Server process not responding or not present." >&2
+	    echo "${PROGNAME}: Proceeding with restart anyway." >&2
 	else
 	    echo "${PROGNAME}: Shut down cleanly.  Restarting." >&2
 	fi
