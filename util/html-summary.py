@@ -946,6 +946,10 @@ def index_group(args, startpath, title, uplink):
         hh.text('Simulation date reflects the most recent simulation run below this level.', br=True)
         hh.text('Reduction date and user reflect the most recent reduction below this level.', br=True)
         hh.text('Yields reflect the maximum over all ensembles below this level.', br=True)
+        hh.text('Yield definitions:', br=True)
+        hh.text('&nbsp;Earths (Det.) = Number of successful Earth detections, repeat visits not counted.', br=True)
+        hh.text('&nbsp;Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted.', br=True)
+        hh.text('&nbsp;Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted.', br=True)
     return
 
 
