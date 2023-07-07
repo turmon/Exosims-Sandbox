@@ -146,7 +146,7 @@ HTML_PROG=util/html-summary.py -i
 #  also needs a sort key (-k) argument before use
 SELECT_PROG=util/select_ensembles.py -q -o experiment
 # Ensemble counts to select ensembles within an experiment
-EXP_COUNTS:=1 2 5 10 20 50 100
+EXP_COUNTS:=1 2 5 10 20 50 100 T
 
 # ipython parallel setup directory
 IPYDIR=ipyparallel/$(USER)/$(HOST_NAME)
