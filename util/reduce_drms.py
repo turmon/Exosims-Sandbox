@@ -85,6 +85,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import argparse
 import sys
+import shutil
 import glob
 import copy
 import time
@@ -3065,7 +3066,13 @@ class EnsembleSummary(object):
                 w.writerow(d)
         ensure_permissions(fn)
 
-        # Last: dump more info to JSON file
+        # copy script to JSON file
+        fn = args.outfile % ('script', 'json')
+        print('\tCopying script to %s' % fn)
+        shutil.copyfile(args.script_name, fn)
+        ensure_permissions(fn)
+                
+        # dump more info to JSON file
         fn = args.outfile % ('pool', 'json')
         pool = self.summary
         with open(fn, 'w') as outfile:

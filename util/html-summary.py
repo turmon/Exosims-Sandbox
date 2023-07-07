@@ -622,8 +622,9 @@ class SimSummary(object):
             hh.link('../../', 'Up to %s' % uplink)
             # summary
             hh.header('Ensemble Summary')
-            hh.paragraph('Ensemble: %s' % self.name)
-            hh.paragraph('Size: %d sims\n' % self.Ndrm)
+            hh.paragraph(f'Ensemble: {self.name}')
+            hh.paragraph(f'Size: {self.Ndrm} sims')
+            hh.paragraph('Source JSON ' + hh.link('../reduce-script.json', 'script', inner=True))
             # table of contents
             hh.toc_here('Contents')
             # overall images
