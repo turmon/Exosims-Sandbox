@@ -2,8 +2,6 @@
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
-# === New version, Spring 2020 ===
-#
 # This is a wrapper around the python driver, ipcluster_ensemble_jpl.py.
 #
 # Usage:
@@ -42,6 +40,9 @@
 #   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
 #   -3        => run the EXOSIMS sim-runner with python3; by default, "python" is used.
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
+#                PATH=@ abbreviates the command-line default (what you get from
+#                "python -c import EXOSIMS"), which may not be the same as
+#                EXOSIMS/EXOSIMS (i.e., Sandbox EXOSIMS). Useful for venv's.
 #
 # Less-used Options:
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
@@ -225,11 +226,16 @@ if [ $CHATTY == 1 ]; then
 fi
 
 # ensure EXOSIMS path
+if [ $EXO_PATH = @ ]; then
+    # useful when using venv's: this specifies the venv's EXOSIMS as the one to use
+    EXO_PATH=$(python -c 'import EXOSIMS; import os; print(os.path.dirname(os.path.dirname(EXOSIMS.__file__)))')
+    echo "${PROGNAME}: EXOSIMS path set to \`${EXO_PATH}'."
+fi
 if [ ! -r $EXO_PATH/EXOSIMS/__init__.py ]; then
    echo "${PROGNAME}: Error: EXOSIMS path seems invalid" >&2
    exit 1
 else
-   echo "${PROGNAME}: Using EXOSIMS at \`${EXO_PATH}'."
+   echo "${PROGNAME}: Using EXOSIMS found at \`${EXO_PATH}'."
 fi
 
 if [ ! -r $SCRIPT ]; then
