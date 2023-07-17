@@ -34,18 +34,28 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         
         SurveyEnsemble.__init__(self, **specs)
 
+        # set up attributes
+        self.verb = specs.get('verbose', True)
+        self.standalone = False
+        self.interactive = False
+
         # allow bail-out
         if 'init-only' in ensemble_mode:
             self.vprint("SurveyEnsemble: initialize-only mode")
-            return
+            bailout = True
         if 'standalone' in ensemble_mode:
             self.vprint("SurveyEnsemble: standalone mode: no ipyparallel")
             self.standalone = True
-            return
-        self.standalone = False
+            bailout = True
+        if 'interactive' in ensemble_mode:
+            self.vprint("SurveyEnsemble: interactive mode: stdout not redirected to logfile")
+            self.interactive = True
+            bailout = True
 
-        self.verb = specs.get('verbose', True)
-        
+        # No ipyparallel mechanics are needed
+        if bailout:
+            return
+
         # specify the cluster
         if ensemble_controller:
             if '.json' in ensemble_controller:
@@ -108,7 +118,11 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
                 print('Survey simulation: %s/%s' % (j + 1, int(nb_run_sim)))
             seed = sim.seed
             fn = os.path.join(kwargs['outpath'], 'log', 'log-%d.out' % (seed,))
-            with RedirectStdStreams(stdout=open(fn, 'w')):
+            if self.interactive:
+                logfile = None # e.g., allow breakpoint() within the run_one
+            else:
+                logfile = open(fn, 'w')
+            with RedirectStdStreams(stdout=logfile):
                 ar = run_one(genNewPlanets=genNewPlanets, rewindPlanets=rewindPlanets, **kwargs)
             res.append(ar)
         t2 = time.time()

@@ -9,6 +9,7 @@ Simple Usage:
 
 Detailed Usage:
   ipcluster_ensemble_jpl_driver.py  [--outpath PATH] [--outopts OPTS]
+                               [--standalone] [--interactive]
                                [--controller CONTROLLER] [--email EMAIL]
                                [--toemail TOEMAIL]
                                SCRIPT N_RUNS
@@ -19,10 +20,11 @@ where:
 
   optional arguments:
     -h, --help            show this help message and exit
+    --standalone          Standalone mode: no ipyparallel
+    --interactive         Interactive mode: post-init stdout not redirected to logfile
     --outpath PATH        Path to output directory.  Created if not present.
                           Default: basename of scriptfile.
     --outopts OPTS        Output result-file mode. Default: 'drm'.  See below.
-    --standalone          Standalone mode, no ipyparallel
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
 
   archaic arguments:
@@ -281,6 +283,9 @@ def main(args, xpsecs):
         ensemble_mode.append('standalone')
         # [11/2018] delay to avoid parallel race conditions (does help)
         time.sleep((os.getpid() % 40)/40.0)
+    # ensemble_mode is picked up by the IPClusterEnsembleJPL __init__
+    if args.interactive:
+        ensemble_mode.append('interactive')
     if args.verbose is not None:
         if args.verbose == 0:
             xspecs['verbose'] = False
@@ -358,6 +363,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int); 0 for cache-warming only.')
     parser.add_argument('-q', '--quiet', default=False, action='store_true', help='Send object creation messages to a log file.')
     parser.add_argument('--standalone', default=False, action='store_true', help='Stand-alone mode (no ipyparallel).')
+    parser.add_argument('--interactive', default=False, action='store_true', help='Interactive mode (stdout not redirected to logfile).')
     parser.add_argument('--outpath', type=str, metavar='PATH',
             help='Path to output directory, created if not present. Default: basename of SCRIPT.')
     parser.add_argument('--outopts', type=str, metavar='OPTS', default='drm,spc',
