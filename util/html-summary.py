@@ -521,6 +521,9 @@ class SimSummary(object):
         elif filename.endswith('obs-timeline.png'):
             seed = re.sub(r'.*/([0-9]+)-obs-timeline\.png', r'\1', filename)
             self.path_graphics[seed]['obs-timeline'] = filename
+        elif filename.endswith('star-obs-trace.png'):
+            seed = re.sub(r'.*/([0-9]+)-star-obs-trace\.png', r'\1', filename)
+            self.path_graphics[seed]['star-obs-trace'] = filename
         elif filename.endswith('obs-keepout-all.png'):
             seed = re.sub(r'.*/([0-9]+)-obs-keepout-all\.png', r'\1', filename)
             self.path_graphics[seed]['obs-keepout-all'] = filename
@@ -707,6 +710,13 @@ class SimSummary(object):
                 hh.image(img_target, width=70)
             else:
                 hh.paragraph('Timeline not available.  Fix with: make ... obs-timeline-N')
+            # star-obs-trace
+            hh.header('Star-Observation Trace')
+            if 'star-obs-trace' in info:
+                img_target = info['star-obs-trace']
+                hh.image(img_target, width=70)
+            else:
+                hh.paragraph('Star/Observation trace not available.  Fix with: make ... obs-timeline-N')
             # path keepout
             hh.header('Keepout and Observations')
             if 'obs-keepout-all' in info:

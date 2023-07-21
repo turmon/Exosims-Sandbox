@@ -37,7 +37,8 @@
 #   exp-path-ensemble* \   Same pattern as html above with -mix or -top, and a
 #   exp-graphics*       \  number saying how many.  Also, can leave off -top-N
 #   exp-html-only*      /  and just make 10 top + 20 selected.
-#   exp-movie-M-*      /   For movie, can make M movies in each of N ensembles.
+#   exp-movie-M-*      /   Make M movies in each of (top/mix)-N ensembles.
+#   exp-obs-timeline-M-*   Make M obs-timelines in each of (top/mix)-N ensembles.
 # (3) Ipython-parallel ("ipp")
 #   Note: targets apply only to the machine where the "make" is run (e.g., aftac1).
 #   ipp-create: create an ipython-parallel profile for this user (use just once).
@@ -91,13 +92,16 @@ else
  S:=ScriptNotDefined
 endif
 # 2: remove some pathname components, if present
-# 2a: get script basename if given as a file (S=Scripts/foo.json -> S=foo)
-S := $(patsubst Scripts/%.json,%,$(S)) 
-# 2b: pull off leading sims/, if present (S=sims/foo -> S=foo)
+#    recall: the Scenario contains neither sims/... nor Scripts/...
+# 2a: pull off Scripts/ if given as a file/dir (S=Scripts/foo.exp -> S=foo.exp)
+S := $(patsubst Scripts/%,%,$(S)) 
+# 2b: get script basename if given as a JSON (S=foo.json -> S=foo)
+S := $(patsubst %.json,%,$(S)) 
+# 2c: pull off leading sims/, if present (S=sims/foo -> S=foo)
 S := $(patsubst sims/%,%,$(S)) 
-# 2b: strip trailing / which could be present (S=sims/foo/ -> S=foo)
+# 2d: strip trailing / which could be present (S=sims/foo/ -> S=foo)
 S := $(patsubst %/,%,$(S))
-# 2c: strip added space at the end of S
+# 2e: strip added space at the end of S
 S := $(strip $(S))
 # 3: repeat script value back, if supplied
 ifdef S_COPY
@@ -127,14 +131,16 @@ GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
 # Programs analogous to the path-movie maker...
-#   program for making (per-drm) timelines
-TIMELINE_PROG=util/plot-timeline.py -d
+#   driver script for making (per-drm) observation timeline plots
+#   (these run rather quickly)
+TIMELINE_PROG=util/plot-obs-timelines.sh
 #   program for making (per-drm) keepout + observation timelines
-KEEPOUT_PROG=PYTHONPATH=EXOSIMS:Local util/plot-keepout-and-obs.py
+#   (these can be a little slow)
+KEEPOUT_PROG=PYTHONPATH=Local util/plot-keepout-and-obs.py
 # drm path-movie maker, generating command lines like:
-#  drm-to-movie.sh -c -l 0 sims/HabEx_4m_TS_dmag26p0_20180206/drm/297992296.pkl
-# -c specifies to make the cumulative plots as well (which does not
-# make sense for the FINAL mode).
+#   drm-to-movie.sh -c -l 0 sims/HabEx_4m_TS_dmag26p0_20180206/drm/297992296.pkl
+#   -c specifies to make the cumulative plots as well (which does not
+#   make sense for the FINAL mode).
 PATH_PROG=util/drm-to-movie.sh -c -l 0
 PATH_PROG_FINAL=util/drm-to-movie.sh -F
 # path-ensemble-plot driver script
@@ -286,22 +292,22 @@ sims/$(S)/path-ens/path-map.png: sims/$(S)/drm
 #  target is: path-movie-N and path-final-N,
 #  for N = 1, 2, 5, 10, 20, etc.
 
-# Rule to make a single path movie, given a SCENARIO
+# Rule to make a single-drm path movie, given a SCENARIO
 sims/$(S)/path/%.mp4: sims/$(S)/drm/%.pkl
 	@ echo "Make: Path movie \`$@'"
 	$(PATH_PROG) $<
 
-# Rule to make a single path final-frame, given a SCENARIO
+# Rule to make a single-drm path final-frame, given a SCENARIO
 sims/$(S)/path/%-final.png: sims/$(S)/drm/%.pkl
 	@ echo "Make: Path final-frame \`$@'"
 	$(PATH_PROG_FINAL) $<
 
-# Rule to make a single timeline, given a SCENARIO
-sims/$(S)/path/%-obs-timeline.png: sims/$(S)/drm/%.pkl
+# Rule to make a single-drm timeline plot-set, given a SCENARIO
+sims/$(S)/path/%-obs-timelines.txt: sims/$(S)/drm/%.pkl
 	@ echo "Make: Timeline \`$@'"
-	$(TIMELINE_PROG) -o sims/$(S)/path/$(*)-%s.%s Scripts/$(S).json $<
+	$(TIMELINE_PROG) -o sims/$(S)/path/$(*)-%s.%s -j Scripts/$(S).json $<
 
-# Rule to make a single keepout map, given a SCENARIO
+# Rule to make a single-drm keepout map, given a SCENARIO
 sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
 	@ echo "Make: Keepout \`$@'"
 	$(KEEPOUT_PROG) -o sims/$(S)/path/$(*)-%s.%s Scripts/$(S).json $<
@@ -312,21 +318,21 @@ sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
 # as a ceiling on the number of path movie targets requested.  The .mp4 targets,
 # in turn, are made by $(PATH_PROG) as shown above.
 # The obs-timelines are not movies, but piggy-back on this same setup.
-## Note: if sims/$(S)/drm/ does not exist, e.g., an "experiment", we get
-## an error that seems caused by syntactic mis-construction of the (empty)
-## dependent clause in this case. The extra "path-dummy" target fixes this.
-path-dummy:;
-.PHONY: path-dummy
+## Note: if sims/$(S)/drm/ does not exist (e.g., if S is an "experiment"),
+## the $(... find ...) will be empty and the Makefile would be syntactically
+## invalid (causing a hard error) *unless* some target is present. So,
+## script-exists has a dual purpose - raise error if there's no script, and
+## ensure the rule syntax is OK.
 
 define MAKE_N_MOVIES
 .PHONY: path-movie-$1 path-final-$1 obs-timeline-$1
-path-movie-$1: path-dummy $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:.pkl:.mp4:')
+path-movie-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:.pkl:.mp4:')
 	@ echo "Make: Placed movies in \`sims/$(S)/path'."
-path-final-$1: path-dummy $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-final.png:')
+path-final-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-final.png:')
 	@ echo "Make: Placed final-frames in \`sims/$(S)/path'."
-obs-timeline-$1: path-dummy $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-obs-timeline.png:')
-	@ echo "Make: Placed obs-timeline in \`sims/$(S)/path'."
-keepout-$1: path-dummy $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-keepout-and-obs.png:')
+obs-timeline-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-obs-timelines.txt:')
+	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
+keepout-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-keepout-and-obs.png:')
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
 endef
 
