@@ -14,6 +14,9 @@
 # is useful for checking validity.  If more than one SEED, the Exosims output is sent
 # to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
 # is sent to the screen.
+# * To repeat an error-causing run interactively, paste the command-line printed by 
+# this script (the one that calls ipcluster_ensemble_jpl.py) into your terminal,
+# and add "--interactive" to the arguments.
 #
 # Typical Usage:
 #   (a) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
