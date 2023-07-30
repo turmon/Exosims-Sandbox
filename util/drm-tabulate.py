@@ -28,8 +28,9 @@ Take the above options from a file with:
   -f FILE: take ATTRs from FILE *instead of* -a/-S/-P/-p options (see below)
 
 Some less-useful options:
-  -A: list available DRM and SPC attributes and values on stderr, for reference
-      this honors match (-m), if given. supply -S '' to get SPC attributes.
+  -M ATTR -> produce output if ATTR is NOT a keyword in the observation
+  -A: list available DRM and SPC attributes and values on stderr, as a reference
+      honors match (-m), and inverse match (-M); supply -S "" to get SPC attributes.
   --json: output is JSON, rather than standard CSV
   --empty: output a record when planet attributes selected, even if no planets present
   -v: increase verbosity (output is to stderr)
@@ -138,6 +139,7 @@ self-contained. The full list is:
    "__star__"    -> -S
    "__planet__"  -> -P  (one row per planet)
    "__planets__" -> -p  (list placed in one field)
+   "__match_inv__"  -M  (inverse match)
 Other program flags (like -s) can be given by Booleans in the 
 JSON file as well. See the top of this usage note for the __attribute_name__
 controlling each flag.
@@ -315,7 +317,10 @@ class SimulationRun(object):
     
 
     def extract_value_obs(self, obs, attr, just_peeking=False):
-        r'''Extract a value, attr, from an observation, obs, allowing recursive lookup.'''
+        r'''Extract a value, attr, from an observation, obs, allowing recursive lookup.
+
+        The just_peeking argument is to detect presence of an attribute.
+        It returns True/False, not the attribute itself.'''
         if not attr:
             # recursion base case:
             #   our obs = caller's obs[seg0] was the last lookup,
@@ -517,7 +522,7 @@ class SimulationRun(object):
             print('Note: SPC not loaded. Use --load_spc to force load.', file=sys.stderr)
 
 
-    def extract_attrs(self, match, attrs, show_attrs):
+    def extract_attrs(self, match, match_inv, attrs, show_attrs):
         r'''Extract attributes from each obs in the DRM.
 
         Returns a dictionary mapping attributes to lists, one list entry
@@ -527,8 +532,10 @@ class SimulationRun(object):
         vals = {name: [] for name in attrs.keys()}
         not_yet_shown = True
         for nobs, obs in enumerate(self.drm):
-            # 1: no obs[match] => skip this observation
+            # 1: no obs[match], or obs[match_inv] present => skip this observation
             if match and not self.extract_value_obs(obs, match, just_peeking=True):
+                continue
+            if match_inv and self.extract_value_obs(obs, match_inv, just_peeking=True):
                 continue
             if show_attrs and not_yet_shown:
                 not_yet_shown = False
@@ -601,7 +608,7 @@ class SimulationRun(object):
         summary dictionary is a union of each individual summary.
         If econo, delete the DRM and keep only the summary.'''
         # this dict holds reductions for the current sim
-        summary = self.extract_attrs(args.match, args.all_attrs, args.show_attributes)
+        summary = self.extract_attrs(args.match, args.match_inv, args.all_attrs, args.show_attributes)
         # delete the base data if asked
         if econo:
             self.drm = None
@@ -621,6 +628,7 @@ def outer_load_and_reduce(f, verb=0, args=None):
     if verb > 1:
         print('Processing <%s> in pid #%d' % (f, os.getpid()))
     sim = SimulationRun(f, load_spc=args.load_spc)
+    #breakpoint()
     return sim.summarize(args)
 
 
@@ -727,6 +735,9 @@ def json_to_object(args):
     # an args.match within given args overrides JSON
     if not args.match:
         args.match = d.get('__match__', args.match)
+    # an args.match_inv within given args overrides JSON
+    if not args.match_inv:
+        args.match_inv = d.get('__match_inv__', args.match)
     # update args.header if present in d
     args.header = bool(d.get('__header__', args.header))
     # update args.load_spc if present in d
@@ -869,6 +880,8 @@ def parse_arglist(arglist):
     parser.add_argument('drm', metavar='DRM', nargs='*', default=[], help='drm file list')
     parser.add_argument('-m', '--match', type=str, default='', metavar='ATTR',
                             help='Attribute within obs to match, else, skip the obs')
+    parser.add_argument('-M', '--match_inv', type=str, default='', metavar='ATTR',
+                            help='Attribute within obs to NOT match (skip if present)')
     group = parser.add_argument_group('Output format')
     group.add_argument('-1', help='Supply CSV header line', action='store_true', dest='header',
                             default=False)
