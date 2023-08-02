@@ -164,13 +164,14 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
     # turmon 2019/01: added SS.promoted_stars
     # turmon 2019/07: added TL.comp0; SU.e, SU.I; SS.t_char_earths
     # turmon 2020/09: added SS.known_{stars,rocky,earths} -- all in SS proto
+    # turmon 2023/07: added TL.int_comp for EXOSIMS v3+, replacing comp0
     param_retain = [
         (SS.SimulatedUniverse,
              ('a', 'e', 'I', 'Rp', 'Mp', 'nPlans', 'p', 'plan2star', 's', 'sInds')),
         (SS.PlanetPopulation,
              ('SAG13coeffs', )),
         (SS.TargetList,
-            ('L', 'dist', 'Name', 'coords', 'Spec', 'MsTrue', 'comp0')),
+            ('L', 'dist', 'Name', 'coords', 'Spec', 'MsTrue', 'comp0', 'int_comp')),
         (SS,
              ('promoted_stars', 't_char_earths', 'known_stars', 'known_rocky', 'known_earths'))]
     spc_params = {}
