@@ -160,9 +160,13 @@ class SimulationRun(object):
             
         # variable initializations
         obs_trace = np.zeros((Nsobs, len(self.drm)+1))
-        det_ok, det_nok = [], []
+        det_ok, det_nok, det_nul, det_iwa, det_owa, det_fail = [], [], [], [], [], []
         char_ok, char_nok, char_part = [], [], []
         arrival_times = []
+        det_num_obs = np.zeros((Nsobs,))
+        char_num_obs = np.zeros_like(det_num_obs)
+        planet_num = np.zeros_like(det_num_obs)
+        char_success = np.zeros_like(det_num_obs)
 
         # find observation trace
         for nobs, obs in enumerate(self.drm):
@@ -179,13 +183,34 @@ class SimulationRun(object):
             if ('det_info' in obs) or ('det_time' in obs):
                 # a detection
                 obs_trace[soInd, nobs+1] = obs_trace[soInd, nobs] + 1
-                if any(obs['det_status']):
+                det_num_obs[soInd] += 1
+                planet_num[soInd] = len(obs['det_status'])
+                if any(obs['det_status'] > 0):
                     det_ok.append((soInd, nobs))
+                    any_det = True
                 else:
-                    det_nok.append((soInd, nobs))
+                    det_nok.append((soInd, nobs)) # failure (1 of several types)
+                    any_det = False
+                # itemize the 3 types of fail - let any success win out
+                if len(obs['det_status']) == 0:
+                    det_nul.append((soInd, nobs))
+                if not any_det and any(obs['det_status'] == 0):
+                    det_fail.append((soInd, nobs)) # worst of the fails
+                else:
+                    if not any_det and any(obs['det_status'] == -2):
+                        det_owa.append((soInd, nobs))
+                    if not any_det and any(obs['det_status'] == -1):
+                        det_iwa.append((soInd, nobs))
             if has_char_info(obs):
-                char_info = obs['char_info'][0]
-                # a characterization
+                char_num_obs[soInd] += 1
+                if 'char_info' in obs:
+                    char_info = obs['char_info'][0]
+                else:
+                    # older (~2019) DRMs have char_status directly within obs
+                    char_info = obs
+                # must count planets for dets or chars, not all stars have both
+                planet_num[soInd] = len(char_info['char_status'])
+                # a characterization - any planet > 0 is an overall success
                 # defs:
                 #   [-1] success:  (>=1) planet is +1
                 #   [-2] partial:  not success, and (>=1) planet is -1
@@ -195,6 +220,7 @@ class SimulationRun(object):
                 if success:
                     obs_trace[soInd, nobs+1] = -1
                     char_ok.append((soInd, nobs))
+                    char_success[soInd] = 1
                 elif partial:
                     obs_trace[soInd, nobs+1] = -2
                     char_part.append((soInd, nobs))
@@ -209,10 +235,18 @@ class SimulationRun(object):
         self.obs_trace = obs_trace
         self.det_ok    = det_ok
         self.det_nok   = det_nok
+        self.det_nul   = det_nul
+        self.det_fail  = det_fail
+        self.det_iwa   = det_iwa
+        self.det_owa   = det_owa
         self.char_ok   = char_ok
         self.char_nok  = char_nok
         self.char_part = char_part
         self.arrival_times = arrival_times
+        self.det_num_obs   = det_num_obs
+        self.char_num_obs  = char_num_obs
+        self.planet_num    = planet_num
+        self.char_success  = char_success
 
 ########################################
 ###
@@ -237,16 +271,18 @@ class plotStarObsContainer(object):
     def plot_star_obs_trace(self, sim):
         r'''Plot the star/obs trace.'''
         # one figure for whole plot
+        # can try layout='constrained' for other placement rules
         fig = plt.figure(figsize=(18,20))
-        ax = fig.add_subplot(111)
-        self.plot_star_obs_core(ax, sim)
+        gs = fig.add_gridspec(1, 3, wspace=0, width_ratios=(1,0.02,0.08))
+        (ax, ax2, ax3) = gs.subplots(sharey=True)
+        #ax = fig.add_subplot(111)
+        self.plot_star_obs_core(fig, ax, ax2, ax3, sim)
 
         # overall title
         title = (
             'Observation Trace: Target Stars across Observations',
             'Detection Search Status: Blue Stripe; Characterization Status: Manila/Green Stripe',
-            'Detections as Squares: Green (success), Red (failure)',
-            'Characterizations as Circles: Green (success), Orange (partial), Red (failure)')
+            'Detections as Squares, Characterizations as Circles: See Legend')
         plt.suptitle('\n'.join(title), weight='bold', fontsize=20)
         # show the plot
         #plt.show(block=False)
@@ -256,7 +292,7 @@ class plotStarObsContainer(object):
         plt.close()
 
 
-    def plot_star_obs_core(self, ax, sim):
+    def plot_star_obs_core(self, fig, ax, ax2, ax3, sim):
         # [0] -- colormap
         # allow for empty obs_trace
         obs_max = np.max(sim.obs_trace) if sim.obs_trace.size > 0 else 0.0
@@ -269,28 +305,63 @@ class plotStarObsContainer(object):
             (mapper(-1),   'lightgreen'),
             (mapper(0),    'white'),
             (mapper(vmax), 'royalblue')])
+        mapper_plan = lambda x : (x - 0)/(2 - 0)
+        cmap_plan = mpl.colors.LinearSegmentedColormap.from_list('Pooled', [
+            (mapper_plan(0),   'white'),
+            (mapper_plan(1),   'lightgreen'),
+            (mapper_plan(2),   'forestgreen')])
+
         # [1] -- the base star-obs trace
         # print(f'uniques = {np.unique(sim.obs_trace)}')
         # star/obs trace serves as background for observations
         with warnings.catch_warnings():
             if sim.obs_trace.size == 0:
                 warnings.simplefilter("ignore") # kill zero-size-image warning
-            ax.imshow(sim.obs_trace, aspect='auto', origin='lower',
-                        vmin=vmin, vmax=vmax, cmap=cmap)
+            pcm = ax.imshow(sim.obs_trace, aspect='auto', origin='lower',
+                            vmin=vmin, vmax=vmax, cmap=cmap)
+        # (not working: steals space from ax, semi-fix with layout=constrained
+        # in the figure() causes other issues with annotations)
+        # fig.colorbar(pcm, ax=ax, shrink=0.6, location='bottom')
 
         # [2] -- overlay the individual observations
+        # smaller markers, needed when Nsobs > 200 or so
+        scalefac = 160.0 / max(160.0, sim.Nsobs)
+        lw = 2.0*np.sqrt(scalefac); msD = 40*scalefac; msC = 80*scalefac
         obs_points = {
-            'det_ok':    dict(c='g', marker='s', s=24),
-            'det_nok':   dict(c='r', marker='s', s=8),
-            'char_ok':   dict(c='forestgreen', marker='o', ec='k', s=80),
-            'char_part': dict(c='orange', marker='o', ec='k', s=80),
-            'char_nok':  dict(c='r', marker='o', ec='k', s=80),
+            'det_ok':    dict(label='D: Success',   c='g', marker='s', s=msD),
+            'det_nul':   dict(label='D: No Planet', c='r', marker='s', s=msD),
+            'det_iwa':   dict(label='D: Fail/IWA',  c='w', ec='r', lw=lw, marker='s', s=msD),
+            'det_owa':   dict(label='D: Fail/OWA',  c='k', ec='r', lw=lw, marker='s', s=msD),
+            'det_fail':  dict(label='D: Fail/SNR',  c='lime', ec='r', lw=lw, marker='s', s=msD),
+            'char_ok':   dict(label='C: OK (Full)', c='forestgreen', marker='o', ec='k', s=msC),
+            'char_part': dict(label='C: Partial',   c='orange', marker='o', ec='k', s=msC),
+            'char_nok':  dict(label='C: Fail',      c='r', marker='o', ec='k', s=msC),
             }
+        handles = []
         for pt_name, pt_props in obs_points.items():
             obs_list = getattr(sim, pt_name)
             soInd_1 = [soInd for soInd, nobs in obs_list]
             nobs_1  = [nobs+0.5  for soInd, nobs in obs_list]
-            ax.scatter(nobs_1, soInd_1, **pt_props)
+            h1 = ax.scatter(nobs_1, soInd_1, **pt_props)
+            handles.append(h1)
+        ax.legend(handles=handles)
+
+        # [2b] -- side plot
+        ax2.imshow(sim.planet_num.reshape((sim.Nsobs, 1)),  cmap=cmap_plan, 
+                       origin='lower', aspect='auto', vmin=0, vmax=2)
+        ax2.set_xticks([])
+        ax2.set_title('#Planet', rotation=90, weight='bold', fontsize=14)
+        planet_fail = np.logical_and((sim.char_success == 0), (sim.planet_num > 0))
+        planet_fail_inx = np.nonzero(planet_fail)[0]
+        # smaller markers, needed when Nsobs > 200 or so
+        s_mark = int(80 * 70.0/max(70.0, sim.Nsobs))
+        ax2.scatter(0*planet_fail_inx, planet_fail_inx, color='r', marker='x', s=s_mark)
+
+        h_det  = ax3.barh(np.arange(sim.Nsobs), sim.det_num_obs, label='Det. Visit')
+        h_char = ax3.barh(np.arange(sim.Nsobs), sim.char_num_obs, left=sim.det_num_obs, color='orange', label='Char. Visit')
+        ax3.set_title('#Visit', rotation=90, weight='bold', fontsize=14)
+        ax3.legend(handles=[h_det, h_char],  bbox_to_anchor=(1.04, 0.5), loc="center left")
+        
 
         ## [3] -- decorations
         self.style_plot()
@@ -335,7 +406,7 @@ class plotStarObsContainer(object):
             title = f'Mission Star-Observation Trace for {sim.name}'
         else:
             title = f'Mission Star-Observation Trace'
-        plt.title(title, weight='bold', fontsize=18)
+        ax.set_title(title, weight='bold', fontsize=18)
 
 
 def main(args):
