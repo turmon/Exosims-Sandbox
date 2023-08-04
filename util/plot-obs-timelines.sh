@@ -192,9 +192,10 @@ python $py_opts $cmd_line
 ## signal success
 ##
 
+# note, umask above makes $sentinel group-writable
 cat > "$sentinel" <<EOF
 Sentinel file
 ${PROGNAME}: completed OK by ${USER} on `date`
 Outputs in: $out_opt
 EOF
-chmod g+w "$sentinel"
+
