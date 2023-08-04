@@ -31,21 +31,29 @@ from collections.abc import Mapping
 import numpy as np
 
 ############################################################
-
+#
+# Pre-defined baskets of filename transformations
+#
+# This code defines some static transformations, mapping
+# property names to transformation-functions, for the "-b" option.
 
 # root directories in various formats
 GATTACA_ROOTDIR = '/scratch_lg/exo-yield/EXOSIMS_external_files/'
 MUSTANG_ROOTDIR = '/proj/exep/rhonda/Sandbox/Parameters/EXOSIMS_external_files/'
 VARIABLE_ROOTDIR = '$EXOSIMS_PARAMS/'
 
+# conversion functions
+
 def to_basename(k, v):
     # "EZ_distribution": "/scratch_lg/exo-yield/EXOSIMS_external_files/exoZodi/nominal_maxL_distribution-Dec2019.fits",
     return Path(v).name
 
 # unwanted duplication here ... still experimenting
-
 def sub_g2v_vanilla(k, v):
     return v.replace(GATTACA_ROOTDIR, VARIABLE_ROOTDIR)
+
+def sub_m2v_vanilla(k, v):
+    return v.replace(MUSTANG_ROOTDIR, VARIABLE_ROOTDIR)
 
 def sub_g2m_vanilla(k, v):
     return v.replace(GATTACA_ROOTDIR, MUSTANG_ROOTDIR)
@@ -53,52 +61,33 @@ def sub_g2m_vanilla(k, v):
 def sub_m2g_vanilla(k, v):
     return v.replace(MUSTANG_ROOTDIR, GATTACA_ROOTDIR)
 
-
-# Various baskets of filename transformations
-#
-# for the "-b" option
+# all filename-containing properties
+SCRIPT_PATH_PROPS = [
+    "wdsfilepath",
+    "binaryleakfilepath",
+    "occHIPs_no",
+    "include_known_RV",
+    "core_thruput",
+    "occ_trans",
+    "core_mean_intensity",
+    "EZ_distribution",
+    ]
 
 # from: gattaca -> variable
-XFORM_g2v = {
-    "cachedir": lambda k,v: "$HOME/.EXOSIMS/cache/",
-    "wdsfilepath": sub_g2v_vanilla,
-    "binaryleakfilepath": sub_g2v_vanilla,
-    "occHIPs_no": sub_g2v_vanilla,
-    "include_known_RV": sub_g2v_vanilla,
-    "core_thruput": sub_g2v_vanilla,
-    "occ_trans":  sub_g2v_vanilla,
-    "core_mean_intensity": sub_g2v_vanilla,
-    # "EZ_distribution": to_basename
-    "EZ_distribution": sub_g2v_vanilla
-    }
+XFORM_g2v = {prop: sub_g2v_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_g2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
+
+# from: mustang -> variable
+XFORM_m2v = {prop: sub_g2v_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_m2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: gattaca -> mustang
-XFORM_g2m = {
-    "cachedir": lambda k,v: "$HOME/.EXOSIMS/cache/",
-    "wdsfilepath": sub_g2m_vanilla,
-    "binaryleakfilepath": sub_g2m_vanilla,
-    "occHIPs_no": sub_g2m_vanilla,
-    "include_known_RV": sub_g2m_vanilla,
-    "core_thruput": sub_g2m_vanilla,
-    "occ_trans":  sub_g2m_vanilla,
-    "core_mean_intensity": sub_g2m_vanilla,
-    # "EZ_distribution": to_basename
-    "EZ_distribution": sub_g2m_vanilla
-    }
+XFORM_g2m = {prop: sub_g2m_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_g2m["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
-# from: gattaca -> mustang
-XFORM_m2g = {
-    "cachedir": lambda k,v: "/cache/",
-    "wdsfilepath": sub_m2g_vanilla,
-    "binaryleakfilepath": sub_m2g_vanilla,
-    "occHIPs_no": sub_m2g_vanilla,
-    "include_known_RV": sub_m2g_vanilla,
-    "core_thruput": sub_m2g_vanilla,
-    "occ_trans":  sub_m2g_vanilla,
-    "core_mean_intensity": sub_m2g_vanilla,
-    # (will not be OK for "bare" (un-rooted) mustang files)
-    "EZ_distribution": sub_m2g_vanilla
-    }
+# from: mustang -> gattaca
+XFORM_m2g = {prop: sub_m2g_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_m2g["cachedir"] = lambda k,v: "/cache/"
 
 # all known baskets of transforms
 REGISTRY = {
@@ -110,7 +99,8 @@ REGISTRY = {
 
 
 ############################################################
-
+#
+# Main application code
 
 def apply_xforms(level, item, bases, sform, xform, verbose):
     r'''Recursively expand a dictionary following mappings sform, xform.
@@ -200,7 +190,8 @@ def dump(args, script, out_spec):
     if args.output in ('', '-'):
         stream = sys.stdout
     else:
-        fn = args.output % script
+        basename = os.path.basename(script)
+        fn = args.output % basename
         if fn == script:
             print(f'{args.progname}: Error: Output equals input ({script}). Skipping.', file=sys.stderr)
             return 0
