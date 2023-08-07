@@ -84,6 +84,7 @@ DRIVER=Local/ipcluster_ensemble_jpl_driver.py
 # option processing
 # 0: EXOSIMS path
 EXO_PATH=$(pwd)/EXOSIMS
+EXO_PATH_SET=no
 # 1: driver options that are or were special
 EMAIL_OPT=
 OUT_OPT=drm:pkl,spc:spc
@@ -144,6 +145,7 @@ while getopts "ASZDh23bcj:p:x:qv:eE:O:" opt; do
 	p)
 	    # alternate EXOSIMS path
 	    EXO_PATH=$OPTARG
+            EXO_PATH_SET=yes
 	    ;;
 	x)
 	    # x-tra specs - ensure it is quoted
@@ -234,6 +236,10 @@ if [ $EXO_PATH = @ ]; then
     EXO_PATH=$(python -c 'import EXOSIMS; import os; print(os.path.dirname(os.path.dirname(EXOSIMS.__file__)))')
     echo "${PROGNAME}: EXOSIMS path set to \`${EXO_PATH}'."
 fi
+# first construct must work if $VIRTUAL_ENV is undefined/unset
+if [ "${VIRTUAL_ENV+defined}" = defined -a "$EXO_PATH_SET" = no ]; then
+    echo "${PROGNAME}: Warning: In a VENV, but still using default path \`${EXO_PATH}'."
+fi
 if [ ! -r $EXO_PATH/EXOSIMS/__init__.py ]; then
    echo "${PROGNAME}: Error: EXOSIMS path seems invalid" >&2
    exit 1
@@ -276,7 +282,8 @@ export OPENBLAS_NUM_THREADS=8
 #   need PATH exported because otherwise ssh will just get a vanilla PATH
 #   --files ==> put chatter on stdout/stderr into log files instead of showing on stdout
 #   --progress ==> show a progress indication
-PAR_ENV_OPTS="--env PATH --env PYTHONPATH --env OPENBLAS_NUM_THREADS"
+# (parallel does not object if the --env FOO is not set)
+PAR_ENV_OPTS="--env PATH --env PYTHONPATH --env OPENBLAS_NUM_THREADS --env EXOSIMS_PARAMS"
 if [ $BATCH == 1 ]; then
     PAR_LOG_OPTS="--joblog $logdir/Joblog --results $logdir --files --progress"
 else
