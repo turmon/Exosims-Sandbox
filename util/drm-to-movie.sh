@@ -162,12 +162,30 @@ fi
 
 ### Invocation of the command
 
-export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
 
+# formerly:
+# pick up Exosims from its default location
+#export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
+# we typically do not need Local to be on PYTHONPATH,
+# because keepout_path_graphics sets the SurveyEnsemble
+# to the Prototype. Commenting out.
+#export PYTHONPATH=Local
+
+# ensure we can at least import EXOSIMS
+if python -c 'import EXOSIMS' ; then
+    source=$(python -c 'import os, EXOSIMS; print(os.path.dirname(EXOSIMS.__file__))')
+    echo "${PROGNAME}: Using EXOSIMS from $source"
+    preamble=
+else
+    echo "${PROGNAME}: Cannot import EXOSIMS from your python. Setting PYTHONPATH to use Sandbox EXOSIMS"
+    preamble="PYTHONPATH=EXOSIMS"
+fi    
+
+# FIXME 2023-08: delete the below: keepout_path_graphics uses the Prototype SurveyEnsemble
 # enforce that no ipyparallel cluster needs to be started
 xspecs='!{"ensemble_mode": "init-only"}'
 
 # $ko_opts is unquoted so as to separate the various words within it
 # $py_opts, same (typically is empty)
-python $py_opts util/keepout_path_graphics.py -e $ko_opts -x "$xspecs" \
+$preamble python $py_opts util/keepout_path_graphics.py -e $ko_opts -x "$xspecs" \
 	--drm $drm --spc $spc --movie "$movie" "$script_fn"

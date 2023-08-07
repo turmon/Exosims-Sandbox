@@ -122,6 +122,9 @@ class SimulationRun(object):
         except:
             sys.stderr.write('Failed to open script file "%s"\n' % script)
             raise
+        # replace SurveyEnsemble with the Prototype
+        # this mostly eliminates the need for Locals/ to be import'able
+        specs['modules']['SurveyEnsemble'] = " "
         # save this in the object state
         self.drm = DRM
         self.specs = outspec

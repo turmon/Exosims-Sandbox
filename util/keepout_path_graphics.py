@@ -249,9 +249,9 @@ class ObserveInfo(object):
         # and HZ observations.  Specifically, we could record number of dets/chars/HZ,
         # or we could record only unique dets/chars/HZ.  It really depends on what we
         # want to plot.
-        self.was_det  = np.zeros((N,), dtype=np.bool) # detection or char?
-        self.success  = np.zeros((N,), dtype=np.bool) # was it successful for any planet?
-        self.hab_zone = np.zeros((N,), dtype=np.bool) # were there successful HZ observations?
+        self.was_det  = np.zeros((N,), dtype=bool) # detection or char?
+        self.success  = np.zeros((N,), dtype=bool) # was it successful for any planet?
+        self.hab_zone = np.zeros((N,), dtype=bool) # were there successful HZ observations?
         for i, obs in enumerate(self.drm):
             # deal with various key possibilities
             if 'det_status0' in obs:
@@ -275,7 +275,7 @@ class ObserveInfo(object):
             self.success[i] = np.any(np.array(obs[st_key]) > 0)
             # was any successful observation done on a HZ planet?
             # 1/ planet-indexes of successful observations, if any
-            success_plan_inds = np.array(obs['plan_inds'],dtype=np.int)[np.where(obs[st_key] > 0)[0]]
+            success_plan_inds = np.array(obs['plan_inds'],dtype=int)[np.where(obs[st_key] > 0)[0]]
             # 2/ indicator for each successful planet, Is the planet in the HZ?
             #    Note: can do similar logic on self.Rp_planet[...] to restrict by planet size
             #    turmon 11/2021: changed the upper boundary of L_planet from 1.55 to 1.67
@@ -290,11 +290,11 @@ class ObserveInfo(object):
         Nstar = len(self.snm)
         tour = [obs for obs in self.drm if 'char_status' in obs]
         # list of all stars visited
-        self.visited = np.array([d['star_ind'] for d in tour], dtype=np.int)
+        self.visited = np.array([d['star_ind'] for d in tour], dtype=int)
         # total cumulative number-of-visits, by star
         self.vcount = np.bincount(self.visited, minlength=Nstar)
         # slew adjacency matrix
-        self.visit2 = np.zeros((Nstar, Nstar), dtype=np.int)
+        self.visit2 = np.zeros((Nstar, Nstar), dtype=int)
         # slew transition list (on what chars did we go from d1->d2)
         visit_when = np.empty((Nstar, Nstar), dtype=object)
         for d1 in range(Nstar):
@@ -694,7 +694,29 @@ def make_graphics(args, xspecs):
 
     # load script, allowing for extra specs
     #   we need to use the contents of "sim" to control the movie options
-    sim = EXOSIMS.MissionSim.MissionSim(args.script, **xspecs)
+
+    # Formerly (7/2023), just:
+    #sim = EXOSIMS.MissionSim.MissionSim(args.script, **xspecs)
+
+    # Now, want to simplify things to eliminate the dependence on
+    # the JPL run_sim in Local/. Load specs and simplify, see below.
+    try:
+        with open(args.script, 'rb') as g:
+            specs = json.load(g)
+    except:
+        sys.stderr.write('Failed to open script file "%s"\n' % args.script)
+        raise
+    # replace SurveyEnsemble with the Prototype
+    # this mostly eliminates the need for Local/ to be import'able
+    specs['modules']['SurveyEnsemble'] = " "
+    # FIXME: for now (8/2023), this line removes the xspecs, which was aimed ONLY 
+    # to chillax the JPL run_sim. Better option: remove the caller's (util/drm-to-movie.sh)
+    # line saying:
+    #   -x '!{"ensemble_mode":"init-only"}'
+    xspecs = {}
+    specs_pool = {**specs, **xspecs}
+
+    sim = EXOSIMS.MissionSim.MissionSim(**specs_pool)
     
     ########################################
     #
@@ -889,7 +911,8 @@ def make_graphics(args, xspecs):
             kogoods_shade[:,i+1] = kogood[-1,:,0]
 
         # strings for later titles
-        currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
+        # (turmon speculatively commented out 2023-08-06)
+        # currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
         time_iso = currentTime.iso
         currentTime.out_subfmt = 'float' # reset for numeric output now
         time_mjd = '%.1f' % currentTime.mjd
@@ -1002,7 +1025,7 @@ def make_graphics(args, xspecs):
 
             # ====  DRM-related overlays for *observations* are within this block  ====
             # was a given star plotted?
-            star_shown = np.zeros((TL.nStars,), dtype=np.bool)
+            star_shown = np.zeros((TL.nStars,), dtype=bool)
             if OI:
                 # add in observations to date: last argument is z-order
                 obs_points = OI.obs_summary(time_day, not final_frame, 12)
