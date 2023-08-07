@@ -45,6 +45,7 @@ import json
 import warnings
 from functools import partial
 from collections import OrderedDict
+from collections import defaultdict
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
@@ -338,7 +339,13 @@ class EnsembleSummary(object):
                 # add in the varying parameters, if they were recorded
                 if has_index:
                     exp_name = r['experiment']
-                    exp_params = self.index_csv[exp_name]
+                    try:
+                        exp_params = self.index_csv[exp_name]
+                    except KeyError:
+                        # happens if there are ensembles in the .exp dir, that are not
+                        # in s_index.json
+                        print(f'{args.progname}: params for {exp_name} not in s_index.json, is it up-to-date?')
+                        exp_params = defaultdict(lambda: "?")
                     for f in param_fields:
                         d[f] = exp_params[f]
                 w.writerow(d)
