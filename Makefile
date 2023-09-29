@@ -130,6 +130,8 @@ GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
+# select a given number of runs from a single Scenario (e.g., for timelines)
+SELECT_RUN_PROG=util/select_runs.py -q
 # Programs analogous to the path-movie maker...
 #   driver script for making (per-drm) observation timeline plots
 #   (these run rather quickly)
@@ -326,13 +328,13 @@ sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
 
 define MAKE_N_MOVIES
 .PHONY: path-movie-$1 path-final-$1 obs-timeline-$1
-path-movie-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:.pkl:.mp4:')
+path-movie-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:.mp4:')
 	@ echo "Make: Placed movies in \`sims/$(S)/path'."
-path-final-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-final.png:')
+path-final-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-final.png:')
 	@ echo "Make: Placed final-frames in \`sims/$(S)/path'."
-obs-timeline-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-obs-timelines.txt:')
+obs-timeline-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-obs-timelines.txt:')
 	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
-keepout-$1: script-exists $(shell find sims/$(S)/drm -maxdepth 1 -name '*.pkl' 2>/dev/null | head --lines=$1 | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-keepout-and-obs.png:')
+keepout-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-keepout-and-obs.png:')
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
 endef
 
