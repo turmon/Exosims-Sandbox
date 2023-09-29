@@ -297,7 +297,7 @@ if [ $ALL == 1 ]; then
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 elif [ $ALL == 2 ]; then
-    PAR_SSH_OPTS="--workdir . --sshdelay 0.10 -S 24/mustang2,24/mustang3,16/mustang4"
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.12 -S 26/mustang2,26/mustang3,18/mustang4"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 elif [ $ALL == 3 ]; then
@@ -305,7 +305,7 @@ elif [ $ALL == 3 ]; then
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 elif [ $ALL == 4 ]; then
-    PAR_SSH_OPTS="--workdir . --sshdelay 0.10 -S 6/aftac1,6/aftac2,6/aftac3,12/mustang2,12/mustang3,8/mustang4"
+    PAR_SSH_OPTS="--workdir . --sshdelay 0.12 -S 6/aftac1,6/aftac2,6/aftac3,12/mustang2,12/mustang3,8/mustang4"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 else
