@@ -25,6 +25,7 @@ import os
 import re
 import ast
 import argparse
+import copy
 from pathlib import Path
 from numbers import Number
 from collections.abc import Mapping
@@ -39,6 +40,7 @@ import numpy as np
 
 # root directories in various formats
 GATTACA_ROOTDIR = '/scratch_lg/exo-yield/EXOSIMS_external_files/'
+#GATTACA_ROOTDIR = 'EXOSIMS_external_files/'
 MUSTANG_ROOTDIR = '/proj/exep/rhonda/Sandbox/Parameters/EXOSIMS_external_files/'
 VARIABLE_ROOTDIR = '$EXOSIMS_PARAMS/'
 
@@ -78,7 +80,7 @@ XFORM_g2v = {prop: sub_g2v_vanilla for prop in SCRIPT_PATH_PROPS}
 XFORM_g2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: mustang -> variable
-XFORM_m2v = {prop: sub_g2v_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_m2v = {prop: sub_m2v_vanilla for prop in SCRIPT_PATH_PROPS}
 XFORM_m2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: gattaca -> mustang
@@ -102,13 +104,14 @@ REGISTRY = {
 #
 # Main application code
 
-def apply_xforms(level, item, bases, sform, xform, verbose):
+def apply_xforms(level, item, bases, sform, eform, xform, verbose):
     r'''Recursively expand a dictionary following mappings sform, xform.
 
     Scan each component of the nested dictionary-and-list structure
     "item". If any dictionary (or sub-dictionary) key matches an entry
     in the mapping "d", we invoke the function d[key] on it.
     '''
+    global SPECS
     if isinstance(item, str):
         return item
     elif isinstance(item, Number):
@@ -116,28 +119,32 @@ def apply_xforms(level, item, bases, sform, xform, verbose):
     elif isinstance(item, list):
         # recursively apply sform/xform to each entry of the list
         if verbose: print(f'{"  "*level}  recurse[list]: {bases = }; {len(item) = }')
-        return [apply_xforms(level+1, i, (*bases, str(index)), sform, xform, verbose)
-                    for index, i in enumerate(item)]
+        return [
+            apply_xforms(level+1, i, (*bases, str(index)), sform, eform, xform, verbose)
+            for index, i in enumerate(item)]
     elif isinstance(item, Mapping):
         # apply sform/xform to any matching dictionary items
         val = dict()
         for k, v in item.items():
+            # extended key name (scienceInstruments.0.QE)
             kx = '.'.join((*bases, k))
             if verbose: print(f'{"  "*level}  sform key: {kx}')
             if kx in sform:
                 if verbose: print(f'{"  "*level}  apply(s): {kx}')
                 val[k] = sform[kx] # sform[] is a literal not a lambda
+            elif kx in eform:
+                val[k] = eval(eform[kx], {"np": np, **SPECS})
             elif k in xform:
                 if verbose: print(f'{"  "*level}  apply(x): {k}')
                 val[k] = xform[k](k, v)
             else:
                 if verbose: print(f'{"  "*level}  recurse[dict]: {k}')
-                val[k] = apply_xforms(level+1, v, (*bases, k), sform, xform, verbose)
+                val[k] = apply_xforms(level+1, v, (*bases, k), sform, eform, xform, verbose)
         return val
     assert False, f'Cannot be reached: {item}'
 
 
-def decode_literal_attrs(attrs, verbose):
+def decode_literal_attrs(attrs, verbose, force_string=False):
     r'''decode a series of command-line attributes given in strings k=v'''
     # matches (whitespace)(identifier)(whitespace)[=:](value)
     # where:
@@ -154,7 +161,7 @@ def decode_literal_attrs(attrs, verbose):
             print(f'Error converting {attr}, need "key=value" format', file=sys.stderr)
             raise
         k, sep, v = m.groups()
-        if sep == ':':
+        if sep == ':' or force_string:
             # a plain string: take v as-is
             val = v
         elif sep == '=':
@@ -183,7 +190,9 @@ def make_xforms(args):
     xform = {**xform_base, **xform_adds}
     # 2: make sform dictionary
     sform = decode_literal_attrs(args.attr_s, args.verbose)
-    return sform, xform
+    # 2: make eform dictionary
+    eform = decode_literal_attrs(args.attr_e, args.verbose, force_string=True)
+    return sform, eform, xform
 
 
 def dump(args, script, out_spec):
@@ -191,7 +200,10 @@ def dump(args, script, out_spec):
         stream = sys.stdout
     else:
         basename = os.path.basename(script)
-        fn = args.output % basename
+        if '%s' in args.output:
+            fn = args.output % basename
+        else:
+            fn = args.output.format(**{'__script__': basename, **out_spec})
         if fn == script:
             print(f'{args.progname}: Error: Output equals input ({script}). Skipping.', file=sys.stderr)
             return 0
@@ -209,9 +221,10 @@ def dump(args, script, out_spec):
 
 
 def main(args):
+    global SPECS
     all_ok = True
     try:
-        sform, xform = make_xforms(args)
+        sform, eform, xform = make_xforms(args)
     except:
         print(f'Error converting input arguments, consider -v', file=sys.stderr)
         raise
@@ -220,8 +233,9 @@ def main(args):
             print(f'{args.progname}: Processing script = {script}')
         # get input script
         in_spec = json.load(open(script, 'r'))
+        SPECS = copy.deepcopy(in_spec)
         # transform the specs dictionary
-        out_spec = apply_xforms(0, in_spec, (), sform, xform, args.verbose)
+        out_spec = apply_xforms(0, in_spec, (), sform, eform, xform, args.verbose)
         # write it out
         ok = dump(args, script, out_spec)
         if not ok: all_ok = False
@@ -264,6 +278,8 @@ if __name__ == '__main__':
                            dest='attr_x', help='named attribute within script (e.g., missionTime)')
     parser.add_argument('-s', '--specific', type=str, action='append', default=[], metavar='REPL',
                            dest='attr_s', help='specific attribute within script (e.g., scienceInstruments.1.QE)')
+    parser.add_argument('-e', '--eval', type=str, action='append', default=[], metavar='REPL',
+                           dest='attr_e', help='specific attribute within script (e.g., scienceInstruments.1.QE)')
     parser.add_argument('-c', '--cachedir', type=str, default='', metavar='DIR',
                             help='"cachedir" attribute of script (like -a cachedir)')
     parser.add_argument('-o', '--output', default='./xform-%s', type=str, help='Output file pattern (contains one %%s)')
@@ -273,8 +289,8 @@ if __name__ == '__main__':
     args.progname = os.path.basename(sys.argv[0])
     
     if args.output not in ('', '-'):
-        if args.output.count('%s') != 1:
-            sys.stderr.write(f'{args.progname}: Fatal: Output {args.output} must have one %s pattern.')
+        if args.output.count('%s') != 1 and '{' not in args.output:
+            sys.stderr.write(f'{args.progname}: Fatal: Output {args.output} must have one formatting pattern.')
             sys.exit(1)
 
     # set umask in hopes that files will be group-writable
