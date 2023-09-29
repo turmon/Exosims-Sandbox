@@ -161,7 +161,7 @@ class SimulationRun(object):
         # variable initializations
         obs_trace = np.zeros((Nsobs, len(self.drm)+1))
         det_ok, det_nok, det_nul, det_iwa, det_owa, det_fail = [], [], [], [], [], []
-        char_ok, char_nok, char_part = [], [], []
+        char_ok, char_nok, char_part, char_miss = [], [], [], []
         arrival_times = []
         det_num_obs = np.zeros((Nsobs,))
         char_num_obs = np.zeros_like(det_num_obs)
@@ -217,6 +217,7 @@ class SimulationRun(object):
                 #   [-3] failure:  otherwise (i.e., char_status is all-0)
                 success = np.any(char_info['char_status'] > 0)
                 partial = ~success and np.any(char_info['char_status'] < 0)
+                char_time = get_char_time(obs)
                 if success:
                     obs_trace[soInd, nobs+1] = -1
                     char_ok.append((soInd, nobs))
@@ -224,6 +225,10 @@ class SimulationRun(object):
                 elif partial:
                     obs_trace[soInd, nobs+1] = -2
                     char_part.append((soInd, nobs))
+                elif char_time == 0:
+                    # a "miss" is an intTime=0 char from tieredScheduler
+                    # it will look like a fail (status = 0) but have time = 0 too
+                    char_miss.append((soInd, nobs))
                 else:
                     obs_trace[soInd, nobs+1] = -3
                     char_nok.append((soInd, nobs))
@@ -242,6 +247,7 @@ class SimulationRun(object):
         self.char_ok   = char_ok
         self.char_nok  = char_nok
         self.char_part = char_part
+        self.char_miss = char_miss
         self.arrival_times = arrival_times
         self.det_num_obs   = det_num_obs
         self.char_num_obs  = char_num_obs
@@ -327,7 +333,7 @@ class plotStarObsContainer(object):
         # smaller markers, needed when Nsobs > 200 or so
         scalefac = 160.0 / max(160.0, sim.Nsobs)
         lw = 2.0*np.sqrt(scalefac); msD = 40*scalefac; msC = 80*scalefac
-        obs_points = {
+        obs_point_types = {
             'det_ok':    dict(label='D: Success',   c='g', marker='s', s=msD),
             'det_nul':   dict(label='D: No Planet', c='r', marker='s', s=msD),
             'det_iwa':   dict(label='D: Fail/IWA',  c='w', ec='r', lw=lw, marker='s', s=msD),
@@ -335,11 +341,15 @@ class plotStarObsContainer(object):
             'det_fail':  dict(label='D: Fail/SNR',  c='lime', ec='r', lw=lw, marker='s', s=msD),
             'char_ok':   dict(label='C: OK (Full)', c='forestgreen', marker='o', ec='k', s=msC),
             'char_part': dict(label='C: Partial',   c='orange', marker='o', ec='k', s=msC),
+            'char_miss': dict(label='C: Miss (t=0)',c='lightgray', marker='o', ec='k', s=msC),
             'char_nok':  dict(label='C: Fail',      c='r', marker='o', ec='k', s=msC),
             }
         handles = []
-        for pt_name, pt_props in obs_points.items():
+        can_omit_point_types = ['char_miss']
+        for pt_name, pt_props in obs_point_types.items():
             obs_list = getattr(sim, pt_name)
+            if (not obs_list) and pt_name in can_omit_point_types:
+                continue
             soInd_1 = [soInd for soInd, nobs in obs_list]
             nobs_1  = [nobs+0.5  for soInd, nobs in obs_list]
             h1 = ax.scatter(nobs_1, soInd_1, **pt_props)
