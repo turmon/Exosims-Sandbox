@@ -521,6 +521,10 @@ class SimSummary(object):
         elif filename.endswith('obs-timeline.png'):
             seed = re.sub(r'.*/([0-9]+)-obs-timeline\.png', r'\1', filename)
             self.path_graphics[seed]['obs-timeline'] = filename
+        elif filename.endswith('obs-timeline-part2.png'):
+            # part2 covers up to 10 year mission duration
+            seed = re.sub(r'.*/([0-9]+)-obs-timeline-part2\.png', r'\1', filename)
+            self.path_graphics[seed]['obs-timeline-part2'] = filename
         elif filename.endswith('star-obs-trace.png'):
             seed = re.sub(r'.*/([0-9]+)-star-obs-trace\.png', r'\1', filename)
             self.path_graphics[seed]['star-obs-trace'] = filename
@@ -674,18 +678,31 @@ class SimSummary(object):
                         img = hh.image(p, width=100, inner=True)
                         hh.table_row((os.path.basename(p), img))
                     hh.table_end()
-            # specific path movies
-            hh.header('Single-Run Paths')
+            # single-run plots: path movies, keepout, obs-timelines
+            hh.header('Single-Run Paths and Timelines')
             path_movie_seeds = sorted(self.path_graphics.keys())
             if not path_movie_seeds:
-                hh.paragraph('No path movies yet.  Fix with: make S=... path-movie-N\n')
+                hh.paragraph('No path movies or observation timelines yet.')
+                hh.paragraph('Generate with: make S=... path-movie-N or make S=... obs-timeline-N\n')
             else:
-                hh.table_top(('Seed', 'Final Frame'), elem_class='gfx')
+                # (plot-count incorrect if there are coronagraph/starshade keepout plots.
+                # they are dicts-of-dict underneath path_graphics[seed] - not worth it to fix)
+                num_plot = sum(len(p) for p in self.path_graphics.values())
+                hh.paragraph(f'Found {num_plot} plots across {len(path_movie_seeds)} runs.')
+                hh.table_top(('Seed', 'Representative Figure'), elem_class='gfx')
                 for seed in path_movie_seeds:
                     info = self.path_graphics[seed]
-                    img_target = info['final'] if 'final' in info else None
+                    # find a thumbnail image for the seed, or None
+                    thumb_tries = {'final': 100, 'star-obs-trace': 50, 'obs-timeline': 50}
+                    img_target, img_width = None, 100
+                    for thumb, width in thumb_tries.items():
+                        if thumb in info:
+                            img_target = info[thumb]
+                            img_width = width
+                            break
+                    # make up and insert table row
                     alink = hh.link('path-%s.html' % seed, seed, inner=True)
-                    img = hh.image(img_target, width=100, inner=True)
+                    img = hh.image(img_target, width=img_width, inner=True)
                     hh.table_row((alink, img))
                 hh.table_end()
 
@@ -708,15 +725,18 @@ class SimSummary(object):
             if 'obs-timeline' in info:
                 img_target = info['obs-timeline']
                 hh.image(img_target, width=70)
+                if 'obs-timeline-part2' in info:
+                    img_target = info['obs-timeline-part2']
+                    hh.image(img_target, width=70)
             else:
-                hh.paragraph('Timeline not available.  Fix with: make ... obs-timeline-N')
+                hh.paragraph('Timeline not available.  Generate with: make ... obs-timeline-N')
             # star-obs-trace
             hh.header('Star-Observation Trace')
             if 'star-obs-trace' in info:
                 img_target = info['star-obs-trace']
                 hh.image(img_target, width=70)
             else:
-                hh.paragraph('Star/Observation trace not available.  Fix with: make ... obs-timeline-N')
+                hh.paragraph('Star/Observation trace not available.  Generate with: make ... obs-timeline-N')
             # path keepout
             hh.header('Keepout and Observations')
             if 'obs-keepout-all' in info:
@@ -725,7 +745,7 @@ class SimSummary(object):
                 img_target = info['obs-keepout-char']
                 hh.image(img_target, width=70)
             else:
-                hh.paragraph('Keepout timeline not available.  Fix with: make ... keepout-N')
+                hh.paragraph('Keepout timeline not available.  Generate with: make ... keepout-N')
             # path summary
             hh.header('Path Overview')
             img_target = info['final'] if 'final' in info else None
@@ -743,13 +763,13 @@ class SimSummary(object):
                               literal=True)
                 hh.script('/Local/www-resources/ens-path-plots.js')
             else:
-                hh.paragraph('Data for widget not available.  Fix with: make ... path-movie-N')
+                hh.paragraph('Data for widget not available.  Generate with: make ... path-movie-N')
             # path movie
             hh.header('Path Movie of This Tour')
             if 'movie' in info:
                 hh.video(info['movie'])
             else:
-                hh.paragraph('No path movie available.  Fix with: make ... path-movie-N')
+                hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')
             # cumulative images
             if 'corona' in info:
                 hh.header('Cumulative Coronagraph Keepout for This Tour')

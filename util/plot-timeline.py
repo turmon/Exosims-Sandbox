@@ -286,6 +286,10 @@ class SimulationRun(object):
                 slew_t0.append(arrival_time-slew_time)
                 slew_dt.append(slew_time)
         
+        # find mission duration
+        last_arrival = 0.0 if len(self.drm) == 0 else strip_units(self.drm[-1]['arrival_time'])
+        self.mission_years = np.ceil(last_arrival / 366.0)
+
         self.det_t0  = np.array(det_t0)
         self.det_dt  = np.array(det_dt)
         self.char_t0 = np.array(char_t0)
@@ -412,7 +416,24 @@ class plotTimelineContainer(object):
             infos.append(','.join((name.replace('-', ''), '%.0f' % extent, '%.1f' % proportion)))
         return ('\n'.join(texts), '\n'.join(infos))
 
-    def plot_timeline_panel(self, sim, slew_debug=False, debug_out=False):
+
+    def plot_timeline_panels(self, sim, **kwargs):
+        r'''Plot multiple "panels", each panel containing several strip-charts.
+
+        Current default is 5 strip-charts per panel, each strip containing one
+        year of observations.'''
+        years_per_panel = 5
+        n_panel = int(np.ceil(sim.mission_years / years_per_panel))
+        for panel in range(n_panel):
+            # t_first: first day of the multi-strip panel
+            t_first = int(panel * years_per_panel * 365)
+            # suffix: filename suffix
+            # (first panel has empty suffix for backwards-compat. filenames)
+            suffix = '' if panel == 0 else f'-part{panel+1}'
+            self.plot_timeline_panel(sim, t_first, suffix, **kwargs)
+
+
+    def plot_timeline_panel(self, sim, t_first, suffix, slew_debug=False, debug_out=False):
         # plot attributes for a "collection"
         plot_attributes = [
             ('Detection',     25, 8, ('blue', 'lightblue'),      ('det_t0',  'det_dt' )),
@@ -431,11 +452,11 @@ class plotTimelineContainer(object):
         # one figure for whole plot
         fig = plt.figure(figsize=(18,20))
         # subplots starting at t_first days, each covering t_cover days
-        t_first = 0 # [days]
         t_cover = 365 # [days]
+        year_0 = int(t_first / t_cover)
         for n_plot in range(5):
             ax = fig.add_subplot(5, 1, n_plot+1)
-            t_str = 'Year %d' % (n_plot+1)
+            t_str = 'Year %d' % (year_0 + n_plot + 1)
             self.plot_timeline(ax, plot_attributes, sim, t_str,
                                    (t_first+n_plot*t_cover, t_first+(n_plot+1)*t_cover))
 
@@ -444,7 +465,8 @@ class plotTimelineContainer(object):
         if True:
             text, infos = self.panel_legend(plot_attributes, sim)
             plt.figtext(0.02, 0.05, text, verticalalignment='center', weight='bold', fontsize=16)
-            if debug_out:
+            # this is writing the whole mission, so only do it once
+            if t_first == 0 and debug_out:
                 fname = 'obs-timeline-info'
                 fn = self.args.outpath % (fname, 'csv')
                 with open(fn, 'w') as f:
@@ -452,7 +474,7 @@ class plotTimelineContainer(object):
         # show the plot (disabled, emits warning b/c currently non-interactive backend)
         if False:
             plt.show(block=False)
-        fname = 'obs-timeline'
+        fname = 'obs-timeline' + suffix
         plt.savefig(self.args.outpath % (fname, 'png'))
         # plt.savefig(self.args.outpath % (fname, 'pdf'))
 
@@ -565,7 +587,8 @@ def main(args):
     if args.dayinthelife:
         plotter.plot_timeline_collection(sim)
     if args.synoptic:
-        plotter.plot_timeline_panel(sim, slew_debug=args.slew_debug, debug_out=args.debug_out)
+        plotter.plot_timeline_panels(sim, slew_debug=args.slew_debug, debug_out=args.debug_out)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Plot timeline of observations reported in DRMs.", epilog='')
