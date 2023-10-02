@@ -1,25 +1,24 @@
 #!/usr/bin/env python
 #
-# Check EXOSIMS input script "specs" for keywords that are unused.
+# input_script_check.py: Check EXOSIMS input script "specs" for keywords that are unused.
 #
 # Usage:
-#   input_script_check.py script.json
+#   input_script_check.py script.json [...]
 #
 # Notes:
-#   * JPL scripts use a localized runner, so you will need to put the sim-runner
-#     in your PYTHONPATH with:
-#
+#   * JPL scripts use a localized sim-runner, so you will need to put the 
+#     sim-runner class in your PYTHONPATH with the shell construct:
 #     PYTHONPATH=Local util/input_script_check.py ...
 #    
-#   * You can also give a list of scripts, and they will be cycled through
+#   * You can give a list of scripts, and they will be cycled through
 #   and checked one-by-one.
 #
 # Use with -h for more usage help.
 
-# turmon 2023-09 adapted from an original by Dmitry Savransky
+# turmon 2023-09 adapted from the original by Dmitry Savransky
 #
 # notes: an alternative to requiring PYTHONPATH=Local is to just
-# use the prototype SurveyEnsemble
+# force use of the prototype SurveyEnsemble
 
 import json
 import sys
@@ -117,7 +116,7 @@ def check_for_unused_kws(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Check an input script for spurious entries."
+        description="Check a list of input scripts for spurious entries."
     )
     parser.add_argument("path", nargs="*", help="Pathname(s) of input script(s)")
     parser.add_argument("-o", "--optical", action="store_false", help="Omit OpticalSystem load and check")
@@ -154,8 +153,7 @@ if __name__ == "__main__":
             except:  # noqa: E722
                 exit_status = max(2, exit_status)
                 print(
-                    "Could not instantiate OpticalSystem with this script, "
-                    "likely due to missing files.",
+                    f"OpticalSystem instantiation failed ({f}): missing files?",
                     file=sys.stderr
                 )
     # exit
