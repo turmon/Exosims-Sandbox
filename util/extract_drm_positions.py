@@ -6,6 +6,7 @@
 #
 # This script produces a CSV of target and observatory positions, with one entry for
 # every observation in the give DRM.
+# Note: this is a 2018 version, lightly updated for Py3 from the original
 #
 # Algorithm and notes:
 # - A pickle summarizing a DRM is loaded, and the corresponding MissionSim 
@@ -30,11 +31,12 @@
 #               json literal rather than a filename
 #
 # Actual usage example for reference:
-#   This command adds EXOSIMS and the Local/ subdirectory here to PYTHONPATH, and then
+#   This command adds the Local/ subdirectory here to PYTHONPATH, and then
 #   runs the command.  The Local/ directory must be added because this particular script
 #   inherits from a SurveyEnsemble (IPClusterEnsembleJPL2) which is in Local/ here.
+#   The Exosims instance should come from your current Python venv.
 #     S=HabEx_4m_TSDD_top200DD_52m_5184_20181015_obs
-#     PYTHONPATH=EXOSIMS:Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl
+#     PYTHONPATH=Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl
 #
 # Note: there is a sh driver for this script, and if using the Sandbox, it's easier
 # to just use the driver, which enforces the filename conventions.
@@ -42,7 +44,7 @@
 
 # history:
 #  turmon oct 2018: created, from keepout_path_graphics
-
+#  turmon oct 2023: updated for python3 and current venv practices
 
 from __future__ import print_function
 import sys
@@ -137,14 +139,28 @@ def dictify_coords(tag, bodies, r_obs, r_targ, r_body):
     d.update({'%s%s_%s'%(b,tag,c):r_body[b][0,i].to(b_unit).value for i,c in enumerate(coords) for b in bodies})
     return d
                          
+def get_char_time(obs):
+    r'''Utility function, gets char time from a drm observation.
+
+    The tricky issue here is that some characterizations (with starshade)
+    have an embedded char_time key, and others (coronagraph + filters) have
+    a list of char_info's with a series of char_times, which must be
+    added up since they occur serially.'''
+    if 'char_time' in obs:
+        # starshade char - has a unitary char_time key
+        return obs['char_time']
+    else:
+        # coronagraph-only char - sum integration windows
+        return sum(cslice['char_time'] for cslice in obs['char_info'])
+
 def obs_to_obs_time(obs):
     r'''Return the time taken by the given observation (det or char).
 
     Returns an astropy Quantity in days.'''
     if 'det_time' in obs:
         rv = obs['det_time']
-    elif 'char_time' in obs:
-        rv = obs['char_time']
+    elif 'char_time' in obs or 'char_info' in obs:
+        rv = get_char_time(obs)
     return rv
 
 def angle_between(left, center, right):
@@ -221,7 +237,7 @@ def extract_positions(OI, args, xspecs):
     # Set up time-by-time loop
     
     # Choose the first observingMode that is a detection mode
-    detMode = filter(lambda mode: mode['detectionMode'] == True, OS.observingModes)[0]
+    detMode = list(filter(lambda mode: mode['detectionMode'], OS.observingModes))[0]
 
     # for progress indication
     system_t0 = time()
@@ -246,8 +262,9 @@ def extract_positions(OI, args, xspecs):
         time1 = time0 + obs_time
         timeH = time0 + obs_time*0.5
         # suppress ms on string output
-        time0.out_subfmt = 'date_hms'
-        time1.out_subfmt = 'date_hms'
+        if False:
+            time0.out_subfmt = 'date_hms'
+            time1.out_subfmt = 'date_hms'
         # chop ms so MS Excel parses a date
         time0_iso = time0.iso[:-4]
         time1_iso = time1.iso[:-4]
@@ -319,8 +336,7 @@ def extract_positions(OI, args, xspecs):
 
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Extract EXOSIMS observing geometry.",
-                                     epilog='At least one of -m or -f or -c should be given.')
+    parser = argparse.ArgumentParser(description="Extract EXOSIMS observing geometry.")
     parser.add_argument('script', metavar='SCRIPT', help='json script')
     parser.add_argument('drm', help='file where pickle of observation sequence lives',
                       metavar='DRM')

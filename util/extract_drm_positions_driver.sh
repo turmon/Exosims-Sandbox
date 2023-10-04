@@ -15,6 +15,9 @@
 #
 # where:
 #  -D   signals to run python with the debugger turned on
+#  -p   signals to use the (old-style) explicit PYTHONPATH
+#       (typically you should be using a virtual environment, not relying on
+#       -p to tell this script to set PYTHONPATH)
 #
 # Conventions:
 #   The script file (.json) is deduced from the DRM filename (directory component).
@@ -24,7 +27,7 @@
 #       json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
 #       csv  = sims/HabEx_4m_TS_dmag26p0_20180206/pos/NNNN-position.csv (output)
 # 
-# turmon oct 2018
+# turmon oct 2018, updated 2023 for newer Sandbox conventions
 #
 ## [end comment block]
 
@@ -40,11 +43,15 @@ umask 002
 # py_opts: python driver options
 ep_opts=
 py_opts=
-while getopts "hD" opt; do
+py_path=0
+while getopts "hpD" opt; do
     case $opt in
 	D)
 	    # python debugging
 	    py_opts="-m pdb"
+	    ;;
+	p)
+	    py_path=1
 	    ;;
 	h)
 	    # help text
@@ -75,7 +82,10 @@ fi
 
 # find parts within input - fragile manipulations
 # e.g., consider drm = ./sims/HabEx_4m_TS_dmag26p0_20180206/drm/NNNN.pkl
-script=$(basename $(dirname $(dirname $drm))) # the "HabEx_4m_TS_dmag26p0_20180206" part
+#script=$(basename $(dirname $(dirname $drm))) # the "HabEx_4m_TS_dmag26p0_20180206" part
+drmdir=$(dirname $drm)
+script=$(echo $(dirname $drmdir) | sed 's:.*sims/::') # the "HabEx_4m_TS_dmag26p0_20180206" part
+
 
 # synthesize script name
 script_fn=Scripts/$script.json
@@ -95,7 +105,9 @@ if [ ! -d "$outdir" ]; then
 fi
 
 # need to import EXOSIMS and local modules
-export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
+if [ "$py_path" -eq 1 ]; then
+    export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
+fi
 
 # $ep_opts is unquoted so as to expand the various words within it
 # $py_opts, same (typically is empty)
