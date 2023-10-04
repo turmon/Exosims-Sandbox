@@ -402,7 +402,7 @@ class plotStarObsContainer(object):
                 if t >= x_top:
                     continue
                 try:
-                    lbl = f'{t}\n{int(sim.arrival_times[int(t+1)])}d'
+                    lbl = f'{t}\n{int(sim.arrival_times[int(t+1)])}d\n{sim.arrival_times[int(t+1)]/365.25:.2f}y'
                 except IndexError:
                     lbl = f'{t}' # sometimes xticks_given[end] >> x_top
                 x_tik.append(t)
@@ -411,7 +411,7 @@ class plotStarObsContainer(object):
 
         # labels
         ax.set_ylabel('Target Name', weight='bold', fontsize=16)
-        ax.set_xlabel('Observation Number', weight='bold', fontsize=16)
+        ax.set_xlabel('Observation Number or Mission Time', weight='bold', fontsize=16)
         if sim.show_seed:
             title = f'Mission Star-Observation Trace for {sim.name}'
         else:

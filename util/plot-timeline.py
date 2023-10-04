@@ -24,13 +24,16 @@ More-complex actual usage line:
 
   util/plot-timeline.py -d Scripts/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402.json sims/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402/drm/992454934.pkl
 
-Michael Turmon, JPL, 04/2019 -- created based on an idea by Dean Keithly
-
 """
+
+# Michael Turmon, JPL
+# 04/2019 - created
+# 10/2023 - added star names and char_status
+# based on an idea by Dean Keithly
+
 
 from __future__ import print_function
 from six.moves import range
-from six.moves import zip
 import six.moves.cPickle as pickle
 import os
 import sys
@@ -39,13 +42,10 @@ import argparse
 import json
 import random
 import time
+from dataclasses import dataclass
+from collections import Counter
 import numpy as np
 
-# currently this pylab import is needed to allow the script
-# to terminate cleanly
-#from pylab import *
-#import matplotlib
-#matplotlib.use('Agg')
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
 
@@ -183,6 +183,24 @@ def draw_obstime(values, probs):
     # choose a bin from values, and add the within-bin offset
     return np.random.choice(a=values, p=probs) + dither
 
+
+########################################
+###
+###  Hold special information about a single observation
+###
+########################################
+
+@dataclass
+class ObservationInfo:
+    """Class that holds one observation's side information."""
+    # flavor [det/char/slew]
+    flavor: str
+    # star name
+    name: str
+    # observation status (success/fail/miss/partial)
+    status: str
+
+
 ########################################
 ###
 ###  Simulation Container Class
@@ -209,15 +227,26 @@ class SimulationRun(object):
             sys.stderr.write('Failed to open DRM file "%s"\n' % drmfile)
             raise
         try:
-            with open(script, 'rb') as g:
-                outspec = json.load(g)
+            with open(script, 'rb') as f:
+                outspec = json.load(f)
         except:
-            sys.stderr.write('Failed to open script file "%s"\n' % script)
+            sys.stderr.write(f'Failed to open script file "{script}"\n')
             raise
+        # load spc file if possible
+        load_spc = True
+        if load_spc:
+            g = drmfile.replace('pkl', 'spc').replace('/drm/', '/spc/')
+            if os.path.isfile(g):
+                spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
+            else:
+                sys.stderr.write(f'No .spc file at {g}, continuing.\n')
+                spc = None
         # save this in the object state
         self.drm = DRM
         self.outspec = outspec
+        self.spc = spc # = None, if SPC not present
         self.name = os.path.splitext(os.path.basename(drmfile))[0] 
+        #self.seed = int(os.path.splitext(os.path.basename(drmfile))[0])
         # expedient way to suppress the numerical seed for presentation plots
         self.show_seed = True
         try:
@@ -228,15 +257,16 @@ class SimulationRun(object):
         #
         # set up auxiliary quantities
         #
-        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in list(mode.keys())]
-        if len(mode_det) > 1:
+        # (detectionMode is standard, but many JPL scripts use detection)
+        mode_det = [mode for mode in outspec['observingModes'] if (
+            mode.get('detection', False) or mode.get('detectionMode', False))]
+        if len(mode_det) >= 1:
             t_mult = mode_det[0].get('timeMultiplier', 1.0) # exosims default = 1.0
         else:
             # if no detection modes, give a warning, but continue
             t_mult = 1.0
             sys.stderr.write('No detection modes found, using timeMultiplier = %f\n' % t_mult)
         self.timeMultiplier = t_mult
-        # FIXME: there is also a char_margin parameter
         # FIXME: for ohTime, use what is in the starlight suppression system
         #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
         self.ohTime = self.outspec.get('ohTime', 0.2) # [days] -- overhead time
@@ -259,43 +289,85 @@ class SimulationRun(object):
         ohTime = self.ohTime
         settlingTime = self.settlingTime
         timeMultiplier = self.timeMultiplier
-        # initial values
-        det_t0,  det_dt  = [], []
-        char_t0, char_dt = [], []
-        slew_t0, slew_dt = [], []
+        # initialize: start_time, interval, star_name
+        det_t0,  det_dt,  det_oi  = [], [], []
+        char_t0, char_dt, char_oi = [], [], []
+        slew_t0, slew_dt, slew_oi = [], [], []
+        # count successful detections (by star)
+        det_counter = Counter()
         for obs in self.drm:
             arrival_time = strip_units(obs['arrival_time'])
+            s_ind = obs['star_ind']
+            s_name = self.spc['Name'][s_ind] if self.spc else ('#' + str(s_ind))
             if ('det_info' in obs) or ('det_time' in obs):
                 # a detection
                 obs_time = strip_units(obs['det_time'])*timeMultiplier + ohTime + settlingTime
                 det_t0.append(arrival_time)
                 det_dt.append(obs_time)
+                det_status = 'success' if np.any(obs['det_status']) else 'fail'
+                if det_status == 'success':
+                    det_counter[s_ind] += 1
+                    if det_counter[s_ind] == 3:
+                        det_status = 'promo' # (promo implies success)
+                det_oi.append(ObservationInfo('det', s_name, det_status))
             if has_char_info(obs):
                 # a characterization -- formerly, just an "else" -- assuming that all obs
                 #   were detections or characterizations
-                # a characterization
                 # Note: charMargin is already included in char_time
+                # Note: can have char_time = 0, we call this a "missed char" (failed just before obs)
                 # TODO: check if timeMultiplier is included in char_time (not critical, we don't use it)
-                # TODO: it can be that char_time = 0, perhaps not include such obs at all?
+                char_time = strip_units(get_char_time(obs))
+                if 'char_info' in obs:
+                    char_info = obs['char_info'][0]
+                else:
+                    # older (~2019) DRMs have char_status directly within obs
+                    char_info = obs
+                # a characterization - any planet > 0 is an overall success
+                # defs:
+                #   success:  (>=1) planet is +1
+                #   partial:  not success, and (>=1) planet is -1
+                #   miss:     char_time = 0 (e.g., KO constraint failed at char time)
+                #   failure:  otherwise (i.e., char_status is all-0) and char_time > 0
+                success = np.any(char_info['char_status'] > 0)
+                partial = ~success and np.any(char_info['char_status'] < 0)
+                if success:
+                    char_status = 'success'
+                elif partial:
+                    char_status = 'partial'
+                elif char_time == 0:
+                    # a "miss" is an intTime=0 char from tieredScheduler
+                    # it will look like a fail (status = 0) but have time = 0 too
+                    char_status = 'miss'
+                else:
+                    char_status = 'fail'
+                # save the information gathered
                 char_t0.append(arrival_time)
-                char_dt.append(strip_units(get_char_time(obs)))
+                char_dt.append(char_time)
+                char_oi.append(ObservationInfo('char', s_name, char_status))
+
             # put the slew info in -- will be missing from coro-only DRMs, obs.get() covers this
             slew_time = strip_units(obs.get('slew_time', 0.0)) # [days]
             if slew_time > 0:
                 # e.g., first slew is length 0
                 slew_t0.append(arrival_time-slew_time)
                 slew_dt.append(slew_time)
+                slew_oi.append(ObservationInfo('slew', s_name, 'success'))
         
-        # find mission duration
+        # find mission duration (should perhaps use self.missionLife)
         last_arrival = 0.0 if len(self.drm) == 0 else strip_units(self.drm[-1]['arrival_time'])
         self.mission_years = np.ceil(last_arrival / 366.0)
 
+        # save the arrays just created
+        # the ObservationInfo lists are left as lists
         self.det_t0  = np.array(det_t0)
         self.det_dt  = np.array(det_dt)
+        self.det_oi  = det_oi
         self.char_t0 = np.array(char_t0)
         self.char_dt = np.array(char_dt)
+        self.char_oi = char_oi
         self.slew_t0 = np.array(slew_t0)
         self.slew_dt = np.array(slew_dt)
+        self.slew_oi = slew_oi
         # extra field for synoptic plots: round up char dt to make each one visible in plot
         self.char_dt_pad = np.maximum(self.char_dt, 0.25)
         # full mission timeline
@@ -406,7 +478,7 @@ class plotTimelineContainer(object):
         for plot_num in range(len(plot_attrs)):
             # unpack
             name, pos, width, color, _ = plot_attrs[plot_num]
-            t0name, dtname = _
+            t0name, dtname, s_name = _
             # select obs within trange
             t0_all = getattr(sim, t0name)
             dt_all = getattr(sim, dtname)
@@ -435,11 +507,12 @@ class plotTimelineContainer(object):
 
     def plot_timeline_panel(self, sim, t_first, suffix, slew_debug=False, debug_out=False):
         # plot attributes for a "collection"
+        # [name] [vertical position] [vertical width] [colorsequence] [fieldnames]
         plot_attributes = [
-            ('Detection',     25, 8, ('blue', 'lightblue'),      ('det_t0',  'det_dt' )),
-            ('Spectra',       15, 8, ('green', 'lightgreen'),    ('char_t0', 'char_dt_pad')),
-            ('-Slew',         15, 2, ('lightgray', 'darkgray'),  ('slew_t0', 'slew_dt')),
-            ('Other',          5, 8, ('chocolate', 'peachpuff'), ('ga_t0',   'ga_dt'  ))]
+            ('Detection',     25, 8, ('cornflowerblue', 'lightblue'),   ('det_t0',  'det_dt',      'det_oi')),
+            ('Spectra',       15, 8, ('mediumseagreen', 'lightgreen'),  ('char_t0', 'char_dt_pad', 'char_oi')),
+            ('-Slew',         15, 2, ('lightgray', 'darkgray'),         ('slew_t0', 'slew_dt', None)),
+            ('Other',          5, 8, ('sandybrown', 'peachpuff'),       ('ga_t0',   'ga_dt',   None))]
 
         # this makes an extra line for slews - I ended up using a different method though.
         # slew_debug_attrs = [
@@ -461,35 +534,46 @@ class plotTimelineContainer(object):
                                    (t_first+n_plot*t_cover, t_first+(n_plot+1)*t_cover))
 
         plt.subplots_adjust(hspace=0.5)
-        # add text
+        # add lower legends
+        t_props = dict(verticalalignment='center', weight='bold', fontsize=16)
         if True:
             text, infos = self.panel_legend(plot_attributes, sim)
-            plt.figtext(0.02, 0.05, text, verticalalignment='center', weight='bold', fontsize=16)
+            plt.figtext(0.02, 0.05, text, **t_props)
+            # (a proper legend with correct markers could be done)
+            text = ('Observation Status [•]', 'Success', 'Promotion', 'Failed spectral char.', 'Partial spectral char.', 'Missed spectral char.')
+            plt.figtext(0.73, 0.05, '\n '.join(text), **t_props)
+            text = (' ', 'green', 'green box', 'red', 'orange', 'gray')
+            plt.figtext(0.90, 0.05, ' \n'.join(text), **t_props)
             # this is writing the whole mission, so only do it once
             if t_first == 0 and debug_out:
                 fname = 'obs-timeline-info'
                 fn = self.args.outpath % (fname, 'csv')
                 with open(fn, 'w') as f:
                     f.write(infos)
-        # show the plot (disabled, emits warning b/c currently non-interactive backend)
-        if False:
-            plt.show(block=False)
+        # add overall title
+        if sim.show_seed:
+            title = f'Mission Observation Timeline for Ensemble {sim.name}'
+        else:
+            title = 'Mission Observation Timeline across Years'
+        t_props['fontsize'] += 4
+        plt.figtext(0.50, 0.93, title, horizontalalignment='center', **t_props)
+        # write the plot
         fname = 'obs-timeline' + suffix
         plt.savefig(self.args.outpath % (fname, 'png'))
         # plt.savefig(self.args.outpath % (fname, 'pdf'))
-
         plt.close()
+
 
     def plot_timeline_collection(self, sim):
         # plot attributes for a "collection"
         plot_attributes = [
-            ('Coronagraph',   35, 8, ('blue', 'lightblue'),     ('det_t0',  'det_dt' )),
-            ('Starshade',     25, 8, ('green', 'lightgreen'),   ('char_t0', 'char_dt')),
-            ('-Slew',         25, 2, ('lightgray', 'darkgray'), ('slew_t0', 'slew_dt')),
-            ('HWC Parallel',  12, 2, ('khaki'),                 ('all_t0',  'all_dt' )),
-            ('HWC Dedicated', 15, 8, ('gold', 'goldenrod'),     ('xob1_t0', 'xob1_dt')),
-            ('UVS Parallel',   2, 2, ('thistle'),               ('all_t0',  'all_dt' )),
-            ('UVS Dedicated',  5, 8, ('purple', 'violet'),      ('xob2_t0', 'xob2_dt'))]
+            ('Coronagraph',   35, 8, ('cornflowerblue', 'lightblue'),     ('det_t0',  'det_dt' , 'det_oi')),
+            ('Starshade',     25, 8, ('green', 'lightgreen'),   ('char_t0', 'char_dt', 'char_oi')),
+            ('-Slew',         25, 2, ('lightgray', 'darkgray'), ('slew_t0', 'slew_dt', None)),
+            ('HWC Parallel',  12, 2, ('khaki'),                 ('all_t0',  'all_dt' , None)),
+            ('HWC Dedicated', 15, 8, ('gold', 'goldenrod'),     ('xob1_t0', 'xob1_dt', None)),
+            ('UVS Parallel',   2, 2, ('thistle'),               ('all_t0',  'all_dt' , None)),
+            ('UVS Dedicated',  5, 8, ('purple', 'violet'),      ('xob2_t0', 'xob2_dt', None))]
         # plots starting at t_first days, each covering t_cover days
         t_first = 0 # [days]
         t_cover = 100 # [days]
@@ -500,7 +584,6 @@ class plotTimelineContainer(object):
             t_str = '%02d' % n_plot
             self.plot_timeline(ax, plot_attributes, sim, 'Segment ' + t_str,
                                    (t_first+n_plot*t_cover, t_first+(n_plot+1)*t_cover))
-            # show the plot
             # show the plot (disabled, emits warning b/c currently non-interactive backend)
             if False:
                 plt.show(block=False)
@@ -516,12 +599,15 @@ class plotTimelineContainer(object):
         for plot_num in range(len(plot_attrs)):
             # unpack
             name, pos, width, color, _ = plot_attrs[plot_num]
-            t0name, dtname = _
+            t0name, dtname, oiname = _
             # select obs within trange
             t0_all = getattr(sim, t0name)
             dt_all = getattr(sim, dtname)
+            oi_all = getattr(sim, oiname) if oiname else []
             t_index = np.logical_and((t0_all+dt_all) >= t_range[0], t0_all <= t_range[1])
-            self.plot_timeline_single(ax, pos, width, color, t0_all[t_index], dt_all[t_index])
+            # sample just the obs_info's landing in the temporal range
+            oi_select = [oi_all[inx] for inx in np.flatnonzero(t_index)] if oi_all else []
+            self.plot_timeline_single(ax, pos, width, color, t0_all[t_index], dt_all[t_index], oi_select)
 
         ## plot styling
         self.style_plot()
@@ -535,18 +621,49 @@ class plotTimelineContainer(object):
         ax.xaxis.set_tick_params(labelsize=16)
         ax.set_yticks(y_pos)
         ax.set_yticklabels(y_lbl, fontsize=16)
-        ax.set_xlabel('Time Since Mission Start [day]', weight='bold', fontsize=16)
-        if sim.show_seed:
-            title = 'Mission Timeline for %s: %s' % (sim.name, lbl)
-        else:
-            title = 'Mission Timeline: %s' % (lbl, )
-        plt.title(title, weight='bold',fontsize=18)
+        ax.set_xlabel('Time Since Mission Start [day]', weight='normal', fontsize=16)
+        # title is now on y-axis right-hand-side
+        # [formerly] title = 'Mission Timeline for %s: %s' % (sim.name, lbl)
+        # plt.title(title, weight='bold',fontsize=18)
+        title = lbl
+        ax.set_ylabel(title, weight='bold', labelpad=12, fontsize=16)
+        ax.yaxis.set_label_position('right')
 
-    def plot_timeline_single(self, ax, center, width, color, t0, dt):
-        r'''Helper function to plot one set of bars for a single instrument.'''
-        # re-order as: [(t0, dt), (t0, dt), ... (t0, dt)]
+    def plot_timeline_single(self, ax, center, width, color, t0, dt, obs_info):
+        r'''Plot one set of bars and obs_info for a single instrument.
+
+        The extra observational information (obs_info) can be a list, or [] for
+        nothing. If it's a list, its length should match t0 and dt.'''
+        # [1] plot bars
+        #   re-order times as: [(t0, dt), (t0, dt), ... (t0, dt)]
         time_arg = np.transpose(np.stack((t0, dt))) 
         ax.broken_barh(time_arg, (center-width/2, width), facecolors=color)
+        # [2] plot obs-info, if desired
+        if obs_info:
+            status2color = dict(success='green', fail='red', miss='gray', partial='orange', promo='green')
+            # text properties for star names
+            t_props = dict(verticalalignment='center', horizontalalignment='left', color='black', fontsize=10,
+                         bbox={'facecolor': 'white', 'edgecolor': 'none', 'alpha': 0.5, 'pad': 1})
+            # point properties: ensure dots for obs-status come out on top of bars
+            p_props = dict(marker='.', s=300, ec='black', zorder=10)
+            # loop: place star-name text and obs-status
+            alternate = -1 # +1/-1/+1/-1/...
+            for i, oi in enumerate(obs_info):
+                if (oi.flavor == 'char') or (oi.flavor == 'det' and oi.status in ('success', 'promo')):
+                    alternate = -1 * alternate
+                    t_props['verticalalignment'] = 'top' if alternate > 0 else 'bottom'
+                    if oi.status == 'promo':
+                        t_props['bbox']['facecolor'] = 'lightgreen'
+                        t_props['bbox']['edgecolor'] = 'black'
+                        x_props = dict(zorder=10)
+                    else:
+                        t_props['bbox']['facecolor'] = 'white'
+                        t_props['bbox']['edgecolor'] = 'none'
+                        x_props = dict()
+                    # star name
+                    ax.text(t0[i], center + alternate * width/2, oi.name, **t_props, **x_props)
+                    # obs-status marker (one point)
+                    ax.scatter(t0[i]+dt[i]/2, center, c=status2color[oi.status], **p_props)
 
 
 ###
