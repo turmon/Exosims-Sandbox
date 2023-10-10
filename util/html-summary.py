@@ -54,6 +54,8 @@
 #  Michael Turmon, JPL, 2018, 2020, 2022
 
 # Apologies: the "business logic" is entwined with the "presentation logic."
+# Notes: profiling (2023-10) reveals the glob.glob's in sim_summary dominate 
+#   runtime, see below.
 
 from __future__ import print_function
 import argparse
@@ -824,6 +826,13 @@ def sim_summary(d):
     # the quick-out for header info
     if d is None:
         return rv
+    # Performance note: the globs below run for each non-Family/Experiment
+    # subdir below sims/ (i.e., if d itself has DRM's) when indexing the 
+    # Sandbox. (2023/10: About 2/3 of the runtime is running these globs.)
+    # Rather than being clever, the best solution is to put the old Ensembles
+    # into a Family at the top-level, cutting runtime of many indexing
+    # components including this one.
+    # 
     # number of unique paths that were indexed in any way (fn = SEED-foo-bar.png)
     path_count = len(set(fn.split('-')[0] for fn in glob.glob(os.path.join(d, 'path/[0-9]*-*.*'))))
     # number of path graphics
@@ -918,9 +927,10 @@ def index_ensemble(args, path_sim, uplink):
                 sim_info.add(fn_full)
         # render information
         fn = os.path.join(outdir, 'index.html')
+        # index.html
         sim_info.render(fn, uplink)
-        for seed in sim_info.path_graphics.keys():
-            sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
+        # render_paths handles all the seeds
+        sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
 
 def index_group(args, startpath, title, uplink):
     r'''Make an index.html with a table summarizing all ensembles below startpath.
