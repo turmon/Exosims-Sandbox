@@ -188,10 +188,13 @@ elif [ "$mode" == status ]; then
 	    x_hopo=$(echo $pfile | sed -e 's|.*/http-||' -e 's|\.pid||' -e 's|\.|:|')
 	    x_host=$(echo $x_hopo | sed -e 's|:.*||')
 	    x_port=$(echo $x_hopo | sed -e 's|.*:||')
-	    echo "  " "HOST:PORT = $x_hopo"
+	    # we only listen on localhost since 2023-October
+	    # (the above filename manipulations find the host the server is running on)
+	    x_host=localhost
+	    echo "  " "HOST:PORT = ${x_host}:${x_port}"
 	    echo "  " "$p_info"
-	    echo "  " "View at this URL: http://${x_host}.jpl.nasa.gov:${x_port}/sims"
-	    if wget -q -t 1 -O /dev/null "http://${x_host}.jpl.nasa.gov:${x_port}/sims/"; then
+	    echo "  " "View at this URL: http://${x_host}:${x_port}/sims"
+	    if wget -q -t 1 -O /dev/null "http://${x_host}:${x_port}/sims/"; then
 		echo "  " "Server seems to respond OK to requests over HTTP."
 	    else
 		echo "  " "Server does not respond to requests over HTTP."
