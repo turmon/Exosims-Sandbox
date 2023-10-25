@@ -141,11 +141,14 @@ if [ "$mode" == start ]; then
     if true; then
 	# apache httpd - multi-threaded, serves movies properly
 	# minimal config, PID and logging configured on command line
+	# (formerly: "ServerName $(hostname)", "Listen $port", but
+	# now only listen for connections from localhost - must make an
+	# ssh tunnel from your remote->localhost to get a server connection)
 	httpd -f "$CURR_DIR/$SERVER_CONFIG" \
 	      -c "PidFile $CURR_DIR/$SERVER_PID" \
 	      -c "ErrorLog $CURR_DIR/$SERVER_LOG" \
-	      -c "ServerName $(hostname)" \
-	      -c "Listen $port"
+	      -c "ServerName localhost" \
+	      -c "Listen localhost:$port"
     else
 	# python SimpleHTTPServer: single-threaded, does not support returning
 	# byte ranges, which makes .mp4s not render in Safari.
