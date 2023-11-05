@@ -161,7 +161,7 @@ Typical usage:
   util/drm-tabulate.py -m char_time -a char_time sims/HabEx_4m_dmag26/drm/*
 
   # number of successful chars, only for chars
-  util/drm-tabulate.py -m char_info -a "np.sum(char_info[0]['char_status'] == 1)" sims/HabEx_4m_dmag26/drm/*
+  util/drm-tabulate.py -m char_info -e "np.sum(char_info[0]['char_status'] == 1)" sims/HabEx_4m_dmag26/drm/*
 
   # planet-by-planet output of: char_status, planet mass, star spectral class, etc.
   util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm/*.pkl
