@@ -6,7 +6,7 @@
 #
 # This script produces a CSV of target and observatory positions, with one entry for
 # every observation in the give DRM.
-# Note: this is a 2018 version, lightly updated for Py3 from the original
+# Note: this 2023 version is updated for micro-thruster analysis (POC: Cameron Haag)
 #
 # Algorithm and notes:
 # - A pickle summarizing a DRM is loaded, and the corresponding MissionSim 
@@ -16,9 +16,6 @@
 # - The DRM file (.pkl extension, name supplied via --drm) is the one produced
 # by the standard simulation setup.  The seed is taken from the name of the
 # DRM file, and the sim object is instantiated by giving it that seed.
-# - We need to NOT have an ipyparallel instance of the sim.  Thus, use
-# Local.IPClusterEnsembleJPL2 for the SurveyEnsemble, because it supports
-# a standalone (non-ipyparallel) mode, which this driver uses.
 #
 # Usage:
 #   extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl
@@ -45,6 +42,7 @@
 # history:
 #  turmon oct 2018: created, from keepout_path_graphics
 #  turmon oct 2023: updated for python3 and current venv practices
+#  turmon oct 2023: placed the legacy extract_drm_positions.py in a _2018.py file
 
 from __future__ import print_function
 import sys
@@ -126,17 +124,20 @@ class ObserveInfo(object):
 ############################################################
 
 
-def dictify_coords(tag, bodies, r_obs, r_targ, r_body):
+def dictify_coords(tag, bodies, r_obs, v_obs, r_targ, r_body, v_body):
     r'''Turns a group of coordinate sets into entries in a dict, which is returned.
 
     This is here to get the clutter out of the main routine.'''
     coords = ('x', 'y', 'z')
     s_unit = 'pc' # for stars
     b_unit = 'au' # for solar system bodies and observatory
+    v_unit = u.au/u.year
     d = {}
-    d.update({'obs%s_%s' %(tag,c):r_obs    [0,i].to(b_unit).value for i,c in enumerate(coords)})
-    d.update({'star%s_%s'%(tag,c):r_targ   [0,i].to(s_unit).value for i,c in enumerate(coords)})
-    d.update({'%s%s_%s'%(b,tag,c):r_body[b][0,i].to(b_unit).value for i,c in enumerate(coords) for b in bodies})
+    d.update({'obs%s_%s'  %(tag,c):r_obs    [0,i].to(b_unit).value for i,c in enumerate(coords)})
+    d.update({'star%s_%s' %(tag,c):r_targ   [0,i].to(s_unit).value for i,c in enumerate(coords)})
+    d.update({'%s%s_%s'   %(b,tag,c):r_body[b][0,i].to(b_unit).value for i,c in enumerate(coords) for b in bodies})
+    d.update({'vobs%s_%s' %(tag,c):v_obs    [0,i].to(v_unit).value for i,c in enumerate(coords)})
+    d.update({'v%s%s_%s'   %(b,tag,c):v_body[b][0,i].to(v_unit).value for i,c in enumerate(coords) for b in ('earth',)})
     return d
                          
 def get_char_time(obs):
@@ -174,7 +175,7 @@ def angle_between(left, center, right):
     theta = np.degrees(np.arccos(np.clip(cos_theta, -1, 1)))
     return theta
 
-def body_position(Obs, bodies, time):
+def body_position(Obs, bodies, time, velocity=True):
     r'''Body positions vector in heliocentric equatorial frame.
 
     For related usage, see Observatory.keepout().'''
@@ -184,7 +185,23 @@ def body_position(Obs, bodies, time):
                     moon='Moon')
     r_body = {b: Obs.solarSystem_body_position(time, body_map[b]).to('AU')
                   for b in bodies}
-    return r_body
+    if velocity:
+        # finite-difference velocity
+        # for Earth:
+        #    -- huge movement in 1d => dt << 1d
+        #    -- typical tiniest obs-time ~ 0.01 day => dt << 0.01 day
+        dt = 0.0001 * u.d
+        time_1 = time - 0.5 * dt
+        time_2 = time + 0.5 * dt
+        r_body_1 = {b: Obs.solarSystem_body_position(time_1, body_map[b]).to('AU')
+                    for b in bodies}
+        r_body_2 = {b: Obs.solarSystem_body_position(time_2, body_map[b]).to('AU')
+                    for b in bodies}
+        # place in AU/year
+        v_body = {b: (r_body_2[b] - r_body_1[b])/dt.to(u.year) for b in bodies}
+    else:
+        v_body = None
+    return r_body, v_body
 
 def extract_positions(OI, args, xspecs):
     r'''Extract target and observatory positions across the DRM in OI.'''
@@ -195,22 +212,25 @@ def extract_positions(OI, args, xspecs):
     OS = sim.OpticalSystem
     Obs = sim.Observatory
     TL = sim.TargetList
+
+    ########################################
+    # 2023-10: This is no longer being used -- commented out
+    #
     # set star coordinates from TL
     #   heliocentric lon/lat
-    OI.xpos = TL.coords.barycentrictrueecliptic.lon.value
-    OI.ypos = TL.coords.barycentrictrueecliptic.lat.value
-    
+    #   NB: this 
+    #OI.xpos = TL.coords.barycentrictrueecliptic.lon.value
+    #OI.ypos = TL.coords.barycentrictrueecliptic.lat.value
+    #
+    # # use (equatorial) ra/dec coordinates vs. (ecliptic) lat/lon coordinates
+    # ra_dec_coord = False
+    # if ra_dec_coord:
+    #     # attribute name for SkyCoord's
+    #     xattr_name, yattr_name = 'ra', 'dec'
+    # else:
+    #     # attribute name for SkyCoord's
+    #     xattr_name, yattr_name = 'lon', 'lat'
     ########################################
-    # set up parameters based on input arguments
-
-    # use (equatorial) ra/dec coordinates vs. (ecliptic) lat/lon coordinates
-    ra_dec_coord = False
-    if ra_dec_coord:
-        # attribute name for SkyCoord's
-        xattr_name, yattr_name = 'ra', 'dec'
-    else:
-        # attribute name for SkyCoord's
-        xattr_name, yattr_name = 'lon', 'lat'
     
     ########################################
     # Output file
@@ -223,12 +243,19 @@ def extract_positions(OI, args, xspecs):
         raise
     # determine nouns to track, fields to output, etc.
     coords = ('x', 'y', 'z')
-    bodies = ('sun', 'earth', 'moon') # = solar system bodies to locate
-    nouns = ('obs', 'star') + bodies # = all things to report positions on
-    fieldnames = ['time_iso', 'time_mjd', 'dt_obs', 'obs_mode',
-                      'star_name', 'star_vmag', 'theta_obs0', 'theta_obsH', 'theta_obs1', ]
-    # currently using the "Halfway" coordinates
-    fieldnames.extend(['%sH_%s' % (x,c) for x in nouns for c in coords])
+    # solar system bodies to locate
+    # bodies = ('sun', 'earth', 'moon')
+    bodies = ('sun', 'earth')
+    # nouns = all things to report positions/velocities on
+    nouns = ('obs', 'vobs', 'star') + bodies + ('vearth', )
+    # removed 'star_vmag'
+    fieldnames = ['timeA_iso', 'timeA_mjd', 'time0_mjd', 'timeH_mjd', 'time1_mjd',
+                      'dt_obs', 'obs_mode',
+                      'star_name', 'theta_obsA', 'theta_obs0', 'theta_obsH', 'theta_obs1', ]
+    # currently using the "Arrival" + "IntTimeStart" + "Halfway" times for coords
+    times_used = ['A', '0', 'H']
+    for t in times_used:
+        fieldnames.extend([f'{x}{t}_{c}' for x in nouns for c in coords])
     # open the CSV writer (ignores extra fields in dict)
     writer = csv.DictWriter(csv_position, fieldnames=fieldnames, extrasaction='ignore')
     writer.writeheader()
@@ -238,6 +265,20 @@ def extract_positions(OI, args, xspecs):
     
     # Choose the first observingMode that is a detection mode
     detMode = list(filter(lambda mode: mode['detectionMode'], OS.observingModes))[0]
+    # we are not handling the multi-mode char case now!
+    charMode = list(filter(lambda mode: mode['instName'].startswith('spec'), OS.observingModes))[0]
+
+    # these ohTimes are Quantity's in days
+    det_ohTime  = detMode[ 'syst']['ohTime']
+    char_ohTime = charMode['syst']['ohTime']
+
+    # find a total overhead [qty days]
+    det_ohTotal  =  det_ohTime + Obs.settlingTime
+    char_ohTotal = char_ohTime + Obs.settlingTime
+
+    print(f"{args.progname}: Modes and overheads:")
+    print(f"  Detection: { detMode['instName']} with { detMode['systName']} setup+overhead { det_ohTotal:.3f}")
+    print(f"  Char-tion: {charMode['instName']} with {charMode['systName']} setup+overhead {char_ohTotal:.3f}")
 
     # for progress indication
     system_t0 = time()
@@ -254,29 +295,43 @@ def extract_positions(OI, args, xspecs):
             sys.stdout.write('  [%3d/%3d]\n' % (i+1, Ntime))
             system_t0 = time()
 
+        # observing mode
+        obs_mode = 'Unknown'
+        if 'det_info' in obs or 'det_time' in obs:
+            obs_mode = 'det'
+            obs_ohTotal = det_ohTotal
+        if 'char_mode' in obs or 'char_info' in obs:
+            obs_mode = 'char'
+            obs_ohTotal = char_ohTotal
+
         # times and time strings
+        # time model for one obs is: (arrival) (time for overhead) (time for integration)
+        # thus:
+        #   timeA = arrival
+        #   time0 = start of integration
+        #   timeH = halfway point for integration
+        #   time1 = end of integration
         arrival_time = extract_time(obs['arrival_time']) # time-from-start
         obs_time = obs_to_obs_time(obs) # time spent observing
         # observing endpoints
-        time0 = sim.TimeKeeping.missionStart + arrival_time*u.day
-        time1 = time0 + obs_time
+        timeA = sim.TimeKeeping.missionStart + arrival_time*u.day
+        time0 = timeA + obs_ohTotal
         timeH = time0 + obs_time*0.5
+        time1 = time0 + obs_time
         # suppress ms on string output
         if False:
             time0.out_subfmt = 'date_hms'
             time1.out_subfmt = 'date_hms'
-        # chop ms so MS Excel parses a date
+        # chop millisec so MS Excel parses a date
+        timeA_iso = timeA.iso[:-4]
         time0_iso = time0.iso[:-4]
+        timeH_iso = timeH.iso[:-4]
         time1_iso = time1.iso[:-4]
+        timeA_mjd = '%.3f' % timeA.mjd
         time0_mjd = '%.3f' % time0.mjd
+        timeH_mjd = '%.3f' % timeH.mjd
         time1_mjd = '%.3f' % time1.mjd
         
-        obs_mode = 'Unknown'
-        if 'det_info' in obs or 'det_time' in obs:
-            obs_mode = 'det'
-        if 'char_mode' in obs or 'char_info' in obs:
-            obs_mode = 'char'
-
         sInd = obs['star_ind']
 
         # keepout calculation yields geometry (koangles are *not* the object angles)
@@ -284,19 +339,28 @@ def extract_positions(OI, args, xspecs):
         #kogoodH, r_bodyH, r_targH, culpritH, koanglesH = Obs.keepout(TL, sInd, timeH, detMode, returnExtra=True)
         #kogood1, r_body1, r_targ1, culprit1, koangles1 = Obs.keepout(TL, sInd, time1, detMode, returnExtra=True)
         
-        r_body0 = body_position(Obs, bodies, time0)
-        r_bodyH = body_position(Obs, bodies, timeH)
-        r_body1 = body_position(Obs, bodies, time1)
+        r_bodyA, v_bodyA = body_position(Obs, bodies, timeA)
+        r_body0, v_body0 = body_position(Obs, bodies, time0)
+        r_bodyH, v_bodyH = body_position(Obs, bodies, timeH)
+        r_body1, v_body1 = body_position(Obs, bodies, time1)
 
         # target star positions vector in heliocentric equatorial frame
+        r_targA = TL.starprop(sInd, timeA)
         r_targ0 = TL.starprop(sInd, time0)
         r_targH = TL.starprop(sInd, timeH)
         r_targ1 = TL.starprop(sInd, time1)
 
         # observatory position in HE coordinates
+        r_obsA = Obs.orbit(timeA)
         r_obs0 = Obs.orbit(time0)
         r_obsH = Obs.orbit(timeH)
         r_obs1 = Obs.orbit(time1)
+
+        # observatory velocity in rotating frame [AU/yr]
+        v_obsA = Obs.haloVelocity(timeA)
+        v_obs0 = Obs.haloVelocity(time0)
+        v_obsH = Obs.haloVelocity(timeH)
+        v_obs1 = Obs.haloVelocity(time1)
 
         # Calculate desired (ra,dec or lon,lat) coordinates of visible targets, kept-out targets, and bright bodies
         # Recall that r_targ (the star positions) and r_body (the solar-system
@@ -309,27 +373,34 @@ def extract_positions(OI, args, xspecs):
 
         # find angle, sun-obs-target (pass as 1x3 tuples)
         # NB: sun = index #0
+        theta_obsA = angle_between(r_bodyA['sun'][0,:], r_obsA[0,:], r_targA[0,:])
         theta_obs0 = angle_between(r_body0['sun'][0,:], r_obs0[0,:], r_targ0[0,:])
         theta_obsH = angle_between(r_bodyH['sun'][0,:], r_obsH[0,:], r_targH[0,:])
         theta_obs1 = angle_between(r_body1['sun'][0,:], r_obs1[0,:], r_targ1[0,:])
 
         # convert to dict for ease-of-output
-        info = dictify_coords('H', bodies, r_obsH, r_targH, r_bodyH)
+        info = {}
+        info.update(dictify_coords('A', bodies, r_obsA, v_obsA, r_targA, r_bodyA, v_bodyA))
+        info.update(dictify_coords('0', bodies, r_obs0, v_obs0, r_targ0, r_body0, v_body0))
+        info.update(dictify_coords('H', bodies, r_obsH, v_obsH, r_targH, r_bodyH, v_bodyH))
+        # previously present
+        #   star_vmag=TL.Vmag[sInd],
         info.update(
             star_name=TL.Name[sInd],
-            star_vmag=TL.Vmag[sInd],
-            time_iso=time0_iso,
-            time_mjd=time0_mjd,
+            timeA_iso=timeA_iso,
+            timeA_mjd=timeA_mjd,
+            time0_mjd=time0_mjd,
+            timeH_mjd=timeH_mjd,
+            time1_mjd=time1_mjd,
             dt_obs=obs_time.value,
             obs_mode=obs_mode,
-            theta_obs0=theta_obs0,
-            theta_obsH=theta_obsH,
-            theta_obs1=theta_obs1,
+            theta_obsA=theta_obsA.to('deg').value,
+            theta_obs0=theta_obs0.to('deg').value,
+            theta_obsH=theta_obsH.to('deg').value,
+            theta_obs1=theta_obs1.to('deg').value,
             )
-
-        #import pdb; pdb.set_trace()
         writer.writerow(info)
-        
+
     # (end loop over observations)
     print('%s: Done.' % args.progname)
     csv_position.close()
