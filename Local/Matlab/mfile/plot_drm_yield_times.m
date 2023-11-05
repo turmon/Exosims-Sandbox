@@ -132,6 +132,9 @@ FigRoster = { ...
     } ...
              };
     
+% 2023-11: skip the montly a/k/a incremental plots
+DO_INCREMENTAL_PLOT = false;
+
 % iterate over all figures in the roster
 
 for fig_num = 1:length(FigRoster),
@@ -155,30 +158,32 @@ for fig_num = 1:length(FigRoster),
         continue;
     end
 
-    %% A: Monthly plot
-    clf; set(gcf, 'Position', [100 100 850 500]);
-   
     % names = {'h_time_det_allplan_cume', 'h_time_det_allplan_uniq', 'h_time_det_allplan_revi'};
     names_legend = {sprintf('All %s', dtxt), ...
                     sprintf('Unique %s', dtxt), ...
                     sprintf('Revisit %s', dtxt) };
 
-    % put each of the above timeseries on one plot
-    for n = 1:N_plot,
-        f = names{n};
-        f_mean = sprintf('%s_%s', f, 'mean');
-        f_std  = sprintf('%s_%s', f, 'std');
-        h_eb = errorbar(tsamp+t_offsets(n), t_yield_time{:,f_mean}, t_yield_time{:,f_std});
-        % style the plot
-        set(h_eb, 'LineWidth', 1); % NB: skinny
-        hold on;
-    end;
+    %% A: Monthly plot
+    if DO_INCREMENTAL_PLOT,
+        clf; set(gcf, 'Position', [100 100 850 500]);
+        
+        % put each of the above timeseries on one plot
+        for n = 1:N_plot,
+            f = names{n};
+            f_mean = sprintf('%s_%s', f, 'mean');
+            f_std  = sprintf('%s_%s', f, 'std');
+            h_eb = errorbar(tsamp+t_offsets(n), t_yield_time{:,f_mean}, t_yield_time{:,f_std});
+            % style the plot
+            set(h_eb, 'LineWidth', 1); % NB: skinny
+            hold on;
+        end;
 
-    style_yield_plot(...
-        sprintf('Monthly %s vs. Mission Time', dtxt), ...
-        sprintf('%s [count/month]', dtxt), ...
-        names_legend);
-    write_plots([fname '-month']);
+        style_yield_plot(...
+            sprintf('Monthly %s vs. Mission Time', dtxt), ...
+            sprintf('%s [count/month]', dtxt), ...
+            names_legend);
+        write_plots([fname '-month']);
+    end;
 
 
     %% B: Cumulative plot

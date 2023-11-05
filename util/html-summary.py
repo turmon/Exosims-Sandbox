@@ -84,7 +84,11 @@ DUMMY_IMAGE = '/Local/www-resources/image-not-found.png'
 # section heads, one for each category of graphic
 SECTION_HEADS = {
         'radlum': '',
-        'rad-sma': '',
+        'rad-sma': '''"Throughput" is the proportion of planets present, that were characterized
+            in the way indicated. Not-a-number entries in this plot correspond to 0/0 conditions
+            arising due to planet types not present in the selected population.
+            The "Popuation" plot allows verification that planets are being generated at the 
+            correct rate, e.g., verification of eta<sub>Earth</sub>.''',
         'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
             Frequency values between plots when x-axis units are the same are comparable,
@@ -107,7 +111,11 @@ SECTION_HEADS = {
             <em>table</em> are determined
             using the promoted_stars variable output at the end of the simulation.
             Those in the <em>plots</em> are determined using detection results
-            aggregated by the reduction code as the simulation proceeds.
+            aggregated by the reduction code as it processes the DRM.
+            <p>
+            <em>The reduction code is separate from the EXOSIMS scheduler. 
+            The reduction code's post-hoc processing, seen in the plots, 
+            may not accurately reproduce scheduler promotion behaviors.</em>
             <p>
             Some x-axis units in this section are in terms of cumulative
             detection integration time rather than mission clock time.''',

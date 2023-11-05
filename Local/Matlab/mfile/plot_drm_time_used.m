@@ -121,7 +121,14 @@ write_plots('obstime-cume');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 2023-11: exit before making Incremental plots
+
+return
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Slews and Characterization vs. time -- Incremental
+
 
 clf; set(gcf, 'Position', [100 100 850 500]);
    

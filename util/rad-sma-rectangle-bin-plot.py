@@ -61,6 +61,7 @@ import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle, Polygon
+from matplotlib.ticker import FuncFormatter
 
 ## mpl.rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 ## for Palatino and other serif fonts use:
@@ -518,11 +519,15 @@ def make_koppa_boxes(args, ax, hist):
 
     ax.set_yscale('log')
     ax.set_xscale('log')
-    #ax.grid(True)
+
+    # tidy up 0.09999999 on x-axis
+    formatter = FuncFormatter(lambda y, _: '{:.8g}'.format(y))
+    ax.xaxis.set_major_formatter(formatter)
+
     return pc
 
-## Static data mapping fields to titles for code below
 
+## Static data mapping fields to titles for code below
 FIELD_INFO = dict(
     # built-ins
     sdet=('SDET Planet Population', 'count', 'count'),
@@ -600,7 +605,7 @@ def plot_rects(args, field):
     ax.set_facecolor('lightgray')
     # ticks as numbers not exponentials
     for axis in [ax.xaxis, ax.yaxis]:
-        formatter = mpl.ticker.FuncFormatter(lambda y, _: '{:.16g}'.format(y))
+        formatter = FuncFormatter(lambda y, _: '{:.8g}'.format(y))
         axis.set_major_formatter(formatter)
 
     # dump the plot
