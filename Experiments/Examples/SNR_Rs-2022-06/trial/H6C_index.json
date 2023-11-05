@@ -1,0 +1,122 @@
+[
+  {
+    "script_name": "H6C_SNR_10_Rs_35.json",
+    "run_name": "H6C_SNR_10_Rs_35",
+    "SNR": 10,
+    "Rs": 35
+  },
+  {
+    "script_name": "H6C_SNR_10_Rs_105.json",
+    "run_name": "H6C_SNR_10_Rs_105",
+    "SNR": 10,
+    "Rs": 105
+  },
+  {
+    "script_name": "H6C_SNR_10_Rs_140.json",
+    "run_name": "H6C_SNR_10_Rs_140",
+    "SNR": 10,
+    "Rs": 140
+  },
+  {
+    "script_name": "H6C_SNR_10_Rs_200.json",
+    "run_name": "H6C_SNR_10_Rs_200",
+    "SNR": 10,
+    "Rs": 200
+  },
+  {
+    "script_name": "H6C_SNR_15_Rs_35.json",
+    "run_name": "H6C_SNR_15_Rs_35",
+    "SNR": 15,
+    "Rs": 35
+  },
+  {
+    "script_name": "H6C_SNR_15_Rs_105.json",
+    "run_name": "H6C_SNR_15_Rs_105",
+    "SNR": 15,
+    "Rs": 105
+  },
+  {
+    "script_name": "H6C_SNR_15_Rs_140.json",
+    "run_name": "H6C_SNR_15_Rs_140",
+    "SNR": 15,
+    "Rs": 140
+  },
+  {
+    "script_name": "H6C_SNR_15_Rs_200.json",
+    "run_name": "H6C_SNR_15_Rs_200",
+    "SNR": 15,
+    "Rs": 200
+  },
+  {
+    "script_name": "H6C_SNR_20_Rs_35.json",
+    "run_name": "H6C_SNR_20_Rs_35",
+    "SNR": 20,
+    "Rs": 35
+  },
+  {
+    "script_name": "H6C_SNR_20_Rs_105.json",
+    "run_name": "H6C_SNR_20_Rs_105",
+    "SNR": 20,
+    "Rs": 105
+  },
+  {
+    "script_name": "H6C_SNR_20_Rs_140.json",
+    "run_name": "H6C_SNR_20_Rs_140",
+    "SNR": 20,
+    "Rs": 140
+  },
+  {
+    "script_name": "H6C_SNR_20_Rs_200.json",
+    "run_name": "H6C_SNR_20_Rs_200",
+    "SNR": 20,
+    "Rs": 200
+  },
+  {
+    "script_name": "H6C_SNR_30_Rs_35.json",
+    "run_name": "H6C_SNR_30_Rs_35",
+    "SNR": 30,
+    "Rs": 35
+  },
+  {
+    "script_name": "H6C_SNR_30_Rs_105.json",
+    "run_name": "H6C_SNR_30_Rs_105",
+    "SNR": 30,
+    "Rs": 105
+  },
+  {
+    "script_name": "H6C_SNR_30_Rs_140.json",
+    "run_name": "H6C_SNR_30_Rs_140",
+    "SNR": 30,
+    "Rs": 140
+  },
+  {
+    "script_name": "H6C_SNR_30_Rs_200.json",
+    "run_name": "H6C_SNR_30_Rs_200",
+    "SNR": 30,
+    "Rs": 200
+  },
+  {
+    "script_name": "H6C_SNR_40_Rs_35.json",
+    "run_name": "H6C_SNR_40_Rs_35",
+    "SNR": 40,
+    "Rs": 35
+  },
+  {
+    "script_name": "H6C_SNR_40_Rs_105.json",
+    "run_name": "H6C_SNR_40_Rs_105",
+    "SNR": 40,
+    "Rs": 105
+  },
+  {
+    "script_name": "H6C_SNR_40_Rs_140.json",
+    "run_name": "H6C_SNR_40_Rs_140",
+    "SNR": 40,
+    "Rs": 140
+  },
+  {
+    "script_name": "H6C_SNR_40_Rs_200.json",
+    "run_name": "H6C_SNR_40_Rs_200",
+    "SNR": 40,
+    "Rs": 200
+  }
+]

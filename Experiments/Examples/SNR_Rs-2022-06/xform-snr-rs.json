@@ -1,0 +1,12 @@
+[
+{
+    "xform_type": "sequence",
+    "xform_name": "SNR_{SNR:.0f}",
+    "observingModes.2.SNR": [10, 15, 20, 30, 40]
+},
+{
+    "xform_type": "sequence",
+    "xform_name": "Rs_{Rs:.0f}",
+    "scienceInstruments.5.Rs": [35, 105, 140, 200]
+}
+]
