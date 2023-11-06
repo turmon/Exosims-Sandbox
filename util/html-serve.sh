@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 #
-# html-serve.sh: start/stop HTTP server
+# html-serve.sh: start/stop/status HTTP server
 #
-# This starts or stops the HTTP server that serves up the Exosims
-# table of contents and ensemble-summary files.
+# This starts, stops, or status-queries the HTTP server that 
+# serves up the EXOSIMS table of contents and ensemble-summary files.
+#
+# For security, the server only serves out to connections coming
+# from localhost, i.e., the system the server is running on.
 #
 # We run the server on a non-standard port - 8090 by default.
 # To see the table of contents, navigate to:
-#   http://mustang2.jpl.nasa.gov:8090/sims/
+#   http://localhost:8090/sims/
+# To connect your own system to localhost, use an ssh tunnel:
+#   ssh -fnNT -L8090:localhost:8090 mustang2.jpl.nasa.gov
+# and visit the above URL on your own system (e.g., laptop).
 #
 # Usage:
 #   html-serve.sh [-h] [-p PORT] MODE
@@ -44,9 +50,26 @@ PROGNAME=$(basename $0)
 # attempt to give group-write to created files
 umask 002
 
-# some defaults
-#  group allowed to kill the server
-SERVER_GROUP=exosims
+# runtime context (s383/JPL supercomputer)
+if [ -d /proj/exep ]; then
+    CONTEXT=s383
+elif [ -d /projects/exo_yield ]; then
+    CONTEXT=jplsc
+else
+    echo "${PROGNAME}: Fatal: Could not determine runtime context." >&2
+    exit 1
+fi
+
+## defaults
+# SERVER_GROUP: whole group is allowed to kill the server
+# DOC_ROOT: httpd needs to know the rooted dir of the content
+if [ $CONTEXT = s383 ]; then
+    SERVER_GROUP=exosims
+    DOC_ROOT=/proj/exep/rhonda/Sandbox/HabEx
+elif [ $CONTEXT = jplsc ]; then
+    SERVER_GROUP=exo-yield
+    DOC_ROOT=/projects/exo_yield/Sandbox/hwo
+fi
 # httpd config file
 SERVER_CONFIG=Local/www-service/config/httpd-apache2.4.conf
 # directory for log and PID files produced by httpd
@@ -141,9 +164,12 @@ if [ "$mode" == start ]; then
     if true; then
 	# apache httpd - multi-threaded, serves movies properly
 	# minimal config, PID and logging configured on command line
-	# (formerly: "ServerName $(hostname)", "Listen $port", but
+	# 1: formerly: "ServerName $(hostname)", "Listen $port", but
 	# now only listen for connections from localhost - must make an
-	# ssh tunnel from your remote->localhost to get a server connection)
+	# ssh tunnel from your remote->localhost to get a server connection
+	# 2: for use across s383/jpl-sc, we export a variable for
+	# httpd.conf ($SERVER_CONFIG) to pick up
+	DOCUMENT_ROOT="$DOC_ROOT" \
 	httpd -f "$CURR_DIR/$SERVER_CONFIG" \
 	      -c "PidFile $CURR_DIR/$SERVER_PID" \
 	      -c "ErrorLog $CURR_DIR/$SERVER_LOG" \
@@ -171,7 +197,7 @@ elif [ "$mode" == stop ]; then
 	echo "${PROGNAME}: Try \`${PROGNAME} status', or check $SERVER_VARDIR for another port number?" >&2
 	exit 1
     fi
-    echo "${PROGNAME}: Killing server at $SERVER_PID."
+    echo "${PROGNAME}: Killing server named in $SERVER_PID."
     kill -TERM $(cat $SERVER_PID)
 
 elif [ "$mode" == status ]; then
