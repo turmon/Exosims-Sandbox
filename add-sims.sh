@@ -71,7 +71,7 @@ PROGNAME=$(basename $0)
 
 # ensemble driver program
 # see also EXOSIMS/run/run_ipcluster_ensemble.py
-DRIVER=Local/sandbox_jpl_driver.py
+DRIVER=Local/sandbox_driver.py
 
 # option processing
 # 0: EXOSIMS path
