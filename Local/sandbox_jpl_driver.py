@@ -1,57 +1,27 @@
 #!/usr/bin/env python
 
-###
-### 11/2023: This driver is obsolete and not being maintained.
-### We do not use ipython parallel, so the name and some of its
-### capabilities are confusing maintenance issues.
-###
-### Please see standalone_jpl_driver.py
-###
-
 r"""
 Top-level script for EXOSIMS runs in the Sandbox environment.
 
-NOTE: This driver is obsolete and un-maintained, see standalone-jpl-driver.py
-
 Simple Usage:
-  ipcluster_ensemble_jpl_driver.py [--outpath PATH] SCRIPT N_RUNS
-  ipcluster_ensemble_jpl_driver.py --help 
+  sandbox_jpl_driver.py [--outpath PATH] SCRIPT
 
 Detailed Usage:
-  ipcluster_ensemble_jpl_driver.py  [--outpath PATH] [--outopts OPTS]
-                               [--standalone] [--interactive]
-                               [--controller CONTROLLER] [--email EMAIL]
-                               [--toemail TOEMAIL]
-                               SCRIPT N_RUNS
+  sandbox_jpl_driver.py  [--outpath PATH] [--outopts OPTS] [--interactive]
+                               SCRIPT
 where:
   positional arguments:
     SCRIPT               Path to a json script with EXOSIMS parameters.
-    N_RUNS               Number of ensemble runs (integer).
 
   optional arguments:
     -h, --help            show this help message and exit
-    --standalone          Standalone mode: no ipyparallel
     --interactive         Interactive mode: post-init stdout not redirected to logfile
     --outpath PATH        Path to output directory.  Created if not present.
                           Default: basename of scriptfile.
     --outopts OPTS        Output result-file mode. Default: 'drm'.  See below.
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
 
-  archaic arguments:
-    --controller CONTROLLER
-                          Controller name (as used in ipyparallel) engines.
-    --email EMAIL         Email address to notify when run is complete.a
-    --toemail TOEMAIL     Additional email to notify when run is complete.
-
 Notes:  
-  * At present (2020), this script is typically used without ipyparallel,
-    that is, --standalone is given.
-  * If not standalone, an ipcluster instance must be running and accessible 
-    to use this script.  If everything is already set up properly,
-    this is usually a matter of executing, from the shell, a command like:
-       $ ipcluster start
-    In the Sandbox, this is:
-       $ make ipp-start
   * The output OPTS control which result files are written.  It defaults to
     'drm', which writes the DRM to drm/SEED.pkl, where SEED is the large 
     integer random number seed. 
@@ -61,14 +31,12 @@ Notes:
     If the supplied extension ends in '.gz', it is gzipped.  Thus, 
     --outopts 'drm:pkl.gz,spc:spc.gz' writes the gzipped pickled DRM to 
     drm/SEED.pkl.gz, and the gzipped spc dictionary to spc/SEED.spc.gz.
-  * The --email option sends to TO_EMAIL using the localhost mail server.
-    Or, it will authenticate with Gmail's server if TO_EMAIL contains "@gmail".
   * If an output directory is reused, new simulation output files will be added.  
     Any generated errors will be appended to any existing log.err file.
 
 """
 
-# turmon 2017, starting from a version by cdx, 2016-2017
+# turmon 2017-2023
 
 from __future__ import print_function
 import numpy as np
@@ -79,8 +47,6 @@ import sys
 import time
 import socket
 import json
-import smtplib
-import getpass
 import tempfile
 import shutil
 # imports needed by run_one, but not elsewhere in the file
@@ -206,6 +172,12 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         #raise ValueError(' '.join((outname,outpath,outopts,path)))
         with writer(path, 'wb') as f:
             six.moves.cPickle.dump(possible_outputs[outname], f)
+        # TODO/FIXME turmon 2023-09: 
+        # change modtime of enclosing folder so that "make reduce" is not fooled
+        # when the file contents (but not the filename) change
+        # something like:
+        #   now = datetime.datetime.now()
+        #   os.utime(os.path.dirname(path), (now, now))
 
     # reset simulation object AFTER the above files are written
     # note, reset_sim() will pop the seed from SS.specs, which causes 
@@ -214,51 +186,6 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
     
     # caller will have the seed, but not the sim
     return seed
-
-
-def ensure_email(args):
-    r'''Ensure email can be accessed, fetching password if needed.
-
-    If args.passwd is None, no password will be asked-for, otherwise, it
-    is retrieved and returned via args.passwd.
-    '''
-    if not args.email:
-        return
-    if args.passwd is not None:
-        args.passwd = getpass.getpass("Password for %s:\n" % args.email)
-    # raise an error now in case of a bad e-mail setup
-    server = smtplib.SMTP(args.smtp)
-    server.ehlo()
-    if args.passwd is not None:
-        server.starttls()
-        server.login(args.email, args.passwd)
-    server.quit()
-
-def send_email(args, message):
-    r'''Send completion email, if desired.'''
-    if not args.email:
-        return
-    server = smtplib.SMTP(args.smtp)
-    server.ehlo()
-    if args.passwd is not None:
-        server.starttls()
-        server.login(args.email, args.passwd)
-
-    if args.toemail is not None:
-        to_email = [args.email, args.toemail]
-    else:
-        to_email = [args.email]
-
-    msg = "\r\n".join([
-      "From: %s" % args.email,
-      "To: %s" % ";".join(to_email),
-      "Subject: Run Completed",
-      "",
-      "Results for: %s\nStored in: %s\nTiming: %s\n\nCome see what I've done." % (
-          args.scriptfile, args.outpath, message)
-      ])
-    server.sendmail(args.email, to_email, msg)
-    server.quit()
 
 
 def main(args, xpsecs):
@@ -286,14 +213,11 @@ def main(args, xpsecs):
 
     # recall xspecs = additional specs as distinct from script file
     ensemble_mode = []
-    # ensemble_controller is picked up by the IPClusterEnsembleJPL __init__
-    if args.controller:
-        xspecs['ensemble_controller'] = args.controller
     # ensemble_mode is picked up by the IPClusterEnsembleJPL __init__
     if args.standalone:
         ensemble_mode.append('standalone')
         # [11/2018] delay to avoid parallel race conditions (does help)
-        time.sleep((os.getpid() % 40)/40.0)
+        time.sleep((os.getpid() % 40)/60.0)
     # ensemble_mode is picked up by the IPClusterEnsembleJPL __init__
     if args.interactive:
         ensemble_mode.append('interactive')
@@ -337,7 +261,8 @@ def main(args, xpsecs):
     if args.standalone:
         SS = sim.SurveySimulation
     kwargs = {'outpath': outpath, 'outopts': args.outopts} # kwargs are flowed to run_one
-    res = sim.run_ensemble(int(args.numruns), run_one=run_one, kwargs=kwargs)
+    numruns = 1
+    res = sim.run_ensemble(numruns, run_one=run_one, kwargs=kwargs)
 
     # result is a list of seeds
     with open(os.path.join(outpath_run, 'outseed_%d.txt' % seed), 'w') as f:
@@ -366,14 +291,12 @@ if __name__ == "__main__":
     print('Invoked as:')
     print(' '.join(sys.argv))
 
-    parser = argparse.ArgumentParser(description='Run an EXOSIMS ensemble under ipyparallel.')
+    parser = argparse.ArgumentParser(description='Run an EXOSIMS in the Sandbox.')
     parser.add_argument('scriptfile', type=str, metavar='SCRIPT', help='Path to scriptfile.')
-    parser.add_argument('numruns', type=int, metavar='N_RUNS', help='Number of ensemble runs.')
     # options
     parser.add_argument('--verbose', type=int, default=None, help='Verbosity (0/1).')
     parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int); 0 for cache-warming only.')
     parser.add_argument('-q', '--quiet', default=False, action='store_true', help='Send object creation messages to a log file.')
-    parser.add_argument('--standalone', default=False, action='store_true', help='Stand-alone mode (no ipyparallel).')
     parser.add_argument('--interactive', default=False, action='store_true', help='Interactive mode (stdout not redirected to logfile).')
     parser.add_argument('--outpath', type=str, metavar='PATH',
             help='Path to output directory, created if not present. Default: basename of SCRIPT.')
@@ -381,11 +304,11 @@ if __name__ == "__main__":
             help='Output result-file mode.')
     parser.add_argument('-x', '--xspecs', help='extra json spec-file to add on top of SCRIPT',
                       dest='xspecs', metavar='FILE', default='')
-    parser.add_argument('--controller', type=str, help='Controller name (as used in ipcluster) for ipython engines.')
-    parser.add_argument('--email', type=str, help='Email address to notify when run is complete.')
-    parser.add_argument('--toemail', type=str, help='Additional email to notify when run is complete.')
 
     args = parser.parse_args()
+
+    # force it without giving an argument
+    args.standalone = True
 
     ### 1: Process arguments
     # validate scriptfile
@@ -417,17 +340,8 @@ if __name__ == "__main__":
         
     # save the command somewhere
     args.command = ' '.join(sys.argv)
-    if args.email and '@gmail' in args.email:
-        args.smtp = 'smtp.gmail.com:587'
-        args.passwd = 'TBD' # we will prompt for password and fill this in
-    else:
-        args.smtp = 'localhost'
-        args.passwd = None # signals no password needed
 
     ### 2: Run EXOSIMS
-    ensure_email(args)
     message = main(args, xspecs)
-    send_email(args, message)
-
     sys.exit(0)
     

@@ -2,10 +2,10 @@
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
-# This is a wrapper around the python driver, ipcluster_ensemble_jpl.py.
+# This is a wrapper around the python driver, sandbox_jpl_driver.py.
 #
 # Usage:
-#   add-sims.sh [-3] [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-e] [-E ADDR] [-O OPTS] SCRIPT SEEDS
+#   add-sims.sh [-3] [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-O OPTS] SCRIPT SEEDS
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
@@ -15,7 +15,7 @@
 # to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
 # is sent to the screen.
 # * To repeat an error-causing run interactively, paste the command-line printed by 
-# this script (the one that calls ipcluster_ensemble_jpl.py) into your terminal,
+# this script (the one that calls sandbox_jpl_driver.py) into your terminal,
 # and add "--interactive" to the arguments.
 #
 # Typical Usage:
@@ -53,8 +53,6 @@
 #   -q        => quiet object creation
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
 #   -c        => chatty console output to aid debugging
-#   -e        => send email to current user at localhost on completion
-#   -E ADDR   => send email to an arbitrary `addr' on completion
 #   -O OPTS   => output options, a string of comma-separated tags telling
 #       which EXOSIMS variables should be written, and to which files.
 #       See the notes in the python driver file for how it works.
@@ -71,22 +69,15 @@ set -euo pipefail
 
 PROGNAME=$(basename $0)
 
-# Assumed ipython parallel setup directory - see also the Makefile
-# of the form "ipyparallel/aftac1-rhonda", etc.
-# This option is no longer used.
-IPYDIR=ipyparallel/${USER}/$(hostname -s)
-IPYCLI=$IPYDIR/security/ipcontroller-client.json
-
 # ensemble driver program
 # see also EXOSIMS/run/run_ipcluster_ensemble.py
-DRIVER=Local/ipcluster_ensemble_jpl_driver.py
+DRIVER=Local/sandbox_jpl_driver.py
 
 # option processing
 # 0: EXOSIMS path
 EXO_PATH=$(pwd)/EXOSIMS
 EXO_PATH_SET=no
 # 1: driver options that are or were special
-EMAIL_OPT=
 OUT_OPT=drm:pkl,spc:spc
 STAND_OPT=
 SEED_OPT=
@@ -104,7 +95,7 @@ ALL=0
 PYTHON_EXECUTIVE_2=python
 PYTHON_EXECUTIVE_3=/usr/local/anaconda3/envs/cornell/bin/python3.7
 PYTHON_EXECUTIVE=$PYTHON_EXECUTIVE_2
-while getopts "ASZDh23bcj:p:x:qv:eE:O:" opt; do
+while getopts "ASZDh23bcj:p:x:qv:O:" opt; do
     case $opt in
 	A)
 	    # use remote machines
@@ -158,14 +149,6 @@ while getopts "ASZDh23bcj:p:x:qv:eE:O:" opt; do
 	v)
 	    # verbosity 0/1
 	    DRIVER_OPT="${DRIVER_OPT} --verbose $OPTARG"
-	    ;;
-	e)
-	    # send e-mail to $USER
-	    EMAIL_OPT="--email $USER"
-	    ;;
-	E)
-	    # send e-mail to named arg
-	    EMAIL_OPT="--email $OPTARG"
 	    ;;
 	O)
 	    # output options
@@ -318,13 +301,13 @@ if [ $CHATTY == 1 ]; then
     set -x
 fi
 # Taking this apart, the most critical elements are:
-#   DISPATCH_INPUT | DISPATCHER [opts] PYTHON_EXECUTIVE DRIVER [opts] SCRIPT NRUN
+#   DISPATCH_INPUT | DISPATCHER [opts] PYTHON_EXECUTIVE DRIVER [opts] SCRIPT
 # where:
 #   DISPATCH_INPUT = optional input stream of newline-separated seeds, for xargs
-#   DISPATCHER [opts] = xargs (which is given appropriate options)
+#   DISPATCHER [opts] = gnu parallel (which is given appropriate options)
 #   PYTHON_EXECUTIVE = python2 or python3
-#   DRIVER [opts] SCRIPT NRUN = python sim-runner, with opts and 2 args
+#   DRIVER [opts] SCRIPT = python sim-runner, with opts and 1 arg
 eval $SEED_INPUT | $DISPATCHER $DISPATCHER_JOBS $PAR_ENV_OPTS $PAR_LOG_OPTS $PAR_SSH_OPTS \
-$PYTHON_EXECUTIVE $DRIVER $EMAIL_OPT $DRIVER_OPT --standalone --seed {} \
- --outpath "$sim_base" --outopts "$OUT_OPT" --controller $IPYCLI "$SCRIPT" 1
+$PYTHON_EXECUTIVE $DRIVER $DRIVER_OPT --seed {} \
+ --outpath "$sim_base" --outopts "$OUT_OPT" "$SCRIPT"
 
