@@ -2,7 +2,7 @@
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
-# This is a wrapper around the python driver, sandbox_jpl_driver.py.
+# This is a wrapper around the python driver, sandbox_driver.py.
 #
 # Usage:
 #   add-sims.sh [-3] [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-O OPTS] SCRIPT SEEDS
@@ -10,12 +10,12 @@
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
 # (aftac1 = 28, aftac2/3 = 44).
-# * If just one SEED is given, Exosims output is send directly to the screen, which
-# is useful for checking validity.  If more than one SEED, the Exosims output is sent
+# * If just one SEED is given, Exosims output is send directly to standard output - 
+# useful for checking validity.  If more than one SEED, the Exosims output is sent
 # to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
-# is sent to the screen.
+# is sent to standard output.
 # * To repeat an error-causing run interactively, paste the command-line printed by 
-# this script (the one that calls sandbox_jpl_driver.py) into your terminal,
+# this script (the one that calls sandbox_driver.py) into your terminal,
 # and add "--interactive" to the arguments.
 #
 # Typical Usage:
@@ -34,7 +34,7 @@
 #             (1) if a plain integer, that number of randomly-chosen initial seeds.
 #             (2) if of the form =SEED, where SEED is an integer, that single integer 
 #                 is the seed. If SEED is 0, only cache warming is done (no run_sim).
-#             (3) otherwise, it is a filename giving a list of integer seeds, one per line.
+#             (3) else, it is a filename giving a list of integer seeds, one per line.
 #
 # Options:
 #   -h        => show this help message and exit.
@@ -60,7 +60,7 @@
 #       is stored as a pickle with extension .pkl, and the planet parameters
 #       are stored as a pickle with extension .spc.
 # 
-# turmon oct 2017, apr 2018, may 2020
+# turmon oct 2017, 2018, 2020, 2023
 #
 ## [end comment block]
 
@@ -69,17 +69,16 @@ set -euo pipefail
 
 PROGNAME=$(basename $0)
 
-# ensemble driver program
-# see also EXOSIMS/run/run_ipcluster_ensemble.py
+# EXOSIMS driver program
+# see also <EXOSIMS>/run/run_ipcluster_ensemble.py
 DRIVER=Local/sandbox_driver.py
 
 # option processing
 # 0: EXOSIMS path
 EXO_PATH=$(pwd)/EXOSIMS
 EXO_PATH_SET=no
-# 1: driver options that are or were special
-OUT_OPT=drm:pkl,spc:spc
-STAND_OPT=
+# 1: driver options
+OUT_OPT=
 SEED_OPT=
 # 2: generic options to the driver
 DRIVER_OPT=
@@ -152,7 +151,7 @@ while getopts "ASZDh23bcj:p:x:qv:O:" opt; do
 	    ;;
 	O)
 	    # output options
-	    OUT_OPT="$OPTARG"
+	    OUT_OPT="--outopts $OPT_ARG"
 	    ;;
 	h)
 	    # help text
@@ -308,6 +307,5 @@ fi
 #   PYTHON_EXECUTIVE = python2 or python3
 #   DRIVER [opts] SCRIPT = python sim-runner, with opts and 1 arg
 eval $SEED_INPUT | $DISPATCHER $DISPATCHER_JOBS $PAR_ENV_OPTS $PAR_LOG_OPTS $PAR_SSH_OPTS \
-$PYTHON_EXECUTIVE $DRIVER $DRIVER_OPT --seed {} \
- --outpath "$sim_base" --outopts "$OUT_OPT" "$SCRIPT"
+$PYTHON_EXECUTIVE $DRIVER $DRIVER_OPT --seed {} $OUT_OPT "$SCRIPT"
 

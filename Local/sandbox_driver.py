@@ -4,11 +4,10 @@ r"""
 Top-level script for EXOSIMS runs in the Sandbox environment.
 
 Simple Usage:
-  sandbox_jpl_driver.py [--outpath PATH] SCRIPT
+  sandbox_driver.py SCRIPT
 
 Detailed Usage:
-  sandbox_jpl_driver.py  [--outpath PATH] [--outopts OPTS] [--interactive]
-                               SCRIPT
+  sandbox_driver.py  [--outpath PATH] [--outopts OPTS] [--interactive] SCRIPT
 where:
   positional arguments:
     SCRIPT               Path to a json script with EXOSIMS parameters.
@@ -17,8 +16,9 @@ where:
     -h, --help            show this help message and exit
     --interactive         Interactive mode: post-init stdout not redirected to logfile
     --outpath PATH        Path to output directory.  Created if not present.
-                          Default: basename of scriptfile.
-    --outopts OPTS        Output result-file mode. Default: 'drm'.  See below.
+                          The default (sims/basename(SCRIPT)) is a Sandbox convention.
+    --outopts OPTS        Results-file writing scheme. (No files: --outopts '')
+                          The default ('drm:pkl,spc:spc') is a Sandbox convention.
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
 
 Notes:  
@@ -48,6 +48,7 @@ import time
 import socket
 import json
 import tempfile
+import datetime
 import shutil
 # imports needed by run_one, but not elsewhere in the file
 import EXOSIMS
@@ -172,17 +173,18 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         #raise ValueError(' '.join((outname,outpath,outopts,path)))
         with writer(path, 'wb') as f:
             six.moves.cPickle.dump(possible_outputs[outname], f)
-        # TODO/FIXME turmon 2023-09: 
         # change modtime of enclosing folder so that "make reduce" is not fooled
         # when the file contents (but not the filename) change
-        # something like:
-        #   now = datetime.datetime.now()
-        #   os.utime(os.path.dirname(path), (now, now))
+        # that is, writing the file may not alter the dir modtime
+        now = datetime.datetime.now()
+        epoch = now.timestamp()
+        os.utime(os.path.dirname(path), (epoch, epoch))
 
     # reset simulation object AFTER the above files are written
     # note, reset_sim() will pop the seed from SS.specs, which causes 
     # the seed to be regenerated next time
-    SS.reset_sim(genNewPlanets=genNewPlanets, rewindPlanets=rewindPlanets)
+    # turmon 2023/11: no sense in doing this, we're always in standalone mode
+    #SS.reset_sim(genNewPlanets=genNewPlanets, rewindPlanets=rewindPlanets)
     
     # caller will have the seed, but not the sim
     return seed
@@ -253,8 +255,9 @@ def main(args, xpsecs):
         shutil.move(fp_log.name, fn_log)
         os.chmod(fn_log, 0o664) # ensure group-write
 
-    subtime = time.ctime()
-    print("Beginning run on: %s" % subtime)
+    printable_time = lambda tm: time.strftime("%Y-%m-%d %H:%M:%S", tm)
+    subtime = time.localtime()
+    print(f'Beginning run: {printable_time(subtime)}')
     # if standalone: manually set up the global SS variable for run_one to access
     # (if run under ipyparallel, this is done on the engines, via ipyparallel,
     # in the SurveyEnsemble __init__)
@@ -281,9 +284,8 @@ def main(args, xpsecs):
             f.write('# %s: %s\n' % (name, value))
         for r in res:
             f.write('%s\n' % str(r))
-
     # basic message
-    return 'Run started on %s, complete on %s.' % (subtime, time.ctime())
+    return f'Run started {printable_time(subtime)}, complete {printable_time(time.localtime())}'
 
 
 if __name__ == "__main__":
@@ -298,16 +300,15 @@ if __name__ == "__main__":
     parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int); 0 for cache-warming only.')
     parser.add_argument('-q', '--quiet', default=False, action='store_true', help='Send object creation messages to a log file.')
     parser.add_argument('--interactive', default=False, action='store_true', help='Interactive mode (stdout not redirected to logfile).')
-    parser.add_argument('--outpath', type=str, metavar='PATH',
+    parser.add_argument('--outpath', type=str, metavar='PATH', default=None,
             help='Path to output directory, created if not present. Default: basename of SCRIPT.')
-    parser.add_argument('--outopts', type=str, metavar='OPTS', default='drm,spc',
-            help='Output result-file mode.')
+    parser.add_argument('--outopts', type=str, metavar='OPTS', default='drm:pkl,spc:spc', help='Output result-file mode.')
     parser.add_argument('-x', '--xspecs', help='extra json spec-file to add on top of SCRIPT',
                       dest='xspecs', metavar='FILE', default='')
 
     args = parser.parse_args()
-
-    # force it without giving an argument
+    args.progname = os.path.basename(sys.argv[0])
+    # force standalone - it's no longer an option
     args.standalone = True
 
     ### 1: Process arguments
@@ -315,9 +316,17 @@ if __name__ == "__main__":
     if not os.path.isfile(args.scriptfile):
         raise ValueError("Supplied script `%s' not found" % args.scriptfile)
     # default output path
+    #   derive sim results dir from script name: if it's in
+    #   the "special" Scripts/... dir, just strip Scripts/ and .json out, 
+    #   else use the basename less .json
     if args.outpath is None:
-        args.outpath = os.path.join(os.path.abspath('.'),
-                                    os.path.splitext(os.path.basename(args.scriptfile))[0])
+        if args.scriptfile.startswith('Scripts/'):
+            # in Scripts/: use the tail
+            pre_outpath = args.scriptfile.replace('Scripts/', 'sims/').replace('.json', '')
+        else:
+            # not in Scripts: use the basename only
+            pre_outpath = os.path.splitext(os.path.basename(args.scriptfile))[0]
+        args.outpath = os.path.join(os.path.abspath('.'), pre_outpath)
     # load extra specs, if any
     if args.xspecs and not args.xspecs.startswith('!'):
         assert os.path.isfile(args.xspecs), "%s is not a file." % args.xspecs
@@ -343,5 +352,7 @@ if __name__ == "__main__":
 
     ### 2: Run EXOSIMS
     message = main(args, xspecs)
+    print(f'{args.progname}: {message}')
+    print(f'{args.progname}: Done.')
     sys.exit(0)
     
