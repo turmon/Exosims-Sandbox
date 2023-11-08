@@ -34,6 +34,10 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         
         SurveyEnsemble.__init__(self, **specs)
 
+        # propagate args to outspec
+        self._outspec['ensemble_mode'] = ensemble_mode
+        self._outspec['ensemble_controller'] = ensemble_controller
+
         # set up attributes
         self.verb = specs.get('verbose', True)
         self.standalone = False
