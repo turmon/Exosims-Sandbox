@@ -637,7 +637,8 @@ class plotTimelineContainer(object):
         # [1] plot bars
         #   re-order times as: [(t0, dt), (t0, dt), ... (t0, dt)]
         time_arg = np.transpose(np.stack((t0, dt))) 
-        ax.broken_barh(time_arg, (center-width/2, width), facecolors=color)
+        # convert tuple to list() for some matplotlib versions
+        ax.broken_barh(time_arg, (center-width/2, width), facecolors=list(color))
         # [2] plot obs-info, if desired
         if obs_info:
             status2color = dict(success='green', fail='red', miss='gray', partial='orange', promo='green')
