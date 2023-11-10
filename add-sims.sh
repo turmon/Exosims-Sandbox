@@ -4,19 +4,22 @@
 #
 # This is a wrapper around the python driver, sandbox_driver.py.
 #
-# Usage:
+# Typical Usage:
+#   add-sims.sh [-S | -Z] SCRIPT SEEDS
+# 
+# Most General Usage:
 #   add-sims.sh [-3] [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-O OPTS] SCRIPT SEEDS
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
-# (aftac1 = 28, aftac2/3 = 44).
-# * If just one SEED is given, Exosims output is send directly to standard output - 
+# (four less than the number of cores, so for example: aftac1 = 28, aftac2/3 = 44).
+# * If just one SEED is given, Exosims output is sent directly to standard output - 
 # useful for checking validity.  If more than one SEED, the Exosims output is sent
 # to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
 # is sent to standard output.
 # * To repeat an error-causing run interactively, paste the command-line printed by 
 # this script (the one that calls sandbox_driver.py) into your terminal,
-# and add "--interactive" to the arguments.
+# and add "--interactive" to the options.
 #
 # Typical Usage:
 #   (a) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
@@ -43,9 +46,10 @@
 #   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
 #   -3        => run the EXOSIMS sim-runner with python3; by default, "python" is used.
 #   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
-#                PATH=@ abbreviates the command-line default (what you get from
-#                "python -c import EXOSIMS"), which may not be the same as
-#                EXOSIMS/EXOSIMS (i.e., Sandbox EXOSIMS). Useful for venv's.
+#                If you are in a Python venv, it will be detected and you should not 
+#                need to specify -p.
+#                Using PATH=@ abbreviates the command-line default (what you get from
+#                "python -c import EXOSIMS").
 #
 # Less-used Options:
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
@@ -212,15 +216,17 @@ if [ $CHATTY == 1 ]; then
     BATCH=0
 fi
 
+# detect a VENV, and if so, set up to use the correct EXO_PATH
+#   (first construct must work if $VIRTUAL_ENV is undefined/unset)
+if [ "${VIRTUAL_ENV+defined}" = defined -a "$EXO_PATH_SET" = no ]; then
+    EXO_PATH=@
+    echo "${PROGNAME}: python venv \`$(basename $VIRTUAL_ENV)' active: attempting to use its EXOSIMS"
+fi
 # ensure EXOSIMS path
 if [ $EXO_PATH = @ ]; then
     # useful when using venv's: this specifies the venv's EXOSIMS as the one to use
     EXO_PATH=$(python -c 'import EXOSIMS; import os; print(os.path.dirname(os.path.dirname(EXOSIMS.__file__)))')
     echo "${PROGNAME}: EXOSIMS path set to \`${EXO_PATH}'."
-fi
-# first construct must work if $VIRTUAL_ENV is undefined/unset
-if [ "${VIRTUAL_ENV+defined}" = defined -a "$EXO_PATH_SET" = no ]; then
-    echo "${PROGNAME}: Warning: In a VENV, but still using default path \`${EXO_PATH}'."
 fi
 if [ ! -r $EXO_PATH/EXOSIMS/__init__.py ]; then
    echo "${PROGNAME}: Error: EXOSIMS path seems invalid" >&2
