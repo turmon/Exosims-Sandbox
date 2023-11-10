@@ -16,23 +16,27 @@ where:
     -h, --help            show this help message and exit
     --interactive         Interactive mode: post-init stdout not redirected to logfile
     --outpath PATH        Path to output directory.  Created if not present.
-                          The default (sims/basename(SCRIPT)) is a Sandbox convention.
-    --outopts OPTS        Results-file writing scheme. (No files: --outopts '')
-                          The default ('drm:pkl,spc:spc') is a Sandbox convention.
+                          The default value (sims/basename(SCRIPT)) follows the 
+                          Sandbox convention, so you don't usually need to specify it.
+    --outopts OPTS        Results-file writing scheme. 
+                          To write no files: --outopts ''
+                          The default ('drm:pkl,spc:spc') follows the Sandbox convention,
+                          so you don't usually need to specify it.
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
 
 Notes:  
   * The output OPTS control which result files are written.  It defaults to
-    'drm', which writes the DRM to drm/SEED.pkl, where SEED is the large 
+    'drm:pkl,spc:spc', which writes the DRM to drm/SEED.pkl, and the star-
+    planet configuration to spc/SEED.spc, where SEED is the large 
     integer random number seed. 
     In general, this is a comma-separated list of file-types-to-write.  If a 
     colon follows the file-type, the string following the colon is used instead 
-    of the default '.pkl'.
-    If the supplied extension ends in '.gz', it is gzipped.  Thus, 
+    of the default '.pkl' extension.
+    If the supplied extension ends in '.gz', the file is gzipped.  Thus, 
     --outopts 'drm:pkl.gz,spc:spc.gz' writes the gzipped pickled DRM to 
     drm/SEED.pkl.gz, and the gzipped spc dictionary to spc/SEED.spc.gz.
-  * If an output directory is reused, new simulation output files will be added.  
-    Any generated errors will be appended to any existing log.err file.
+  * If an output directory is reused, new simulation output files will be added
+    to that directory.
 
 """
 
