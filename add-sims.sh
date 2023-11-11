@@ -267,6 +267,7 @@ export OPENBLAS_NUM_THREADS=8
 
 # options for gnu parallel - rather complex
 #   cores reported: aftac1, 32; aftac2, 48; aftac3, 48.
+#   Other considerations: mustang5 exists, but python not installed there
 #   need PATH exported because otherwise ssh will just get a vanilla PATH
 #   --files ==> put chatter on stdout/stderr into log files instead of showing on stdout
 #   --progress ==> show a progress indication
