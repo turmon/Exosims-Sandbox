@@ -10,19 +10,8 @@
 # summary statistics, and plots, can optionally be generated.
 #
 # DRM or observing-tour display:  If pickles summarizing a DRM are supplied (--drm), then the
-# observing tour is loaded and the observations are shown.  The DRM may be provided in two ways.
-# - [Newer] Provide a DRM file (.pkl extension, name supplied via --drm) and
-# a SPC file (.spc extension, name supplied via --spc), as produced by the standard
-# simulation setup.
-# - [Older] Supply a directory of pickles (--drm DIR), containing
-# three pickle files, named like:
-#   data-from-sims/HabEx_Tiered_20170728b:
-#      HabEx_4m_TS_20170728_DRM2yr.pkl
-#      HabEx_Tiered_20170728_Starcoords2yr.pkl
-#      HabEx_Tiered_20170728_Starnames2yr.pkl
-# The DRM itself is in the first pickle, and the star names and coordinates are in the
-# others.  (Because this code has access to the .json script that controlled the run, it
-# can reproduce the star information, so the latter two pickles are not in fact needed.)
+# observing tour is loaded and the observations are shown. It is assumed that --drm and --spc
+# are used together. 
 #
 # Typical usage:
 #   keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json 
@@ -40,7 +29,10 @@
 #  -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
 #  -f DIR -- the directory name for .png frame-by-frame output
 #  -c DIR -- the directory name for cumulative keepout output
-#  --drm DIR -- the directory where pickles containing a DRM are
+#  --drm FILE -- the file containing the DRM as a pickle
+#  --spc FILE -- the file containing the SPC as a pickle
+#
+# experts only:
 #  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
 #               if the given SCRIPT name begins with !, it is treated as a
 #               json literal rather than a filename
@@ -56,6 +48,7 @@
 #  turmon nov 2018: add occulter keepout to existing detector keepout
 #  turmon mar 2020: python3, astropy4
 #  turmon dec 2020: updated to handle starshade-only cases better
+#  turmon 2023: simplify, fix multiple issues with newer DRM formats
 #
 # Note: The "cumulative observability" map-format plots are fragile, because
 # the "koMap" returned by Obs.keepout() changed after this code was
@@ -70,11 +63,9 @@
 #
 # TODO: This was the first keepout-extracting code we wrote.  It does not separate
 # compilation-of-information from generation-of-graphics.  So it has a main loop 
-# that is lengthy and unfactored.
+# that is lengthy and unfactored (make_graphics(), about 500 lines)
 
 
-from __future__ import print_function
-from __future__ import absolute_import
 import sys
 import glob
 import argparse
@@ -99,8 +90,17 @@ import matplotlib.patches as patches
 import matplotlib.lines as lines
 from matplotlib import collections as mplc
 from matplotlib import rcParams
-from six.moves import range
-from six.moves import zip
+
+# For tqdm.__version__ >= 4.66, you can:
+#   set environment variable TQDM_DISABLE=1
+#   os.environ["TQDM_DISABLE"] = "1"
+# 
+# To allow older versions, and to keep this self-contained,
+# I'm patching tqdm (used in Obs.keepout) like this:
+from tqdm import tqdm
+from functools import partialmethod
+tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
+
 
 # keeps xlabel from being chopped off
 rcParams.update({'figure.autolayout': True})
@@ -118,13 +118,6 @@ PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 # Utility Functions
 #
 ############################################################
-
-def extract_time(tm):
-    r'''Unbox a time, if it is boxed, for compatibility with multiple DRMs.'''
-    try:
-        return tm.value
-    except AttributeError:
-        return tm
 
 def ensure_dir(directory):
     r'''Ensure enclosing dir exists, especially in multiprocessing context.'''
@@ -164,16 +157,59 @@ def get_koangles(OS):
             tmpNames.remove(name)
     return koangles
 
+def extract_time(tm):
+    r'''Unbox a time, if it is boxed, for compatibility with multiple DRMs.'''
+    try:
+        return tm.value
+    except AttributeError:
+        return tm
+
+def get_char_status(obs):
+    r'''Utility function, gets char status from a drm observation.
+    '''
+    if 'char_status' in obs:
+        # starshade char - has a unitary char_status key
+        return obs['char_status']
+    else:
+        # coronagraph-only - get per-planet char status by combining channels
+        # Each char status is a vector of -1, 0, +1 for each planet.
+        # Planets are combined separately: 2 planets -> return a length-2 array.
+        # There are 3x3 values to specify in combining 2 status values across
+        # channels (wavelengths).  We combine according to these rules,
+        # where s, s' are statuses {-1 (partial), 0 (fail), +1 (success)} --
+        #   c(s,s) = s; c(s,s') = c(s',s); c(1, s) = 1; c(0, s) = s.
+        # This turns out to be the same as the following:
+        c = lambda s1, s2: np.sign(s1 + s2 + np.maximum(s1, s2))
+        rv = 0.0 # start with the identity element
+        for islice in obs['char_info']:
+            rv = c(rv, islice['char_status'])
+        return rv
+    
+def strip_units(x):
+    r'''Strip astropy units from x.'''
+    # TODO: allow coercing units to a supplied value
+    if hasattr(x, 'value'):
+        return x.value
+    else:
+        return x
+
+def get_slew_begin(obs):
+    r'''Return the time of the beginning of the slew, if any, for obs'''
+    slew_time = strip_units(obs.get('slew_time', 0.0))
+    arrival_time = strip_units(obs['arrival_time'])
+    return arrival_time - slew_time
+
+
 class GraphicsStyle(object):
     r'''Singleton class that holds graphics styles.'''
     # mapping of conditions to colors
     # formerly: char_ok   = (0.0, 0.5, 1.0) # sky blue
     char_HZ   = (0.0, 0.7, 0.0) # green
     char_ok   = (0.5, 0.2, 1.0) # purple
-    char_fail = (0.9, 0.0, 0.0) # red
+    char_fail = (0.8, 0.1, 0.0) # brick-red
     det_HZ    = (0.0, 0.7, 0.0) # green
     det_ok    = (0.5, 0.2, 1.0) # purple
-    det_fail  = (0.9, 0.0, 0.0) # red
+    det_fail  = (0.8, 0.1, 0.0) # brick-red
     # line/shape styles
     char_mec  = 'black' # characterization, marker edge color
     det_mec = None # detection, marker edge color
@@ -208,36 +244,16 @@ class ObserveInfo(object):
         self.snm = self.spc['Name']
         #self.sco = self.spc['coords'] # we have the script, so coords are not needed
         #self.spc_coord = self.sco.heliocentrictrueecliptic
-        # planet luminosity, scaled for distance, one entry per planet, in SolarLuminosity/AU^2
-        self.L_planet = (self.spc['L'][self.spc['plan2star']]/(self.spc['a'].to('au')**2)).value
+        # planet Equivalent Insolation Distance (EID), for HZ test
+        self.EID_planet = (self.spc['a'] / np.sqrt(self.spc['L'][self.spc['plan2star']])).value
         # planet radius, in EarthRad
         self.Rp_planet = self.spc['Rp'].value
-
-    def load_from_3_files(self, loc):
-        r'''Load the DRM, and star info from three files which were exported from an Exosims instance.
-        This load method was used in some 2017 experiments, but is not preferred.'''
-        # DRM
-        fn_pkl = glob.glob(os.path.join(loc, '*.pkl'))
-        assert len(fn_pkl) == 3, 'Expect exactly three pickles in DRM location'
-        # these will fail noisily if there is no match
-        fn_drm = glob.glob(os.path.join(loc, '*_DRM*.pkl'))[0]
-        fn_snm = glob.glob(os.path.join(loc, '*_Starnames*.pkl'))[0]
-        fn_sco = glob.glob(os.path.join(loc, '*_Starcoords*.pkl'))[0]
-        print('Loading DRM from', fn_drm)
-        self.drm = pickle.load(open(fn_drm, 'rb'), **PICKLE_ARGS)
-        self.snm = pickle.load(open(fn_snm, 'rb'), **PICKLE_ARGS)
-        self.sco = pickle.load(open(fn_sco, 'rb'), **PICKLE_ARGS)
-        # make these up
-        self.L_planet  = np.zeros( (len(self.nm), ) )
-        self.Rp_planet = np.zeros( (len(self.nm), ) )
 
     def __init__(self, loc, spc):
 
         # load DRM and Star-Planet info
         if spc:
             self.load_from_spc_file(loc, spc)
-        else:
-            self.load_from_3_files(loc)
         # number of observations
         N = len(self.drm)
         # stars we visited, in DRM order
@@ -263,24 +279,24 @@ class ObserveInfo(object):
             # was the observation a detection?
             was_det = (Dkey in obs)
             self.was_det[i] = was_det
-            # we query detections/characterizations for status in the same way
-            st_key = Dkey if was_det else 'char_status'
-            # FIXME: 03-Nov-2021, turmon
+            # query detections/characterizations for status in the same way
+            if was_det:
+                obs_status = obs[Dkey]
+            else:
+                obs_status = get_char_status(obs)
+            # 03-Nov-2021, turmon // Nov-2023, turmon, believe the below is obsolete
             # inserted due to some DRM's containing records that are neither det nor char
-            if st_key not in obs:
-                print('Masked error: set DRM[%d][%s] = 0 because key is absent (star_ind = %d)' %
-                          (i, st_key, obs['star_ind']))
-                obs[st_key] = np.zeros(obs['plan_inds'].shape) # correct size zeros
+            ##    print('Masked error: set DRM[%d][%s] = 0 because key is absent (star_ind = %d)' %
+            ##              (i, st_key, obs['star_ind']))
             # was the observation successful?
-            self.success[i] = np.any(np.array(obs[st_key]) > 0)
+            self.success[i] = np.any(np.array(obs_status) > 0)
             # was any successful observation done on a HZ planet?
             # 1/ planet-indexes of successful observations, if any
-            success_plan_inds = np.array(obs['plan_inds'],dtype=int)[np.where(obs[st_key] > 0)[0]]
+            success_plan_inds = np.array(obs['plan_inds'],dtype=int)[np.where(obs_status > 0)[0]]
             # 2/ indicator for each successful planet, Is the planet in the HZ?
-            #    Note: can do similar logic on self.Rp_planet[...] to restrict by planet size
             #    turmon 11/2021: changed the upper boundary of L_planet from 1.55 to 1.67
-            hab_zone = np.logical_and(self.L_planet[success_plan_inds] >= 0.40,
-                                      self.L_planet[success_plan_inds] <= 1.67)
+            hab_zone = np.logical_and(self.EID_planet[success_plan_inds] >= 0.40,
+                                      self.EID_planet[success_plan_inds] <= 1.67)
             # 3/ was any successful planet observation in the HZ?
             #    Note: perhaps we actually want a count?
             self.hab_zone[i] = np.any(hab_zone)
@@ -288,7 +304,7 @@ class ObserveInfo(object):
     def tour_summary(self, args):
         '''Compute and optionally dump tour summary statistics.'''
         Nstar = len(self.snm)
-        tour = [obs for obs in self.drm if 'char_status' in obs]
+        tour = [obs for i, obs in enumerate(self.drm) if not self.was_det[i]]
         # list of all stars visited
         self.visited = np.array([d['star_ind'] for d in tour], dtype=int)
         # total cumulative number-of-visits, by star
@@ -344,9 +360,7 @@ class ObserveInfo(object):
                 print("Slews written to `%s'" % fn)
 
     def summary(self):
-        s = ('DRM of %d observations, %d stars observed, %d stars total'
-                 %
-                 (len(self.drm), len(set(self.drm_s_ind)), len(self.snm)))
+        s = f'Loaded DRM:\n  {len(self.drm)} observations\n  {len(set(self.drm_s_ind))} stars observed\n  {len(self.snm)} stars total'
         return s
 
     def lookup(self, day):
@@ -454,7 +468,9 @@ class ObserveInfo(object):
         r"""Return pair of characterization observations bracketing a given day."""
         center = self.lookup(day)
         hi = np.min(np.where(self.was_det[center:] == False)[0])
-        lo = max([i for i in range(center) if 'char_status' in self.drm[i]])
+        # char_status is not at top-level of all the DRM's
+        # lo = max([i for i in range(center) if 'char_status' in self.drm[i]])
+        lo = max([i for i in range(center) if not self.was_det[i]])
         if not hi or not lo:
             return None, None
         else:
@@ -482,7 +498,7 @@ class ObserveInfo(object):
         r"""Return all characterization observations up to a given day."""
         # catch the next characterization AFTER day
         endpoint = self.char_after(day)
-        # return DRM entry for those observations of 0:endpoint-1 were NOT detections
+        # return DRM entries from 0:endpoint-1 that were NOT detections
         return np.take(self.drm, np.where(self.was_det[:endpoint+1] == False)[0])
         
     def stars_on_slew(self, day):
@@ -505,7 +521,9 @@ def xyz2lonlat(x, y, z):
   return lon, lat
 
 def gcp(lon1, lat1, lon2, lat2):
-    r"""GCP = great circle points from (lon1,lat1) -> (lon2,lat2)."""
+    r"""GCP = great circle points from (lon1,lat1) -> (lon2,lat2).
+
+    Point-count is auto-determined for smoothness without waste."""
     Npt = 200
     p1 = np.array(lonlat2xyz(lon1, lat1))
     p2 = np.array(lonlat2xyz(lon2, lat2))
@@ -692,14 +710,14 @@ def circle_marker(**given_props):
 
 def make_graphics(args, xspecs):
 
-    # load script, allowing for extra specs
-    #   we need to use the contents of "sim" to control the movie options
+    # instantiate sim object, allowing for extra specs
+    #   we use the contents of "sim" to control movie-making
 
-    # Formerly (7/2023), just:
+    # Formerly (7/2023), th was just:
     #sim = EXOSIMS.MissionSim.MissionSim(args.script, **xspecs)
-
-    # Now, want to simplify things to eliminate the dependence on
-    # the JPL run_sim in Local/. Load specs and simplify, see below.
+    # Now: simplify things to eliminate the dependence on
+    # the JPL run_sim in Local/. So, load specs file and simplify
+    # its SurveyEnsemble before object instantiation.
     try:
         with open(args.script, 'rb') as g:
             specs = json.load(g)
@@ -710,10 +728,10 @@ def make_graphics(args, xspecs):
     # this mostly eliminates the need for Local/ to be import'able
     specs['modules']['SurveyEnsemble'] = " "
     # FIXME: for now (8/2023), this line removes the xspecs, which was aimed ONLY 
-    # to chillax the JPL run_sim. Better option: remove the caller's (util/drm-to-movie.sh)
-    # line saying:
+    # to chillax the JPL run_sim.
+    # Since then, we have also removed the caller's (util/drm-to-movie.sh)
+    # line giving these xspecs:
     #   -x '!{"ensemble_mode":"init-only"}'
-    xspecs = {}
     specs_pool = {**specs, **xspecs}
 
     sim = EXOSIMS.MissionSim.MissionSim(**specs_pool)
@@ -911,9 +929,9 @@ def make_graphics(args, xspecs):
             kogoods_shade[:,i+1] = kogood[-1,:,0]
 
         # strings for later titles
-        # (turmon speculatively commented out 2023-08-06)
-        # currentTime.out_subfmt = 'date_hm' # suppress sec and ms on string output below
-        time_iso = currentTime.iso
+        time_iso = currentTime.copy()
+        time_iso.format = 'iso'
+        time_iso.out_subfmt = 'date_hm' # suppress sec.ms in string output below
         currentTime.out_subfmt = 'float' # reset for numeric output now
         time_mjd = '%.1f' % currentTime.mjd
         time_day = currentTime.mjd - startTimeMission
@@ -1001,10 +1019,6 @@ def make_graphics(args, xspecs):
                     opts = dict(facecolors='white', alpha=0.9)  # fill with white
                     #opts = dict(alpha=0.9)  # fill with white
                     paths = mplc.LineCollection(lola, linewidths=1.5, color='gray', **opts)
-                    # below is a patch to allow for mpl < 2.0, which does not allow setting
-                    # facecolor as a keyword argument.  TODO: upgrade aftac* to mpl >= 2.0
-                    #if closed:
-                    #    paths.set_facecolor('white') 
                     ax.add_artist(paths)
 
                 # draw a non-circular boundary for a planet
@@ -1035,6 +1049,12 @@ def make_graphics(args, xspecs):
                                                      obs_size, color=obs_color, fill=True, 
                                                      **obs_dict))
                     star_shown[obs_star] = True
+                    
+                # plot parameters for just below
+                future_slew_mult = 0.7
+                future_slew_color = [0.70, 0.9, 0.60]
+                leg_props = dict(numpoints=1, labelspacing=0.2, prop={'size': 6})
+
                 # find characterizations up to present day...
                 chars = OI.char_to_date(time_day)
                 # ...add in arrows for these characterizations
@@ -1046,9 +1066,21 @@ def make_graphics(args, xspecs):
                     # color of path from char -> char
                     pcolor_decay = 0.95 if i < Ntime-1 else 1.0 # last iteration: no decay
                     pcolor = [1 - pcolor_decay**(len(chars)-2-j)] * 3
+                    # special-case arrow(j->j+1), until slew(j->j+1) has begun
+                    # note, this will affect only the final arrow shown, and only between 
+                    # obs[j].arrival_time and obs[j+1].arrival_time - obs[j+1].slew_time
+                    #
+                    # first: is slew j->j+1 a "future" slew that has not yet begun?
+                    future_slew = (time_day < get_slew_begin(r1))
+                    # change arrow params
+                    if future_slew:
+                        w_mult = future_slew_mult
+                        pcolor = future_slew_color
+                    else:
+                        w_mult = 1.0
                     # great circle path from char -> char, as a series of line segments
                     greatc = wrap_paths((OI.xpos[s0], OI.ypos[s0]), (OI.xpos[s1], OI.ypos[s1]))
-                    paths = mplc.LineCollection(greatc, linewidths=1.5, color=pcolor)
+                    paths = mplc.LineCollection(greatc, linewidths=1.5*w_mult, color=pcolor)
                     ax.add_artist(paths)
                     # arrow somewhere along path
                     arrow_0, arrow_del = get_arrow(greatc, 1.5)
@@ -1056,20 +1088,36 @@ def make_graphics(args, xspecs):
                         continue
                     ax.arrow(arrow_0[0], arrow_0[1],
                              arrow_del[0], arrow_del[1],
-                             shape='full', color=pcolor, lw=0, length_includes_head=True, head_width=5, zorder=10)
+                             shape='full', color=pcolor, lw=0, length_includes_head=True,
+                             head_width=5*w_mult, zorder=10)
+
+                # path-arrow legend
+                # (tried with arrows rather than plt.plot, but it got hard)
+                line1, = plt.plot([0,1,2], label="Spectral Char. Slew: Upcoming", lw=1.5*future_slew_mult, color=future_slew_color)
+                line2, = plt.plot([0,1,2], label="Spectral Char. Slew: Recent", lw=1.5, color=[0]*3)
+                line3, = plt.plot([0,1,2], label="Spectral Char. Slew: Past",   lw=1.5, color=[0.5]*3)
+                # create a legend to appear at lower-right
+                first_legend = plt.legend(handles=[line1, line2, line3],
+                                   loc='lower right', bbox_to_anchor=(1.02, -0.245),
+                                   **leg_props)
+                ax = plt.gca()
+                ax.add_artist(first_legend)
+
                 # legend for DRM plot
                 GS = GraphicsStyle()
+                demo_dets = 4 # the count to demo the dot-size for
                 l = plt.legend((
-                    circle_marker(markerfacecolor=GS.det_HZ, ms=GS.count2pt2(4)),
-                    circle_marker(markerfacecolor=GS.det_ok, ms=GS.count2pt2(4)),
+                    circle_marker(markerfacecolor=GS.det_HZ, ms=GS.count2pt2(demo_dets)),
+                    circle_marker(markerfacecolor=GS.det_ok, ms=GS.count2pt2(demo_dets)),
                     circle_marker(markersize=3, markerfacecolor=GS.char_ok,   mec=GS.char_mec, mew=GS.char_lw),
                     circle_marker(markersize=3, markerfacecolor=GS.char_HZ,   mec=GS.char_mec, mew=GS.char_lw),
                     circle_marker(markersize=3, markerfacecolor=GS.char_fail, mec=GS.char_mec, mew=GS.char_lw)
                     ), (
-                        'Detection (4, HZ)', 'Detection (4, non-HZ)',
-                        'Char (non-HZ)', 'Char (HZ)', 'Char (insufficient SNR)'),
-                                   numpoints=1, loc='lower left', bbox_to_anchor=(-0.14, -0.245),
-                                   labelspacing=0.2, prop={'size': 6})
+                        f'Detection ({demo_dets}, HZ)',
+                        f'Detection ({demo_dets}, non-HZ)',
+                        'Spectral Char. (non-HZ)', 'Spectral Char. (HZ)', 'Failed Char. (low SNR)'),
+                                   loc='lower left', bbox_to_anchor=(-0.14, -0.245),
+                                   **leg_props)
                 l.set_zorder(30)
         
             #------  DRM overlays end  --------
@@ -1089,7 +1137,7 @@ def make_graphics(args, xspecs):
             plt.ylim(-90, 90);
             plt.xlabel('%s [deg]' % movie_xlabel, **axlabel_style)
             plt.ylabel('%s [deg]' % movie_ylabel, **axlabel_style)
-            plt.title('%s $-$ MJD %s $-$ Day #%.1f' % (time_iso, time_mjd, time_day),
+            plt.title('%s $-$ MJD %s $-$ Day #%.0f' % (time_iso, time_mjd, time_day),
                           **title_style)
             plt.tick_params(axis='both', which='major', **tick_style)
 
@@ -1145,8 +1193,12 @@ def make_graphics(args, xspecs):
         # times, for labels
         t_start = currentTimes[0]
         t_end   = currentTimes[-1]
+        # turmon: 2023-11-15 -- inserted these 2 lines
+        #   move from (native) MJD to ISO format b/c ISO has 'date' subformat
+        t_start.format = 'iso'
+        t_end.format   = 'iso'
         t_start.out_subfmt = 'date'
-        t_end.out_subfmt = 'date'
+        t_end.out_subfmt   = 'date'
 
         def make_observability_cume(cume_good_sorted, title, fn):
             r'''Make and save a cumulative line plot of observability.'''
@@ -1246,9 +1298,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Make EXOSIMS keepout graphics.",
                                      epilog='At least one of -m or -f or -c should be given.')
     parser.add_argument('script', metavar='SCRIPT', help='json script')
-    parser.add_argument('--drm', help='directory/file where pickles of observation sequence live',
-                      dest='drm_dir', metavar='DIR', default='')
-    parser.add_argument('--spc', help='name of star-planet-characteristics (spc) file',
+    parser.add_argument('--drm', help='file containing pickle of observations (DRM)',
+                      dest='drm', metavar='FILE', default='')
+    parser.add_argument('--spc', help='file of star-planet-characteristics (spc)',
                       dest='spc', metavar='FILE', default='')
     parser.add_argument('-x', '--xspecs', help='extra json spec-file to add on top of SCRIPT',
                       dest='xspecs', metavar='FILE', default='')
@@ -1265,8 +1317,6 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--delta', help='delta-time [days], default = %(default).2f',
                       type=float, dest='delta_t', default=5.0)
     parser.add_argument('-e', '--equatorial', help='equatorial coordinates, default = False',
-                      action='store_true')
-    parser.add_argument('-D', '--debug', help='debug mode, default = False',
                       action='store_true')
     
     args = parser.parse_args()
@@ -1295,6 +1345,7 @@ if __name__ == '__main__':
         print('WARNING: outputs in poorly-tested ra/dec coords, use -e for equatorial.')
 
     # load extra specs, if any
+    #    -- this isn't used (11/2023), but leaving it for now
     # argument is a filename, or if argument begins with "!", a literal.
     if args.xspecs and not args.xspecs.startswith('!'):
         assert os.path.isfile(args.xspecs), "%s is not a file." % args.xspecs
@@ -1316,16 +1367,12 @@ if __name__ == '__main__':
         xspecs = {}
 
     # load info about observations (DRM) from given location
-    if args.drm_dir:
-        args.OI = ObserveInfo(args.drm_dir, args.spc)
+    if args.drm:
+        args.OI = ObserveInfo(args.drm, args.spc)
         print(args.OI.summary())
     else:
         args.OI = None
         print('Not plotting DRM.')
-
-    if args.debug:
-        print('Debug mode')
-        import pdb; pdb.set_trace()
 
     make_graphics(args, xspecs)
 
