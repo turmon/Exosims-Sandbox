@@ -124,7 +124,7 @@ class ObserveInfo(object):
 ############################################################
 
 
-def dictify_coords(tag, bodies, r_obs, v_obs, r_targ, r_body, v_body):
+def dictify_coords(tag, bodies, r_obs, vr_obs, vd_obs, r_targ, r_body, v_body):
     r'''Turns a group of coordinate sets into entries in a dict, which is returned.
 
     This is here to get the clutter out of the main routine.'''
@@ -133,10 +133,11 @@ def dictify_coords(tag, bodies, r_obs, v_obs, r_targ, r_body, v_body):
     b_unit = 'au' # for solar system bodies and observatory
     v_unit = u.au/u.year
     d = {}
-    d.update({'obs%s_%s'  %(tag,c):r_obs    [0,i].to(b_unit).value for i,c in enumerate(coords)})
-    d.update({'star%s_%s' %(tag,c):r_targ   [0,i].to(s_unit).value for i,c in enumerate(coords)})
-    d.update({'%s%s_%s'   %(b,tag,c):r_body[b][0,i].to(b_unit).value for i,c in enumerate(coords) for b in bodies})
-    d.update({'vobs%s_%s' %(tag,c):v_obs    [0,i].to(v_unit).value for i,c in enumerate(coords)})
+    d.update({'obs%s_%s'   %(tag,c):r_obs      [0,i].to(b_unit).value for i,c in enumerate(coords)})
+    d.update({'star%s_%s'  %(tag,c):r_targ     [0,i].to(s_unit).value for i,c in enumerate(coords)})
+    d.update({'%s%s_%s'    %(b,tag,c):r_body[b][0,i].to(b_unit).value for i,c in enumerate(coords) for b in bodies})
+    d.update({'vrobs%s_%s'  %(tag,c):vr_obs    [0,i].to(v_unit).value for i,c in enumerate(coords)})
+    d.update({'vdobs%s_%s'  %(tag,c):vd_obs    [0,i].to(v_unit).value for i,c in enumerate(coords)})
     d.update({'v%s%s_%s'   %(b,tag,c):v_body[b][0,i].to(v_unit).value for i,c in enumerate(coords) for b in ('earth',)})
     return d
                          
@@ -174,6 +175,20 @@ def angle_between(left, center, right):
     # clip to [-1,+1] to suppress numerical issues
     theta = np.degrees(np.arccos(np.clip(cos_theta, -1, 1)))
     return theta
+
+def fd_obs_velocity(Obs, tm):
+    # finite-difference velocity for the observatory, based on position
+    # for Obs:
+    #    -- huge movement in 1d => dt << 1d
+    #    -- typical tiniest obs-time ~ 0.01 day => dt << 0.01 day
+    dt = 0.0001 * u.d
+    time_1 = tm - 0.5 * dt
+    time_2 = tm + 0.5 * dt
+    r_obs_1 = Obs.orbit(time_1)
+    r_obs_2 = Obs.orbit(time_2)
+    # place in AU/year
+    v_body = (r_obs_2 - r_obs_1) / dt.to(u.year)
+    return v_body
 
 def body_position(Obs, bodies, time, velocity=True):
     r'''Body positions vector in heliocentric equatorial frame.
@@ -247,13 +262,13 @@ def extract_positions(OI, args, xspecs):
     # bodies = ('sun', 'earth', 'moon')
     bodies = ('sun', 'earth')
     # nouns = all things to report positions/velocities on
-    nouns = ('obs', 'vobs', 'star') + bodies + ('vearth', )
+    nouns = ('obs', 'vrobs', 'vdobs', 'star') + bodies + ('vearth', )
     # removed 'star_vmag'
     fieldnames = ['timeA_iso', 'timeA_mjd', 'time0_mjd', 'timeH_mjd', 'time1_mjd',
                       'dt_obs', 'obs_mode',
                       'star_name', 'theta_obsA', 'theta_obs0', 'theta_obsH', 'theta_obs1', ]
     # currently using the "Arrival" + "IntTimeStart" + "Halfway" times for coords
-    times_used = ['A', '0', 'H']
+    times_used = ['A', '0', 'H', '1']
     for t in times_used:
         fieldnames.extend([f'{x}{t}_{c}' for x in nouns for c in coords])
     # open the CSV writer (ignores extra fields in dict)
@@ -357,10 +372,16 @@ def extract_positions(OI, args, xspecs):
         r_obs1 = Obs.orbit(time1)
 
         # observatory velocity in rotating frame [AU/yr]
-        v_obsA = Obs.haloVelocity(timeA)
-        v_obs0 = Obs.haloVelocity(time0)
-        v_obsH = Obs.haloVelocity(timeH)
-        v_obs1 = Obs.haloVelocity(time1)
+        vr_obsA = Obs.haloVelocity(timeA)
+        vr_obs0 = Obs.haloVelocity(time0)
+        vr_obsH = Obs.haloVelocity(timeH)
+        vr_obs1 = Obs.haloVelocity(time1)
+
+        # observatory velocity in heliocentric equatorial frame [AU/yr]
+        vd_obsA = fd_obs_velocity(Obs, timeA)
+        vd_obs0 = fd_obs_velocity(Obs, time0)
+        vd_obsH = fd_obs_velocity(Obs, timeH)
+        vd_obs1 = fd_obs_velocity(Obs, time1)
 
         # Calculate desired (ra,dec or lon,lat) coordinates of visible targets, kept-out targets, and bright bodies
         # Recall that r_targ (the star positions) and r_body (the solar-system
@@ -380,9 +401,10 @@ def extract_positions(OI, args, xspecs):
 
         # convert to dict for ease-of-output
         info = {}
-        info.update(dictify_coords('A', bodies, r_obsA, v_obsA, r_targA, r_bodyA, v_bodyA))
-        info.update(dictify_coords('0', bodies, r_obs0, v_obs0, r_targ0, r_body0, v_body0))
-        info.update(dictify_coords('H', bodies, r_obsH, v_obsH, r_targH, r_bodyH, v_bodyH))
+        info.update(dictify_coords('A', bodies, r_obsA, vr_obsA, vd_obsA, r_targA, r_bodyA, v_bodyA))
+        info.update(dictify_coords('0', bodies, r_obs0, vr_obs0, vd_obs0, r_targ0, r_body0, v_body0))
+        info.update(dictify_coords('H', bodies, r_obsH, vr_obsH, vd_obsH, r_targH, r_bodyH, v_bodyH))
+        info.update(dictify_coords('1', bodies, r_obs1, vr_obs1, vd_obs1, r_targ1, r_body1, v_body1))
         # previously present
         #   star_vmag=TL.Vmag[sInd],
         info.update(
