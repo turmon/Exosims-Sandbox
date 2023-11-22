@@ -733,6 +733,9 @@ class SimSummary(object):
             # path timeline
             hh.header('Observing Timeline')
             if 'obs-timeline' in info:
+                hh.paragraph('Observing timeline plot ' +
+                    hh.link('/Local/www-resources/doc/obs-timeline.html', 'format description', inner=True),
+                    br=True)
                 img_target = info['obs-timeline']
                 hh.image(img_target, width=70)
                 if 'obs-timeline-part2' in info:
@@ -743,10 +746,13 @@ class SimSummary(object):
             # star-obs-trace
             hh.header('Star-Observation Trace')
             if 'star-obs-trace' in info:
+                hh.paragraph('Star-observation trace plot ' +
+                    hh.link('/Local/www-resources/doc/star-obs-trace.html', 'format description', inner=True),
+                    br=True)
                 img_target = info['star-obs-trace']
                 hh.image(img_target, width=70)
             else:
-                hh.paragraph('Star/Observation trace not available.  Generate with: make ... obs-timeline-N')
+                hh.paragraph('Star-Observation trace not available.  Generate with: make ... obs-timeline-N')
             # path keepout
             hh.header('Keepout and Observations')
             if 'obs-keepout-all' in info:
@@ -777,6 +783,9 @@ class SimSummary(object):
             # path movie
             hh.header('Path Movie of This Tour')
             if 'movie' in info:
+                hh.paragraph('Path movie ' +
+                    hh.link('/Local/www-resources/doc/path-movie.html', 'format description', inner=True),
+                    br=True)
                 hh.video(info['movie'])
             else:
                 hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')

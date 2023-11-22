@@ -1,0 +1,8 @@
+# git ignore for this directory
+
+# generated files (from .md)
+*.html
+
+# generated files (from .md)
+*.md_html.meta
+
