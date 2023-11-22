@@ -29,8 +29,13 @@ ipyparallel/*
 Local/www-service/var/*
 !Local/www-service/var/README
 
+# ignore this dir, it is generated
+Local/www-resources/doc/*
+!Local/www-resources/doc/README
+
 # play area for documentation
 util/sandbox
 
 # remove the scripts from source control
 Scripts
+
