@@ -3,16 +3,18 @@
 # json-attr-edit.py: edit attributes of a JSON script
 #
 # Usage:
-#    json-attr-edit.py [-f] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...
+#    json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...
 #
 # where
-#   -b BASE gives a basket of pre-defined transforms
+#   -h gives more complete documentation
+#   -b BASE gives a basket of pre-defined transforms (see -h for all)
 #   -a REPL replaces of every instance of the attribute named in REPL
 #   -s REPL replaces a specific (drilled-down) attribute named in REPL
 #   -c DIR gives a new cache directory
 #   -o OUTPUT gives an output filename pattern
 #             (the script name is plugged into the single %s in OUTPUT)
 #   -f forces the write of generated files, possibly over-writing existing files
+#   -v increases verbosity
 #
 # See -h for more.
 
@@ -20,7 +22,6 @@
 
 import sys
 import json
-from json import JSONEncoder
 import os
 import re
 import ast
@@ -44,6 +45,22 @@ GATTACA_ROOTDIR = '/scratch_lg/exo-yield/EXOSIMS_external_files/'
 MUSTANG_ROOTDIR = '/proj/exep/rhonda/Sandbox/Parameters/EXOSIMS_external_files/'
 VARIABLE_ROOTDIR = '$EXOSIMS_PARAMS/'
 
+# old mustang conventions (say, before 2022?)
+OLDMUST_ROOTDIR = '/proj/exep/rhonda/'
+OLDMUST_ROOTOPT = '/proj/exep/rhonda/HabEx/'
+
+# all filename-containing properties
+SCRIPT_PATH_PROPS = [
+    "wdsfilepath",
+    "binaryleakfilepath",
+    "occHIPs_no",
+    "include_known_RV",
+    "core_thruput",
+    "occ_trans",
+    "core_mean_intensity",
+    "EZ_distribution",
+    ]
+
 # conversion functions
 
 def to_basename(k, v):
@@ -63,40 +80,72 @@ def sub_g2m_vanilla(k, v):
 def sub_m2g_vanilla(k, v):
     return v.replace(MUSTANG_ROOTDIR, GATTACA_ROOTDIR)
 
-# all filename-containing properties
-SCRIPT_PATH_PROPS = [
-    "wdsfilepath",
-    "binaryleakfilepath",
-    "occHIPs_no",
-    "include_known_RV",
-    "core_thruput",
-    "occ_trans",
-    "core_mean_intensity",
-    "EZ_distribution",
-    ]
+# for this one (old mustang conventions -> variable), we have
+# to special-case the starshade vs. coronagraph
+# the names here are like:
+#  "binaryleakfilepath": "/proj/exep/rhonda/binary_leakage/leakData.csv",
+#  "wdsfilepath": "/proj/exep/rhonda/binary_leakage/ExoCat_WDS_Sep_dM.csv",
+#  "EZ_distribution": "/proj/exep/rhonda/Sandbox/HabEx/EXOSIMS/EXOSIMS/ZodiacalLight/nominal_maxL_distribution-Dec2019.fits",
+#  "occHIPs_no":"/proj/exep/rhonda/topStars/DD8_HabEx_4m_20190725.txt",  
+#  "include_known_RV": "/proj/exep/rhonda/topStars/EPRV_stars/HIP_RV_musts.txt",
+#  "occ_trans": "/proj/exep/rhonda/HabEx/Krist_occ_trans2_6m_asec500nm_OWA128.fits",
+#  "core_thruput": "/proj/exep/rhonda/HabEx/Krist_core_thruput_6m_asec500nm_OWA128.fits", 
+#  "occ_trans": "/proj/exep/rhonda/HabEx/Starshade/TV3_occ_trans_asec_650_60m_95200_IWA65.fits",
+#  "core_thruput": "/proj/exep/rhonda/HabEx/Starshade/TV3_core_thruput_asec_650_60m_95200_IWA65.fits",
+#  "core_mean_intensity": "/proj/exep/rhonda/HabEx/Starshade/TV3_core_mean_intensity....fits",
+
+def sub_om2v_optics(k,v):
+    if k == 'EZ_distribution':
+        return VARIABLE_ROOTDIR + 'exoZodi/' + to_basename(k, v)
+    elif '/HabEx/' in v:
+        # an optical parameter:
+        #   occ_trans, core_thruput, core_mean_intensity
+        if 'Starshade' in v:
+            return v.replace(OLDMUST_ROOTOPT + 'Starshade/', VARIABLE_ROOTDIR + 'starshade/')
+        else:
+            return v.replace(OLDMUST_ROOTOPT, VARIABLE_ROOTDIR + 'coronagraph/')
+    else:
+        return v.replace(OLDMUST_ROOTDIR, VARIABLE_ROOTDIR)
+
+## enter a new basket:
+##  - define a conversion subroutine for each keyword that will be altered (above)
+##  - place them into a dictionary indexed by key name
+##  - add a #note field to the dictionary
+##  - enter in the REGISTRY variable below
 
 # from: gattaca -> variable
 XFORM_g2v = {prop: sub_g2v_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_g2v['#note'] = 'Gattaca 2023 filename convention -> EXOSIMS_PARAMS'
 XFORM_g2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: mustang -> variable
 XFORM_m2v = {prop: sub_m2v_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_m2v['#note'] = 'Mustang 2023 filename convention -> EXOSIMS_PARAMS'
 XFORM_m2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: gattaca -> mustang
 XFORM_g2m = {prop: sub_g2m_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_g2m['#note'] = 'Gattaca 2023 filename convention -> mustang'
 XFORM_g2m["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # from: mustang -> gattaca
 XFORM_m2g = {prop: sub_m2g_vanilla for prop in SCRIPT_PATH_PROPS}
+XFORM_m2g['#note'] = 'Mustang 2023 filename convention -> gattaca'
 XFORM_m2g["cachedir"] = lambda k,v: "/cache/"
+
+# from: old_mustang -> variable
+XFORM_om2v = {prop: sub_om2v_optics for prop in SCRIPT_PATH_PROPS}
+XFORM_om2v['#note'] = 'Mustang pre-2023 filename convention -> EXOSIMS_PARAMS'
+XFORM_om2v["cachedir"] = lambda k,v: "$HOME/.EXOSIMS/cache/"
 
 # all known baskets of transforms
 REGISTRY = {
     "null": dict(),
-    "g2v": XFORM_g2v,
-    "g2m": XFORM_g2m,
-    "m2g": XFORM_m2g,
+    "g2v":  XFORM_g2v,
+    "g2m":  XFORM_g2m,
+    "m2g":  XFORM_m2g,
+    "m2v":  XFORM_m2v,
+    "om2v": XFORM_om2v,
     }
 
 
@@ -118,7 +167,7 @@ def apply_xforms(level, item, bases, sform, eform, xform, verbose):
         return item
     elif isinstance(item, list):
         # recursively apply sform/xform to each entry of the list
-        if verbose: print(f'{"  "*level}  recurse[list]: {bases = }; {len(item) = }')
+        if verbose > 1: print(f'{"  "*level}  recurse[list]: {bases = }; {len(item) = }')
         return [
             apply_xforms(level+1, i, (*bases, str(index)), sform, eform, xform, verbose)
             for index, i in enumerate(item)]
@@ -128,17 +177,20 @@ def apply_xforms(level, item, bases, sform, eform, xform, verbose):
         for k, v in item.items():
             # extended key name (scienceInstruments.0.QE)
             kx = '.'.join((*bases, k))
-            if verbose: print(f'{"  "*level}  sform key: {kx}')
+            if verbose > 1: print(f'{"  "*level}  sform key: {kx}')
             if kx in sform:
-                if verbose: print(f'{"  "*level}  apply(s): {kx}')
+                if verbose > 1: print(f'{"  "*level}  apply(s): {kx}')
                 val[k] = sform[kx] # sform[] is a literal not a lambda
+                if verbose > 0: print(f'{kx}: {val[k]}')
             elif kx in eform:
                 val[k] = eval(eform[kx], {"np": np, **SPECS})
+                if verbose > 0: print(f'{kx}: {val[k]}')
             elif k in xform:
-                if verbose: print(f'{"  "*level}  apply(x): {k}')
+                if verbose > 1: print(f'{"  "*level}  apply(x): {k}')
                 val[k] = xform[k](k, v)
+                if verbose > 0: print(f'{k}: {val[k]}')
             else:
-                if verbose: print(f'{"  "*level}  recurse[dict]: {k}')
+                if verbose > 1: print(f'{"  "*level}  recurse[dict]: {k}')
                 val[k] = apply_xforms(level+1, v, (*bases, k), sform, eform, xform, verbose)
         return val
     assert False, f'Cannot be reached: {item}'
@@ -154,7 +206,7 @@ def decode_literal_attrs(attrs, verbose, force_string=False):
     p = re.compile('\s*([\w.]+)\s*([:=])(.*)')
     sform = dict()
     for attr in attrs:
-        if verbose: print(f'  Decoding |{attr}|...')
+        if verbose > 1: print(f'  Decoding |{attr}|...')
         # kind message if not key:val format
         m = p.match(attr)
         if not m:
@@ -171,13 +223,13 @@ def decode_literal_attrs(attrs, verbose, force_string=False):
             except:
                 print(f'Error interpreting {attr} with eval', file=sys.stderr)
                 raise
-        if verbose: print(f'  Got {k} -> {val} (of type: {type(val)})')
+        if verbose > 1: print(f'  Got {k} -> {val} (of type: {type(val)})')
         sform[k] = val
     return sform
 
 
 def make_xforms(args):
-    if args.verbose:
+    if args.verbose > 1:
         print(f'{args.progname}: Decoding arguments.')
     # 1: make xform dictionary
     xform_base = REGISTRY[args.base]
@@ -229,7 +281,7 @@ def main(args):
         print(f'Error converting input arguments, consider -v', file=sys.stderr)
         raise
     for script in args.script:
-        if args.verbose:
+        if args.verbose > 0:
             print(f'{args.progname}: Processing script = {script}')
         # get input script
         in_spec = json.load(open(script, 'r'))
@@ -243,11 +295,9 @@ def main(args):
 
 ############################################################
 
-REPL_NOTE = '''
-BASE is a basket of pre-selected transforms, default is none. Otherwise:
-  * g2v is gattaca filename base to $EXOSIMS_PARAMS variable
-  * g2m is gattaca filename base to mustang filename base
-  * m2g is mustang filename base to gattaca filename base
+REPL_NOTE_template = '''
+BASE is an optional basket of pre-selected transforms, one of:
+  * |DOCS|
 
 REPL may be given in two ways:
   * a string of the form ATTR:VALUE, meaning that the named ATTR will
@@ -259,12 +309,19 @@ REPL may be given in two ways:
     e.g.:  pupilDiam=6.0 sets "pupilDiam" to the number, 6.0
            lucky_planets=True sets "lucky_planets" to the boolean, True
            Rprange=[0.5,4.0] sets "Rprange" to that numeric vector
-The above avoids most nested quoting by signaling strings with ":".
+The first way avoids nested quoting by signaling strings with ":".
 
 The above ATTR may be a bare name (eta, scaleOrbits, etc.), or a dotted name,
 where dots stand for references. So, scienceInstruments.1.QE=0.72 means the second
 scienceInstrument's QE is set to the floating-point value 0.72.
+
+Supply "-v" to show substitutions that were made.
 '''
+
+# substitute in the (dynamic) replacement bases
+REPL_NOTE = REPL_NOTE_template.replace(
+    '|DOCS|', 
+    '\n  * '.join(f'{name}: {base["#note"]}' for name,base in REGISTRY.items() if base))
 
 ############################################################
 
@@ -281,10 +338,10 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--eval', type=str, action='append', default=[], metavar='REPL',
                            dest='attr_e', help='specific attribute within script (e.g., scienceInstruments.1.QE)')
     parser.add_argument('-c', '--cachedir', type=str, default='', metavar='DIR',
-                            help='"cachedir" attribute of script (like -a cachedir)')
+                            help='"cachedir" attribute of script (like -a cachedir:DIR)')
     parser.add_argument('-o', '--output', default='./xform-%s', type=str, help='Output file pattern (contains one %%s)')
     parser.add_argument('-f', '--force', default=False, action='store_true', help='Allow outputs to overwrite.')
-    parser.add_argument('-v', default=False, action='store_true', dest='verbose', help='Verbosity.')
+    parser.add_argument('-v', default=0, action='count', dest='verbose', help='Verbosity.')
     args = parser.parse_args()
     args.progname = os.path.basename(sys.argv[0])
     
