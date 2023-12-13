@@ -124,7 +124,7 @@ class SimulationRun(object):
             raise
         # replace SurveyEnsemble with the Prototype
         # this mostly eliminates the need for Locals/ to be import'able
-        specs['modules']['SurveyEnsemble'] = " "
+        outspec['modules']['SurveyEnsemble'] = " "
         # save this in the object state
         self.drm = DRM
         self.specs = outspec
@@ -178,13 +178,21 @@ class SimulationRun(object):
 
     def get_keepout(self):
         r'''Instantiate Exosims object to get 2d keepout matrix and place in object.'''
-        ## unused -- the below would create a whole MissionSim
-        ## sim = EXOSIMS.MissionSim.MissionSim(specfile, nopar=True)
-        # create just the Exosims objects we need
         specs = self.specs
-        obs = get_module_from_specs(specs, 'Observatory')(**specs)
-        TL  = get_module_from_specs(specs, 'TargetList')( **specs)
-        TK  = get_module_from_specs(specs, 'TimeKeeping')(**specs)
+        if False:
+            ## unused -- the below would create a whole MissionSim
+            # (for some operations, we would need the actual seed - not for keepout, though)
+            specs['seed'] = 777
+            from EXOSIMS import MissionSim
+            sim = MissionSim.MissionSim(nopar=True, **specs)
+            obs = sim.Observatory
+            TL = sim.TargetList
+            TK = sim.TimeKeeping
+        else:
+            # create just the Exosims objects we need
+            obs = get_module_from_specs(specs, 'Observatory')(**specs)
+            TL  = get_module_from_specs(specs, 'TargetList')( **specs)
+            TK  = get_module_from_specs(specs, 'TimeKeeping')(**specs)
 
         # get keepout map for entire mission
         startTime = TK.missionStart.copy()
