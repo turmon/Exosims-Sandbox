@@ -223,6 +223,8 @@ def decode_literal_attrs(attrs, verbose, force_string=False):
             except:
                 print(f'Error interpreting {attr} with eval', file=sys.stderr)
                 raise
+        else:
+            raise ValueError('Could not extract value from attribute')
         if verbose > 1: print(f'  Got {k} -> {val} (of type: {type(val)})')
         sform[k] = val
     return sform
@@ -237,7 +239,12 @@ def make_xforms(args):
         xform_base['cachedir'] = lambda k,v: args.cachedir
     xform_args = decode_literal_attrs(args.attr_x, args.verbose)
     # make two-input lambda's from the literals just found
-    xform_adds = {k:(lambda x1, x2: v) for k, v in xform_args.items()}
+    # (the below dict comprehension failed, all its functions were the same(!)
+    #xform_adds = {k:lambda x1, x2: xform_args[k] for k, v in xform_args.items()}
+    xform_adds = dict()
+    import copy
+    for k in xform_args:
+        xform_adds[k] = lambda x1, x2: copy.copy(xform_args[k])
     # merge these two (xform_adds supersedes)
     xform = {**xform_base, **xform_adds}
     # 2: make sform dictionary
@@ -280,6 +287,8 @@ def main(args):
     except:
         print(f'Error converting input arguments, consider -v', file=sys.stderr)
         raise
+    # FIXME: giving -a promote_hz_stars=0 -a earths_only=11 results in only
+    # the second value "winning" within the "xform" dictionary, puzzled(!)
     for script in args.script:
         if args.verbose > 0:
             print(f'{args.progname}: Processing script = {script}')
