@@ -6,17 +6,21 @@
 # DRMs, and finds means and other scalar indexes for them
 #
 # Usage:
-#   summarize-int-times.sh SIM
+#   summarize-int-times.sh [-H] SIM
 #
 # where SIM is a simulation directory, for example:
 #    SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229
 # In this case, SIM/drm must contain several DRM's as .pkl files
 #
-# This assumes the "mlr" CSV utility is in your PATH. It is at:
-#    /proj/exep/rhonda/Sandbox/Tools/bin/mlr
-# so you can:
-#    export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin
-# or place the above in your .bash_profile
+# Use -H for hybrid DRM's, which store the integration time attribute
+# differently.
+#
+# Context:
+#  * This assumes the "mlr" CSV utility is in your PATH. It is at:
+#      /proj/exep/rhonda/Sandbox/Tools/bin/mlr
+#    so you can:
+#      export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin
+#    or place the above in your .bash_profile
 #
 # 
 # turmon jan 2024
@@ -31,8 +35,15 @@ PROGNAME=$(basename $0)
 # attempt to give group-write to created files
 umask 002
 
-while getopts "h" opt; do
+# attribute name where char_time usually is
+att_name=char_info.0.char_time
+
+while getopts "Hh" opt; do
     case $opt in
+	H)
+	    # alternative name for the char_time attribute
+            att_name=char_time
+	    ;;
 	h)
 	    # help text
 	    sed 's/^# \?//' $(which $0) | awk '/^#/{exit};NR>1{print}'
@@ -87,10 +98,12 @@ fi
 
 # output this to stderr so we can still redirect a CSV on stdout
 echo "${PROGNAME}: Found $drmnum scripts in \`$drmdir'." >& 2
+echo "${PROGNAME}: Using $att_name DRM attribute to obtain integration time." >& 2
 
 # DRM tabulation incantation
 #  -ns1: output obs-number, seed number, and header
 #  -m char_info: insist that it's a char
+#        [-> -M det_status: also works for starshade DRMs]
 #  -a Tint:char_info.0.char_time: output char_info[0]['char_time'] as 
 #     a csv field, Tint
 #  Not present: -a char_info.0.char_status (don't need it)
@@ -101,7 +114,7 @@ echo "${PROGNAME}: Found $drmnum scripts in \`$drmdir'." >& 2
 
 
 if [ 1 -eq 1 ]; then
-  util/drm-tabulate.py -sn1 -m char_info -a arrival_time -a Tint:char_info.0.char_time $drmdir/*.pkl | mlr --csv cut -f seed,Tint | mlr --csv stats1 -a count,sum,mean,median -f Tint -g seed | mlr --csv stats1 -a mean --fx 'seed' | mlr --csv --ofmt '%.3f' rename -r '_mean$,_ens,Tint_count,char_count' 
+  util/drm-tabulate.py -sn1 -M det_status -a arrival_time -a Tint:${att_name} $drmdir/*.pkl | mlr --csv cut -f seed,Tint | mlr --csv stats1 -a count,sum,mean,median -f Tint -g seed | mlr --csv stats1 -a mean --fx 'seed' | mlr --csv --ofmt '%.3f' rename -r '_mean$,_ens,Tint_count,char_count' 
 else
   : # dead code, leave for reference
   # util/drm-tabulate.py -ns1 -m char_info -a arrival_time -a Tint:char_info.0.char_time $drmdir/*.pkl | mlr --csv cut -f seed,Tint | mlr --csv stats1 -a mean,stddev,p25,p50,p75 -f Tint -g seed | mlr --csv stats1 -a mean --fx 'seed' | mlr --csv put '$Tint_iqr_mean = $Tint_p75_mean - $Tint_p25_mean' | mlr --csv rename -g -r '_mean$,_ens'
