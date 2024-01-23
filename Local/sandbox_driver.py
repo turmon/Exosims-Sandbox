@@ -268,18 +268,19 @@ def main(args, xpsecs):
     if args.standalone:
         SS = sim.SurveySimulation
     kwargs = {'outpath': outpath, 'outopts': args.outopts} # kwargs are flowed to run_one
+    # res is a list of seeds (a singleton in current usage)
     numruns = 1
     res = sim.run_ensemble(numruns, run_one=run_one, kwargs=kwargs)
 
-    # result is a list of seeds
     with open(os.path.join(outpath_run, 'outseed_%d.txt' % seed), 'w') as f:
         file_params = [
             ('file_type', 'EXOSIMS run seed list'),
             ('user', os.getenv('USER')), 
             ('host', socket.gethostname()),
-            ('time', subtime),
+            ('time', printable_time(subtime)),
             ('shell_command', args.command),
             ('python_interpreter', ' '.join(sys.version.split())),
+            ('venv', os.getenv('VIRTUAL_ENV', 'None')), 
             ('numpy_version', np.__version__),
             ('astropy_version', astropy.__version__),
             ('EXOSIMS_version', EXOSIMS.__version__),
