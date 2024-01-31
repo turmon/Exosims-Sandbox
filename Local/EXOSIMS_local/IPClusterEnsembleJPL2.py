@@ -121,11 +121,18 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
             if nb_run_sim > 1:
                 print('Survey simulation: %s/%s' % (j + 1, int(nb_run_sim)))
             seed = sim.seed
-            fn = os.path.join(kwargs['outpath'], 'log', 'log-%d.out' % (seed,))
-            if self.interactive:
-                logfile = None # e.g., allow breakpoint() within the run_one
+            oldLogMethod = False # old = before January 2024
+            if oldLogMethod:
+                # this will put the run_sim in a separate log file,
+                # which is OK for ipp (one instantiation, many runs)
+                # but not for standalone
+                fn = os.path.join(kwargs['outpath'], 'log', 'log-%d.out' % (seed,))
+                if self.interactive:
+                    logfile = None # e.g., allow breakpoint() within the run_one
+                else:
+                    logfile = open(fn, 'w')
             else:
-                logfile = open(fn, 'w')
+                logfile = None
             with RedirectStdStreams(stdout=logfile):
                 ar = run_one(genNewPlanets=genNewPlanets, rewindPlanets=rewindPlanets, **kwargs)
             res.append(ar)

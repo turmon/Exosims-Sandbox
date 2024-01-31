@@ -42,10 +42,7 @@ Notes:
 
 # turmon 2017-2023
 
-from __future__ import print_function
-import numpy as np
-import numpy
-import astropy
+import subprocess
 import argparse
 import sys
 import time
@@ -54,6 +51,9 @@ import json
 import tempfile
 import datetime
 import shutil
+import numpy as np
+import numpy
+import astropy
 # imports needed by run_one, but not elsewhere in the file
 import EXOSIMS
 import EXOSIMS.MissionSim
@@ -193,6 +193,15 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
     # caller will have the seed, but not the sim
     return seed
 
+def sandbox_git_id():
+    try:
+        p = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True)
+        commit_id = p.stdout.decode().strip()
+    except:
+        print('Could not get sandbox git information, continuing.', file=sys.stderr)
+        commit_id = 'None'
+    return commit_id
+
 
 def main(args, xpsecs):
     r'''Prepare and execute simulations.'''
@@ -202,20 +211,21 @@ def main(args, xpsecs):
     global SS
     
     # ensure various output paths
+    # turmon 01/2024: no longer use sys, adding
     outpath = args.outpath
-    for d in ('run', 'log', 'drm', 'sys', 'spc'):
+    for d in ('log', 'log/environ', 'log/outspec', 'log/console', 'drm', 'spc'):
         outpath1 = os.path.join(outpath, d)
         if not os.path.exists(outpath1):
-            print("Creating output path `%s'." % outpath1)
             try:
                 os.makedirs(outpath1)
             except OSError:
                 pass # usually a race condition with parallel jobs
         if not os.access(outpath1, os.W_OK | os.X_OK):
             raise ValueError("Cannot write to outpath `%s'." % outpath1)
-    # the run summary (outspec, seeds); the logs
-    outpath_run = os.path.join(outpath, 'run')
-    outpath_log = os.path.join(outpath, 'log')
+    # various logs
+    outpath_envi = os.path.join(outpath, 'log/environ') # S/W env.
+    outpath_spec = os.path.join(outpath, 'log/outspec') # outspec
+    outpath_log  = os.path.join(outpath, 'log/console')
 
     # recall xspecs = additional specs as distinct from script file
     ensemble_mode = []
@@ -252,10 +262,10 @@ def main(args, xpsecs):
     if args.seed is not None and args.seed == 0:
         print('Seed given as 0. Cache warming only. Instantiation complete and caches in place.')
         return 'Cache-warming complete. No run performed.'
-    res = sim.genOutSpec(tofile = os.path.join(outpath_run, 'outspec_%d.json' % seed))
+    res = sim.genOutSpec(tofile = os.path.join(outpath_spec, '%d.json' % seed))
     # place the output in a properly-named file
     if fp_log:
-        fn_log = os.path.join(outpath_log, 'log-%d.init' % seed)
+        fn_log = os.path.join(outpath_log, '%d_init.out' % seed)
         shutil.move(fp_log.name, fn_log)
         os.chmod(fn_log, 0o664) # ensure group-write
 
@@ -272,23 +282,25 @@ def main(args, xpsecs):
     numruns = 1
     res = sim.run_ensemble(numruns, run_one=run_one, kwargs=kwargs)
 
-    with open(os.path.join(outpath_run, 'outseed_%d.txt' % seed), 'w') as f:
+    with open(os.path.join(outpath_envi, '%d.txt' % seed), 'w') as f:
         file_params = [
-            ('file_type', 'EXOSIMS run seed list'),
+            ('file_type', 'EXOSIMS runtime environment'),
             ('user', os.getenv('USER')), 
             ('host', socket.gethostname()),
             ('time', printable_time(subtime)),
             ('shell_command', args.command),
             ('python_interpreter', ' '.join(sys.version.split())),
-            ('venv', os.getenv('VIRTUAL_ENV', 'None')), 
+            ('python_venv', os.getenv('VIRTUAL_ENV', 'None')), 
             ('numpy_version', np.__version__),
             ('astropy_version', astropy.__version__),
             ('EXOSIMS_version', EXOSIMS.__version__),
-            ('EXOSIMS_path', EXOSIMS.__path__[0])]
+            ('EXOSIMS_path', EXOSIMS.__path__[0]),
+            ('sandbox_git_commit', sandbox_git_id()),
+            ('seed', ','.join((str(r) for r in res)))]
         for name, value in file_params:
-            f.write('# %s: %s\n' % (name, value))
-        for r in res:
-            f.write('%s\n' % str(r))
+            f.write('%s: %s\n' % (name, value))
+        #for r in res:
+        #    f.write('%s\n' % str(r))
     # basic message
     return f'Run started {printable_time(subtime)}, complete {printable_time(time.localtime())}'
 
