@@ -1,37 +1,46 @@
 #!/usr/bin/env python
 #
-# The given directory (or directories) within sims/, containing an ensemble of DRMs 
+# html-summary.py: Generate HTML-format summary of graphics and tables
+# 
+# The given directory (or directories) within `sims/`, containing an ensemble of DRMs 
 # and corresponding graphical outputs, is summarized to HTML.
-# Note: arguments should not contain the sims/ prefix.
+# Note that arguments should not contain the `sims/` prefix.
 #
 # Usage:
-#   html-summary.py [-r] [-i] [SIM ...]
+#   `html-summary.py [-r] [-i] [SIM ...]`
 #
-# Optionally (-i), a top-level index.html is updated as a table of contents
+# Optionally (using `-i`), a top-level index.html is updated as a table of contents
 # for all the simulations. You typically want this.
-# Also for "-i", any intermediate index.html's between sims/index.html and
-# sims/SIM/index.html will also be made; this is needed when SIM is nested ("families").
+# Also for `-i`, any intermediate index.html's between `sims/index.html` and
+# `sims/SIM/index.html` will also be made; this is needed when SIM is nested ("families").
 #
 # Options are:
-#  -i => generate intermediate index.html's after generating any named SIM indexes.
-#  -r => performs recursive descent (otherwise, only named SIMS are indexed)
-#  -h => help
+# 
+# +  -i => generate intermediate index.html's after generating any named SIM indexes.
+# +  -r => performs recursive descent (otherwise, only named SIMS are indexed)
+# +  -h => help
 #
 # Simplest usage:
+# ```
 #  $ html-summary.py -i SIM
+# ```
 #   where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD.
 #   Re-generates the HTML for this ensemble and the top-level index.
 # Other usage:
+# ```
 #  $ html-summary.py -i SIM.exp
-#   vs.
 #  $ html-summary.py -r -i SIM.exp
+# ```
 #   where SIM.exp is a multi-ensemble experiment.  The usage with "-r" summarizes
 #   all ensembles under SIM.exp; without "-r", it generates only the top-level summary
 #   file, which lists a one-line overview of each ensemble.
+# ```
 #  $ html-summary.py -r
+# ```
 #   regenerates *all* indexes for everything in sims/*.
 #
 # Notes and Specifics
+# 
 # * The output is written to the file:
 #     sims/SIM/index.html
 #   This file can be viewed by starting an HTTP server on an unused port, see below.
@@ -67,10 +76,8 @@ import csv
 #import pickle
 import six.moves.cPickle as pickle
 from collections import defaultdict, OrderedDict
-import numpy as np
-import astropy.units as u
-import six
-from six.moves import range
+#from six.moves import range
+
 # this is in effect a Py2/Py3 switch: Py2 io.StringIO.write() expects unicode 
 # inputs and raises on str inputs, so could not unify Py2/Py3 on io.StringIO
 try:
@@ -359,14 +366,14 @@ class HTML_helper(object):
     def ul(self, attrs={}):
         self.list_type = 'ul'
         if attrs:
-            self.list_attrs = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attrs)])
+            self.list_attrs = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attrs.items()])
         else:
             self.list_attrs = ''
     def li(self, txt, level, attrs):
         # establish the LI attributes, if any
         attr_txt = ''
         if attrs:
-            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attrs)])
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attrs.items()])
         # close prior LI, etc.
         if level == self.list_level:
             self.f.write(self.indent() + '</li>\n')
@@ -391,7 +398,7 @@ class HTML_helper(object):
     def div(self, txt, **attr):
         attr_txt = ''
         if attr:
-            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in six.iteritems(attr)])
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attr.items()])
         self.f.write(self.indent(  ) + '<div%s>\n' % attr_txt)
         self.f.write(self.indent( 1) + '%s\n' % txt)
         self.f.write(self.indent(-1) + '</div>\n')
@@ -404,7 +411,8 @@ class HTML_helper(object):
     def script(self, path, literal=False):
         r'''Javascript literal or external file.'''
         if literal:
-            if isinstance(path, six.string_types):
+            # bare str -> singleton list for join below
+            if isinstance(path, str):
                 path = [path]
             self.f.write(self.indent() + '<script type="text/javascript">\n')
             self.indent(1)
@@ -637,6 +645,8 @@ class SimSummary(object):
             hh.header(os.path.basename(self.name), level=1)
             # navigation link
             hh.link('../../', 'Up to %s' % uplink)
+            # fixed link to documentation
+            hh.paragraph('Sandbox ' + hh.link('/Local/www-resources/doc_sandbox/', 'documentation', inner=True))
             # summary
             hh.header('Ensemble Summary')
             hh.paragraph(f'Ensemble: {self.name}')
@@ -963,6 +973,7 @@ def index_group(args, startpath, title, uplink):
         # navigation link
         if uplink:
             hh.link('../', 'Up to %s' % uplink)
+        hh.paragraph('Sandbox ' + hh.link('/Local/www-resources/doc_sandbox/', 'documentation', inner=True))
         # table of individual sims
         hh.header('Ensembles')
         # make the table be sortable so that the JS sorter knows about it
