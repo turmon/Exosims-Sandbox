@@ -1,0 +1,22 @@
+site_name: EXOSIMS-Sandbox
+nav:
+    - Home: index.md
+    - Galleries:
+        - Binned Ensemble Galleries: binned-ensemble-gallery.md
+        - Ensemble Path Galleries: path-ensemble-gallery.md
+        - Single DRM Galleries: single-drm-gallery.md
+    - Execution: execution.md
+    - Script Index: script_index.md
+    - Implementation Details: impl_index.md
+
+plugins:
+  - search
+  - mkdocstrings
+  - gen-files:
+      scripts:
+        - gen_pages.py  # or any other name or path
+            
+
+# theme: readthedocs
+theme: 
+  name: "material"

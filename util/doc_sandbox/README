@@ -1,0 +1,55 @@
+Documentation Notes & Commands of Interest
+-----------------------------------------------
+
+Sandbox utility doc generation using mkdocs
+
+mkdocs can export docs to github (it's not set up that way at present,
+but it has been). That's one of its appeals.
+
+In this dir, we're using mkdocs to make documentation for Sandbox basic 
+operating principles, and for command-lines for utilities.
+See mkdocs.yml for the file contents.
+
+Basic operating principles:
+  - static .md files pointing to some .png diagrams
+    e.g., the budding reference homepage:
+      docs/reference.md 
+
+Command-lines:
+  - gen_pages.py, a mkdocs plugin, generates .md files containing
+    the usage information for all util/ commands, at runtime, 
+    whenever mkdocs build is run
+
+Selected utilities
+  - pre_mkdocs, an ordinary python script, generates .md templates
+    for a few scripts (the ones symlinked in util_details).
+    Perhaps this should one day be all or almost all such scripts?
+
+(jan 2024, orig ~2019)
+
+See the Makefile for some usage lines. Also:
+
+# build the docs
+mkdocs build
+
+# serve on localhost:8000
+# (localhost may be mustang!)
+mkdocs serve
+
+More on methods::
+https://realpython.com/python-project-documentation-with-mkdocs/#step-1-set-up-your-environment-for-building-documentation
+
+TODO:
+- edit the ../util/*.sh,*.py files so the usage block at the top renders in Markdown
+- edit the .py usage blocks so they are surrounded by ''' ... ''' and not by #
+- add other existing PDF/Markdown Sandbox documentation to this pile of documentation
+- increase documentation "usefulness density" by:
+  + find a better way to feature some commands as being *USER-CALLABLE*, 
+    as opposed to *INFRASTRUCTURE*, so they are rendered in a special list, 
+    or with a special pip next to their name
+  + find a way to exclude some files that are obsolete but not deleted
+    (e.g., a stoplist in gen-pages.py, or a keyword like "obsolete" within 
+    the file, or (reverse-wise) a keyword like "maintained" within the 
+    complement of these files?)
+
+
