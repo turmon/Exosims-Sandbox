@@ -29,12 +29,20 @@ ipyparallel/*
 Local/www-service/var/*
 !Local/www-service/var/README
 
-# ignore this dir, it is generated
+# generated files, except for README placeholder
 Local/www-resources/doc/*
 !Local/www-resources/doc/README
 
-# play area for documentation
-util/sandbox
+# documentation - generated files
+util/doc_sandbox/site
+util/doc_sandbox/docs/impl_index.md
+util/doc_sandbox/docs/implementation/*
+!util/doc_sandbox/docs/implementation/README
+
+# generated files above are placed here for www service
+# (but leave the README placeholder)
+Local/www-resources/doc_sandbox/*
+!Local/www-resources/doc_sandbox/README
 
 # remove the scripts from source control
 Scripts
