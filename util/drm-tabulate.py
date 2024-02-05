@@ -3,38 +3,41 @@ r'''
 drm-tabulate.py: extract named fields from a pile of DRMs
 
 usage:
-  drm-tabulate.py [-1sn] [--json] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...
+  `drm-tabulate.py [-1sn] [--json] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...`
 
-where:
-  DRM ... is a list of DRM pickles
+Args:
+  DRM (file): a list of DRM pickles
 
-Choose attributes of an observation "obs" in the DRM with:
-  -a ATTR -> output obs[ATTR] (repeat -a OK, see below)
-  -S ATTR -> output the SPC attribute ATTR for obs[star_ind]
-  -P ATTR -> output the SPC attributes ATTR for obs[plan_inds[:]]
-  -p ATTR -> output the list of SPC attributes ATTR for obs[plan_inds]
-  -e CODE -> compute a value by [e]valuating the Python CODE expression
+Attributes of an observation "obs" in the DRM are printed by 
+naming them in one of the following ways.
 
-Match a subset of observations with:
-  -m ATTR -> produce output if ATTR is a keyword in the observation
+Attribute naming:
+  + `-a ATTR`: output `obs[ATTR]` (repeat -a OK, see below)
+  + `-S ATTR`: output the SPC attribute ATTR for `obs[star_ind]`
+  + `-P ATTR`: output the SPC attributes ATTR for `obs[plan_inds[:]]`
+  + `-p ATTR`: output the list of SPC attributes ATTR for `obs[plan_inds]`
+  + `-e CODE`: compute a value by [e]valuating the Python CODE expression
 
-Output special pseudo-attributes:
-  -s: output the DRM seed number (__seed__, boolean)
-  -n: output the DRM observation number (__obs_num__, boolean)
-  --plan_num: output the planet number (__plan_num__, boolean)
-  -1: print line 1, the CSV header (__header__, boolean)
+Pseudo-attributes:
+  + `-s`: output the DRM seed number (`__seed__`, boolean)
+  + `-n`: output the DRM observation number (`__obs_num__`, boolean)
+  + `--plan_num`: output the planet number (`__plan_num__`, boolean)
+  + `-1`: supply the CSV header on line 1 (`__header__`, boolean)
 
-Take the above options from a file with:
-  -f FILE: take ATTRs from FILE *instead of* -a/-S/-P/-p options (see below)
+Match only a subset of observations:
+  + `-m ATTR`: produce output only if ATTR is a keyword in obs
+  + `-M ATTR`: produce output if ATTR is NOT a keyword in obs
 
-Some less-useful options:
-  -M ATTR -> produce output if ATTR is NOT a keyword in the observation
-  -A: list available DRM and SPC attributes and values on stderr, as a reference
-      honors match (-m), and inverse match (-M); supply -S "" to get SPC attributes.
-  --json: output is JSON, rather than standard CSV
-  --empty: output a record when planet attributes selected, even if no planets present
-  -v: increase verbosity (output is to stderr)
-  -j N: use N parallel workers (default = ~2/3 of cores)
+External file:
+  + -f FILE: take ATTRs from FILE *instead of* `-a/-S/-P/-p` options (see below)
+
+Less-useful options:
+  + `-A`: list available DRM and SPC attributes and values on stderr, as a reference.
+      It honors match (`-m`), and inverse match (`-M`); supply `-S ""` to get SPC attributes.
+  + `--json`: output is JSON, rather than standard CSV
+  + `--empty`: output a record when planet attributes selected, even if no planets present
+  + `-v`: increase verbosity (output is to stderr)
+  + `-j N`: use N parallel workers (default = ~2/3 of cores)
         If N = 0 or 1, no parallelism: needed for debugging.
 
 DRM ATTRIBUTES
@@ -43,81 +46,90 @@ DRM ATTRIBUTES
 The main degree of freedom is attribute specification -- which is done
 using either of two notations. Below, suppose "obs" is one entry in the DRM.
 
--a => Directly named attributes
-    1) Get a field in obs by giving: "-a arrival_time"
-    2) Drill into nested attributes with "."; for example
-          obs['char_mode']['lam']
+* `-a` => Directly named attributes
+    1. Get a field in obs by giving: `-a arrival_time`
+    2. Drill into nested attributes with `.`. For example
+          `obs['char_mode']['lam']`
         is extracted with:
-          -a char_mode.lam
-        For lists, give the index number; obs['plan_inds'][0] is
-          -a plan_inds.0 
-        The last phase angle, obs['char_params'][-1], is:
-          -a char_params.phi.-1
-    3) Supply a comma-separated list of such DRM fields in one -a
-          -a arrival_time,slew_time,scMass
+          `-a char_mode.lam`
+        For lists, give the index number; `obs['plan_inds'][0]` is
+          `-a plan_inds.0`
+        The last phase angle, `obs['char_params'][-1]`, is:
+          `-a char_params.phi.-1`
+    3. Supply a comma-separated list of such DRM fields at once with
+          `-a arrival_time,slew_time,scMass`
 
--e => Evaluated expressions
-    1) A Python expression can be given, which is evaluated in the context 
+* `-e` => Evaluated expressions
+    1. A Python expression can be given, which is evaluated in the context 
         of variables named for each field in "obs". To output a count of 
-        detections using the obs['det_status'] list, use:
-          -e "np.sum(det_status == 1)"
-    2) No comma-separated lists are allowed, due to ambiguity.
-    3) The full SPC is available, if desired, using spc[...], so
-       -e "spc['Spec'][star_ind]"  <==> -S Spec
-       See below for more on -S.
+        detections using the `obs['det_status']` list, use:
+          `-e "np.sum(det_status == 1)"`
+    2. No comma-separated lists are allowed, due to ambiguity.
+    3. The full SPC is available, if desired, using `spc[...]`, so
+       `-e "spc['Spec'][star_ind]`  <==> `-S Spec`
+       See below for more on `-S`.
 
-For either -a or -e, the resulting column can be custom-named with 
-a label:attr construct, such as
+For either `-a` or `-e`, the resulting column can be custom-named with 
+a `label:attr` construct, such as
+``` shell
           -a "lambda:char_mode.lam"
           -e "det_count:np.sum(det_status == 1)"
+```
 otherwise a basic generated name is used.
 (But: Attributes in comma-separated expressions cannot be custom-named.)
 
 STAR-PLANET ATTRIBUTES
 ----------------------
 
--S => shortcut for Star attributes
-    -S ATTR means: look up the named ATTR for obs['star_ind'] in
-    the corresponding SPC file, e.g.
-      -S Spec => spc['Spec'][obs['star_ind']]
-    means to output the spectral class of obs['star_ind']
++ `-S` => shortcut for Star attributes.
 
--P => shortcut for Planet attributes
-    -P ATTR means to look up the named ATTR for each planet in 
-    obs['plan_inds'] in the SPC file, e.g.
-      -P Mp => spc['Mp'][obs['plan_inds']]
-    Note that obs['plan_inds'] is in general a vector. 
-    So, if you give -P, this program "scalar-expands" the vector
+    `-S ATTR` means: look up the named ATTR for `obs['star_ind']` in
+    the corresponding SPC file, e.g.
+      `-S Spec` => `spc['Spec'][obs['star_ind']]`
+    which will output the spectral class of `obs['star_ind']`
+
++ `-P` => shortcut for Planet attributes.
+
+    `-P ATTR` means to look up the named ATTR for each planet in 
+    `obs['plan_inds']` in the SPC file, e.g.
+      `-P Mp` => `spc['Mp'][obs['plan_inds']]`.
+    
+    Note that `obs['plan_inds']` is in general a vector. 
+    So, if you give `-P`, this program "scalar-expands" the vector
     to write one row of output *for each plan_ind in plan_inds*. 
     This facilitates row-by-row processing.
-    Note that if plan_inds = [], no record will be written. 
-    To write a record in the zero-planet case anyway, specify --empty.
 
--p => shortcut for alternate Planet attributes
-    This is the same lookup as -P, but the vector is output to
+    Note that if `plan_inds = []`, no record will be written. 
+    To write a record in the zero-planet case anyway, specify `--empty`.
+
++ `-p` => shortcut for alternate Planet attributes.
+
+    This is the same lookup as `-P`, but the vector is output to
     that *one* column in the row. This would be more useful for 
     the JSON output; the CSV format looks like:
-       "[0.282, 1.044]"
+       `"[0.282, 1.044]"`
+    which would not look like a number to downstream consumers.
 
 For all of the above, an optional column-name can be given just as
-for -a and -e. If not given, the attribute name, or a generated
+for `-a` and `-e`. If not given, the attribute name, or a generated
 string, will be used.
 
 The SPC file is loaded using the filename convention that 
-  .../drm/NAME.pkl -> .../spc/NAME.spc
-If no -S/-P/-p is given, the SPC is not loaded, to allow use of 
+  `.../drm/NAME.pkl` goes with `.../spc/NAME.spc`
+If no `-S/-P/-p` is given, the SPC is not loaded, to allow use of 
 this program when only the DRM is present. If the SPC file is needed
-to support spc[...] within "-e" constructs above, load of the SPC 
-can be forced by giving --load_spc (or if using External File,
-"load_spc": true).
+to support `spc[...]` within `-e` constructs above, load of the SPC 
+can be forced by giving `--load_spc` (or if using External File,
+`"load_spc": true`).
 
 
 EXTERNAL FILE
 -------------
 
 These expressions can become complex, so the "-a ATTR" and all above
-constructs can be placed in a JSON file and specified with -f FILE:
+constructs can be placed in a JSON file and specified with `-f FILE`:
 
+``` json
 {
   "__match__": "char_info",
   "lambda": "char_mode.lam",
@@ -129,24 +141,27 @@ constructs can be placed in a JSON file and specified with -f FILE:
     "Name": "Name"
   }
 }
+```
 
 Recall JSON uses double-quotes for strings, and Python dictionary keys
-are extracted with ...['attr'], so there is no conflict between quote marks.
-The key name (e.g., "char_count" above) is used as the column name for the CSV.
-Above, "__match__" abbreviates the -m construct, so the JSON file can be
+can be extracted with `d['attr']`, so there is no conflict between quote marks.
+The column name (e.g., `char_count` above) is used as the column name for the CSV.
+Above, `__match__` abbreviates the `-m` construct, so the JSON file can be
 self-contained. The full list is:
+```
    "__eval__"    -> -e 
    "__star__"    -> -S
    "__planet__"  -> -P  (one row per planet)
    "__planets__" -> -p  (list placed in one field)
    "__match_inv__"  -M  (inverse match)
-Other program flags (like -s) can be given by Booleans in the 
-JSON file as well. See the top of this usage note for the __attribute_name__
+```
+Other program flags (like `-s`) can be given by Booleans in the 
+JSON file as well. See the top of this usage note for the `__attribute_name__`
 controlling each flag.
 
-As on the command line, the SPC file is loaded if __star__, __planet__, 
-or __planets__ is present. To force the load if an __eval__ construct needs
-the SPC file, use --load_spc, or the Boolean directive "__load_spc__": true
+As on the command line, the SPC file is loaded if `__star__`, `__planet__`, 
+or `__planets__ `is present. To force the load if an `__eval__` construct needs
+the SPC file, use `--load_spc`, or the Boolean directive `"__load_spc__": true`
 within the JSON.
 
 
@@ -154,6 +169,7 @@ USAGE
 -----
 
 Typical usage:
+``` shell
   # each arrival_time
   util/drm-tabulate.py -a arrival_time sims/HabEx_4m_dmag26/drm/*
 
@@ -165,6 +181,7 @@ Typical usage:
 
   # planet-by-planet output of: char_status, planet mass, star spectral class, etc.
   util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm/*.pkl
+```
 
 turmon apr 2019, feb 2022, dec 2022
 '''
@@ -677,7 +694,12 @@ class EnsembleSummary(object):
         self.summary = summary
 
     def dump(self, args, outfile):
-        r'''Dump reduced data to output.'''
+        r'''Dump reduced data to output.
+
+        Args:
+          args (namespace): program input arguments
+          outfile (file): output filename
+          '''
         saved_fields = args.all_attrs.keys()
         Nrows = set(len(self.summary[fname]) for fname in saved_fields)
         # Nrows will be a singleton set if all fields were in all DRMs

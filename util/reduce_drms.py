@@ -3,17 +3,18 @@ r'''
 reduce_drms.py: reduce a pile of DRMs to various summary CSV files
 
 usage:
-  reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]
+  `reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]`
 
-where:
-  DRM ... is a list of DRM pickles,
-and:
-  -O outfile gives a template (containing exactly two occurrences of %s) for
+Args:
+  DRM (file): a list of DRM pickles
+
+Options:
+  + `-O outfile` gives a template (containing exactly two occurrences of %s) for
      file outputs.  This is optional, but is best to supply.
-  -j N means to use N parallel workers to process the files.  By default,
+  + `-j N` means to use N parallel workers to process the files.  By default,
      about 2/3 of the available cores will be used (20 on aftac1, 30 on aftac2).
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
-  -D TYPE gives a (string) TYPE that is inserted into the DEBUG variable in the 
+  + `-D TYPE` gives a (string) TYPE that is inserted into the DEBUG variable in the 
      script, and which can be used to print a selected TYPE of debug output.
 
 turmon jan 2018, oct 2018

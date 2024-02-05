@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
 # 
-# Top-level sh driver for certain drm plots.
+# plot_drms.sh: Top-level sh driver for Matlab-based plots.
 #
 # usage:
-#   plot_drms.sh [-d] [-o OP] in_tmpl dest_tmpl
+#   `plot_drms.sh [-d] [-o OP] in_tmpl dest_tmpl`
+#
 # where:
-#   in_tmpl: filename template for data input
-#       e.g.: sims/ExoS_A_SAG13/reduce-%s.%s
-#   dest_tmpl: the destination template for graphical output
-#       e.g.: sims/ExoS_A_SAG13/gfx/plot-%s.%s
-# and:
-#   -d is a flag which signals to use the developer MATLABPATH (~turmon) rather
+# 
+# +  in_tmpl: filename template for data input, 
+#       e.g.: `sims/ExoS_A_SAG13/reduce-%s.%s`
+# +  dest_tmpl: the destination template for graphical output, 
+#       e.g.: `sims/ExoS_A_SAG13/gfx/plot-%s.%s`
+# +  -d is a flag which signals to use the developer MATLABPATH (~turmon) rather
 #      than the regular production path.
-#   -o OP is a flag which instructs the matlab script to only make plots of
+# +  -o OP is a flag which instructs the matlab script to only make plots of
 #      type OP.  Useful for getting a fast plot result in testing.
 #
 # For example,
 #
-#  plot_drms.sh 
-#
-# See also: 
-#
+#  `plot_drms.sh`
+
 # Michael Turmon, JPL, Jan 2018
 
 # exit-on-error

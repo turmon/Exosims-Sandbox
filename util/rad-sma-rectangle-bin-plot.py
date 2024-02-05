@@ -1,45 +1,59 @@
 #!/usr/bin/env python
 #
-# Radius-SMA ("Kopparapu") bin plot of planet properties (characterizations, population)
+# rad-sma-rectangle-bin-plot.py: Radius-SMA ("Kopparapu") histogram plots
+# 
+# This function makes plots of quantities like yield and occurrence counts, 
+# binned by radius and semi-major axis (SMA). Our colloquial name for these
+# plots is "Kopparapu bin plots".
 #
 # Usage:
-#   rad-sma-rectangle-bin-plot.py OPTS CSV
+#   `rad-sma-rectangle-bin-plot.py OPTS CSV`
+#
 # where the argument CSV is either:
-#   (a) the special string 'self', allowing access to baked-in
-#   tables, named by the following fields:
-#       sdet -- sdet rates from Dulz 2019
-#       sag13 -- sag13 rates
-#       kopparapu -- kopparapu 2018 rates
-#   (b) a template for (currently 2) CSV files, of the form
-#       path/to/data/reduce-%s.csv
+#
+# +  (a) the special string 'self', allowing access to baked-in
+#    tables, named by the following fields:
+#
+#       - sdet -- sdet rates from Dulz 2019
+#       - sag13 -- sag13 rates
+#       - kopparapu -- kopparapu 2018 rates
+# 
+# +  (b) a template for (currently 2) CSV files, of the form
+#       `path/to/data/reduce-%s.csv`
 #   produced by the reduction script.  We need the
-#   5x3 bins from files like "reduce-radlum.csv", and
-#   earth chars from "reduce-earth.csv".  Several specific
+#   5x3 bins from files like `reduce-radlum.csv`, and
+#   earth chars from `reduce-earth.csv`.  Several specific
 #   columns ("fields") can be extracted (from each).
-# where OPTS is:
-#   -f FIELD: comma-separated name(s) of the field(s) within
+#
+# In addition:
+# 
+# +  -f FIELD: comma-separated name(s) of the field(s) within
 #     the CSV to plot - use any or all of:
-#          char_{full,strict}
-#          char_tput_{full,strict}
-#          population
+# 
+#        -  char_{full,strict}
+#        -  char_tput_{full,strict}
+#        -  population
 #     or, for the "self" target, one or more of the fields
 #     noted above.
 #     By default, all fields are given.
-#   -t, --title : set graph title.  By default, a string
+# 
+# +  -t, --title : set graph title.  By default, a string
 #     derived from the field name is used, so this option
 #     is not much needed.
-#   --eta : suppress \eta = ... text label in table.  Generally 
-#   --sigma : add +/- sigma suffix to the numbers in the table
-#   --quantile : add ^{U}_{L} where U and L are the distance
+# +  --eta : suppress \eta = ... text label in table.  Generally 
+# +  --sigma : add +/- sigma suffix to the numbers in the table
+# +  --quantile : add ^{U}_{L} where U and L are the distance
 #         to the upper and lower quantile (U = q75 - mean, etc.)
-#   -o : specify an output-file template, with *two* %s placeholders
+# +  -o : specify an output-file template, with *two* %s placeholders
 #        for a graph type (derived from the field name)
 #        and a file type (pdf/png).  By default: ./det-rad-sma-%s.%s
-#   -h : help
+# +  -h : help
 #
 # Sample usage:
+#```shell
 #   rad-sma-rectangle-bin-plot.py --sigma --eta -t 'SDET Rates' -f sdet self
 #   rad-sma-rectangle-bin-plot.py --sigma --eta -t 'CSV Rates' -f char_full csv/reduce-%s.csv
+#```
 #
 # For more on usage, use the -h option.
 # Some options may be described there but not documented here.
@@ -411,8 +425,9 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
     tabular plot.'''
     # box preface: "FOO = x", or just "x".  Not general enough, because
     # eta is not the right FOO for some fields.
+    # r'' to shield \e and \o from interpretation
     if eta:
-        symbol = '\eta%s = ' % ('_\oplus' if earth else '')
+        symbol = r'\eta%s = ' % (r'_\oplus' if earth else '')
     else:
         symbol = ''
     txt = '%s%.2g' % (symbol, x)
@@ -422,8 +437,8 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
             # low/hi range
             txt += '^{%+.2g}_{%+.2g}' % (x_hi - x, x_lo - x)
         elif x_lo != None and x_hi == None:
-            # standard deviation
-            txt += '\pm%.2g' % (x_lo, )
+            # standard deviation (r'' because \p would look like \n)
+            txt += r'\pm%.2g' % (x_lo, )
     return '$' + txt + '$'
 
 def make_koppa_boxes(args, ax, hist):

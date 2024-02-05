@@ -3,19 +3,20 @@ r'''
 export-ensemble-files.py: export selected files (plots, csv) from an ensemble
 
 usage:
-  export-ensemble-files.py [ -p ] [ -o ] SIMDIR
+
+  `export-ensemble-files.py [ -p ] [ -o ] SIMDIR`
 
 where:
-  SIMDIR is a simulation directory, typically, sims/FOO
-and:
-  -o outfile gives an output subdirectory
-  -p means plain text output versus the default markdown
+
++  `SIMDIR` is a simulation directory, typically, `sims/FOO`
++  `-o outfile` gives an output subdirectory
++  `-p` means plain text output versus the default markdown
 
 Typical usage:
-  util/export-ensemble-files.py sims/HabEx_4m_foo
+  `util/export-ensemble-files.py sims/HabEx_4m_foo`
 
-turmon oct 2019
 '''
+# turmon oct 2019
 
 from __future__ import division
 from __future__ import print_function

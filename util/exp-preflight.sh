@@ -4,25 +4,29 @@
 #
 # This wraps a couple of commands that warm the caches for large
 # multi-ensemble runs.  This serves multiple purposes:
-#  -- Ensures the script really works, lowering the chance of mass failures
-#     in a batch run.
-#  -- Sets up cache files so that all subsequent runs will find cached
-#     results, e.g. for keepout.  We do not want multiple batch runs
-#     to simultaneously attempt to write cache files.
-#  -- Give a time estimate for a single run so that a time projection
-#     for a full run can be made.
-# Note: If cache files were generated, the time estimate may be off.  If
+# 
+#  - Ensures the script really works, lowering the chance of mass failures
+#    in a batch run.
+#  - Sets up cache files so that all subsequent runs will find cached
+#    results, e.g. for keepout.  We do not want multiple batch runs
+#    to simultaneously attempt to write cache files.
+#  - Give a time estimate for a single run so that a time projection
+#    for a full run can be made.
+# 
+# If cache files were generated, the time estimate may be off.  If
 # you want to use the time estimate in this case, just re-run the script.
 #
 # Usage:
-#   exp-preflight.sh EXP
+#   `exp-preflight.sh EXP`
 #
-# where EXP is an experiment name.  By convention, EXP is in the Scripts/ directory
-# and ends in '.exp'.  The directory named by EXP must contain several json scripts.
+# where EXP is an experiment name.  By convention, EXP is in the `Scripts/` directory
+# and ends in `.exp`.  The directory named by EXP must contain several json scripts.
 # One of them is an index, and the others will be used for ensemble runs.
 #
 # Simplest usage:
+# ```
 #   $ util/exp-preflight.sh Scripts/ExampleExp.exp
+# ```
 # 
 # turmon may 2020
 #

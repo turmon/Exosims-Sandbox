@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 #
-# Check an ipython parallel controller/engine.
+# ipcluster-check: Check an ipython parallel controller/engine.
 #
-# Usage:
-#   ...
 # Simplest usage:
-#   ipcluster-check.py
+#   `ipcluster-check.py`
 #
 #
 # For more on usage, use the -h option.

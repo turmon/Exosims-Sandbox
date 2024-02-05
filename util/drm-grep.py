@@ -3,45 +3,51 @@ r'''
 drm-grep.py: search through a pile of DRMs for named fields
 
 usage:
-  drm-grep.py [-1snv] [ -m MATCH ] [-a ATTR] [ -j N ] DRM ...
+  `drm-grep.py [-1snv] [ -m MATCH ] [-a ATTR] [ -j N ] DRM ...`
 
 where:
-  DRM ... is a list of DRM pickles,
+
++  DRM ... is a list of DRM pickles,
+
 and:
-  -a ATTR means: output the keyword ATTR (repeat -a for multiple keywords,
+
++  -a ATTR means: output the keyword ATTR (repeat -a for multiple keywords,
      or separate their names by commas)
-  -S ATTR means: output the SPC attribute ATTR for obs[star_ind]
-  -P ATTR means: output the SPC attribute ATTR for obs[plan_inds[0]]
-  -m MATCH means: only produce output if MATCH is a keyword in the observation
-  -1 means: output the CSV header ("line 1")
-  -s means: output the DRM seed number
-  -n means: output the DRM observation number
++  -S ATTR means: output the SPC attribute ATTR for obs[star_ind]
++  -P ATTR means: output the SPC attribute ATTR for obs[plan_inds[0]]
++  -m MATCH means: only produce output if MATCH is a keyword in the observation
++  -1 means: output the CSV header ("line 1")
++  -s means: output the DRM seed number
++  -n means: output the DRM observation number
 
 or the less-useful options:
-  -v increases verbosity (output is to stderr)
-  -j N means to use N parallel workers to process the files.  By default,
+
++  -v increases verbosity (output is to stderr)
++  -j N means to use N parallel workers to process the files.  By default,
      about 2/3 of the available cores will be used (20 on aftac1, 30 on aftac2).
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
 
 Extension:
 Some attributes are nested.  To get at nested attributes, such as:
-  drm[0]['char_mode']['lam']
+  `drm[0]['char_mode']['lam']`
 use:
-  -a char_mode.lam
+  `-a char_mode.lam`
 This extends to multiply-nested attributes, and to lists.  The initial plan_ind is
-  -a plan_inds.0
+  `-a plan_inds.0`
 The last phase angle is:
-  -a char_params.phi.-1
+  `-a char_params.phi.-1`
 
 Typical usage:
+```shell
   # (all arrival_time's)
   util/drm-grep.py -a arrival_time sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408/drm/*
 
   # (char_time, but only looking at characterizations)
   util/drm-grep.py -m char_time -a char_time sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408/drm/*
+```shell
 
-turmon apr 2019
 '''
+# turmon apr 2019
 
 #####
 #####

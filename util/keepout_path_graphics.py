@@ -14,26 +14,32 @@
 # are used together. 
 #
 # Typical usage:
-#   keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json 
+#
+#   `keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json`
+# 
 # where:
-#  -s is the start-time of the movie
+# 
+# + -s is the start-time of the movie
 #        if zero, the start-time from the script is used.
 #        if a float in [0,1], the movie is started that proportion of the way through the mission.
 #        if a number <= 10000 is given, this is the offset from mission start in days
 #        if a number > 10000 is given, this is the MJD start time.
-#  -l is the length in years
+# + -l is the length in years
 #        if zero is given (-l 0), the duration from the script is used.
-#  -d is the delta-t between frames in days
-#  -m is the name of the movie
-# optionally:
-#  -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
-#  -f DIR -- the directory name for .png frame-by-frame output
-#  -c DIR -- the directory name for cumulative keepout output
-#  --drm FILE -- the file containing the DRM as a pickle
-#  --spc FILE -- the file containing the SPC as a pickle
+# + -d is the delta-t between frames in days
+# + -m is the name of the movie
 #
-# experts only:
-#  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
+# optionally:
+#
+# + -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
+# + -f DIR -- the directory name for .png frame-by-frame output
+# + -c DIR -- the directory name for cumulative keepout output
+# + --drm FILE -- the file containing the DRM as a pickle
+# + --spc FILE -- the file containing the SPC as a pickle
+#
+# Option for experts only:
+# 
+# +  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
 #               if the given SCRIPT name begins with !, it is treated as a
 #               json literal rather than a filename
 

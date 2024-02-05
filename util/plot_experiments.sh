@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
 # 
-# Top-level sh driver for certain "experiment", or multi-ensemble drm plots
+# plot_experiments.sh: Top-level driver for certain multi-ensemble DRM plots
 #
 # usage:
-#   plot_experiment.sh [-d] in_experiment dest_tmpl
+#   `plot_experiment.sh [-d] in_experiment dest_tmpl`
+# 
 # where:
-#   in_experiment: filename giving experiment summary
-#       e.g.: Experiments/HabEx_4m_TSDD_pop100DD_revwt.json
-#   dest_tmpl: the destination template for graphical output
-#       e.g.: exps/HabEx_4m_TSDD_pop100DD_revwt/gfx/plot-%s.%s
-# and:
-#   -d is a flag which signals to use the developer MATLABPATH (~turmon) rather
+# 
+# *  in_experiment: filename giving experiment summary
+#    e.g.: Experiments/HabEx_4m_TSDD_pop100DD_revwt.json
+# *  `dest_tmpl`: the destination template for graphical output
+#    e.g.: exps/HabEx_4m_TSDD_pop100DD_revwt/gfx/plot-%s.%s
+# * -d is a flag which signals to use the developer MATLABPATH (~turmon) rather
 #      than the regular production path.
 #
 # For example,
 #
-#  plot_experiment.sh Experiments/HabEx_4m_TSDD_pop100DD_revwt.json /tmp/revwt-plot-%s.%s
+#  `plot_experiment.sh Experiments/HabEx_4m_TSDD_pop100DD_revwt.json /tmp/revwt-plot-%s.%s`
 #
 # See also: 
 #
 # Michael Turmon, JPL, Jun 2018
+##
 
 # exit-on-error
 set -euo pipefail

@@ -3,18 +3,19 @@
 # json-attr-edit.py: edit attributes of a JSON script
 #
 # Usage:
-#    json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...
+#    `json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...`
 #
 # where
-#   -h gives more complete documentation
-#   -b BASE gives a basket of pre-defined transforms (see -h for all)
-#   -a REPL replaces of every instance of the attribute named in REPL
-#   -s REPL replaces a specific (drilled-down) attribute named in REPL
-#   -c DIR gives a new cache directory
-#   -o OUTPUT gives an output filename pattern
+# 
+# +   -h gives more complete documentation
+# +   -b BASE gives a basket of pre-defined transforms (see -h for all)
+# +   -a REPL replaces of every instance of the attribute named in REPL
+# +   -s REPL replaces a specific (drilled-down) attribute named in REPL
+# +   -c DIR gives a new cache directory
+# +   -o OUTPUT gives an output filename pattern
 #             (the script name is plugged into the single %s in OUTPUT)
-#   -f forces the write of generated files, possibly over-writing existing files
-#   -v increases verbosity
+# +   -f forces the write of generated files, possibly over-writing existing files
+# +   -v increases verbosity
 #
 # See -h for more.
 
@@ -203,7 +204,7 @@ def decode_literal_attrs(attrs, verbose, force_string=False):
     #    identifier can be missionLife or systems.0.QE, disallow -1
     #    a separator of = or :
     #    value is what is left
-    p = re.compile('\s*([\w.]+)\s*([:=])(.*)')
+    p = re.compile(r'\s*([\w.]+)\s*([:=])(.*)')
     sform = dict()
     for attr in attrs:
         if verbose > 1: print(f'  Decoding |{attr}|...')

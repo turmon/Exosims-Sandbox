@@ -3,31 +3,36 @@ r'''
 tabulate_csv.py: tabulate CSV file or files according to standard processes
 
 usage:
-  tabulate_csv.py [ -q ] [ -p ] [ -o outfile ] MODE CSVFILE
+  `tabulate_csv.py [ -q ] [ -p ] [ -o outfile ] MODE CSVFILE`
 
 where:
-  MODE is a comma-separated list of modes, or "all"
+
+* MODE is a comma-separated list of modes, or "all"
     (at present, "funnel" is the only mode)
-  CSVFILE is a CSV file (or file pattern) with input fields for the table
-and:
-  -o outfile gives an output file or output file pattern (stdout default)
-  -p means plain text output versus the default markdown
-  -q means to continue quietly if CSVFILE is not present
+* CSVFILE is a CSV file (or file pattern) with input fields for the table
+
+* -o outfile gives an output file or output file pattern (stdout default)
+* -p means plain text output versus the default markdown
+* -q means to continue quietly if CSVFILE is not present
 
 The MODE is intended to be one or several keywords indicating the kind
 of tabulation to be done.  There are really two cases:
-  - single-mode operation.  The CSVFILE can be given explicitly, and so can
+
+- single-mode operation.  The CSVFILE can be given explicitly, and so can
     the optional outfile.
-  - multi-mode operation.  Here the CSVFILE should be a pattern with two
+- multi-mode operation.  Here the CSVFILE should be a pattern with two
     %s's: the first for the relevant MODE, the second for the "csv" suffix.
     And the outfile, if given, should also contain two %s placeholders: the first
     for the mode and the second for the suffix (md or txt).
+
 The setup is intended to support many tabulations at once.  Now, there is just one:
-   reduce-funnel.csv -> table-funnel.md
+   `reduce-funnel.csv -> table-funnel.md`
 
 Typical usage:
+``` shell
   util/tabulate_csv.py funnel sims/HabEx_4m_foo/reduce-funnel.csv
   util/tabulate_csv.py -q -o sims/HabEx_4m_foo/tbl/table-%s.%s all sims/HabEx_4m_foo/reduce-%s.%s
+```
 
 turmon jan 2019
 '''

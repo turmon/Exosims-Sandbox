@@ -3,26 +3,30 @@
 
 Usage:
 
-  plot-timeline.py [-d] [-s] [-t CSV] [-o OUTPATH] SCRIPT DRM
+  `plot-timeline.py [-d] [-s] [-t CSV] [-o OUTPATH] SCRIPT DRM`
 
 where:
 
-  -d means to omit the day-in-the-life plot (can be useful)
-  -s means to omit the synoptic all-mission plot
-  -o OUTPATH gives an output path for results, containing two %s slots  
-  -t CSV names a CSV file for General Astrophysics proxy observation-durations
+*  -d means to omit the day-in-the-life plot (can be useful)
+*  -s means to omit the synoptic all-mission plot
+*  -o OUTPATH gives an output path for results, containing two %s slots  
+*  -t CSV names a CSV file for General Astrophysics proxy observation-durations
      (without -t, a sane builtin default is used).
 
 Most helpful Sandbox usage:
 
+```
   plot-timeline.py -d Scripts/FOO.json sims/FOO/drm/SEED.pkl 
+```
 
-where FOO.json is a script, and SEED.pkl is a DRM.  Output will be placed in the working directory 
-unless -o path/to/output/%s.%s or the like is given.
+where `FOO.json` is a script, and `SEED.pkl` is a DRM.  Output will be placed in the working directory 
+unless `-o path/to/output/%s.%s` or the like is given.
 
 More-complex actual usage line:
 
+```
   util/plot-timeline.py -d Scripts/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402.json sims/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402/drm/992454934.pkl
+```
 
 """
 
