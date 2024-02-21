@@ -16,9 +16,9 @@ Options:
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
   + `-D TYPE` gives a (string) TYPE that is inserted into the DEBUG variable in the 
      script, and which can be used to print a selected TYPE of debug output.
-
-turmon jan 2018, oct 2018
 '''
+
+# turmon jan 2018, oct 2018
 
 ## Note on design and code extensions
 #
