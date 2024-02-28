@@ -1,3 +1,24 @@
+---
+[2024]
+The preferred way to name an EXOSIMS version for runs is to
+use a Python virtual environment ("venv"), rather than using
+the EXOSIMS symlink here.
+
+See ../Python-venvs for more, or in particular:
+/proj/exep/rhonda/Sandbox/Python-venvs/README.txt
+
+---
+[2021]
+Rhonda is maintaining the JPL-local EXOSIMS fork:
+
+  /proj/exep/rhonda/exosimsRhonda/EXOSIMS
+
+The EXOSIMS symlink was updated on April 30, 2021 to point to the above 
+directory.
+
+---
+[2019]
+
 The long standing symlink for EXOSIMS pointed to:
 
   /proj/exep/rhonda/exosims_1.4Walker/EXOSIMS
@@ -5,11 +26,3 @@ The long standing symlink for EXOSIMS pointed to:
 Walker's fork was officially merged into master in April 2021.
 As Walker is no longer available, the above directory is being retired.
 
-In its place, Rhonda will be mainting the JPL-local, most up to date fork:
-
-  /proj/exep/rhonda/exosimsRhonda/EXOSIMS
-
-The EXOSIMS symlink was updated on April 30, 2021 to point to the above 
-directory.
-
--Rhonda
