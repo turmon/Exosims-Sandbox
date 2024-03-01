@@ -663,8 +663,15 @@ class SimSummary(object):
                     hh.paragraph(SECTION_HEADS[tag])
                 # tables, if any, are at top (ad hoc at the moment)
                 if tag in self.tables_show and len(self.tables[tag]) > 0:
-                    # print 'Rendering', self.tables[tag]
+                    # print(f'Rendering {self.tables[tag]}')
                     hh.header('Tables for %s' % shown, level=3)
+                    # TODO: insert table explanation here
+                    if True:
+                        hh.paragraph(
+                            hh.link('/Local/www-resources/doc/promotion-tabulation.html',
+                                    'Rules for counting', inner=True) +
+                            ' in these tables',
+                            br=True)
                     for table in self.tables[tag]:
                         self.render_table(hh, table)
                 # plot widgets for star-target info

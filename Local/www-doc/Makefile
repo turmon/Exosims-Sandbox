@@ -14,7 +14,7 @@
 # turmon 11/2023
 
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md
+SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md
 
 # destination directory for above pages
 DEST_DIR=../www-resources/doc
