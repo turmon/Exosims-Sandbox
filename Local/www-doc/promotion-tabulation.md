@@ -24,6 +24,13 @@ and some of them succeed (rows 4 and 5).
 The same is true of planets: in order to be successfully characterized
 (last rows) the star around the planet must be promoted (row 1).
 
+All quantities after &plusmn; are the 
+[standard error of the mean](https://en.wikipedia.org/wiki/Standard_error).
+That is, they are the population standard deviation divided by
+the square root of ensemble size, so they will drop to zero
+as ensemble size grows.
+The intent is to show how accurate the shown average is.
+
 ## Table Contents
 
 In all cases, consideration is restricted to a population P of

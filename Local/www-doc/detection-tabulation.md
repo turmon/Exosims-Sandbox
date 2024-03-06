@@ -17,13 +17,6 @@ list at the end of the simulation in the `promoted_stars` variable.
 All quantities shown are ensemble averages of detection-related
 events across all DRM's in the ensemble - the ensemble mean.
 
-All quantities after &plusmn; are the 
-[standard error of the mean](https://en.wikipedia.org/wiki/Standard_error).
-That is, they are the population standard deviation divided by
-the square root of ensemble size, so they will drop to zero
-as ensemble size grows.
-The intent is to show how accurate the shown average is.
-
 ## Table Contents
 
 In all cases, consideration is restricted to a population P of
