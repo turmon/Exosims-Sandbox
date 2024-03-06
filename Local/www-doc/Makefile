@@ -13,8 +13,12 @@
 #
 # turmon 11/2023
 
+# accept bash-only to get proper failure reporting 
+# for the python | sed line below
+SHELL=/bin/bash -o pipefail
+
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md
+SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md
 
 # destination directory for above pages
 DEST_DIR=../www-resources/doc
