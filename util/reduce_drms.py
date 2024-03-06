@@ -1437,6 +1437,175 @@ class SimulationRun(object):
         return rv
 
 
+    def det_funnel_analysis(self):
+        r'''Extract detection observation status from DRM.
+
+        For each sim, these are scalar quantities.'''
+        ## 0: set up return value
+        rv = dict()
+        # target types - star is a bit special but can be handled similarly
+        Targets = ('star', 'allplan', 'hzone', 'earth')
+        # initialize counters -- force them to exist
+        # FIXME: rework to use f-strings
+        for sname in ('allstar', 'promo'):
+            for target in Targets:
+                # tries, success
+                rv[f'detfunnel_{sname}_cand_{target}'] = 0.0
+                for outcome in ('tries', 'fails', 'success'):
+                    for count in ('cume', 'uniq'):
+                        rv[f'detfunnel_{sname}_{outcome}_{target}_{count}'] = 0.0
+                count = 'cume'
+                for outcome in ('f_snr', 'f_iwa', 'f_owa'):
+                    rv[f'detfunnel_{sname}_{outcome}_{target}_{count}'] = 0.0
+                for outcome in ('det0', 'det1', 'det2', 'det3', 'det4', 'detV'):
+                    rv[f'detfunnel_{sname}_{outcome}_{target}_{count}'] = 0.0
+        # record all the above keys for later use -- needs to be an explicit list
+        rv['_detfunnel_keys'] = list(rv.keys())
+        # Do not error-out if sim load did not work, resulting in sim_info being not present or None
+        if not getattr(self, 'sim_info', False):
+            return rv
+        binner = RpLBins() # for is_earthlike()
+        # earthlike = binner.is_earthlike(self.spc, np.arange(self.spc['nPlans']), self.spc['plan2star'])
+        # hzone = binner.is_hab_zone(self.spc, np.arange(self.spc['nPlans']), self.spc['plan2star'])
+
+        # Up here so it's available throughout
+        all_stars = np.arange(self.Nstar)
+        # 'promoted_stars' may not always be in the SPC dict
+        promoted_stars = self.spc.get('promoted_stars', [])
+        # deep-dive stars
+        top_HIPs = self.sim_info['top_HIPs'] # list of hipparcos names of deep-dive stars
+        top_sInds = np.where(np.in1d(self.spc['Name'], top_HIPs))[0]
+
+        ## 1: Find det status indications at each star, for each planet,
+        # summing up over the DRM
+        # - Status is stored as vectors-of-vectors (VoV), and represent
+        #   *per-planet* counts for that star.  The VoV is a numpy (n_star,)
+        #   vector of numpy "Objects", each of which is a per-planet status count.
+        # - When a new det (1xNplan) is made at a star, we:
+        #     ctr[sind] += this_det_status_indicator
+        #   and the per-planet indicator counts will be updated.  Starting 
+        #   at (scalar) zero means we don't special-case the first visit.
+        # - We also need some per-star counters to keep track of visits -
+        #   because planets can be [], this implies a separate counter
+        n_star = self.Nstar
+        # per-star counters (ordinary integers)
+        tries_ctr   = np.zeros(n_star, 'int')
+        fails_ctr   = np.zeros(n_star, 'int')
+        success_ctr = np.zeros(n_star, 'int')
+        # per-star-per-planet counters
+        tries_det_ctr   = np.zeros(n_star, 'O') # VoV
+        success_det_ctr = np.zeros(n_star, 'O') # VoV
+        fails_det_ctr   = np.zeros(n_star, 'O') # VoV
+        f_snr_det_ctr   = np.zeros(n_star, 'O') # VoV
+        f_iwa_det_ctr   = np.zeros(n_star, 'O') # VoV
+        f_owa_det_ctr   = np.zeros(n_star, 'O') # VoV
+        for obs in self.drm:
+            # skip non-detection observations
+            if 'det_status' not in obs:
+                continue
+            sind = obs['star_ind']
+            # length-nplan vector
+            det_status = np.array(obs['det_status'])
+            # update star counters (all are int)
+            # for star:
+            #     any planet succeeds => success=True
+            #     no planets => success=False
+            #     fail = not(success)
+            success = np.any(det_status == 1)
+            tries_ctr  [sind] += 1
+            fails_ctr  [sind] += int(not success)
+            success_ctr[sind] += int(success)
+            # update planet counters (all are VoV)
+            # every planet in the sind (if any) gets +1 for tries
+            tries_det_ctr  [sind] += np.full(len(det_status), 1)
+            success_det_ctr[sind] += (det_status ==  1)
+            fails_det_ctr  [sind] += (det_status !=  1)
+            f_snr_det_ctr  [sind] += (det_status ==  0)
+            f_iwa_det_ctr  [sind] += (det_status == -1)
+            f_owa_det_ctr  [sind] += (det_status == -2)
+
+        # helper function, uses I[] which is modified in the loop
+        I = dict()
+        def select_ctr(target, star_ctr, det_ctr):
+            r'''Select the counter to use depending on target.'''
+            if target == 'star':
+                # a scalar
+                return star_ctr
+            else:
+                # a vector; [] if nplan = 0, no earths, etc.
+                return det_ctr[I[target]]
+
+        ## 2: Use above yields to compile metrics for promoted stars
+        # can add to the "for": (top_sInds, 'deep')
+        for star_list, sname in ((all_stars, 'allstar'), (promoted_stars, 'promo'), ):
+            for sind in star_list:
+                # quick out if not visited (all_stars case)
+                if tries_ctr[sind] == 0:
+                    continue
+                # planets for star #sind
+                plan_inds = np.where(self.spc['plan2star'] == sind)[0]
+                # indicators for these planets
+                I['star']    = np.full(1, True) # little used, see select_ctr
+                I['allplan'] = np.full(len(plan_inds), True)
+                I['hzone']   = binner.is_hab_zone (self.spc, plan_inds, sind)
+                I['earth']   = binner.is_earthlike(self.spc, plan_inds, sind)
+
+                ## 2a: candidates
+                # count the candidate pool size
+                #  (NB: the counter bumped only if there was a visit)
+                for target in Targets:
+                    rv[f'detfunnel_{sname}_cand_{target}'] += np.sum(I[target])
+
+                ## 2b: det attempts
+                # attempts are fundamentally per-star
+                for target in Targets:
+                    # tries is:
+                    #   for star -> scalar #visits to star
+                    #   for planet -> vector (1xNtargets) of visits to that planet type
+                    tries = select_ctr(target, tries_ctr[sind], tries_det_ctr[sind])
+                    rv[f'detfunnel_{sname}_tries_{target}_uniq'] += np.sum(tries > 0)
+                    rv[f'detfunnel_{sname}_tries_{target}_cume'] += np.sum(tries)
+
+                ## 2c: det fails
+                # basically per-planet
+                #    for star: all-planet-fail <=> star-fail, and no planets => fail=True
+                for target in Targets:
+                    # fails is just like tries above
+                    fails = select_ctr(target, fails_ctr[sind], fails_det_ctr[sind])
+                    # but, subcategories of "det fail" don't make sense for star
+                    # (so, f_snr, etc., for star will be NaN)
+                    f_snr = select_ctr(target, np.nan, f_snr_det_ctr[sind])
+                    f_iwa = select_ctr(target, np.nan, f_iwa_det_ctr[sind])
+                    f_owa = select_ctr(target, np.nan, f_owa_det_ctr[sind])
+                    rv[f'detfunnel_{sname}_fails_{target}_uniq'] += np.sum(fails > 0)
+                    rv[f'detfunnel_{sname}_fails_{target}_cume'] += np.sum(fails)
+                    rv[f'detfunnel_{sname}_f_snr_{target}_cume'] += np.sum(f_snr)
+                    rv[f'detfunnel_{sname}_f_iwa_{target}_cume'] += np.sum(f_iwa)
+                    rv[f'detfunnel_{sname}_f_owa_{target}_cume'] += np.sum(f_owa)
+
+                ## 2d: det success
+                # basically per-planet
+                #   for star: success = not(fail).
+                #     any planet succeeds => success=True
+                #     no planets => success=False
+                for target in Targets:
+                    # success is like tries above
+                    # det0, det1, etc., for star still make sense
+                    success = select_ctr(target, success_ctr[sind], success_det_ctr[sind])
+                    rv[f'detfunnel_{sname}_success_{target}_uniq'] += np.sum(success > 0)
+                    rv[f'detfunnel_{sname}_success_{target}_cume'] += np.sum(success)
+                    rv[f'detfunnel_{sname}_det0_{target}_cume'] += np.sum(success == 0)
+                    rv[f'detfunnel_{sname}_det1_{target}_cume'] += np.sum(success == 1)
+                    rv[f'detfunnel_{sname}_det2_{target}_cume'] += np.sum(success == 2)
+                    rv[f'detfunnel_{sname}_det3_{target}_cume'] += np.sum(success == 3)
+                    rv[f'detfunnel_{sname}_det4_{target}_cume'] += np.sum(success == 4)
+                    rv[f'detfunnel_{sname}_detV_{target}_cume'] += np.sum(success >= 5)
+
+        ## 3: return the dict of results for this DRM
+        # Note: valid keys are in '_detfunnel_keys'
+        return rv
+
+
     def promotion_analysis(self):
         r'''Extract time-binned target promotion candidate numbers from DRM.
 
@@ -2331,6 +2500,8 @@ class SimulationRun(object):
         summary.update(self.per_star_promotion())
         # fold in "funnel" promotion and deep-dive summaries
         summary.update(self.funnel_analysis())
+        # fold in "detfunnel" detection summary
+        summary.update(self.det_funnel_analysis())
         # delete the base data if asked
         if econo:
             self.drm = None
@@ -2543,7 +2714,8 @@ class EnsembleSummary(object):
         #     of dynamic keys (multi-band chars).  So we pool keys across all reductions.
         #     This affects '_yield_time_keys', for instance.
         attrs_auto = []
-        for key_family in ('event_count', 'event_analysis', 'promo_count', 'promo_phist', 'funnel',
+        for key_family in ('event_count', 'event_analysis', 'promo_count', 'promo_phist',
+                               'funnel', 'detfunnel', 
                                'per_star_yield', 'per_star_promotion', 'resource_analysis',
                                'summarize_revisits', 'visit_time', 
                                'earth_char', 'yield_time', 'radlum', 'earth', 'delta_v'):
@@ -2998,6 +3170,29 @@ class EnsembleSummary(object):
             w.writeheader()
             # dictionary mapping field -> value
             d = {f:self.summary[f] for f in funnel_fields}
+            w.writerow(d)
+        ensure_permissions(fn)
+
+        # 7.2: det_funnel analysis (allstars, promotion)
+        fn = args.outfile % ('det-funnel', 'csv')
+        print('\tDumping to %s' % fn)
+        # compose the names of all fields to be saved
+        # initial list
+        detfunnel_fields = []
+        # qoi = quantities-of-interest
+        #   these are created by the det_funnel_analysis() routine and relayed to here
+        detfunnel_qoi = self.auto_keys.get('detfunnel', [])
+        # add the names of more fields to be saved
+        detfunnel_fields.extend([ (x + '_' + y)
+                                for x in detfunnel_qoi
+                                for y in basic_stats])
+        # NB: detfunnel_* quantities are scalars!
+        # funnel_len = len(self.summary[funnel_fields[0]])
+        with open(fn, 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=detfunnel_fields)
+            w.writeheader()
+            # dictionary mapping field -> value
+            d = {f:self.summary[f] for f in detfunnel_fields}
             w.writerow(d)
         ensure_permissions(fn)
 

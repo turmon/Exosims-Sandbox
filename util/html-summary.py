@@ -62,11 +62,15 @@
 # author:
 #  Michael Turmon, JPL, 2018, 2020, 2022
 
-# Apologies: the "business logic" is entwined with the "presentation logic."
+# Apologies:
+# * The "business logic" is entwined with the "presentation logic."
+# * A superior approach would have been to generate this page in
+# markdown, and then convert the markdown to html with python's markdown library.
+# We wouldn't have had as fine control over the HTML (actually a minor plus),
+# and we wouldn't have to worry about matching tags, for a huge win.
 # Notes: profiling (2023-10) reveals the glob.glob's in sim_summary dominate 
 #   runtime, see below.
 
-from __future__ import print_function
 import argparse
 import sys
 import os
@@ -77,13 +81,7 @@ import csv
 import six.moves.cPickle as pickle
 from collections import defaultdict, OrderedDict
 #from six.moves import range
-
-# this is in effect a Py2/Py3 switch: Py2 io.StringIO.write() expects unicode 
-# inputs and raises on str inputs, so could not unify Py2/Py3 on io.StringIO
-try:
-    from cStringIO import StringIO
-except:
-    from io import StringIO
+from io import StringIO
 
 # image to use in case something we expect is not found
 DUMMY_IMAGE = '/Local/www-resources/image-not-found.png'
@@ -106,12 +104,25 @@ SECTION_HEADS = {
         'visit-time': '''Counts in these plots represent the number of target stars visited or re-visited. 
              <p>Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
              reduce overplotting of multiple time series.''',
-        'yield': '''Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
-             reduce overplotting of multiple time series.''',
-        'cume': '''Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
+        'yield': '''On the plots, time axis is mission clock time. 
+             Time-axis for the various lines is offset slightly to 
+             reduce overplotting of multiple time series.
+             <p>
+             The table entries for Detected (cumulative) give the final
+             achieved value shown on the Detections plots.''',
+        'cume': '''Time axis is mission clock time. 
+             Time-axis for the various lines is offset slightly to 
              reduce overplotting of multiple time series.''',
         'perstar-det':  '',
         'perstar-char': '',
+        'det-funnel': '''Progression of detection observations, separated into
+            all observed stars, and only promoted stars.
+            <p>
+            Attempts means all detection attempts on that target. 
+            Each attempt ends in either failure (further subdivided into 
+            one of three modes), or success.
+            Repeat detection attempts result in a count of successful detections.
+            ''',
         'promote': '''Funnel analysis from detection to characterization, 
             separated into deep dive targets and promoted targets.  
             <p>Promotions in the
@@ -442,6 +453,31 @@ class HTML_helper(object):
 #
 ############################################################
 
+# container class for plot information
+class GraphicsDescription(object):
+    # title: the as-shown-in-html name for graphics of this type
+    # target: graphics can be remade with "make S=... target"
+    # infotype: the type of info (sometimes it is both tables and plots)
+    title = 'Plot' # always replaced
+    target = ''
+    infotype = 'Plots' # sometimes Tables + Plots
+    def __init__(self, title, target, infotype=None):
+        self.title = title
+        self.target = target
+        if infotype:
+            self.infotype = infotype
+    
+# container class for table information
+class TableDescription(object):
+    title = 'Table'
+    text = 'This is a table.'
+    filename = ''
+    def __init__(self, title, text, filename):
+        self.title = title
+        self.text = text
+        self.filename = filename
+    
+
 class SimSummary(object):
     r'''Summarize one ensemble to HTML.
 
@@ -456,10 +492,12 @@ class SimSummary(object):
     sim_dir_no_index = set(('export', 'log', 'spc', 'sys', 'log_sim', 'run', 'html'))
     # NOTE: The following two lists are the main hook for adding new plot families to the
     # generated HTML:
-    #  -- The "graphics_map" associates a file pattern (e.g., /det-radlum*) to
+    #  -- "graphics_map" associates a file pattern (e.g., /det-radlum*) to
     #  a symbolic tag ("radlum").
-    #  -- The "graphics_show" gives a list of symbolic tags to put into HTML sections (in the
+    #  -- "graphics_show" gives a list of symbolic tags to put into HTML sections (in the
     #  order given), and the displayed section names.
+    #
+    # graphics_map: maps filename -> tag
     # list-of-pairs: (str,tag) means if filename contains 'str', it is a graphic of type 'tag'
     graphics_map = [('/det-perstar-det', 'perstar-det'),
                         ('/det-perstar-char', 'perstar-char'),
@@ -478,28 +516,44 @@ class SimSummary(object):
                         ('/det-earth-char-', 'earth-char'),
                         ('/det-earth-char-count', 'earth-char'),
                         ('/path-ens/path-', 'path')]
-    # (tag, str, target) means the as-shown-in-html name for graphics of type 'tag' is 'str',
-    # and it can be remade with "make S=... target"
-    # this is a list because it is in order of presentation
-    graphics_show = [
-        ('radlum',      'Radius/Luminosity',          'graphics'),
-        ('rad-sma',     'Radius/SMA',                 'graphics'),
-        ('duration',    'Event Duration',             'graphics'),
-        ('event-count', 'Event Count',                'graphics'),
-        ('visit-time',  'Visits vs. Time',            'graphics'),
-        ('yield',       'Mission Yield vs. Time',     'graphics'),
-        ('cume',        'Mission Resources vs. Time', 'graphics'),
-        ('perstar-det', 'Per-Star Detection',         'graphics'),
-        ('perstar-char','Per-Star Characterization',  'graphics'),
-        ('promote',     'Target Promotion',           'graphics'),
-        ('earth-char',  'Earth Characterizations',    'graphics'),
-        ('path',        'Full-Ensemble Path',         'path-ensemble')]
-    # list-of-pairs: (str,tag) means if filename contains 'str', it is a table of type 'tag'
-    tables_map = [('/table-funnel', 'promote'),
-                      ]
-    # (tag: str) means the as-shown-in-html name for table of type 'tag' is 'str'
-    tables_show = {'promote': 'Target Promotion',
-                       }
+    # tag: GD() means that graphics of type "tag" have the given description
+    # Note: the order here gives the order of presentation!
+    graphics_show = {
+        'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics'),
+        'rad-sma':     GraphicsDescription('Radius/SMA',                 'graphics'),
+        'duration':    GraphicsDescription('Event Duration',             'graphics'),
+        'event-count': GraphicsDescription('Event Count',                'graphics'),
+        'visit-time':  GraphicsDescription('Visits vs. Time',            'graphics'),
+        'yield':       GraphicsDescription('Yield vs. Time',             'graphics', 'Information'),
+        'cume':        GraphicsDescription('Mission Resources vs. Time', 'graphics'),
+        'perstar-det': GraphicsDescription('Per-Star Detection',         'graphics'),
+        'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics'),
+        'promote':     GraphicsDescription('Target Promotion',           'graphics', 'Information'),
+        'earth-char':  GraphicsDescription('Earth Characterizations',    'graphics'),
+        'path':        GraphicsDescription('Full-Ensemble Path',         'path-ensemble')
+        }
+    # tables_map: maps filename -> tag
+    # (str,tag) means if filename contains 'str', it is a table of type 'tag'
+    # and will be shown in-line with the associated graphics in "graphics_show".
+    # descriptive text is associated with the tag in "tables_show" below
+    tables_map = [
+        ('/table-funnel', 'promote'),
+        ('/table-det-funnel', 'yield'), # with yield-vs-time
+        ]
+    # tag: TD() means the as-shown-in-html information for table of type 'tag' is TD
+    tables_show = {
+        'promote': TableDescription(
+            'Target Promotion',
+            '''These tables show the promotion-to-characterization process for
+            the given star populations.''',
+            '/Local/www-resources/doc/promotion-tabulation.html'),
+        'yield': TableDescription(
+            'Detection Progress',
+            '''These tables show detection attempts and their outcome (failure/success)
+            across the given star populations.''',
+            '/Local/www-resources/doc/detection-tabulation.html')
+        }
+
     def __init__(self, sim_dir, name=''):
         self.name = name if name else sim_dir
         self.Ndrm = 0
@@ -600,6 +654,7 @@ class SimSummary(object):
         Markdown puts a |---|---| style line between the header rows 
         and the data rows (allowing for multi-line heads), and that this 
         code requires such a separation.
+        Another approach: use the python markdown library.
         '''
         with open(t_file, 'r') as fp:
             # 0 = not in a table; 1 = in table header; 2 = in table body
@@ -628,6 +683,9 @@ class SimSummary(object):
                     # table body
                     cols = line.split('|')
                     hh.table_row(cols[1:-1])
+                elif line.startswith('[//]'):
+                    # markdown-format comment
+                    pass
                 else:
                     print('Unexpected table line <%s>' % line)
             # be sure to close the table out
@@ -655,20 +713,23 @@ class SimSummary(object):
             # table of contents
             hh.toc_here('Contents')
             # overall images
-            for tag, shown, target in self.graphics_show:
+            for tag, g_desc in self.graphics_show.items():
+                target = g_desc.target
                 # overall section header
-                hh.header(shown + ' Plots')
+                hh.header(f'{g_desc.title} {g_desc.infotype}')
                 # optional caption
                 if SECTION_HEADS[tag]:
                     hh.paragraph(SECTION_HEADS[tag])
-                # tables, if any, are at top (ad hoc at the moment)
+                # tables, if any, are at section top (ad hoc at the moment)
                 if tag in self.tables_show and len(self.tables[tag]) > 0:
                     # print(f'Rendering {self.tables[tag]}')
-                    hh.header('Tables for %s' % shown, level=3)
-                    # TODO: insert table explanation here
-                    if True:
-                        hh.paragraph(
-                            hh.link('/Local/www-resources/doc/promotion-tabulation.html',
+                    # "t_desc" abstracts the table explanation
+                    t_desc = self.tables_show[tag]
+                    hh.header(f'Tables for {t_desc.title}', level=3)
+                    if t_desc.text:
+                        hh.paragraph(t_desc.text, br=True)
+                    if t_desc.filename:
+                        hh.paragraph(hh.link(t_desc.filename,
                                     'Rules for counting', inner=True) +
                             ' in these tables',
                             br=True)
@@ -698,7 +759,8 @@ class SimSummary(object):
                     hh.script('/Local/www-resources/ens-path-plots.js')
                 plots = self.graphics[tag]
                 if not plots:
-                    hh.paragraph('No such plots.  Generate with: make S=... %s' % target)
+                    if target:
+                        hh.paragraph(f'No such plots.  Generate with: make S=... {target}')
                 else:
                     hh.table_top(('Filename', 'Plot Preview'), elem_class='gfx')
                     for p in sorted(plots):
