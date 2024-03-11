@@ -35,6 +35,7 @@ Less-useful options:
   + `-A`: list available DRM and SPC attributes and values on stderr, as a reference.
       It honors match (`-m`), and inverse match (`-M`); supply `-S ""` to get SPC attributes.
   + `--json`: output is JSON, rather than standard CSV
+  + `--format`: supply a printf-style format string (e.g., %.3g) for CSV floats
   + `--empty`: output a record when planet attributes selected, even if no planets present
   + `-v`: increase verbosity (output is to stderr)
   + `-j N`: use N parallel workers (default = ~2/3 of cores)
@@ -727,6 +728,10 @@ class EnsembleSummary(object):
                 if args.header:
                     w.writeheader()
                 for d in dumpable:
+                    for k,v in d.items():
+                        # not used for ints or strings
+                        if args.float_format and isinstance(v, (float, np.floating)):
+                            d[k] = args.float_format % v
                     w.writerow(d)
         # list-of-dicts
         return dumpable
@@ -913,7 +918,8 @@ def parse_arglist(arglist):
     group = parser.add_argument_group('Seldom used')
     group.add_argument('--load_spc', help='Force load of SPC file', action='store_true', dest='load_spc',
                             default=False)
-    group.add_argument('--empty', help='output records despite having 0 planets', action='store_false', dest='empty_skipped',
+    group.add_argument('--format', help='Floating-point output format (%%-style)', dest='float_format', type=str, default='')
+    group.add_argument('--empty', help='Output records despite having 0 planets', action='store_false', dest='empty_skipped',
                             default=True)
     group.add_argument('-A', help='Show list of Available Attributes on stderr', action='store_true', dest='show_attributes')
     group.add_argument('-v', help='Verbosity', action='count', dest='verbose', default=0)
@@ -923,6 +929,9 @@ def parse_arglist(arglist):
     args = parser.parse_args(arglist)
     # for informative warnings, can be over-ridden
     args.progname = 'drm_tabulate'
+    if args.float_format and '%' not in args.float_format:
+        print(f'{args.progname}: Fatal. Need a % format specifier in --format.', file=sys.stderr)
+        sys.exit(1)
     # Enforce that -P => --plan_num (only for CLI)
     if args.planet and 'plan_num' not in args.pseudo:
         args.pseudo.append('plan_num')
