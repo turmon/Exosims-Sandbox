@@ -719,8 +719,6 @@ class EnsembleSummary(object):
         dumpable = []
         for i in inx:
             # dictionary mapping field -> value -- everything is a scalar here
-            #print(f'{i} => {self.summary.seed}')
-            #breakpoint()
             d = {f:self.summary[f][i] for f in saved_fields}
             dumpable.append(d)
         # place it in CSV or JSON
