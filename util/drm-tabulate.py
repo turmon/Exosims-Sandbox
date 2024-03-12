@@ -708,10 +708,19 @@ class EnsembleSummary(object):
         if len(Nrows) > 1:
             sys.stderr.write(f'Warning: DRMs have different attr counts: {sorted(Nrows)}\n')
         Nrow = max(Nrows, default=0)
+        # if present, sort by seed to eliminate job-based ordering
+        # sorted() is stable, so same-seed rows are not re-ordered
+        inx = list(range(Nrow))
+        if 'seed' in self.summary:
+            # re-order the index list
+            inx = sorted(inx,
+                key=lambda i: self.summary['seed'][i])
         # make list-of-dicts to dump
         dumpable = []
-        for i in range(Nrow):
+        for i in inx:
             # dictionary mapping field -> value -- everything is a scalar here
+            #print(f'{i} => {self.summary.seed}')
+            #breakpoint()
             d = {f:self.summary[f][i] for f in saved_fields}
             dumpable.append(d)
         # place it in CSV or JSON
