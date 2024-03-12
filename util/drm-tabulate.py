@@ -314,12 +314,14 @@ class SimulationRun(object):
             return
         # disabling gc during object construction speeds up by ~30% (12/2017, py 2.7.14)
         gc.disable()
-        drm = pickle.load(open(f, 'rb'), **PICKLE_ARGS)
+        with open(f, 'rb') as fp:
+            drm = pickle.load(fp, **PICKLE_ARGS)
         # load a spc file - only if needed to lookup -S, -P attrs
         if load_spc:
             g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
             if os.path.isfile(g):
-                spc = pickle.load(open(g, 'rb'), **PICKLE_ARGS)
+                with open(g, 'rb') as fp:
+                    spc = pickle.load(fp, **PICKLE_ARGS)
             else:
                 raise ValueError('Could not find a .spc file to match DRM <%s>' % f)
         else:
@@ -598,7 +600,9 @@ class SimulationRun(object):
                             vals_1[name] = [np.nan]
                         # further: correct any [[]] to [NaN]
                         #   heuristic - planet attributes like SNR will be [[]]
-                        elif len(vals_1[name]) == 1 and vals_1[name][0] == []:
+                        elif (len(vals_1[name]) == 1 and
+                                  isinstance(vals_1[name][0], list) and
+                                  len(vals_1[name][0]) == 0):
                             vals_1[name] = [np.nan]
                     #print('Empty planets')
                     #print(vals_1)
@@ -728,7 +732,9 @@ class EnsembleSummary(object):
             if args.json:
                 json.dump(dumpable, outfile, indent=2, cls=NumpyEncoder)
             else:
-                csv_opts = {}
+                # (possibly needed depending on float_format setup?)
+                # csv_opts = dict(quoting=csv.QUOTE_NONE)
+                csv_opts = dict()
                 if args.delimiter:
                     csv_opts['delimiter'] = args.delimiter
                 w = csv.DictWriter(outfile, fieldnames=saved_fields, **csv_opts)
