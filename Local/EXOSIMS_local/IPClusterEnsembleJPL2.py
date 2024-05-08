@@ -44,6 +44,7 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         self.interactive = False
 
         # allow bail-out
+        bailout = False
         if 'init-only' in ensemble_mode:
             self.vprint("SurveyEnsemble: initialize-only mode")
             bailout = True
