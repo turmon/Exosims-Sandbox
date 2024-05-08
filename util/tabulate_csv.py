@@ -198,8 +198,8 @@ class DetFunnelTabulator(BaseTabulator):
     # prefix for the CSV key lookup
     tag = 'detfunnel'
     targets = ('star', 'allplan', 'hzone', 'earth')
-    # do not render the +/- (std error of mean) numbers
-    show_error = False
+    # (do)/(don't) render the +/- (std error of mean) numbers
+    show_error = True
     def __init__(self):
         self.table_row_spec = [
             ['Status', 'Star', 'Planet', 'Hab. Zone', 'Earth'],
