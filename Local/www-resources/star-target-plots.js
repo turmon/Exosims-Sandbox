@@ -270,10 +270,9 @@ Plotly.d3.csv(sim_url, function(err1, simRow) {
 		y.push(row['star_L'])
 		qoi.push(qoi_info.xform(qoi_value))
 		size.push((isNaN(qoi_value) || isNaN(qoi_screen)) ? 5 : 8)
-		text.push(row['star_Name'] + formatStarAlternates(starAlternateNames, row['star_Name']) + '<br>' +
-			  qoi_info.name + ' = ' + qoi_value.toPrecision(4) + ' ' + qoi_info.unit +
-			  ' &plusmn; ' + qoi_sem.toPrecision(3) + ' [N = ' + qoi_nens + ']' + '<br>' +
-			  'Std. Deviation = '  + qoi_std.toPrecision(4) + ' ' + qoi_info.unit)
+		text.push(`${row['star_Name']} ${formatStarAlternates(starAlternateNames, row['star_Name'])} [${row['star_Spec']}]<br>` +
+			  `${qoi_info.name} = ${qoi_value.toPrecision(4)} ${qoi_info.unit} &plusmn; ${qoi_sem.toPrecision(3)} [N = ${qoi_nens}]<br>` +
+			  `Std. Deviation = ${qoi_std.toPrecision(4)} ${qoi_info.unit}`)
 	    }
 	    // console.log(qoi_info)
 	    insertPlotly(target, qoi_info, x, y, qoi, size, text);
