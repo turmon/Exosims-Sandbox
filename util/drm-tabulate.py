@@ -188,9 +188,6 @@ Typical usage:
 turmon apr 2019, feb 2022, dec 2022
 '''
 
-
-from __future__ import division
-from __future__ import print_function
 import argparse
 import sys
 import time
@@ -202,16 +199,13 @@ import csv
 import pprint
 import warnings
 import collections
+import pickle
 from functools import partial
 from dataclasses import dataclass
-from typing import ClassVar
-import six.moves.cPickle as pickle
 #import multiprocessing.dummy
 import multiprocessing as mproc
 import numpy as np
 import astropy.units as u
-from six.moves import map
-from six.moves import range
 
 ##
 ## Globals
@@ -641,7 +635,7 @@ class SimulationRun(object):
                     vals_1[name].extend([vals_1[name][-1]] * (Nplan - val_lens[name]))
                 if 'plan_num' in vals_1:
                     # set plan_num correctly ... its bogey value is [0]
-                    vals_1['plan_num'] = [(index + 1) for index in range(Nplan)]
+                    vals_1['plan_num'] = list((index + 1) for index in range(Nplan))
             # 4: vals += vals_1 (both are lists)
             for name in vals_1.keys():
                 vals[name].extend(vals_1[name])
