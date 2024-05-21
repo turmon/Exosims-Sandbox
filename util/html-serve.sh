@@ -207,7 +207,7 @@ elif [ "$mode" == status ]; then
     filepat="$SERVER_VARDIR/http-*.pid"
     if ls $filepat &> /dev/null; then
 	echo "Looking in: $SERVER_VARDIR"
-	echo "Found server(s):" 
+	echo "Found possible server(s):" 
 	for pfile in $filepat; do
 	    echo "$pfile"
 	    p_info=$(stat -c 'started by %U on %y' $pfile)
@@ -220,6 +220,7 @@ elif [ "$mode" == status ]; then
 	    echo "  " "HOST:PORT = ${x_host}:${x_port}"
 	    echo "  " "$p_info"
 	    echo "  " "View at this URL: http://${x_host}:${x_port}/sims"
+            echo "  " "Making trial request to server..."
 	    if wget -q -t 1 -O /dev/null "http://${x_host}:${x_port}/sims/"; then
 		echo "  " "Server seems to respond OK to requests over HTTP."
 	    else
