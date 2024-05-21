@@ -564,6 +564,8 @@ class SimulationRun(object):
         if f is None:
             self.drm = []
             self.spc = defaultdict(list)
+            # set this one up (we query it later)
+            self.spc['nPlans'] = 0
             self.name = 'dummy'
             self.Nstar = 0
             return
@@ -2558,7 +2560,9 @@ class EnsembleSummary(object):
         r'''Pool the attrs named by the given key (the key family) across all reductions.'''
         attr_set = set()
         for r in reductions:
-            attr_set.update(set(r[key]))
+            # r.get(): allow processing to continue if the family was not present
+            # 2024: but, processing still may not continue to completion
+            attr_set.update(set(r.get(key, [])))
         # ensure the order is deterministic
         return list(sorted(attr_set))
 
