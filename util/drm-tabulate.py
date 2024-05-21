@@ -22,6 +22,7 @@ Pseudo-attributes:
   + `-s`: output the DRM seed number (`__seed__`, boolean)
   + `-n`: output the DRM observation number (`__obs_num__`, boolean)
   + `--plan_num`: output the planet number (`__plan_num__`, boolean)
+  + `-N`, `--name`: output the scenario name (`__scenario__`, boolean)
   + `-1`: supply the CSV header on line 1 (`__header__`, boolean)
 
 Match only a subset of observations:
@@ -330,11 +331,34 @@ class SimulationRun(object):
         # set up object state
         self.name = f
         self.seed = int(os.path.splitext(os.path.basename(f))[0])
+        # used for the "name" pseudo-attribute
+        self.scenario = self.get_scenario(f)
         # self.Nstar = len(spc['Name'])
         self.spc = spc # = None, if SPC not needed
         self.drm = drm
         self.summary = None # place-holder
     
+
+    def get_scenario(self, f):
+        r'''Get scenario name from DRM file name.
+
+        Attempt to honor sandbox conventions, e.g., 
+           sims/aas_2024a.fam/H6H_TSDD_DulzE_omniNUV_20240107/drm/777.pkl
+           --> 
+           aas_2024a.fam/H6H_TSDD_DulzE_omniNUV_20240107
+        If the given filename does not appear to follow this convention, 
+        we attempt to do something reasonable.'''
+        if not f.startswith('sims/'):
+            # take off the SEED.pkl part and return the rest
+            return os.path.dirname(f)
+        # remove sims/ and continue
+        f_tail = f[5:]
+        d = os.path.dirname(f_tail)
+        if d.endswith('/drm'):
+            # this is the happy path: remove the trailing /drm
+            return d[:-4]
+        # otherwise, we return the last thing we recognized
+        return f_tail
 
     def extract_value_obs(self, obs, attr, just_peeking=False):
         r'''Extract a value, attr, from an observation, obs, allowing recursive lookup.
@@ -390,6 +414,8 @@ class SimulationRun(object):
                 return nobs + 1
         elif attr == 'seed':
             return self.seed
+        elif attr == 'scenario':
+            return self.scenario
         elif attr == 'plan_num':
             return 0 # likely altered later, depending on #planets
         else:
@@ -786,7 +812,7 @@ def json_to_object(args):
     # Insert container duplicating top-level attributes, for later
     d['__attr__'] = {key:val for key, val in d.items() if not key.startswith('_')}
     # Insert container of each pseudo-attribute that is present and truthy
-    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num', 'plan_num') if d.get('__{}__'.format(key))}
+    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num', 'plan_num', 'scenario') if d.get(f'__{key}__')}
     return d
 
 
@@ -910,10 +936,12 @@ def parse_arglist(arglist):
     group.add_argument('-p', '--planets', type=str, action='append', default=[], metavar='ATTR',
                             dest='planets', help='Planet attribute, as above, as a list per obs')
     group = parser.add_argument_group('Pseudo-attributes')
-    # -s and -n put a pseudo-attribute into that list
+    # -s, -n, -N put a pseudo-attribute into that list
     group.add_argument('-s', '--seed', dest='pseudo', help='Output the DRM seed', action='append_const', const='seed', default=[])
     group.add_argument('-n', '--obs_num', dest='pseudo', help='Output the observation number', action='append_const', const='obs_num')
     group.add_argument('--plan_num', dest='pseudo', help='Output the planet number', action='append_const', const='plan_num')
+    # key string is "scenario", not "name", because the former is searchable
+    group.add_argument('-N', '--name', dest='pseudo', help='Output the scenario Name', action='append_const', const='scenario')
     group = parser.add_argument_group('Attributes by JSON file')
     group.add_argument('-f', '--file', type=argparse.FileType('r'), help='JSON program file naming attributes')
 
