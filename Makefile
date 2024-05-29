@@ -193,7 +193,8 @@ exp-preflight:
 ## Data reductions
 ##
 .PHONY: reduce exp-reduce
-# (TODO: a non-for-loop way to do this)
+# (TODO: do without for-loop. the loop forces remake of top-level
+# index files for every scenario)
 # the presence of sims/X/drm is the cue that X is an ensemble
 exp-reduce: experiment-exists
 	@ for d in sims/$(S)/*; do \
