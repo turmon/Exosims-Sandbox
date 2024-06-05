@@ -2142,10 +2142,14 @@ class SimulationRun(object):
             RpL_population[p] = binner.quantize(self.spc, p, self.spc['plan2star'][p])
         # planet counts within each bin / #stars
         # NB: there can be out-of-range planets in the Rp,L space
-        h_RpL_population = np.histogram(RpL_population, RpL_bin_edges)[0] / (1.0 * self.Nstar)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning) # ignore 0/0 -> nan
+            h_RpL_population = np.histogram(RpL_population, RpL_bin_edges)[0] / (1.0 * self.Nstar)
         # [3b] for Earthlike; this the empirical eta-Earth
         earthlike = binner.is_earthlike(self.spc, np.arange(nPlans), self.spc['plan2star'])
-        exoE_population = np.sum(earthlike) / (1.0 * self.Nstar)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning) # ignore 0/0 -> nan
+            exoE_population = np.sum(earthlike) / (1.0 * self.Nstar)
 
         # returned value
         rv = {}
