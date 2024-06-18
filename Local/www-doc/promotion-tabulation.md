@@ -28,7 +28,8 @@ All quantities after &plusmn; are the
 [standard error of the mean](https://en.wikipedia.org/wiki/Standard_error).
 That is, they are the population standard deviation divided by
 the square root of ensemble size, so they will drop to zero
-as ensemble size grows.
+as ensemble size grows. 
+The ensemble size used for this scaling is shown in a note below the table.
 The intent is to show how accurate the shown average is.
 
 ## Table Contents
