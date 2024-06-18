@@ -159,6 +159,37 @@ class BaseTabulator(object):
             md_comment(f'Source file: {tail}'),
             '', '']))
 
+    def dump_coda(self, fp, plain, table, key):
+        r'''Presently: coda is the ensemble size, relevant to error bars.
+
+        Ensemble size should be the same for all keys, and for all tables.'''
+        # grab any key from the row_spec
+        Nens = -1
+        within_body = False
+        for nr, row in enumerate(self.table_row_spec):
+            if within_body:
+                # pick any cell: Nens is the same everywhere
+                cell = row[1]
+                key_Nens = self.tag + '_' + (cell % key) + '_nEns'
+                # do not fail if not present, just stick with (-1)
+                Nens = int(table.get(key_Nens, Nens))
+                break
+            # end of table head
+            if len(row) == 0:
+                within_body = True
+        # sanity checks
+        assert within_body, 'Unexpected format of table_row_spec'
+        assert Nens >= 0, 'Ensemble N not found'
+        # tag line featuring ensemble "N"
+        fp.write(
+            'Standard error of the mean, proportional to 1/&radic;N, ' +
+            'is computed for the yields shown above.\n' +
+            ('' if plain else '<br>') +
+            'These yields were averaged over ' +
+            f'N = {Nens} ensemble members.'
+            )
+
+
 ########################################
 ###
 ###  (characterization) Funnel tables
@@ -186,6 +217,8 @@ class FunnelTabulator(BaseTabulator):
             self.dump_provenance(fp, args)
         self.dump_worker(fp, args.plain, table[0], 'deep',  'Promotion to Characterization: Deep Dive Stars')
         self.dump_worker(fp, args.plain, table[0], 'promo', 'Promotion to Characterization: Promoted Stars')
+        # a text footnote for the table
+        self.dump_coda(  fp, args.plain, table[0], 'promo')
 
 
 ########################################
@@ -228,6 +261,8 @@ class DetFunnelTabulator(BaseTabulator):
             self.dump_provenance(fp, args)
         self.dump_worker(fp, args.plain, table[0], 'allstar', 'Detection Progression: All Observed Stars')
         self.dump_worker(fp, args.plain, table[0], 'promo',   'Detection Progression: Promoted Stars')
+        # a text footnote for the table
+        self.dump_coda(  fp, args.plain, table[0], 'promo')
 
 
 # list of classes for various tabulation types

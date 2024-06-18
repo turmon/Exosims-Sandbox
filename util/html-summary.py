@@ -649,13 +649,18 @@ class SimSummary(object):
         ...
         | data 2_1 | data 2_2 | ...            |
         <newline>
+        coda
         
         with an optional header (# Title) in front of the column heads.
         Markdown puts a |---|---| style line between the header rows 
-        and the data rows (allowing for multi-line heads), and that this 
-        code requires such a separation.
+        and the data rows (allowing for multi-line heads), and this 
+        code requires such a separation. The ending blank line is required.
+        The optional coda at the end is a text block entered as one
+        HTML paragraph.
         Another approach: use the python markdown library.
         '''
+        # slots for post-table markup (e.g. comments after the table)
+        coda = []
         with open(t_file, 'r') as fp:
             # 0 = not in a table; 1 = in table header; 2 = in table body
             in_table = 0
@@ -686,11 +691,19 @@ class SimSummary(object):
                 elif line.startswith('[//]'):
                     # markdown-format comment
                     pass
+                elif in_table == 0:
+                    # default case is text to appear after the table:
+                    # it will appear as a single paragraph
+                    coda.append(line)
                 else:
+                    # we are in-table, but line does not match table content
                     print('Unexpected table line <%s>' % line)
             # be sure to close the table out
             if in_table > 0:
                 hh.table_end()            
+            # insert the coda, if any, as one paragraph
+            if coda:
+                hh.paragraph('\n'.join(coda))
 
     def render(self, filename, uplink):
         r'''Main driver for rendering a directory to HTML files.'''
