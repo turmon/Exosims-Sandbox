@@ -182,7 +182,16 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         # that is, writing the file may not alter the dir modtime
         now = datetime.datetime.now()
         epoch = now.timestamp()
-        os.utime(os.path.dirname(path), (epoch, epoch))
+        out_dir = os.path.dirname(path)
+        try:
+            os.utime(out_dir, (epoch, epoch))
+        except PermissionError:
+            # need try/except: utime fails if not dir owner (it happens!)
+            # the fallback creates an empty file in the directory
+            tf = tempfile.NamedTemporaryFile(dir=out_dir, prefix='.', delete=True)
+            tf.write(bytes('Dummy file\n', 'utf-8'))
+            # will automatically delete the above file
+            tf.close()
 
     # reset simulation object AFTER the above files are written
     # note, reset_sim() will pop the seed from SS.specs, which causes 
