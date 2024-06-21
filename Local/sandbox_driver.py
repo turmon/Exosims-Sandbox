@@ -187,7 +187,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
             os.utime(out_dir, (epoch, epoch))
         except PermissionError:
             # need try/except: utime fails if not dir owner (it happens!)
-            # the fallback creates an empty file in the directory
+            # the below fallback creates an empty file in the directory
             tf = tempfile.NamedTemporaryFile(dir=out_dir, prefix='.', delete=True)
             tf.write(bytes('Dummy file\n', 'utf-8'))
             # will automatically delete the above file
