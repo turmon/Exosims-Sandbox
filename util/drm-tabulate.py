@@ -124,6 +124,9 @@ to support `spc[...]` within `-e` constructs above, load of the SPC
 can be forced by giving `--load_spc` (or if using External File,
 `"load_spc": true`).
 
+All attributes in the SPC file are available. In addition, the following
+attributes are derived from the SPC and made available:
+   _earthlike: is the planet Earthlike (Radius, SMA), via -P _earthlike
 
 EXTERNAL FILE
 -------------
@@ -331,7 +334,33 @@ class SimulationRun(object):
         self.spc = spc # = None, if SPC not needed
         self.drm = drm
         self.summary = None # place-holder
+        if self.spc:
+            self.spc['_earthlike'] = self.is_earthlike_all().astype(int)
     
+    def is_earthlike_all(self):
+        r'''Is the planet earthlike? (for a vector of every planet)
+
+        This follows the reference version in reduce_drms.py.'''
+        # handy abbreviations
+        spc = self.spc
+        plan2star = spc['plan2star']
+        # extract planet and star properties
+        L_star = spc['L'][plan2star]
+        Rp_plan = strip_units(spc['Rp'])
+        a_plan = strip_units(spc['a']) / np.sqrt(L_star)
+        # Definition: planet radius (in earth radii) and separation must be
+        # between the given bounds.
+        #    0.95 <= a/sqrt(L) <= 1.67
+        ## OLD:
+        ## The lower Rp bound is not axis-parallel, but
+        ## the best axis-parallel bound is 0.90, so that's what we use.
+        ## Rp_plan_lo = 0.90
+        # New: 0.8/sqrt(a)
+        Rp_plan_lo = 0.80/np.sqrt(a_plan)
+        # We use the numpy versions so that plan_ind can be a numpy vector.
+        return np.logical_and(
+            np.logical_and(Rp_plan >= Rp_plan_lo, Rp_plan <= 1.4),
+            np.logical_and(a_plan  >= 0.95,       a_plan  <= 1.67))
 
     def get_scenario(self, f):
         r'''Get scenario name from DRM file name.
