@@ -57,6 +57,7 @@
 #   ipp-nuke: deletes your ipython-parallel profile.  The inverse of ipp-create.
 #       (Note: attempts to "ipp-kill" first, so as to not leave engines running.)
 # (4) Web-server
+#   html-ensure: start Apache httpd web-server, if not running already
 #   html-start: start Apache httpd web-server
 #   html-stop: stop Apache httpd web-server
 #   html-status: show running web-servers, if any
@@ -488,7 +489,11 @@ exp-html-only: experiment-exists
 ## http server start, stop, status
 ##
 
-.PHONY: html-start html-stop html-status
+.PHONY: html-ensure html-start html-stop html-status
+html-ensure:
+	util/html-serve.sh ensure
+	@echo "Stop with \`make html-stop'."
+
 html-start:
 	util/html-serve.sh start
 	@echo "Stop with \`make html-stop'."

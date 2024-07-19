@@ -1,0 +1,18 @@
+# crontab fragment to check that a sentinel webpage
+# (currently sims/heartbeat.html) is available on the 
+# local web-server
+# 
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+#
+# The "-q" to html-serve ensures that it will produce no output
+# if the server is up, so that no mail will be sent.
+# But if the server is down and needs to be restarted, output
+# *will* be sent.
+# 
+# The notation */10 means "every 10 minutes"
+# 
+# For more information see the manual pages of crontab(5) and cron(8)
+#
+# m h  dom mon dow   command
+*/10 * *    *    *   cd /proj/exep/rhonda/Sandbox/HabEx && util/html-serve.sh -q ensure

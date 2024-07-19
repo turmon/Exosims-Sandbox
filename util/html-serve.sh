@@ -19,10 +19,12 @@
 #   html-serve.sh [-h] [-p PORT] [-s apache|simple] MODE
 #
 # where MODE is one of:
-#   start: start the server on the given port
-#   stop: stop the server on the given port
+#   ensure: if no server is running, start one
+#           this is generally preferred over "start"
+#   start:  start the server on the given port
+#   stop:   stop the server on the given port
 #   status: list the servers running, if any
-#   init: check that server status files work: should be unneeded.
+#   init:   check that server status files work: should be unneeded.
 #
 # and:
 #  -p PORT   => gives the HTTP port number.  Default is 8090.
@@ -63,6 +65,9 @@ else
     exit 1
 fi
 
+# URL to query for when checking server status
+heartbeat=sims/heartbeat.html
+
 ## defaults
 # SERVER: apache server binary
 # SERVER_GROUP: whole group is allowed to kill the server
@@ -74,7 +79,7 @@ if [[ $CONTEXT = s383 ]]; then
     # (need the slash)
     MOD_ROOT=/usr/lib/apache2/
 elif [ $CONTEXT = jplsc ]; then
-    SERVER=httpd
+    SERVER=/usr/sbin/httpd # dir may not be in PATH
     SERVER_GROUP=exo-yield
     DOC_ROOT=/projects/exo_yield/Sandbox/hwo
     # (empty)
@@ -95,17 +100,21 @@ DEFAULT_SERVER=apache
 
 port=$DEFAULT_PORT
 server=$DEFAULT_SERVER
-while getopts "hp:s:" opt; do
+verbosity=normal
+while getopts "hqp:s:" opt; do
     case $opt in
 	s)
 	    # server flavor
 	    server="$OPTARG"
-            echo "${PROGNAME}: Server type set to: $server"
+            [ "$verbosity" == normal ] && echo "${PROGNAME}: Server type set to: $server"
 	    ;;
 	p)
 	    # port number
 	    port="$OPTARG"
-            echo "${PROGNAME}: Operating port set to: $port"
+            [ "$verbosity" = normal ] && echo "${PROGNAME}: Operating port set to: $port"
+	    ;;
+	q)
+	    verbosity=quiet
 	    ;;
 	h)
 	    # help text
@@ -218,7 +227,7 @@ if [[ "$mode" == start ]]; then
 	nohup python -m http.server "$port" -b localhost 1>/dev/null 2>> "$SERVER_LOG" &
 	# capture server PID - last backgrounded command
 	server_pid_var=$!
-        echo "$server_pid_var" > $SERVER_PID
+        echo "$server_pid_var" > "$SERVER_PID"
     else
 	echo "${PROGNAME}: Unreachable." >&2
 	exit 2
@@ -250,6 +259,13 @@ elif [[ "$mode" == status ]]; then
 	echo "Found possible server(s):" 
 	for pfile in $filepat; do
 	    echo "$pfile"
+	    # contents should be just the PID
+	    pid=$(cat "$pfile")
+	    if ps ax | grep -q "^ *$pid " ; then
+		pid_runs="running"
+	    else
+		pid_runs="seems to have died"
+	    fi
 	    p_info=$(stat -c 'Started by %U on %y' "$pfile")
 	    x_hopo=$(echo "$pfile" | sed -e 's|.*/http-||' -e 's|\.pid||' -e 's|\.|:|')
 	    # we listen on localhost, x_host is the server hostname
@@ -259,10 +275,11 @@ elif [[ "$mode" == status ]]; then
 	    # (the above filename manipulations find the host/port the server is running on)
 	    echo "  " "Running on $x_host"
 	    echo "  " "$p_info"
+	    echo "  " "PID = $pid, $pid_runs"
 	    echo "  " "HOST:PORT = ${x_serv}:${x_port}"
 	    echo "  " "View at this URL: http://${x_serv}:${x_port}/sims"
             echo "  " "Making trial request to server..."
-	    if wget -q -t 1 -O /dev/null "http://${x_serv}:${x_port}/sims/"; then
+	    if wget -q -t 1 -O /dev/null "http://${x_serv}:${x_port}/$heartbeat"; then
 		echo "  " "Server seems to respond OK to requests over HTTP."
 	    else
 		echo "  " "Server does not respond to requests over HTTP."
@@ -271,6 +288,24 @@ elif [[ "$mode" == status ]]; then
     else
 	echo "No HTTP servers running on this host." 
     fi
+
+elif [[ "$mode" == ensure ]]; then
+    #
+    # ensure the server is operating
+    #
+    # test if it is running
+    if wget -q -t 1 -O /dev/null "http://localhost:$port/$heartbeat"; then
+	if [[ "$verbosity" != "quiet" ]]; then
+	    echo "${PROGNAME}: Server is OK on port $port"
+	fi
+    else
+	# OK to be noisy if it's down
+	echo "${PROGNAME}: Server is down on port $port"
+	echo "${PROGNAME}: Attempting to restart"
+	set +x
+	$0 -p "$port" -s "$server" start
+    fi
+
 
 else
     echo "${PROGNAME}: Unrecognized mode input $mode." >&2
