@@ -1,0 +1,28 @@
+#!/usr/bin/env -S util/drm-tabulate.py -f
+# 
+# Demo script for drm-tabulate. Invoke with a list of pickle files as arguments.
+# 
+# This mimics the command-line construction:
+# util/drm-tabulate.py -s1 --plan_num -M det_comp -a star_ind -a cstat:char_info.0.char_status -P Rp -P a -S L -P _earthlike <PICKLE FILES>
+#
+{
+    "arrival_time": "arrival_time",
+    "cstat": "char_info.0.char_status",
+    "__seed__": true,
+    "__obs_num__": true,
+    "__plan_num__": true,
+    "__header__": true,
+    "__match__": "char_comp",
+    "__planet__": {
+	"a":  "a",
+	"Rp": "Rp",
+	"earth":  "_earthlike",
+	"Mp": "Mp"
+    },
+    "__star__": {
+	"Spec": "Spec",
+	"Name": "Name",
+	"dist": "dist",
+	"luminosity": "L"
+    }
+}

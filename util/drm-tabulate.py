@@ -135,6 +135,7 @@ These expressions can become complex, so the "-a ATTR" and all above
 constructs can be placed in a JSON file and specified with `-f FILE`:
 
 ``` json
+# drm-tabulate parameters: count chars
 {
   "__match__": "char_info",
   "lambda": "char_mode.lam",
@@ -147,6 +148,8 @@ constructs can be placed in a JSON file and specified with `-f FILE`:
   }
 }
 ```
+
+As an extension to JSON, comment lines (beginning with #) are discarded.
 
 Recall JSON uses double-quotes for strings, and Python dictionary keys
 can be extracted with `d['attr']`, so there is no conflict between quote marks.
@@ -168,6 +171,10 @@ As on the command line, the SPC file is loaded if `__star__`, `__planet__`,
 or `__planets__ `is present. To force the load if an `__eval__` construct needs
 the SPC file, use `--load_spc`, or the Boolean directive `"__load_spc__": true`
 within the JSON.
+
+Discarding #-starting lines permits use of the shell's "shebang" convention.
+You can capture a complex argument structure in a file and re-use it in other
+circumstances. See: util/drm-tab-demo.json5 for an example.
 
 
 USAGE
@@ -602,6 +609,7 @@ class SimulationRun(object):
         not_yet_shown = True
         for nobs, obs in enumerate(self.drm):
             # 1: no obs[match], or obs[match_inv] present => skip this observation
+            #print(f' {obs["ObsNum"]}: {match} {bool(match)} -> {self.extract_value_obs(obs, match, just_peeking=True)}')
             if match and not self.extract_value_obs(obs, match, just_peeking=True):
                 continue
             if match_inv and self.extract_value_obs(obs, match_inv, just_peeking=True):
@@ -805,12 +813,21 @@ class EnsembleSummary(object):
 ###
 ########################################
 
+class JSONWithCommentsDecoder(json.JSONDecoder):
+    r'''Remove JSON lines starting with # to allow -f with shebang'''
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def decode(self, s: str) -> any:
+        s = '\n'.join(l if not l.lstrip().startswith('#') else '' for l in s.split('\n'))
+        return super().decode(s)
+
 def json_to_object(args):
     r'''Load a JSON dictionary, extract any program flags, return the remainder.'''
     # 1: attempt to load a dict from a JSON file
     try:
-        # ensure the load preserves order
-        d = json.load(args.file, object_pairs_hook=collections.OrderedDict)
+        # the load will ignore comments
+        d = json.load(args.file, cls=JSONWithCommentsDecoder)
     except:
         sys.stderr.write(f'{args.progname}: Error loading json-format args from file "{args.file.name}"\n')
         sys.stderr.write(f'{args.progname}: Traceback follows.\n')
@@ -821,12 +838,12 @@ def json_to_object(args):
     args.file = args.file.name
     assert isinstance(d, collections.abc.Mapping), 'JSON "{}" must translate to a dictionary'.format(args.file)
     # 2: Propagate simple flags from d -> args
-    # an args.match within given args overrides JSON
+    # args.match present within args overrides JSON
     if not args.match:
         args.match = d.get('__match__', args.match)
-    # an args.match_inv within given args overrides JSON
+    # args.match_inv present within args overrides JSON
     if not args.match_inv:
-        args.match_inv = d.get('__match_inv__', args.match)
+        args.match_inv = d.get('__match_inv__', args.match_inv)
     # update args.header if present in d
     args.header = bool(d.get('__header__', args.header))
     # update args.load_spc if present in d
