@@ -810,7 +810,11 @@ class SimulationRun(object):
             det_earth_frac   = yield_det_earth_uniq  / earth_per_star
             char_plan_frac   = yield_char_plan_uniq  / plan_per_star
             char_earth_frac  = yield_char_earth_uniq / earth_per_star
-
+            # turmon 2024/07: the average integration time, or NaN
+            # (of course, != cumulative time on the target star)
+            dtime_avg = dtime_ctr / tried_det_ctr
+            ctime_avg = ctime_ctr / tried_char_ctr
+        
         # return a dict of results for this DRM
         # Note: names from here forward do not change
         rv = {
@@ -818,6 +822,7 @@ class SimulationRun(object):
             'h_star_det_visit':        tried_det_ctr,
             'h_star_det_tobs1':        tried_det_obs_time,
             'h_star_det_tInt':         dtime_ctr,
+            'h_star_det_tIntAvg':      dtime_avg,
             'h_star_det_comp':         det_comp,
             'h_star_det_plan_cume':    yield_det_plan_cume,
             'h_star_det_plan_uniq':    yield_det_plan_uniq,
@@ -831,6 +836,7 @@ class SimulationRun(object):
             'h_star_char_visit':       tried_char_ctr,
             'h_star_char_tobs1':       tried_char_obs_time,
             'h_star_char_tInt':        ctime_ctr,
+            'h_star_char_tIntAvg':     ctime_avg,
             'h_star_char_comp':        char_comp,
             'h_star_char_plan_cume':   yield_char_plan_cume,
             'h_star_char_plan_uniq':   yield_char_plan_uniq,

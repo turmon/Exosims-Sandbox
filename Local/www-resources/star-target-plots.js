@@ -26,7 +26,8 @@ var known_qoi_info = [
     // detection non-yield
     {fieldname: 'h_star_det_visit_mean',        name: 'Detection Visits',                  screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
     {fieldname: 'h_star_det_comp_mean',         name: 'Mean Completeness (Det.)',          screen: '',                           unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_tInt_mean',         name: 'Mean Integration Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_det_tInt_mean',         name: 'Mean Cume Integ. Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_det_tIntAvg_mean',      name: 'Mean One-visit Integ. Time (Det.)', screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
     {fieldname: 'h_star_det_tobs1_mean',        name: 'First Observation Time (Det.)',     screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: passthru},
     // detection yields			        
     {fieldname: 'h_star_det_plan_cume_mean',    name: 'Mean Total Detections',             screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
@@ -41,7 +42,8 @@ var known_qoi_info = [
     // char non-yield			        
     {fieldname: 'h_star_char_visit_mean',       name: 'Characterization Visits',           screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
     {fieldname: 'h_star_char_comp_mean',        name: 'Mean Completeness (Char.)',         screen: '',                            unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_tInt_mean',        name: 'Mean Integration Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_char_tInt_mean',        name: 'Mean Cume Integ. Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_char_tIntAvg_mean',     name: 'Mean One-visit Integ. Time (Char.)',screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
     {fieldname: 'h_star_char_tobs1_mean',       name: 'First Observation Time (Char.)',    screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: passthru},
     // char yields
     {fieldname: 'h_star_char_plan_cume_mean',   name: 'Mean Total Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
