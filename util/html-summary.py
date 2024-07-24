@@ -69,7 +69,7 @@
 # We wouldn't have had as fine control over the HTML (actually a minor plus),
 # and we wouldn't have to worry about matching tags, for a huge win.
 # Notes: profiling (2023-10) reveals the glob.glob's in sim_summary dominate 
-#   runtime, see below.
+# runtime, see below.
 
 import argparse
 import sys
@@ -82,9 +82,15 @@ import six.moves.cPickle as pickle
 from collections import defaultdict, OrderedDict
 #from six.moves import range
 from io import StringIO
+from pathlib import Path
+
+# path to resources
+WWW_RES = Path('/Local/www-resources')
+# doc directory within this
+WWW_DOC = WWW_RES / 'doc'
 
 # image to use in case something we expect is not found
-DUMMY_IMAGE = '/Local/www-resources/image-not-found.png'
+DUMMY_IMAGE = WWW_RES / 'image-not-found.png'
 
 # section heads, one for each category of graphic
 SECTION_HEADS = {
@@ -458,14 +464,18 @@ class GraphicsDescription(object):
     # title: the as-shown-in-html name for graphics of this type
     # target: graphics can be remade with "make S=... target"
     # infotype: the type of info (sometimes it is both tables and plots)
+    # filename: for descriptive webpage (parallel with TableDescription below)
     title = 'Plot' # always replaced
     target = ''
     infotype = 'Plots' # sometimes Tables + Plots
-    def __init__(self, title, target, infotype=None):
+    filename = None
+    def __init__(self, title, target, infotype=None, filename=None):
         self.title = title
         self.target = target
         if infotype:
             self.infotype = infotype
+        if filename:
+            self.filename = filename
     
 # container class for table information
 class TableDescription(object):
@@ -524,11 +534,11 @@ class SimSummary(object):
         'duration':    GraphicsDescription('Event Duration',             'graphics'),
         'event-count': GraphicsDescription('Event Count',                'graphics'),
         'visit-time':  GraphicsDescription('Visits vs. Time',            'graphics'),
-        'yield':       GraphicsDescription('Yield vs. Time',             'graphics', 'Information'),
+        'yield':       GraphicsDescription('Yield vs. Time',             'graphics', infotype='Information'),
         'cume':        GraphicsDescription('Mission Resources vs. Time', 'graphics'),
-        'perstar-det': GraphicsDescription('Per-Star Detection',         'graphics'),
-        'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics'),
-        'promote':     GraphicsDescription('Target Promotion',           'graphics', 'Information'),
+        'perstar-det': GraphicsDescription('Per-Star Detection',         'graphics', filename=WWW_DOC/'per-star-metrics.html'),
+        'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics', filename=WWW_DOC/'per-star-metrics.html'),
+        'promote':     GraphicsDescription('Target Promotion',           'graphics', infotype='Information'),
         'earth-char':  GraphicsDescription('Earth Characterizations',    'graphics'),
         'path':        GraphicsDescription('Full-Ensemble Path',         'path-ensemble')
         }
@@ -546,12 +556,12 @@ class SimSummary(object):
             'Target Promotion',
             '''These tables show the promotion-to-characterization process for
             the given star populations.''',
-            '/Local/www-resources/doc/promotion-tabulation.html'),
+            WWW_DOC / 'promotion-tabulation.html'),
         'yield': TableDescription(
             'Detection Progress',
             '''These tables show detection attempts and their outcome (failure/success)
             across the given star populations.''',
-            '/Local/www-resources/doc/detection-tabulation.html')
+            WWW_DOC / 'detection-tabulation.html')
         }
 
     def __init__(self, sim_dir, name=''):
@@ -717,7 +727,7 @@ class SimSummary(object):
             # navigation link
             hh.link('../../', 'Up to %s' % uplink)
             # fixed link to documentation
-            hh.paragraph('Sandbox ' + hh.link('/Local/www-resources/doc_sandbox/', 'documentation', inner=True))
+            hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
             # summary
             hh.header('Ensemble Summary')
             hh.paragraph(f'Ensemble: {self.name}')
@@ -753,12 +763,16 @@ class SimSummary(object):
                     hh.header('Interactive Detection Plot Widget', level=3)
                     hh.div('<!-- det plot goes here -->', id='detPlotDiv', style='width: 900px; height: 700px;')
                     hh.div('Detection QOI for Plot Shading: <select class="det_qoi_select"> </select>')
+                    if g_desc.filename:
+                        hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                 elif tag == 'perstar-char':
                     hh.header('Interactive Characterization Plot Widget', level=3)
                     hh.div('<!-- char plot goes here -->', id='charPlotDiv', style='width: 900px; height: 700px;')
                     hh.div('Characterization QOI for Plot Shading: <select class="char_qoi_select"> </select>')
+                    if g_desc.filename:
+                        hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                     # assume dets always accompany chars, and insert the script at this point
-                    hh.script('/Local/www-resources/star-target-plots.js')
+                    hh.script(WWW_RES/'star-target-plots.js')
                 elif tag == 'path' and self.graphics[tag]:
                     hh.header('Interactive Ensemble Path Widget', level=3)
                     hh.div('<!-- ensemble path plot goes here -->',
@@ -769,7 +783,7 @@ class SimSummary(object):
                         'var ens_path_root = "../path-ens";',
                         'var ens_path_mode = "ensemble";'],
                               literal=True)
-                    hh.script('/Local/www-resources/ens-path-plots.js')
+                    hh.script(WWW_RES/'ens-path-plots.js')
                 plots = self.graphics[tag]
                 if not plots:
                     if target:
@@ -826,7 +840,7 @@ class SimSummary(object):
             hh.header('Observing Timeline')
             if 'obs-timeline' in info:
                 hh.paragraph('Observing timeline plot ' +
-                    hh.link('/Local/www-resources/doc/obs-timeline.html', 'format description', inner=True),
+                    hh.link(WWW_DOC/'obs-timeline.html', 'format description', inner=True),
                     br=True)
                 img_target = info['obs-timeline']
                 hh.image(img_target, width=70)
@@ -839,7 +853,7 @@ class SimSummary(object):
             hh.header('Star-Observation Trace')
             if 'star-obs-trace' in info:
                 hh.paragraph('Star-observation trace plot ' +
-                    hh.link('/Local/www-resources/doc/star-obs-trace.html', 'format description', inner=True),
+                    hh.link(WWW_DOC/'star-obs-trace.html', 'format description', inner=True),
                     br=True)
                 img_target = info['star-obs-trace']
                 hh.image(img_target, width=70)
@@ -869,14 +883,14 @@ class SimSummary(object):
                     'var ens_path_root = "../path/%s-cume";' % seed,
                     'var ens_path_mode = "single";'],
                               literal=True)
-                hh.script('/Local/www-resources/ens-path-plots.js')
+                hh.script(WWW_RES/'ens-path-plots.js')
             else:
                 hh.paragraph('Data for widget not available.  Generate with: make ... path-movie-N')
             # path movie
             hh.header('Path Movie of This Tour')
             if 'movie' in info:
                 hh.paragraph('Path movie ' +
-                    hh.link('/Local/www-resources/doc/path-movie.html', 'format description', inner=True),
+                    hh.link(WWW_DOC/'path-movie.html', 'format description', inner=True),
                     br=True)
                 hh.video(info['movie'])
             else:
@@ -1055,7 +1069,7 @@ def index_group(args, startpath, title, uplink):
         # navigation link
         if uplink:
             hh.link('../', 'Up to %s' % uplink)
-        hh.paragraph('Sandbox ' + hh.link('/Local/www-resources/doc_sandbox/', 'documentation', inner=True))
+        hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
         # table of individual sims
         hh.header('Ensembles')
         # make the table be sortable so that the JS sorter knows about it

@@ -18,7 +18,7 @@
 SHELL=/bin/bash -o pipefail
 
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md
+SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md
 
 # destination directory for above pages
 DEST_DIR=../www-resources/doc

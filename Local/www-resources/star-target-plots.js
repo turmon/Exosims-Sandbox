@@ -25,15 +25,15 @@ function passthru(x) {return x};
 var known_qoi_info = [
     // detection non-yield
     {fieldname: 'h_star_det_visit_mean',        name: 'Detection Visits',                  screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_comp_mean',         name: 'Mean Completeness (Det.)',          screen: '',                           unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_tInt_mean',         name: 'Mean Cume Integ. Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_det_tIntAvg_mean',      name: 'Mean One-visit Integ. Time (Det.)', screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_det_comp_mean',         name: 'Completeness (Det.)',               screen: '',                           unit: 'count', xform: passthru},
+    {fieldname: 'h_star_det_tInt_mean',         name: 'Cume Integ. Time (Det.)',           screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_det_tIntAvg_mean',      name: 'One-visit Integ. Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
     {fieldname: 'h_star_det_tobs1_mean',        name: 'First Observation Time (Det.)',     screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: passthru},
     // detection yields			        
-    {fieldname: 'h_star_det_plan_cume_mean',    name: 'Mean Total Detections',             screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_plan_uniq_mean',    name: 'Mean Unique Detections',            screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Mean Total Detections: Earths',     screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Mean Unique Detections: Earths',    screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_det_plan_cume_mean',    name: 'Total Detections',                  screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_det_plan_uniq_mean',    name: 'Unique Detections',                 screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Total Detections: Earths',          screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Unique Detections: Earths',         screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
     // detection ratios			        
     {fieldname: 'h_star_det_plan_value_mean',   name: 'Detection Rank',                    screen: '',                           unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_det_plan_frac_mean',    name: 'Planets Detected/Planets Present',  screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
@@ -41,15 +41,15 @@ var known_qoi_info = [
     {fieldname: 'h_star_det_earth_frac_mean',   name: 'Earths Detected/Earths Present',    screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
     // char non-yield			        
     {fieldname: 'h_star_char_visit_mean',       name: 'Characterization Visits',           screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_comp_mean',        name: 'Mean Completeness (Char.)',         screen: '',                            unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_tInt_mean',        name: 'Mean Cume Integ. Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_char_tIntAvg_mean',     name: 'Mean One-visit Integ. Time (Char.)',screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_char_comp_mean',        name: 'Completeness (Char.)',              screen: '',                            unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_tInt_mean',        name: 'Cume Integ. Time (Char.)',          screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
+    {fieldname: 'h_star_char_tIntAvg_mean',     name: 'One-visit Integ. Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
     {fieldname: 'h_star_char_tobs1_mean',       name: 'First Observation Time (Char.)',    screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: passthru},
     // char yields
-    {fieldname: 'h_star_char_plan_cume_mean',   name: 'Mean Total Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_plan_uniq_mean',   name: 'Mean Unique Characterizations',         screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Mean Total Characterizations: Earths',  screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Mean Unique Characterizations: Earths', screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_plan_cume_mean',   name: 'Total Characterizations',           screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_plan_uniq_mean',   name: 'Unique Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Total Characterizations: Earths',   screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Unique Characterizations: Earths',  screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
     // char ratios
     {fieldname: 'h_star_char_plan_value_mean',  name: 'Characterization Rank',                 screen: '',                            unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_char_plan_frac_mean',   name: 'Planets Characterized/Planets Present', screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
@@ -203,14 +203,17 @@ Plotly.d3.csv(sim_url, function(err1, simRow) {
 	var simBigTitle = 'Experiment ' + simRow[0].experiment + ', Ensemble Size ' + simRow[0].ensemble_size;
 
 	// the fieldnames are unique and define what CSV columns we can plot
+	// gen: generic = pertaining to either det or char
 	var qoi_gen_fieldnames = Object.getOwnPropertyNames(allRows[0])
-	    .filter(function (name) {return name.match(/h_star_.*_per_star_mean/)});
+	    .filter(function (name) {return name.match(/h_star_.*_per_star_mean/)}).sort();
+	// det = (det + promo + gen), and sorting these to give a deterministic order
 	var qoi_det_fieldnames = Object.getOwnPropertyNames(allRows[0])
 	    .filter(function (name) {return name.match(/h_star_(?:det|promo).*_mean/)})
-	    .concat(qoi_gen_fieldnames);
+	    .sort().concat(qoi_gen_fieldnames);
+	// char = (char + gen), and sorting these to give a deterministic order
 	var qoi_char_fieldnames = Object.getOwnPropertyNames(allRows[0])
 	    .filter(function (name) {return name.match(/h_star_char.*_mean/)})
-	    .concat(qoi_gen_fieldnames);
+	    .sort().concat(qoi_gen_fieldnames);
 
 	// the best metadata we have
 	var qoi_det_info  = matchFieldnamesToInfo(qoi_det_fieldnames);
