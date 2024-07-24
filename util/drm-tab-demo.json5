@@ -1,4 +1,4 @@
-#!/usr/bin/env -S util/drm-tabulate.py -f
+#!/usr/bin/env -S drm-tabulate.py -f
 # 
 # Demo script for drm-tabulate. Invoke with a list of pickle files as arguments.
 # 
