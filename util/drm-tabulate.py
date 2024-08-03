@@ -11,6 +11,9 @@ Args:
 Attributes of an observation "obs" in the DRM are printed by 
 naming them in one of the following ways.
 
+If any DRM argument is a directory, we descend from there recursively
+into scripts, .exp, or .fam directories to find pickles (drm/*.pkl).
+
 Attribute naming:
   + `-a ATTR`: output `obs[ATTR]` (repeat -a OK, see below)
   + `-S ATTR`: output the SPC attribute ATTR for `obs[star_ind]`
@@ -200,6 +203,7 @@ turmon apr 2019, feb 2022, dec 2022
 
 import argparse
 import sys
+import glob
 import time
 import json
 import os
@@ -1021,6 +1025,42 @@ def parse_arglist(arglist):
     return args
 
 
+def expand_drm(progname, drm):
+    r'''Expand drm input arg such that it descends into directories.'''
+    def expand_dir(d):
+        dx = []
+        for root, dirs, files in os.walk(d):
+            # expand drm/*.pkl (two cases)
+            # case 1: drm directory was named in the argument
+            if root.endswith('/drm'):
+                dx.extend(glob.glob(f'{root}/*.pkl'))
+                dirs[:] = [] # descend no farther
+                continue
+            # case 2: it was a script directory
+            if 'drm' in dirs:
+                dx.extend(glob.glob(f'{root}/drm/*.pkl'))
+                dirs[:] = [] # descend no farther
+                continue
+            # only allow descent into .exp or .fam ...
+            # ...or script directories having /drm inside
+            downs = [d for d in dirs if (
+                d.endswith('.exp') or d.endswith('.fam') or
+                os.path.isdir(f'{root}/{d}/drm'))]
+            dirs[:] = downs
+        return dx
+            
+    d_all = []
+    # iterate over the drm input list, expanding each dir present
+    for x in drm:
+        if os.path.isfile(x):
+            d_all.append(x)
+        elif os.path.isdir(x):
+            d_all.extend(expand_dir(x))
+        else:
+            print(f'{args.progname}: Fatal. Could not access {x}.', file=sys.stderr)
+            sys.exit(1)
+    return d_all
+
 ########################################
 ###
 ###  Program Entry
@@ -1047,5 +1087,7 @@ if __name__ == '__main__':
         for name, attr in args.all_attrs.items():
             sys.stderr.write(f'  retrieving "{attr.flavor}" type attribute: {name} <- {attr.text}\n')
 
-    main(args, args.drm, sys.stdout)
+    infiles = expand_drm(args.progname, args.drm)
+
+    main(args, infiles, sys.stdout)
     sys.exit(0)
