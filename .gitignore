@@ -45,5 +45,7 @@ Local/www-resources/doc_sandbox/*
 !Local/www-resources/doc_sandbox/README
 
 # remove the scripts from source control
+# (except one file, to allow recursive Make to work)
 Scripts
+!Scripts/sims.json
 
