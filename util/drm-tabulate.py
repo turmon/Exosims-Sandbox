@@ -26,6 +26,7 @@ Pseudo-attributes:
   + `-n`: output the DRM observation number (`__obs_num__`, boolean)
   + `--plan_num`: output the planet number (`__plan_num__`, boolean)
   + `-N`, `--name`: output the scenario name (`__scenario__`, boolean)
+  + `-B`, `--basename`: last directory in scenario (`__basename__`, boolean)
   + `-1`: supply the CSV header on line 1 (`__header__`, boolean)
 
 Match only a subset of observations:
@@ -185,17 +186,21 @@ USAGE
 
 Typical usage:
 ``` shell
-  # each arrival_time
-  util/drm-tabulate.py -a arrival_time sims/HabEx_4m_dmag26/drm/*
+  # each arrival_time for one pickle
+  util/drm-tabulate.py -a arrival_time sims/HabEx_4m_dmag26/drm/777.pkl
 
-  # each char_time, looking only at chars
-  util/drm-tabulate.py -m char_time -a char_time sims/HabEx_4m_dmag26/drm/*
+  # each char_time, looking only at chars, recursive in drm/
+  util/drm-tabulate.py -m char_time -a char_time sims/HabEx_4m_dmag26/drm
+
+  # view available fields (first observation) (first char observation)
+  util/drm-tabulate.py -A sims/HabEx_4m_dmag26/drm/777.pkl
+  util/drm-tabulate.py -A -m char_info sims/HabEx_4m_dmag26/drm/777.pkl
 
   # number of successful chars, only for chars
-  util/drm-tabulate.py -m char_info -e "np.sum(char_info[0]['char_status'] == 1)" sims/HabEx_4m_dmag26/drm/*
+  util/drm-tabulate.py -m char_info -e "np.sum(char_info[0]['char_status'] == 1)" sims/HabEx_4m_dmag26/drm
 
   # planet-by-planet output of: char_status, planet mass, star spectral class, etc.
-  util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm/*.pkl
+  util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm
 ```
 
 turmon apr 2019, feb 2022, dec 2022
@@ -341,6 +346,7 @@ class SimulationRun(object):
         self.seed = int(os.path.splitext(os.path.basename(f))[0])
         # used for the "name" pseudo-attribute
         self.scenario = self.get_scenario(f)
+        self.basename = os.path.basename(self.scenario)
         # self.Nstar = len(spc['Name'])
         self.spc = spc # = None, if SPC not needed
         self.drm = drm
@@ -383,8 +389,13 @@ class SimulationRun(object):
         If the given filename does not appear to follow this convention, 
         we attempt to do something reasonable.'''
         if not f.startswith('sims/'):
-            # take off the SEED.pkl part and return the rest
-            return os.path.dirname(f)
+            # take off the SEED.pkl part
+            reasonable = os.path.dirname(f)
+            # remove drm suffix, if present
+            if reasonable.endswith('/drm'):
+                return reasonable[:-4]
+            else:
+                return reasonable
         # remove sims/ and continue
         f_tail = f[5:]
         d = os.path.dirname(f_tail)
@@ -450,6 +461,8 @@ class SimulationRun(object):
             return self.seed
         elif attr == 'scenario':
             return self.scenario
+        elif attr == 'basename':
+            return self.basename
         elif attr == 'plan_num':
             return 0 # likely altered later, depending on #planets
         else:
@@ -856,7 +869,7 @@ def json_to_object(args):
     # Insert container duplicating top-level attributes, for later
     d['__attr__'] = {key:val for key, val in d.items() if not key.startswith('_')}
     # Insert container of each pseudo-attribute that is present and truthy
-    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num', 'plan_num', 'scenario') if d.get(f'__{key}__')}
+    d['__pseudo__'] = {key:key for key in ('seed', 'obs_num', 'plan_num', 'scenario', 'basename') if d.get(f'__{key}__')}
     return d
 
 
@@ -986,10 +999,11 @@ def parse_arglist(arglist):
     group.add_argument('--plan_num', dest='pseudo', help='Output the planet number', action='append_const', const='plan_num')
     # key string is "scenario", not "name", because the former is searchable
     group.add_argument('-N', '--name', dest='pseudo', help='Output the scenario Name', action='append_const', const='scenario')
+    group.add_argument('-B', '--basename', dest='pseudo', help='Output the scenario Basename', action='append_const', const='basename')
     group = parser.add_argument_group('Attributes by JSON file')
     group.add_argument('-f', '--file', type=argparse.FileType('r'), help='JSON program file naming attributes')
 
-    parser.add_argument('drm', metavar='DRM', nargs='*', default=[], help='drm file list')
+    parser.add_argument('drm', metavar='DRM', nargs='*', default=[], help='drm file/directory list')
     parser.add_argument('-m', '--match', type=str, default='', metavar='ATTR',
                             help='Attribute within obs to match, else, skip the obs')
     parser.add_argument('-M', '--match_inv', type=str, default='', metavar='ATTR',
@@ -1026,7 +1040,9 @@ def parse_arglist(arglist):
 
 
 def expand_drm(progname, drm):
-    r'''Expand drm input arg such that it descends into directories.'''
+    r'''Expand drm input arg such that it descends into directories.
+
+    TODO: Filename manipulation using Pathlib not f-strings.'''
     def expand_dir(d):
         dx = []
         for root, dirs, files in os.walk(d):
@@ -1041,7 +1057,7 @@ def expand_drm(progname, drm):
                 dx.extend(glob.glob(f'{root}/drm/*.pkl'))
                 dirs[:] = [] # descend no farther
                 continue
-            # only allow descent into .exp or .fam ...
+            # only allow descent into .exp or .fam dirs ...
             # ...or script directories having /drm inside
             downs = [d for d in dirs if (
                 d.endswith('.exp') or d.endswith('.fam') or
