@@ -66,7 +66,7 @@ explanation.  This document adds some context to that helpful summary.
 
 ### Adding simulations to the ensemble
 
-Adding simulations is done outside make with the `add-sims.sh`
+Adding simulations is done outside of make with the `add-sims.sh`
 shell script driver.
 Its basic usage is simply:
 
@@ -75,7 +75,10 @@ Its basic usage is simply:
 where `SCRIPT` is the JSON script for Exosims,
 and `N` is the number of sims
 to add to the ensemble tied to `SCRIPT`.
-This pushes down to a call to our main driver script for
+More commonly, `N` is actually the filename of a 
+standardized list of seeds, e.g., `Experiments/seed100.txt`.
+
+This pushes down to call a driver script for
 Exosims, `Local/sandbox_driver.py`.
 The main function of this driver is to put result files in the proper place,
 and to perform logging.
@@ -83,24 +86,46 @@ In particular, the observing sequence ("DRM") for each sim is named for
 the seed and goes in one directory, and the star-planet configuration
 for that sim ("SPC"), also named for the seed, goes in a separate directory.
 
-Two options to add-sims are noteworthy:
+In the above usage case, a number of independent jobs 
+(maximum of about 40) is run in parallel 
+at the shell level on the local host only using GNU `parallel`.
 
-    -P PAR    => run without ipython parallel, using PAR independent jobs
-    -S SEEDS  => perform one sim for each integer seed, one per line,
-               in the file SEEDS.  Implies -P.
+Two parallelization options to add-sims are noteworthy:
 
-The `-P` option uses the same underlying run code, but
-uses independent jobs (run in parallel at the shell level using GNU `parallel`).
-We typically use `-P` because it is simpler, but ipython parallel can
-be good for cases where initialization of the simulator takes significant
+    -Z => run in parallel across mustang2/3/4, aftac1/2/3 (100-way parallel)
+    -S => run in parallel across mustang2/3/4 (64-way parallel)
+
+These are available as long as you have passwordless ssh set up
+between the various machines above.
+(Test this with `ssh mustang4 ls`
+while logged in to mustang2, for example.)
+In the above cases, the independent jobs are farmed out to the 
+indicated machines by GNU `parallel`.
+
+Scripts typically need to generate cache files when run the first
 time.
+We support this by allowing the `N` option above to refer not to a 
+seed filename, but to give a seed itself:
 
-The `-S SEEDS` option allows multiple ensembles to use the same
-set of seeds, so that yield variability due to parameter changes
-is isolated from that due to the simulated universe.
-One Exosims simulation is run per seed.
+    =SEED => run a single simulation with the given integer SEED
+    =0 => initialize caches, but exit before running the simulation
 
-More options and further details are in the `add-sims.sh` header.
+For the single-seed cases above, the usual simulation chatter is
+sent to standard output rather than being logged, to make it easier
+to diagnose first-run problems.
+
+So typically, when generating results from a new script, you run:
+
+    add-sims.sh SCRIPT =0
+
+first, to initialize the cache files, and only then run:
+
+    add-sims.sh -Z SCRIPT Experiments/seed100.txt
+
+to run 100 Monte Carlo simulations.
+
+More options and further details in the output of
+`add-sims.sh -h`, or in the `add-sims.sh` header.
 
 
 ### Generating basic result summaries
@@ -216,70 +241,13 @@ filenames, and farm this list out to the machines available (aftac1,
 aftac2, aftac3).  The detailed process is described in the file 
 `Experiments/run-experiment-howto.txt`.
 
-One important detail is has to do with Monte Carlo noise.  When tuning the
+One important detail has to do with Monte Carlo noise.  When tuning the
 scheduler, we want to randomize over multiple simulated universes to
 provide robust parameter choices.  But, when comparing two parameter
 settings, we want to use the same *set* of simulated universes for both, to
 suppress the additional noise that would arise if the two settings used
 independent simulated universes.  (This is a simple instance of stratified
 sampling.)  So the sets of random number seeds used for each ensemble
-across the tuning experiment will be the same.  This is one purpose of the
-`-S` option that `add-sims.sh` takes.
-
-
-## Obsolete
- 
-We stopped using iPython parallel due to fragility of the distributed
-worker instances.
-
-### iPython parallel support
- 
-As noted, simulations can also be run using iPython parallel, rather than
-shell-level parallelism.
-This mode starts up a given number of python processes ("engines"), which are
-eventually given an Exosims function to run by `add-sims.sh`.
-This creates extra state (a Python interpreter is held by each "engine"),
-but avoids re-initialization of the Exosims object for each run.
-See also the `SurveyEnsemble` documentation within Exosims.
-
-To support creation, startup, and shutdown of these engines,
-we added some iPython-parallel ("ipp") targets to the `Makefile`.
-These targets operate independently of the simulation/results
-infrastructure targets.
-The targets (invoked like `make ipp-create`) are:
-
-* `ipp-create`: create an ipython-parallel profile for this mission (use once
-     per sandbox instance only).
-     Copies several files into a per-user, per-machine ipyparallel directory.
-     To undo, see `ipp-nuke`, below.
-	 
-* `ipp-start`: start the ipython-parallel controller and engines
-     Note: If `EXOSIMS_ENGINE_N` (an integer) is exported from the environment,
-     this many engines will be started up, otherwise, the system-default
-     will be used.  To use this, run, from the shell:
-
-       `$ EXOSIMS_ENGINE_N=8 make ipp-start`
-
-* `ipp-stop`: stop the above processes.  See also `ipp-kill`, below.
-
-* `ipp-status`: report status of the controller and engines
-     Note: This attempts to run trivial jobs on the remote engines, so it
-     will not work if the engines are busy with another job.  See `ipp-ps`, below.
-
-* `ipp-ps`: use the unix `ps` command to identify the number of running
-    engines. This works when the engines are busy, but is not informative
-    about whether engines are responding to Python commands.
-
-* `ipp-kill`: sometimes `ipp-stop` does not work and engines or controllers
-     are orphaned.  `ipp-kill` identifies these by process id, and kills them.
-
-* `ipp-nuke`: deletes your ipython-parallel profile.  The inverse of `ipp-create`.
-     (Note: it attempts to `ipp-kill` first, so as to not leave engines running.)
-
-As evidenced by the various status and termination commands, sometimes
-using ipython parallel in this context can be annoying, because you have
-to remember the state of the worker engines.
-In particular, the engines will have to be restarted (`ipp-stop` followed by `ipp-start`)
-when the underlying Exosims code changes, because the already-running
-engines will hold a stale copy of the code.
+across the tuning experiment should be the same.  This is one purpose of the
+standardized seed files in the `Experiments` directory.
 
