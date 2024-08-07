@@ -1,5 +1,10 @@
 # skip DRM output, graphics, csv's
+# (except one file, used for a quick webserver status check)
+# (the ! is ineffectual for a dir that was fully excluded...
+# this is here just for book-keeping that this file is part
+# of the repository...commit it with -f)
 sims
+!sims/heartbeat.html
 
 # skip focused analysis/experiments/results
 Analyses
@@ -46,6 +51,9 @@ Local/www-resources/doc_sandbox/*
 
 # remove the scripts from source control
 # (except one file, to allow recursive Make to work)
+# (the ! is ineffectual for a dir that was fully excluded...
+# this is here just for book-keeping that this file is part
+# of the repository...commit it with -f)
 Scripts
 !Scripts/sims.json
 
