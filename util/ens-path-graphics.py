@@ -231,7 +231,7 @@ class DRMSummary(object):
         # instantiate an EXOCAT object so we can harvest its data
         SC = EXOCAT1.EXOCAT1()
         # find the EXOCAT1 star corresponding to each spc star
-        sc_index = np.zeros((Nstar,), dtype=np.int)
+        sc_index = np.zeros((Nstar,), dtype=int)
         for i in range(Nstar):
             sc_index[i] = np.where(SC.Name == spc['Name'][i])[0]
         # extract just the coordinates we care about...
@@ -243,13 +243,13 @@ class DRMSummary(object):
         Nstar = self.Nstar
         Ndrm = len(self.drms)
         # list of all stars visited
-        self.visited = np.array([d['star_ind'] for drm in self.drms for d in drm], dtype=np.int)
+        self.visited = np.array([d['star_ind'] for drm in self.drms for d in drm], dtype=int)
         # total cumulative number-of-visits, by star
         self.vcount = np.bincount(self.visited, minlength=Nstar)
 
         # slew adjacency matrix
         #   this is probably inefficient, but it may not matter
-        self.visit2 = np.zeros((Nstar, Nstar), dtype=np.int)
+        self.visit2 = np.zeros((Nstar, Nstar), dtype=int)
         for drm in self.drms:
             # if only one thing in DRM, there was no slew
             if len(drm) < 2: continue
