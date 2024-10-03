@@ -194,7 +194,8 @@ def dump_names(args, n, info):
     keys = sorted(info.spc.keys())
     args.out_fp.write('%s' % info.seed)
     for f in keys:
-        args.out_fp.write(',%s' % f)
+        xtra = f'[{str(info.spc[f].shape)}]' if isinstance(info.spc[f],np.ndarray) else ''
+        args.out_fp.write(f'\n{f}{xtra}')
     args.out_fp.write('\n')
     
 
