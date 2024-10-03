@@ -3,7 +3,7 @@ r'''
 drm-tabulate.py: extract named fields from a pile of DRMs
 
 usage:
-  `drm-tabulate.py [-1sn] [--json] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...`
+  `drm-tabulate.py [-1sn] [--json|--pandas] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...`
 
 Args:
   DRM (file): a list of DRM pickles
@@ -40,6 +40,7 @@ Less-useful options:
   + `-A`: list available DRM and SPC attributes and values on stderr, as a reference.
       It honors match (`-m`), and inverse match (`-M`); supply `-S ""` to get SPC attributes.
   + `--json`: output is JSON, rather than standard CSV
+  + `--pandas`: output is to a pandas pickle, rather than standard CSV
   + `--format`: supply a printf-style format string (e.g., %.3g) for CSV floats
   + `--empty`: output a record when planet attributes selected, even if no planets present
   + `-v`: increase verbosity (output is to stderr)
@@ -203,8 +204,17 @@ Typical usage:
   util/drm-tabulate.py -ns1 -m char_time -e "CS:char_status" -P Mp -e "SpecLetter:[spc['Spec'][star_ind][0]]" -S Spec -a ct:char_time -a char_mode.lam sims/.../drm
 ```
 
-turmon apr 2019, feb 2022, dec 2022
 '''
+
+# turmon apr 2019, feb 2022, dec 2022, oct 2024
+#
+# profile note:
+# when run under -j1 (no multiprocessing), unpickling takes about 75%
+# of the runtime for a 100-DRM load-and-process (Oct 2024, 30s wall time)
+# (deferring GC until after unpickling seems to transfer some "runtime"
+# to small function calls like path manipulations happening just after
+# GC is re-enabled, so the actual proportion is probably higher).
+# Alas, cProfile and multiprocessing seem incompatible. vizTracer? py-spy?
 
 import argparse
 import sys
@@ -223,6 +233,7 @@ from functools import partial
 from dataclasses import dataclass
 #import multiprocessing.dummy
 import multiprocessing as mproc
+import pandas as pd
 import numpy as np
 import astropy.units as u
 
@@ -772,12 +783,13 @@ class EnsembleSummary(object):
         # record these summaries in the object
         self.summary = summary
 
+
     def dump(self, args, outfile):
         r'''Dump reduced data to output.
 
         Args:
           args (namespace): program input arguments
-          outfile (file): output filename
+          outfile (file): output file object
           '''
         saved_fields = args.all_attrs.keys()
         Nrows = set(len(self.summary[fname]) for fname in saved_fields)
@@ -805,6 +817,11 @@ class EnsembleSummary(object):
             np.set_printoptions(linewidth=1000)
             if args.json:
                 json.dump(dumpable, outfile, indent=2, cls=NumpyEncoder)
+            elif args.pd_pkl:
+                # returns a pandas DataFrame
+                # (unsure how this works for vector elements)
+                # ("outfile.buffer" is a bit of a cheat that works for stdout)
+                pd.DataFrame.from_dict(dumpable).to_pickle(outfile.buffer)
             else:
                 # (possibly needed depending on float_format setup?)
                 # csv_opts = dict(quoting=csv.QUOTE_NONE)
@@ -865,6 +882,10 @@ def json_to_object(args):
     args.header = bool(d.get('__header__', args.header))
     # update args.load_spc if present in d
     args.load_spc = bool(d.get('__load_spc__', args.load_spc))
+    # update args.json if present in d
+    args.json = bool(d.get('__json__', args.json))
+    # update args.pd_pkl if present in d
+    args.pd_pkl = bool(d.get('__pandas__', args.pd_pkl))
     # 3: Make containers for __attr__ and __pseudo__
     # Insert container duplicating top-level attributes, for later
     d['__attr__'] = {key:val for key, val in d.items() if not key.startswith('_')}
@@ -1013,6 +1034,8 @@ def parse_arglist(arglist):
                             default=False)
     group.add_argument('--delimiter', help='CSV field delimiter', metavar='STR', type=str)
     group.add_argument('--json', help='JSON output format', action='store_true', dest='json',
+                            default=False)
+    group.add_argument('--pandas', help='pandas pickle output format', action='store_true', dest='pd_pkl',
                             default=False)
     group = parser.add_argument_group('Seldom used')
     group.add_argument('--load_spc', help='Force load of SPC file', action='store_true', dest='load_spc',
