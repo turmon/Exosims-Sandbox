@@ -189,7 +189,9 @@ if [[ "$mode" == start ]]; then
     if [ -r "$SERVER_PID" ]; then
 	echo "${PROGNAME}: Server may be running on $port already." >&2
 	echo "${PROGNAME}: Attempting to shut down cleanly and restart." >&2
-	kill -TERM "$(cat "$SERVER_PID")" || true
+        # it's OK for this to fail: the PID file may be a leftover from a
+        # reboot and thus be stale (hopefully it's not our "vi" session)
+	kill -TERM "$(cat "$SERVER_PID")" || echo "${PROGNAME}: Note: kill error is nonfatal." >&2
 	sleep 0.1
 	# if the PID file was not removed, the server is apparently not 
         # responding ... proceed anyway (e.g., host machine restart)
