@@ -52,43 +52,25 @@ set -euo pipefail
 
 PROGNAME=$(basename "$0")
 
+# (fixed) URL to query for when checking server status
+heartbeat=sims/heartbeat.html
+
 # attempt to give group-write to created files
 umask 002
 
-# runtime context (s383/JPL supercomputer)
+# runtime context -- very location-specific
 if [ -d /proj/exep ]; then
+    # s383 cluster
     CONTEXT=s383
 elif [ -d /projects/exo_yield ]; then
+    # JPL supercomputer (gattaca)
     CONTEXT=jplsc
+elif [ -d /Users ]; then
+    CONTEXT=macos
 else
     echo "${PROGNAME}: Fatal: Could not determine runtime context." >&2
     exit 1
 fi
-
-# URL to query for when checking server status
-heartbeat=sims/heartbeat.html
-
-## defaults
-# SERVER: apache server binary
-# SERVER_GROUP: whole group is allowed to kill the server
-# DOC_ROOT: httpd needs to know the rooted dir of the content
-if [[ $CONTEXT = s383 ]]; then
-    SERVER=apache2
-    SERVER_GROUP=exosims
-    DOC_ROOT=/proj/exep/rhonda/Sandbox/HabEx
-    # (need the slash)
-    MOD_ROOT=/usr/lib/apache2/
-elif [ $CONTEXT = jplsc ]; then
-    SERVER=/usr/sbin/httpd # dir may not be in PATH
-    SERVER_GROUP=exo-yield
-    DOC_ROOT=/projects/exo_yield/Sandbox/hwo
-    # (empty)
-    MOD_ROOT=
-fi
-# httpd config file
-SERVER_CONFIG=Local/www-service/config/httpd-apache2.4.conf
-# directory for log and PID files produced by httpd
-SERVER_VARDIR=Local/www-service/var
 
 # current working directory - httpd needs absolute pathnames
 CURR_DIR=$(pwd)
@@ -97,6 +79,43 @@ DEFAULT_PORT=8090
 # default server
 DEFAULT_SERVER=apache
 
+
+## defaults
+# SERVER_HTTPD: apache/httpd server binary
+# SERVER_GROUP: whole group is allowed to kill the server
+# DOC_ROOT: httpd needs to know the rooted dir of the content
+if [[ $CONTEXT = s383 ]]; then
+    SERVER_HTTPD=apache2
+    SERVER_GROUP=exosims
+    DOC_ROOT=/proj/exep/rhonda/Sandbox/HabEx
+    # (need the slash)
+    MOD_ROOT=/usr/lib/apache2/modules/
+    # formatting arguments to stat (GNU/linux stat)
+    STAT_FORMAT=("-c" "Started by %U on %y")
+elif [ $CONTEXT = jplsc ]; then
+    SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
+    SERVER_GROUP=exo-yield
+    DOC_ROOT=/projects/exo_yield/Sandbox/hwo
+    # (empty)
+    MOD_ROOT=modules/
+    # formatting arguments to stat (GNU/linux stat)
+    STAT_FORMAT=("-c" "Started by %U on %y")
+elif [ $CONTEXT = macos ]; then
+    SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
+    SERVER_GROUP=staff
+    # assume we are running from Sandbox itself (will vary per-user)
+    DOC_ROOT=$(pwd)
+    # ok for macOS Sonoma (10.14) at least
+    MOD_ROOT=/usr/libexec/apache2/
+    # formatting arguments to stat (macos -> BSD)
+    STAT_FORMAT=("-f" "Started by %Su on %Sm")
+    # change default port for local service
+    DEFAULT_PORT=8100
+fi
+# httpd config file
+SERVER_CONFIG=Local/www-service/config/httpd-apache2.4.conf
+# directory for log and PID files produced by httpd
+SERVER_VARDIR=Local/www-service/var
 
 port=$DEFAULT_PORT
 server=$DEFAULT_SERVER
@@ -189,9 +208,7 @@ if [[ "$mode" == start ]]; then
     if [ -r "$SERVER_PID" ]; then
 	echo "${PROGNAME}: Server may be running on $port already." >&2
 	echo "${PROGNAME}: Attempting to shut down cleanly and restart." >&2
-        # it's OK for this to fail: the PID file may be a leftover from a
-        # reboot and thus be stale (hopefully it's not our "vi" session)
-	kill -TERM "$(cat "$SERVER_PID")" || echo "${PROGNAME}: Note: kill error is nonfatal." >&2
+	kill -TERM "$(cat "$SERVER_PID")" || true
 	sleep 0.1
 	# if the PID file was not removed, the server is apparently not 
         # responding ... proceed anyway (e.g., host machine restart)
@@ -215,7 +232,7 @@ if [[ "$mode" == start ]]; then
 	# httpd.conf ($SERVER_CONFIG) to pick up: the first 2 lines below.
 	MODULE_ROOT="$MOD_ROOT" \
 	DOCUMENT_ROOT="$DOC_ROOT" \
-	$SERVER -f "$CURR_DIR/$SERVER_CONFIG" \
+	$SERVER_HTTPD -f "$CURR_DIR/$SERVER_CONFIG" \
 	      -c "DefaultRuntimeDir $(pwd)" \
 	      -c "PidFile $CURR_DIR/$SERVER_PID" \
 	      -c "ErrorLog $CURR_DIR/$SERVER_LOG" \
@@ -263,12 +280,12 @@ elif [[ "$mode" == status ]]; then
 	    echo "$pfile"
 	    # contents should be just the PID
 	    pid=$(cat "$pfile")
-	    if ps ax | grep -q "^ *$pid " ; then
+	    if ps -p $pid > /dev/null; then
 		pid_runs="running"
 	    else
 		pid_runs="seems to have died"
 	    fi
-	    p_info=$(stat -c 'Started by %U on %y' "$pfile")
+	    p_info=$(stat "${STAT_FORMAT[@]}" "$pfile")
 	    x_hopo=$(echo "$pfile" | sed -e 's|.*/http-||' -e 's|\.pid||' -e 's|\.|:|')
 	    # we listen on localhost, x_host is the server hostname
 	    x_host=$(echo "$x_hopo" | sed -e 's|:.*||')
@@ -288,7 +305,7 @@ elif [[ "$mode" == status ]]; then
 	    fi
 	done
     else
-	echo "No HTTP servers running on this host." 
+	echo "No sandbox HTTP servers running on this host." 
     fi
 
 elif [[ "$mode" == ensure ]]; then
