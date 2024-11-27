@@ -12,20 +12,20 @@
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
-# (four less than the number of cores, so for example: aftac1 = 28, aftac2/3 = 44).
+# (four less than the number of cores, so for example: mustang2/3 = 68).
 # * If just one SEED is given, Exosims output is sent directly to standard output - 
 # useful for checking validity.  If more than one SEED, the Exosims output is sent
-# to a set of log files (sims/SCRIPT/log_sim/1/*), and a summary of current job status
+# to a set of log files (sims/SCRIPT/log/*), and a summary of current job status
 # is sent to standard output.
 # * To repeat an error-causing run interactively, paste the command-line printed by 
 # this script (the one that calls sandbox_driver.py) into your terminal,
 # and add "--interactive" to the options.
 #
 # Typical Usage:
-#   (a) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
-#     add-sims.sh -Z Scripts/ExampleScript.json Experiments/seed100.txt 
-#   (b) Run a machine-dependent number of jobs spanning 64 seeds on the local machine
+#   (a) Run a machine-dependent number of jobs spanning 64 seeds on the local machine
 #     add-sims.sh Scripts/ExampleScript.json Experiments/seed64.txt 
+#   (b) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
+#     add-sims.sh -Z Scripts/ExampleScript.json Experiments/seed100.txt 
 #   (c) Do a test run for a single arbitrary seed (we use 777):
 #     add-sims.sh Scripts/ExampleScript.json =777
 #   (d) Write cache files for a new script, but do not run a sim:
@@ -44,14 +44,14 @@
 #   -A        => run using Afta's (aftac1/2/3 -- 18 + 23 + 23 jobs = 64 jobs)
 #   -S        => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
 #   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
-#   -c        => chatty console output to aid debugging
+#   -c        => chatty console output (for debugging) even if #SEEDS > 1
 #
 # Less-used Options:
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -q        => quiet object creation
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
-#   -p PATH   => EXOSIMS path is PATH instead of the default EXOSIMS/EXOSIMS
+#   -p PATH   => EXOSIMS path is PATH instead of the default in your environment.
 #                If you are in a Python venv, it will be detected and you should not 
 #                need to specify -p.
 #                Using PATH=@ abbreviates the command-line default (what you get from
@@ -72,13 +72,17 @@ set -euo pipefail
 
 PROGNAME=$(basename $0)
 
+# files/dirs created by any child commands will be group-writable
+umask 0002
+
 # EXOSIMS driver program
 # see also <EXOSIMS>/run/run_ipcluster_ensemble.py
 DRIVER=Local/sandbox_driver.py
 
 # option processing
 # 0: EXOSIMS path
-EXO_PATH=$(pwd)/EXOSIMS
+# EXO_PATH=$(pwd)/EXOSIMS # (formerly)
+EXO_PATH=@
 EXO_PATH_SET=no
 # 1: driver options
 OUT_OPT=
@@ -93,7 +97,7 @@ BATCH=0
 CHATTY=0
 ECHO_CMD=0
 ALL=0
-while getopts "ASZDhbcj:p:x:qv:O:" opt; do
+while getopts "AHSZDhbcj:p:x:qv:O:" opt; do
     case $opt in
 	A)
 	    # use remote machines
@@ -110,6 +114,10 @@ while getopts "ASZDhbcj:p:x:qv:O:" opt; do
 	D)
 	    # fewer jobs on all remote machines (for Dakota)
 	    ALL=4
+	    ;;
+	H)
+	    # fewer jobs on mustang2/3 (for Dakota, temp. 2024-05)
+	    ALL=5
 	    ;;
 	b)
 	    # batch mode output to log-files
@@ -147,7 +155,7 @@ while getopts "ASZDhbcj:p:x:qv:O:" opt; do
 	h)
 	    # help text
 	    sed 's/^#//' $(which $0) | awk '/^#/{exit};NR>1{print}'
-            echo "Note: By default, using python at" $(which python)
+            echo "${PROGNAME}: Note: By default, using python at" $(which python)
 	    exit 2
 	    ;;
 	\?)
@@ -167,8 +175,9 @@ fi
 SCRIPT="$1"
 SEEDS=$2
 
-# files/dirs created by any child commands will be group-writable
-umask 0002
+##
+## Handle SEEDS
+##
 
 # handle the 3 cases for the SEEDS argument
 if expr "$SEEDS" : '^=[0-9][0-9]*$' > /dev/null; then
@@ -179,7 +188,6 @@ if expr "$SEEDS" : '^=[0-9][0-9]*$' > /dev/null; then
 elif expr "$SEEDS" : '^[0-9][0-9]*$' > /dev/null; then
     # it is a number-of-runs
     # draw $SEEDS 9-digit random integers from awk
-    # SEED_INPUT="awk 'BEGIN {srand(); for (i=0; i<$SEEDS; i++) print int(rand()*1000000000+1)}'"
     SEED_INPUT="seq $SEEDS | awk 'BEGIN {srand()}; {print int(rand()*999999999+1)}'"
     NRUN=$SEEDS
 else
@@ -198,56 +206,94 @@ echo "${PROGNAME}: Performing $NRUN EXOSIMS run(s)."
 if [ $NRUN -gt 1 ]; then
     BATCH=1
 fi
-# allow over-ride
+# allow over-ride by -c
 if [ $CHATTY == 1 ]; then
     BATCH=0
 fi
+
+##
+## EXOSIMS path
+##
 
 # detect a VENV, and if so, set up to use the correct EXO_PATH
 #   (first construct must work if $VIRTUAL_ENV is undefined/unset)
 if [ "${VIRTUAL_ENV+defined}" = defined -a "$EXO_PATH_SET" = no ]; then
     EXO_PATH=@
-    echo "${PROGNAME}: python venv \`$(basename $VIRTUAL_ENV)' active: attempting to use its EXOSIMS"
+    echo "${PROGNAME}: Note: python venv \`$(basename $VIRTUAL_ENV)' active, will use its EXOSIMS"
+else 
+    echo "${PROGNAME}: WARNING: Not running in a Python VENV." >&2
 fi
 # ensure EXOSIMS path
+# tricky:
+#  - "." is always first in sys.path, and (alas!) ./EXOSIMS exists, so "import EXOSIMS" can pick it up,
+#    we import EXOSIMS.Prototypes to keep this from happening
+#  - mustang* default python also has its own outdated EXOSIMS (stuck with this)
+#  - ~/.local/lib/.../site-packages can have or point to an EXOSIMS
+# So, we echo it back here, and *force* it via PYTHONPATH later on
 if [ $EXO_PATH = @ ]; then
     # useful when using venv's: this specifies the venv's EXOSIMS as the one to use
-    EXO_PATH=$(python -c 'import EXOSIMS; import os; print(os.path.dirname(os.path.dirname(EXOSIMS.__file__)))')
-    echo "${PROGNAME}: EXOSIMS path set to \`${EXO_PATH}'."
+    EXO_PATH=$(python -c 'import EXOSIMS.Prototypes; import os.path as p; print(p.dirname(p.dirname(p.dirname(EXOSIMS.Prototypes.__file__))))')
+    echo "${PROGNAME}: Note: EXOSIMS path set to \`${EXO_PATH}'."
 fi
 if [ ! -r $EXO_PATH/EXOSIMS/__init__.py ]; then
    echo "${PROGNAME}: Error: EXOSIMS path seems invalid" >&2
    exit 1
 else
-   echo "${PROGNAME}: Using EXOSIMS found at \`${EXO_PATH}'."
+   echo "${PROGNAME}: Note: EXOSIMS is found at \`${EXO_PATH}'."
 fi
+# Detect and warn if not in a git repo
+make_diff=0
+if git -C "$EXO_PATH" status >& /dev/null; then
+    echo "${PROGNAME}: Note: EXOSIMS is in a repository, branch: $(git -C "$EXO_PATH" rev-parse --abbrev-ref HEAD)"
+    if git -C "$EXO_PATH" status | grep -q 'working tree clean'; then
+	echo "${PROGNAME}: Note: EXOSIMS working tree is clean."
+    else
+	echo "${PROGNAME}: WARNING: EXOSIMS has uncommitted changes in working tree." >&2
+	echo "${PROGNAME}: Note: Will place \`git diff' in sim log directory." >&2
+	make_diff=1
+    fi
+else
+   echo "${PROGNAME}: WARNING: EXOSIMS is not in a git repository" >&2
+fi
+    
+
+##
+## Script/sim name
+##
 
 if [ ! -r $SCRIPT ]; then
-    echo "${PROGNAME}: Error: Could not read the file \`${SCRIPT}'"
+    echo "${PROGNAME}: Error: Could not read the script file \`${SCRIPT}'"
     exit 1
 fi
-
 # basename for sim results is derived from script name: if it's in
 # the "special" Scripts/... dir, just strip Scripts/ and .json out, 
 # else use the basename less .json
 if [[ "$SCRIPT" =~ ^Scripts/.* ]]; then
     sim_base=$(echo "$SCRIPT" | sed -e 's:Scripts/::' -e 's:\.json$::')
 else
+    # (not the conventional Sandbox way)
     sim_base=$(basename $SCRIPT .json)
 fi
 sim_base=sims/$sim_base
 logdir=$sim_base/log/console
 pardir=$sim_base/log/gnu_parallel
-mkdir -p $logdir $pardir
+mkdir -p "$logdir" "$pardir"
 
-# (1) sanity check: DIR/Module/__init__.py should exist, for each
-#     colon-separated DIR in PYTHONPATH, if you want to use "import Module".
-# (2) this PYTHONPATH should also be used for the remote engines,
-#     and the engine PYTHONPATH is set at engine-creation time using 
-#     the Local/00-path.py startup file, which is copied to the
-#     $IPYDIR/startup directory.
-# formerly:
-# export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
+# optionally put "git diff" in the logs
+if [ $make_diff == 1 ]; then
+    diffdir=$sim_base/log/git-diff/$(date -Iminutes)
+    mkdir -p "$diffdir"
+    git -C "$EXO_PATH" status    > "$diffdir/status.out"
+    git -C "$EXO_PATH" diff      > "$diffdir/diff.out"
+    echo git -C "$EXO_PATH" diff > "$diffdir/diff.cmd"
+fi
+
+##
+## Prepare for run
+##
+
+# sanity check: DIR/Module/__init__.py should exist, for each
+# colon-separated DIR in PYTHONPATH, if you want to use "import Module".
 export PYTHONPATH=${EXO_PATH}:$(pwd)/Local
 
 # 6/2019: sometimes we run out of threads, if many parallel instances?
@@ -304,6 +350,10 @@ elif [ $ALL == 3 ]; then
     DISPATCHER_JOBS=""
 elif [ $ALL == 4 ]; then
     PAR_SSH_OPTS="${par_ssh_remote_base} --sshdelay 0.12 -S 6/aftac1,6/aftac2,6/aftac3,12/mustang2,12/mustang3,8/mustang4"
+    # remove the --jobs option, which interacts with the above
+    DISPATCHER_JOBS=""
+elif [ $ALL == 5 ]; then
+    PAR_SSH_OPTS="${par_ssh_remote_base} --sshdelay 0.12 -S 12/mustang2,12/mustang3"
     # remove the --jobs option, which interacts with the above
     DISPATCHER_JOBS=""
 else
