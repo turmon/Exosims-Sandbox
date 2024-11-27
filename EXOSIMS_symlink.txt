@@ -1,11 +1,18 @@
 ---
 [2024]
-The preferred way to name an EXOSIMS version for runs is to
+The preferred way to name an EXOSIMS version is to
 use a Python virtual environment ("venv"), rather than using
-the EXOSIMS symlink here.
+the EXOSIMS symlink (formerly) resident here.
 
 See ../Python-venvs for more, or in particular:
 /proj/exep/rhonda/Sandbox/Python-venvs/README.txt
+
+Thus the EXOSIMS symlink has been removed to reduce version confusion.
+With this link present, "import EXOSIMS" from this directory could
+import from the very old version here.
+
+Updated to add: Many script files use and EZ_dist that refers to the
+Sandbox EXOSIMS, so these files (only) were put in place.
 
 ---
 [2021]
