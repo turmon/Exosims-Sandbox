@@ -1,7 +1,7 @@
 # EXOSIMS Sandbox
 
-This is the code making up an Exosims "Sandbox" -- a directory containing
-scripts (JSON-encoded parameter files) that drive Exosims simulation runs,
+This is the code making up an EXOSIMS "Sandbox" -- a directory containing
+scripts (JSON-encoded parameter files) that drive EXOSIMS simulation runs,
 source code that performs runs and analysis, and support code for display
 of results over a browser interface.
 
