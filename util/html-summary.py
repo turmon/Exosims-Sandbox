@@ -77,10 +77,10 @@ import os
 import glob
 import re
 import csv
+import html
 #import pickle
 import six.moves.cPickle as pickle
 from collections import defaultdict, OrderedDict
-#from six.moves import range
 from io import StringIO
 from pathlib import Path
 
@@ -419,8 +419,18 @@ class HTML_helper(object):
         self.f.write(self.indent(  ) + '<div%s>\n' % attr_txt)
         self.f.write(self.indent( 1) + '%s\n' % txt)
         self.f.write(self.indent(-1) + '</div>\n')
-    def link(self, href, content, inner=False):
-        line = '<A href="%s">%s</A>' % (href, content)
+    def span(self, txt, **attr):
+        '''Returns a string but does not render to the HTML doc.'''
+        attr_txt = ''
+        if attr:
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attr.items()])
+        rv = ('<span%s>' % attr_txt) + txt + '</span>'
+        return rv
+    def link(self, href, content, inner=False, **attr):
+        attr_txt = ''
+        if attr:
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attr.items()])
+        line = f'<A href="{href}"{attr_txt}>{content}</A>'
         if not inner:
             self.f.write(self.indent() + line + '\n')
         else:
@@ -1055,6 +1065,51 @@ def index_ensemble(args, path_sim, uplink):
         # render_paths handles all the seeds
         sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
 
+def obtain_metadata_info(root, d):
+    '''Find a one-line information block for a group, if it exists'''
+    def meta_from_text(fp):
+        '''Grab first nontrivial line as the "title"'''
+        for l in fp.readlines():
+            if l.strip():
+                meta = l.strip().replace('#', '')
+                return meta
+        return ''
+    def meta_from_html(fp):
+        '''Extract the <title> element'''
+        # (we don't want dependency on a parser)
+        meta = ''
+        for l in fp.readlines():
+            if '<title>' in l:
+                # assumes <title> is a one-liner
+                lplus = ' '.join(l.split())
+                # get what is between <title> and the next <
+                meta = lplus.split('<title>')[1].split('<')[0]
+                if not meta:
+                    meta = 'HTML Title not understood'
+            if '<body>' in l or '</head>' in l:
+                # give up
+                meta = 'HTML Title not found'
+            if meta:
+                return meta
+        return 'HTML Title not found'
+    # map from FN -> function, where
+    #   FN = allowed filename (basename part)
+    #   function = function that returns one-liner from file object
+    meta_map = {
+        'README.md': meta_from_text,
+        'README.html': meta_from_html,
+        }
+    meta, meta_fn = '', ''
+    # try allowed filenames
+    for fn, mapper in meta_map.items():
+        fn_full = os.path.join(root, d, fn)
+        if os.path.isfile(fn_full):
+            with open(fn_full) as fp:
+                meta = mapper(fp) or f'Title not found in {fn_full}'
+                meta_fn = os.path.join(d, fn)
+            break
+    return meta, meta_fn
+
 def index_group(args, startpath, title, uplink):
     r'''Make an index.html with a table summarizing all ensembles below startpath.
 
@@ -1072,6 +1127,11 @@ def index_group(args, startpath, title, uplink):
         hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
         # table of individual sims
         hh.header('Ensembles')
+        # summary
+        hh.paragraph(f'Ensemble: {startpath}')
+        # TODO: link to the README.md/README.html here
+        # if os.path.isfile(README):
+        #hh.paragraph('Source JSON ' + hh.link('../reduce-script.json', 'script', inner=True))
         # make the table be sortable so that the JS sorter knows about it
         hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
         item_num = 0
@@ -1082,12 +1142,20 @@ def index_group(args, startpath, title, uplink):
                 # 1: make table row with: link to the sim html + sim summary
                 #     no recursive descent in this block
                 if d.endswith('.exp') or d.endswith('.fam'):
-                    alink = hh.link('%s/index.html' % d, d, inner=True)
+                    # alink is an HTML fragment as a string
+                    alink = hh.link(f'{d}/index.html', d, inner=True)
+                    # augment alink (the row "name" field) with README.txt info ("extra")
+                    extra, extra_fn = obtain_metadata_info(root, d)
+                    if extra:
+                        # tooltip HTML element classes are picked up by CSS styles (no JS needed)
+                        dingbat = '&#9432;' # currently a circled "i"
+                        extra_span = hh.span(html.escape(extra), **{'class': 'tooltiptext'})
+                        alink += hh.link(extra_fn, f'&nbsp;{dingbat}{extra_span}', inner=True, **{'class': 'tooltip'})
                     properties = exp_summary(os.path.join(root, d))
                     hh.table_row([alink] + list(properties.values()))
                     item_num += 1
                 elif os.path.isdir(os.path.join(root, d, 'drm')):
-                    alink = hh.link('%s/html/index.html' % d, d, inner=True)
+                    alink = hh.link(f'{d}/html/index.html', d, inner=True)
                     properties = sim_summary(os.path.join(root, d))
                     # format the properties as a row
                     hh.table_row([alink] + list(properties.values()))

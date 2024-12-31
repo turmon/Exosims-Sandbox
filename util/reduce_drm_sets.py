@@ -32,8 +32,6 @@ Typical usage:
 turmon nov 2018, feb 2022
 '''
 
-from __future__ import division
-from __future__ import print_function
 import argparse
 import sys
 import glob
@@ -43,6 +41,7 @@ import copy
 import csv
 import json
 import warnings
+import shutil
 from functools import partial
 from collections import OrderedDict
 from collections import defaultdict
@@ -380,22 +379,58 @@ class EnsembleSummary(object):
             d = {f_out:self.summary[f_have] for f_out, f_have in saved_field_map}
             w.writerow(d)
         ensure_permissions(fn)
-        
+
+    def dump_readme(self, args):
+        r'''Dump a README document, if possible.
+
+        Looks in the Scripts/ directory (that corresponds to the sims/... input
+        that was given in the arguments), and tries to find a README type document
+        for that ensemble-set. If found, the README is copied to either README.md
+        or README.html in the sims/ directory.'''
+
+        # map is: src: dest, where ...
+        #   src = README file name in Scripts/
+        #   dest = README file name in sims/
+        # the goal here is to have only 2 allowed file types
+        # within sims/: text (as markdown), and HTML, so that
+        # the html indexer does not have to try everything
+        fn_map = {
+            'README.md':  'README.md',
+            'README.txt': 'README.md',
+            'README':     'README.md',
+            'README.html': 'README.html'
+            }
+        # filename surgery on the given outfile template
+        # (we need the "naked" directory, not the template)
+        outfile_dir = os.path.dirname(args.outfile % ('dummy', 'txt'))
+        # attempt to find a README in Scripts/
+        for fn_src, fn_dest in fn_map.items():
+            fn_full = os.path.join(args.script_root, fn_src)
+            if os.path.isfile(fn_full):
+                fn_out = os.path.join(outfile_dir, fn_dest)
+                print(f'\tDumping {fn_src} to {fn_out}')
+                shutil.copyfile(fn_full, fn_out)
+                ensure_permissions(fn_out)
+                break
+
 
 def main(args):
-    print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
+    print(f'{args.progname}: Loading {len(args.infile)} file patterns.')
     ensemble_set = EnsembleSummary(args.infile, args)
     if ensemble_set.Nens == 0:
-        print('%s: Warning: no actual Ensembles present.' % (args.progname, ))
+        print(f'{args.progname}: Warning: no actual Ensembles present.')
     else:
-        print('%s: Found %d summarized ensembles.' % (args.progname, ensemble_set.Nens))
+        print(f'{args.progname}: Found {ensemble_set.Nens} summarized ensembles.')
     # save a reference to the universe (stars and their attributes)
-    print('%s: Reducing.' % args.progname)
+    print(f'{args.progname}: Reducing.')
     ensemble_set.load_and_reduce()
-    print('%s: Dumping result tabulation.' % args.progname)
+    print(f'{args.progname}: Dumping result tabulation.')
     ensemble_set.dump_results(args)
-    print('%s: Dumping capsule summary.' % args.progname)
+    print(f'{args.progname}: Dumping capsule summary.')
     ensemble_set.dump_summary(args)
+    print(f'{args.progname}: Seeking README.')
+    ensemble_set.dump_readme(args)
+    print(f'{args.progname}: Done.')
 
 
 if __name__ == '__main__':
@@ -449,6 +484,10 @@ if __name__ == '__main__':
 
     # readable version of expt_name
     args.expt_name_readable = args.expt_name if args.expt_name else 'Root'
+
+    # get the Ensemble-set name from the first argument above
+    args.script_root = os.path.dirname(infile0).replace('sims/', 'Scripts/')
+    # print('%s: Inferring script file: %s' % (args.progname, args.script_root))
 
     # best practice is to explicitly give outfile, this is the backup
     if not args.outfile:

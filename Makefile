@@ -165,7 +165,7 @@ exp-preflight:
 ########################################
 ## Data reductions
 ##
-.PHONY: reduce exp-reduce
+.PHONY: reduce exp-reduce exp-reduce-only
 # (TODO: do without for-loop. the loop forces remake of top-level
 # index files for every scenario)
 # the presence of sims/X/drm is the cue that X is an ensemble
@@ -177,6 +177,10 @@ exp-reduce: experiment-exists
 		$(MAKE) --no-print-directory S=$$d_prime reduce || exit $$?; \
 	done
 	@ echo "Make: Reducing overall experiment..."
+	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
+
+exp-reduce-only: experiment-exists
+	@ echo "Make: Reducing ONLY overall experiment..."
 	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
 
 # 'make reduce' flows from sims/ down to $S/ through DIR/reduce-info.csv targets
