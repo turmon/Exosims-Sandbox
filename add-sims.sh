@@ -50,9 +50,10 @@
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -q        => quiet object creation
+#   -P        => do not show the gnu parallel progress bar (good for scripted batch jobs)
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
 #   -p PATH   => EXOSIMS path is PATH instead of the default in your environment.
-#                If you are in a Python venv, it will be detected and you should not 
+#                If you are in a Python venv, this will be detected and you should not 
 #                need to specify -p.
 #                Using PATH=@ abbreviates the command-line default (what you get from
 #                "python -c import EXOSIMS").
@@ -93,11 +94,12 @@ DRIVER_OPT=
 DISPATCHER=parallel
 # by default, use 4 less than the number of cores
 DISPATCHER_JOBS="--jobs -4"
+DISPATCHER_BATCH_PROGRESS="--progress"
 BATCH=0
 CHATTY=0
 ECHO_CMD=0
 ALL=0
-while getopts "AHSZDhbcj:p:x:qv:O:" opt; do
+while getopts "AHSZDhbcj:p:x:qv:PO:" opt; do
     case $opt in
 	A)
 	    # use remote machines
@@ -133,7 +135,7 @@ while getopts "AHSZDhbcj:p:x:qv:O:" opt; do
 	    ;;
 	p)
 	    # alternate EXOSIMS path
-	    EXO_PATH=$OPTARG
+	    EXO_PATH="$OPTARG"
             EXO_PATH_SET=yes
 	    ;;
 	x)
@@ -147,6 +149,10 @@ while getopts "AHSZDhbcj:p:x:qv:O:" opt; do
 	v)
 	    # verbosity 0/1
 	    DRIVER_OPT="${DRIVER_OPT} --verbose $OPTARG"
+	    ;;
+	P)
+	    # suppress progress bar
+            DISPATCHER_BATCH_PROGRESS=""
 	    ;;
 	O)
 	    # output options
@@ -322,7 +328,7 @@ done
 date_time=$(date +%Y-%m-%d_%H:%M:%S)
 joblog_file=${pardir}/JobLog_${date_time}.txt
 if [ $BATCH == 1 ]; then
-    PAR_LOG_OPTS="--joblog $joblog_file --results ${logdir}/{}.out --files --progress"
+    PAR_LOG_OPTS="--joblog $joblog_file --results ${logdir}/{}.out $DISPATCHER_BATCH_PROGRESS --files"
     # no progress bars in logfiles
     export TQDM_DISABLE=1
 else
