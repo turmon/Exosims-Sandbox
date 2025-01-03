@@ -132,11 +132,18 @@ names_legend = {'Obs. Count', 'Obs. Span', 'Promotion'};
 N_plot = length(names);
 
 % put each of the above detection-times on one plot
+skipping = false;
 for n = 1:N_plot,
     f = names{n};
     f_mean = sprintf('%s_%s', f, 'q50');
     f_bar1 = sprintf('%s_%s', f, 'q25');
     f_bar2 = sprintf('%s_%s', f, 'q75');
+    if ~any(contains(fieldnames(t_promote), f_mean)),
+        % stop at any error here
+        fprintf('%s: No %s in promotion table, skipping\n', mfilename, f_mean);
+        skipping = true;
+        break;
+    end;
     h_eb = errorbar(tsamp+t_offsets(n), ...
                     t_promote{:,f_mean}, ...
                     t_promote{:,f_mean} - t_promote{:,f_bar1}, ...
@@ -144,6 +151,13 @@ for n = 1:N_plot,
     % style the plot
     set(h_eb, 'LineWidth', 1); % NB: skinny
     hold on;
+end;
+
+% this happens when there are no DRM's, and in this case all fields are missing,
+% so all plots will fail
+if skipping,
+    fprintf('\t%s: Skipping promotion plots (re-run reduction, or no DRMs?).\n', mfilename);
+    return;
 end;
 
 style_promote_plot('All Planets: Cumulative Promotions vs. Detector Time', ...
@@ -254,6 +268,15 @@ write_plots('promote-star-span-cume');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Promotion-count histograms (function of planet count)
+
+% bail out of all plots if the canary field is not present
+canary = 'h_phist_t1_count_hzone_mean';
+if ~any(contains(fieldnames(t_phist), canary)),
+    % stop at any error here
+    fprintf('\t%s: No %s in promotion table ("phist"), skipping\n', mfilename, canary);
+    return;
+end;
+
 
 x_values = t_phist{:,'h_phist_count_lo'};
 names_legend = {'Obs. Count', 'Obs. Span', 'Promotion'};
