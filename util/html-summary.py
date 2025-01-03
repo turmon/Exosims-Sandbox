@@ -1125,13 +1125,17 @@ def index_group(args, startpath, title, uplink):
         if uplink:
             hh.link('../', 'Up to %s' % uplink)
         hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
-        # table of individual sims
+        # overall section
         hh.header('Ensembles')
         # summary
-        hh.paragraph(f'Ensemble: {startpath}')
-        # TODO: link to the README.md/README.html here
-        # if os.path.isfile(README):
-        #hh.paragraph('Source JSON ' + hh.link('../reduce-script.json', 'script', inner=True))
+        hh.paragraph(f'Ensemble set: {startpath}')
+        # link to the README.md/README.html, if present
+        for fn_stem in ('README.md', 'README.html'):
+            fn = os.path.join(startpath, fn_stem)
+            if os.path.isfile(fn):
+                hh.paragraph('Experiment descriptive ' + hh.link(fn_stem, 'README', inner=True))
+                break
+        # table of individual sims
         # make the table be sortable so that the JS sorter knows about it
         hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
         item_num = 0
