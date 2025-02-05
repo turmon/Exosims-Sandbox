@@ -118,15 +118,18 @@ class EnsembleRun(object):
     def convert_sim_summary(self, raw_props):
         # For each property that we want to convert: (key, converter, default_value)
         # (we don't use all of these now)
-        # for 'experiment', we must strip the left-padding because of a 
+        # for 'experiment':
+        # (1) we must strip the left-padding because of a 
         # hack that left-pads names with a single space to control how they
         # are ultimately displayed.  This was innocuous when names were just 
         # labels, but here they are meaningful identifiers
+        # (2) If it is not present, we (later) skip the record because the Ensemble
+        # is not index'able without a name - the '' signals this
         prop_map = [
             ('ensemble_size', int, 0),
             ('runtime', str, '2000-01-01_00:00'), # actually a date
             ('simtime', str, '2000-01-01_00:01'), # actually a date
-            ('experiment', str.lstrip, 'Un-Named'), # see above
+            ('experiment', str.lstrip, ''), 
             ('detections_earth_all', float, 0.0),
             ('detections_earth_unique', float, 0.0),
             ('chars_earth_unique', float, 0.0),
@@ -148,6 +151,10 @@ class EnsembleRun(object):
             with open(info_fn) as f:
                 info_items = csv.DictReader(f);
                 info = self.convert_sim_summary(next(info_items)) # it is a 1-line csv
+                if not info['experiment']:
+                    # print(f'\tSkipping: {info_fn}')
+                    # this will later exclude the record
+                    info = dict()
         except IOError:
             info = {}
         # Number of paths generated
@@ -160,14 +167,9 @@ class EnsembleRun(object):
     def summarize(self, econo=True):
         r'''Find the summary of the Ensemble as a dictionary held within the object.
 
-        The convention is that the summary is built up by calling a series of analytic
-        routines, each of which returns a dictionary of summary information.  The overall
-        summary dictionary is a union of each individual summary.
         If econo, delete the info and keep only the summary.'''
         # this dict holds reductions for the current sim
-        summary = {}
-        # fold in info -- this is trivial at the moment, pending more extensive summary
-        summary.update(self.extract_info())
+        summary = self.extract_info()
         # delete the base data if asked
         if econo:
             self.info = None
@@ -240,11 +242,14 @@ class EnsembleSummary(object):
         with WorkerMap(self.args.jobs) as map_function:
             # map the load-and-reduce function over each file
             # reductions is a list of dicts containing summaries
+            # (dict is empty if no valid summary existed)
             # py3: ensure the list is materialized
             reductions = list(map_function(partial(outer_load_and_reduce, verb=self.args.verbose),
                                       self.ens_files))
         # hacky fix for no-drm case
-        if len(self.ens_files) == 0:
+        # note: n_valid <= len(self.ens_files)
+        n_valid = sum([1 for r in reductions if len(r) > 0])
+        if n_valid == 0:
             reductions = outer_load_and_reduce(None)
         # need to save the original data for full-results tabular output
         self.reductions = [r for r in reductions if len(r) > 0]
@@ -300,7 +305,7 @@ class EnsembleSummary(object):
         extra_info = dict(
             user=os.environ['USER'],
             runtime=time.strftime("%Y-%m-%d_%H:%M"),
-            simtime=simtimes[-1],
+            simtime=simtimes[-1] if simtimes else '2000-01-01_00:00',
             experiment=args.expt_name_readable,
             experiment_size=len(reductions), # only already-reduced ensembles
             )
