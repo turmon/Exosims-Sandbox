@@ -1130,6 +1130,7 @@ def index_group(args, startpath, title, uplink):
         # summary
         hh.paragraph(f'Ensemble set: {startpath}')
         # link to the README.md/README.html, if present
+        # (typically placed by reduce_drm_sets)
         for fn_stem in ('README.md', 'README.html'):
             fn = os.path.join(startpath, fn_stem)
             if os.path.isfile(fn):
