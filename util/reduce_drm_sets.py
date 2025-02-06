@@ -126,7 +126,7 @@ class EnsembleRun(object):
         # (2) If it is not present, we (later) skip the record because the Ensemble
         # is not index'able without a name - the '' signals this
         prop_map = [
-            ('ensemble_size', int, 0),
+            ('ensemble_size', lambda s: int(float(s)), 0), # allow '0.0'
             ('runtime', str, '2000-01-01_00:00'), # actually a date
             ('simtime', str, '2000-01-01_00:01'), # actually a date
             ('experiment', str.lstrip, ''), 
@@ -151,7 +151,9 @@ class EnsembleRun(object):
             with open(info_fn) as f:
                 info_items = csv.DictReader(f);
                 info = self.convert_sim_summary(next(info_items)) # it is a 1-line csv
-                if not info['experiment']:
+                # if clause catches (and excludes) placeholder reduce-info's
+                # that were created by the Dakota stub that generates scripts
+                if len(info) < 2:
                     # print(f'\tSkipping: {info_fn}')
                     # this will later exclude the record
                     info = dict()
@@ -248,7 +250,7 @@ class EnsembleSummary(object):
                                       self.ens_files))
         # hacky fix for no-drm case
         # note: n_valid <= len(self.ens_files)
-        n_valid = sum([1 for r in reductions if len(r) > 0])
+        n_valid = len([1 for r in reductions if len(r) > 0])
         if n_valid == 0:
             reductions = outer_load_and_reduce(None)
         # need to save the original data for full-results tabular output
@@ -420,7 +422,7 @@ class EnsembleSummary(object):
 
 
 def main(args):
-    print(f'{args.progname}: Loading {len(args.infile)} file patterns.')
+    print(f'{args.progname}: Examining {len(args.infile)} file patterns.')
     ensemble_set = EnsembleSummary(args.infile, args)
     if ensemble_set.Nens == 0:
         print(f'{args.progname}: Warning: no actual Ensembles present.')
@@ -470,8 +472,8 @@ if __name__ == '__main__':
     # bona fide experiments should have the s_index.json file, but families will not.
     # expedient solution: don't insist on it, so that families can be reduced
     if args.indexfile and not os.access(args.indexfile, os.R_OK):
-        print("%s: Warning: Supplied index file `%s' is not readable." % (args.progname, args.indexfile))
-        print("%s: Proceeding without supplied index file." % (args.progname, ))
+        print("%s: Warning: Associated index file `%s' is not readable." % (args.progname, args.indexfile))
+        print("%s: Proceeding without index file." % (args.progname, ))
         args.indexfile = None
 
     # get the experiment name from the directory - brittle, but expedient.
