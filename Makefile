@@ -101,7 +101,8 @@ HOST_NAME=$(shell hostname -s)
 # program used for data reduction
 REDUCE_PROG=util/reduce_drms.py
 # program used for reduction of multi-ensemble experiments
-REDUCE_ENS_PROG=util/reduce_drm_sets.py
+# (-E: expand the given "parent" dir to subdirs with Ensembles)
+REDUCE_ENS_PROG=util/reduce_drm_sets.py -E
 # programs used for matlab/python graphics
 GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
@@ -165,7 +166,7 @@ exp-preflight:
 ########################################
 ## Data reductions
 ##
-.PHONY: reduce exp-reduce exp-reduce-only
+.PHONY: reduce reduce-only exp-reduce exp-reduce-only
 # (TODO: do without for-loop. the loop forces remake of top-level
 # index files for every scenario)
 # the presence of sims/X/drm is the cue that X is an ensemble
@@ -177,15 +178,18 @@ exp-reduce: experiment-exists
 		$(MAKE) --no-print-directory S=$$d_prime reduce || exit $$?; \
 	done
 	@ echo "Make: Reducing overall experiment..."
-	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
+	$(REDUCE_ENS_PROG) sims/$(S)
 
 exp-reduce-only: experiment-exists
 	@ echo "Make: Reducing ONLY overall experiment..."
-	$(REDUCE_ENS_PROG) -i Scripts/$(S)/s_index.json -O sims/$(S)/reduce-%s.%s sims/$(S)/*
+	$(REDUCE_ENS_PROG) sims/$(S)
 
 # 'make reduce' flows from sims/ down to $S/ through DIR/reduce-info.csv targets
 # in all intermediate dirs: see the PROPAGATE_REDUCTION_UPWARD mechanism below
 reduce: script-exists sims/reduce-info.csv
+
+# 'make reduce-only' does not flow from sims -> $S: it just does the bottom level
+reduce-only: script-exists sims/$(S)/reduce-info.csv
 
 # dependence for a bottom-level reduction in sims/$S
 sims/$(S)/reduce-info.csv: sims/$(S)/drm
@@ -209,10 +213,12 @@ REDUCE_CHAIN:=$(shell echo $S | awk -F/ '{for(i=1; i<=NF; i++) {for (j=1; j<i; j
 #   ParentDir(LINK)/reduce-info.csv: LINK/reduce-info.csv
 # where LINK (a.k.a. $1 here) is, for example: sims/HabExSample
 # below, note $(dir $1) preserves the trailing slash on the enclosing dir
+# [turmon 2025-02: previously the key line below was:
+# [	$(REDUCE_ENS_PROG) -O $$(@D)/reduce-%s.%s $$(@D)/*/
 define PROPAGATE_REDUCTION_UPWARD
 $(dir $1)reduce-info.csv: $1/reduce-info.csv
 	@ echo "Make: Reducing parent: $$(@D)"
-	$(REDUCE_ENS_PROG) -O $$(@D)/reduce-%s.%s $$(@D)/*/
+	$(REDUCE_ENS_PROG) $$(@D)
 endef
 
 # Expand the above rule into one transformation for each intermediate dir.
