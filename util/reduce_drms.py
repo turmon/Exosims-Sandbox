@@ -82,7 +82,6 @@ Options:
 # reason the above technical debt has accumulated.
 
 from __future__ import division
-from __future__ import print_function
 from __future__ import absolute_import
 import argparse
 import sys
@@ -108,8 +107,6 @@ from scipy import stats
 from scipy.interpolate import interp1d
 import astropy.units as u
 import astropy.constants as const
-from six.moves import map
-from six.moves import range
 from functools import reduce
 
 ########################################
@@ -3397,6 +3394,9 @@ if __name__ == '__main__':
                       type=int, dest='jobs', default=int(N_CPU*0.65))
     args = parser.parse_args()
     
+    # measure elapsed time
+    time_start = time.time()
+
     # set umask in hopes that files will be group-writable
     os.umask(0o002)
 
@@ -3464,4 +3464,8 @@ if __name__ == '__main__':
     print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))
 
     main(args)
+    # measure elapsed time
+    time_delta = time.time() - time_start
+    print(f'{args.progname}: Done. Elapsed time: {time_delta:.3}s.')
+
     sys.exit(0)
