@@ -1278,7 +1278,7 @@ class SimulationRun(object):
         promoted_stars = self.spc.get('promoted_stars', [])
         # deep-dive stars
         top_HIPs = self.sim_info['top_HIPs'] # list of hipparcos names of deep-dive stars
-        top_sInds = np.where(np.in1d(self.spc['Name'], top_HIPs))[0]
+        top_sInds = np.where(np.isin(self.spc['Name'], top_HIPs))[0]
 
         ## 1: Find char yield at each star, for each planet, across the DRM
         # -- Some yields are stored as vectors-of-vectors (VoV), and represent
@@ -1479,7 +1479,7 @@ class SimulationRun(object):
         promoted_stars = self.spc.get('promoted_stars', [])
         # deep-dive stars
         top_HIPs = self.sim_info['top_HIPs'] # list of hipparcos names of deep-dive stars
-        top_sInds = np.where(np.in1d(self.spc['Name'], top_HIPs))[0]
+        top_sInds = np.where(np.isin(self.spc['Name'], top_HIPs))[0]
 
         ## 1: Find det status indications at each star, for each planet,
         # summing up over the DRM
