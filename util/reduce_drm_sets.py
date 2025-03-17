@@ -12,9 +12,9 @@ and:
      file outputs.  This is optional - output will go to the ENS parent
      directory, according to Sandbox conventions, if not given.
      So, -O is normally not needed, but is good for debugging.
-  -j N means to use N parallel workers to process the files.  By default,
-     about 2/3 of the available cores will be used.
-     If N = 0 or 1, no parallel workers are used: helpful for debugging.
+  -j N means to use N parallel workers to process the files (default 1).
+     If N = 0 or 1, no parallel workers are used: fastest for our
+     small workload, and helpful for debugging.
   -i indexfile names a JSON index file (by convention, s_index.json) that 
      associates experiment names with parameter values for that experiment.
      This allows output of summary information that is labeled with the
@@ -396,11 +396,25 @@ class EnsembleSummary(object):
         self.summary = summary
 
 
-    def dump_results_worker(self, args, extension, first_fields, complain=True):
-        r'''Dump reduced data to files.'''
+    def dump_results_worker(self, args, extension, first_fields, otype='csv', complain=True, extras=False):
+        r'''Dump reduced data to files.
 
-        fn = args.outfile % (extension, 'csv')
-        print('\tDumping to %s' % fn)
+        Arguments:
+          otype: string, contains "csv", "json", or both; defines output file type
+          complain: boolean; do we issue warnings for out-of-date s_index.json?
+          extras: boolean; set True to write all gathered scenario information
+        '''
+
+        # FIXME: JSON was added later and it shows. We should generate what-to-write,
+        # and then write it to CSV, JSON, or both as a second step. (See /dev/null below.)
+        # But the present implementation is completely functional.
+
+        if 'csv' in otype:
+            fn = args.outfile % (extension, 'csv')
+            print('\tDumping CSV to %s' % fn)
+        else:
+            # wasteful, yet so expedient
+           fn = '/dev/null'
         # list of basic field-names in order they should be dumped
         saved_fields = [
             'chars_earth_unique',
@@ -417,9 +431,15 @@ class EnsembleSummary(object):
         else:
             param_fields = []
 
-        # fields to dump includes both
+        # fields to dump includes everything
         all_fields = first_fields + param_fields + saved_fields
-        # TODO: Extend field map with varying parameters
+        if extras:
+            # toss it all in
+            extra_fields = list(set(self.reductions[0].keys()) - set(all_fields))
+            all_fields.extend(extra_fields)
+            saved_fields.extend(extra_fields)
+        # record the final dumped data so CSV and JSON match
+        d_full = []
         with open(fn, 'w') as csvfile:
             # OK to have extra fields in dict-for-row
             w = csv.DictWriter(csvfile, fieldnames=all_fields, extrasaction='ignore')
@@ -444,7 +464,18 @@ class EnsembleSummary(object):
                     for f in param_fields:
                         d[f] = scenario_params[f]
                 w.writerow(d)
-        ensure_permissions(fn)
+                # save result for the JSON
+                d_full.append(d)
+        if 'csv' in otype:
+            ensure_permissions(fn)
+        # dump the JSON version
+        if 'json' in otype:
+            fn = args.outfile % (extension, 'json')
+            print('\tDumping JSON to %s' % fn)
+            with open(fn, 'w') as jsonfile:
+                json.dump(d_full, jsonfile, indent=2)
+            ensure_permissions(fn)
+
         
     def dump_results(self, args):
         r'''Dump multi-line summary data to files
@@ -457,9 +488,12 @@ class EnsembleSummary(object):
                 + scenario name (recorded as "experiment")
           This means that reduce-yield.csv is not in fact very useful.
           '''
+
         # only complain the first time
         self.dump_results_worker(args, 'yield', [], complain=True)
         self.dump_results_worker(args, 'yield-plus', ['experiment'], complain=False)
+        self.dump_results_worker(args, 'yield-all', ['experiment'],
+                                 otype='json', complain=False, extras=True)
 
     def dump_summary(self, args):
         r'''Dump overall, one-line summary data to a file: reduce-info.csv'''
@@ -526,6 +560,33 @@ class EnsembleSummary(object):
         else:
             print(f'\tNo README present. Continuing.')
 
+    def dump_index(self, args):
+        r'''Dump the index file, if possible.
+
+        Looks in the Scripts/ directory (that corresponds to the sims/... input
+        that was given in the arguments), and tries to find s_index.json
+        for that ensemble-set. If found, it is copied to the sims/ directory.'''
+
+        if not args.indexfile:
+            if args.verbose:
+                print(f'\tIndex file name unavailable. Continuing.')
+            return False
+        # can happen if you explicitly give the index file
+        # not using Sandbox => don't just put it somewhere
+        if not args.indexfile.startswith('Scripts/'):
+            if args.verbose:
+                print(f'\tIndex file {args.indexfile} not in "Scripts/". Continuing.')
+            return False
+        if not os.path.isfile(args.indexfile):
+            print(f'\tIndex file {args.indexfile} no longer found. Continuing.')
+            return False
+        #
+        fn_out = args.indexfile.replace('Scripts/', 'sims/', 1)
+        print(f'\tDumping {args.indexfile} to {fn_out}')
+        shutil.copyfile(args.indexfile, fn_out)
+        ensure_permissions(fn_out)
+        return True
+
 
 def main(args):
     ensemble_set = EnsembleSummary(args.infile, args)
@@ -542,6 +603,8 @@ def main(args):
     ensemble_set.dump_summary(args)
     print(f'{args.progname}: Seeking README.')
     ensemble_set.dump_readme(args)
+    if ensemble_set.dump_index(args):
+        print(f'{args.progname}: Dumping index file.')
 
 
 def expand_infile_arg(args):
@@ -599,7 +662,7 @@ def expand_infile_arg(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Summarize an Experiment, that is, a list of Ensembles.",
+    parser = argparse.ArgumentParser(description="Summarize an Experiment/Family, that is, a list of Ensembles.",
                                      epilog='Without -E, typically invoke with wildcard to look in each ENS/reduce-info.csv. With -E, typically give without wildcard, and thus look in ENS/*/reduce-info.csv')
     parser.add_argument('ens', metavar='ENS', nargs='+', default=[],
                             help='ensemble list, or (with -E) directory-of-ensembles')
@@ -612,7 +675,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', help='verbosity', action='count', dest='verbose',
                             default=0)
     parser.add_argument('-j', '--jobs', help=' # parallel jobs, default = %(default)d',
-                      type=int, dest='jobs', default=int(N_CPU*0.65))
+                      type=int, dest='jobs', default=1)
     args = parser.parse_args()
     
     # measure elapsed time
