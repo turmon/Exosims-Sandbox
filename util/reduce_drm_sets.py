@@ -43,9 +43,10 @@ related CSV files. Overall:
   s_YX_D9.0_iwa56_C5.86e-11_tput0.54,9.0,5.86e-11,0.54,56,11.61,33.51,18.11,100
   s_YX_D7.8_iwa50_C4.88e-10_tput0.45,7.8,4.88e-10,0.45,50,16.29,45.74,25.51,100
   s_YX_D8.0_iwa38_C5.68e-10_tput0.57,8.0,5.68e-10,0.57,38,19.88,51.44,28.32,100
-
 (Note: the "experiment" column should have been labeled "scenario", according to
 our current naming conventions.)
+  - reduce-yield-all.json: one JSON object per ENS, with summary information as
+    in reduce-yield-plus.csv, as well as some other information such as runtime.
 
 This program supports nested Experiments. That is, if -E is given, and if the
 parent ENS contains only Experiments (.exp suffixes -- no .fam), an omnibus 
@@ -196,6 +197,7 @@ class EnsembleRun(object):
             ('ensemble_size', lambda s: int(float(s)), 0), # allow '0.0'
             ('runtime', str, '2000-01-01_00:00'), # actually a date
             ('simtime', str, '2000-01-01_00:01'), # actually a date
+            ('user', str, 'n/a'), 
             ('experiment', str.lstrip, ''), 
             ('detections_earth_all', float, 0.0),
             ('detections_earth_unique', float, 0.0),
@@ -204,6 +206,7 @@ class EnsembleRun(object):
             # not used in the roll-up
             ('detections_unique_mean', float, 0.0),
             ('chars_unique_mean', float, 0.0), 
+            ('chars_strict_mean', float, 0.0), 
             ]
         props = {}
         for key, converter, nullval in prop_map:
@@ -212,22 +215,32 @@ class EnsembleRun(object):
 
     def read_sim_summary(self, d):
         r'''Summarize one simulation directory (ensemble) into a dict.'''
-        # grab the summary data for d
+        # file should exist: d was screened earlier to contain this file
         info_fn = os.path.join(d, 'reduce-info.csv')
+        # record root of HTML summary (directory for "index.html")
+        # (this may properly be an indexer function, but it fits here)
+        info_dir = os.path.basename(d)
+        if info_dir.endswith(('.fam', '.exp')):
+            base_url = info_dir
+        else:
+            base_url = os.path.join(info_dir, 'html')
+        # grab the summary data for d, if possible
         try:
             with open(info_fn) as f:
                 info_items = csv.DictReader(f);
                 info = self.convert_sim_summary(next(info_items)) # it is a 1-line csv
                 # if clause catches (and excludes) placeholder reduce-info.csv's
                 # that were created by the Dakota stub that generates scripts.
-                # (those are purely artifacts and have no good information)
+                # (they are purely artifacts and have no good information)
                 if len(info) < 2:
                     # print(f'\tSkipping: {info_fn}')
                     # this will later exclude the record
                     info = dict()
+                else:
+                    info["url"] = base_url
         except IOError:
-            info = {}
-        # Number of paths generated
+            # it did exist earlier, but things can happen
+            info = dict()
         return info
 
     def extract_info(self):
@@ -295,7 +308,8 @@ class EnsembleSummary(object):
             s1 = {k:v for k,v in s.items() if k not in stop_fieldnames}
             self.index[s['run_name']] = s1
         # also create a scalarized version of the index, for CSV output
-        # this is the same mapping as "index", but it expands value-lists into sequences of named scalars
+        # this is the same mapping as "index", but it expands value-lists
+        # into sequences of named scalars
         index_csv = dict()
         for scenario_name, d in self.index.items():
             index_csv[scenario_name] = OrderedDict()
