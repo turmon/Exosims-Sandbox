@@ -224,6 +224,7 @@ class EnsembleRun(object):
         if d.startswith(sim_root + '/'):
             info_dir = d[(len(sim_root)+1):]
         else:
+            # should not happen!
             info_dir = os.path.basename(d)
         if info_dir.endswith(('.fam', '.exp')):
             # if it's a .fam/.exp, index.html is at top
@@ -231,8 +232,6 @@ class EnsembleRun(object):
         else:
             # if it's a plain ensemble index.html is inside html/
             base_url = os.path.join(info_dir, 'html')
-        #print(f'** Baseurl: {base_url}')
-        #breakpoint()
         # grab the summary data for d, if possible
         try:
             with open(info_fn) as f:
