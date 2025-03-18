@@ -160,7 +160,7 @@ class WorkerMap(object):
 
 class EnsembleRun(object):
     r'''Load and summarize an Ensemble.'''
-    def __init__(self, f):
+    def __init__(self, f, sim_root):
         # allow creating a dummy object so that its properties may be queried
         self.summary = None # place-holder for later
         if f is None:
@@ -168,7 +168,7 @@ class EnsembleRun(object):
             self.Nens = 0
             self.info = {}
             return
-        info = self.read_sim_summary(f)
+        info = self.read_sim_summary(f, sim_root)
         # Case where 'experiment' is not in the summary (reduce-info.csv)
         # Some {FOO.exp,FOO.fam}/reduce-info.csv's do not have 'experiment'
         # defined (this was an un-noticed error). The clause below fixes this.
@@ -213,17 +213,26 @@ class EnsembleRun(object):
             props[key] = converter(raw_props.get(key, nullval))
         return props
 
-    def read_sim_summary(self, d):
+    def read_sim_summary(self, d, sim_root):
         r'''Summarize one simulation directory (ensemble) into a dict.'''
         # file should exist: d was screened earlier to contain this file
         info_fn = os.path.join(d, 'reduce-info.csv')
         # record root of HTML summary (directory for "index.html")
         # (this may properly be an indexer function, but it fits here)
-        info_dir = os.path.basename(d)
+        # (nested Experiments: cannot just take URL as basename(d))
+        # info_dir is the directory containing all the summarized Ensembles
+        if d.startswith(sim_root + '/'):
+            info_dir = d[(len(sim_root)+1):]
+        else:
+            info_dir = os.path.basename(d)
         if info_dir.endswith(('.fam', '.exp')):
+            # if it's a .fam/.exp, index.html is at top
             base_url = info_dir
         else:
+            # if it's a plain ensemble index.html is inside html/
             base_url = os.path.join(info_dir, 'html')
+        #print(f'** Baseurl: {base_url}')
+        #breakpoint()
         # grab the summary data for d, if possible
         try:
             with open(info_fn) as f:
@@ -263,14 +272,14 @@ class EnsembleRun(object):
 
 
 # NB: Present in outer scope as a helper for load_and_reduce() below.
-def outer_load_and_reduce(f, verb=0):
+def outer_load_and_reduce(f, sim_root='', verb=0):
     r'''Load a sim and summarize it into a dict.
 
     This must be present at the outer scope of the file so it can be loaded
     by a separate process that is created by the multiprocessing module.'''
     if verb > 0:
         print('Processing <%s> in pid #%d' % (f, os.getpid()))
-    ensemble = EnsembleRun(f)
+    ensemble = EnsembleRun(f, sim_root)
     # dictionary for this single Ensemble
     return ensemble.summarize()
 
@@ -335,7 +344,9 @@ class EnsembleSummary(object):
             # reductions is a list of dicts containing summaries
             # (dict is empty if no valid summary existed)
             # py3: ensure the list is materialized
-            reductions = list(map_function(partial(outer_load_and_reduce, verb=self.args.verbose),
+            reductions = list(map_function(partial(outer_load_and_reduce,
+                                                   sim_root=self.args.sim_root,
+                                                   verb=self.args.verbose),
                                       self.ens_files))
         # hacky fix for no-drm case
         # note: n_valid <= len(self.ens_files)
@@ -627,7 +638,7 @@ def expand_infile_arg(args):
     Assumes args.infile has at least one member.'''
     # list of ensemble directories: our main goal
     ens_files = []
-    # is this an experiment-of-experiments (foo.exp/{bar,baz,brat}.exp)?
+    # is this nested Experiment (foo.exp/{bar,baz,brat}.exp)?
     # (if so, we will descend into its child experiments)
     inner_experiment = False
     if args.expand:
@@ -647,7 +658,7 @@ def expand_infile_arg(args):
                     inner_exps.append(entry.path)
                 else:
                     pass # don't care about other dirs
-            # if experiment-of-experiments, replace infile X.exp with X.exp/*.exp
+            # if Nested Experiment, replace infile X.exp with X.exp/*.exp
             if inner_exps and not found_fam:
                 inner_experiment = True
                 infiles = inner_exps
@@ -750,9 +761,12 @@ if __name__ == '__main__':
     args.expt_name_readable = args.expt_name if args.expt_name else 'Root'
     # get the Ensemble-set name from the first argument above
     if args.ens1.startswith('sims/'):
+        args.sim_root = os.path.dirname(args.ens1)
         args.script_root = os.path.dirname(args.ens1).replace('sims', 'Scripts', 1)
     else:
-        args.script_root = '' # not recognized -- give up
+        # not recognized -- give up
+        args.sim_root = ''
+        args.script_root = ''
     if args.verbose:
         print(f"{args.progname}: Inferring script base directory: `{args.script_root}'")
 
