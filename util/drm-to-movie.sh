@@ -172,7 +172,8 @@ fi
 
 # ensure we can at least import EXOSIMS
 if python -c 'import EXOSIMS' ; then
-    source=$(python -c 'import os, EXOSIMS; print(os.path.dirname(EXOSIMS.__file__))')
+    # this seeming indirection is needed, see add-sims.sh
+    source=$(python -c 'import EXOSIMS.Prototypes; import os.path as p; print(p.dirname(p.dirname(p.dirname(EXOSIMS.Prototypes.__file__))))')
     echo "${PROGNAME}: Using EXOSIMS from $source"
     preamble=
 else
