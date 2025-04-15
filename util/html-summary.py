@@ -110,11 +110,19 @@ SECTION_HEADS = {
         'visit-time': '''Counts in these plots represent the number of target stars visited or re-visited. 
              <p>Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
              reduce overplotting of multiple time series.''',
-        'yield': '''On the plots, time axis is mission clock time. 
-             Time-axis for the various lines is offset slightly to 
+        'yield': '''<b>Plots:</b> Time axis is mission clock time. 
+             The time axis for the various quantities (All/Unique/Revisit)
+             is offset slightly to 
              reduce overplotting of multiple time series.
              <p>
-             The table entries for Detected (cumulative) give the final
+             <b>Characterization plots:</b> If the observing scenario
+             contains multiple observing modes, the "revisit" line will
+             count the second and following modes as revisits. For example,
+             if there are characterization observations in VIS and 3 NUV wavelengths,
+             the 3 subsequent NUV observations will be counted as revisits.
+             <p>
+             <b>Plot/Table relationship:</b> Table entries for
+             Detected (cumulative) give the final
              achieved value shown on the Detections plots.''',
         'cume': '''Time axis is mission clock time. 
              Time-axis for the various lines is offset slightly to 
