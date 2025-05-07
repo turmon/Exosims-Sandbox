@@ -75,6 +75,8 @@ import argparse
 import sys
 import os
 import glob
+import json
+import time
 import re
 import csv
 import html
@@ -208,6 +210,9 @@ class HTML_helper(object):
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="/Local/www-resources/sorttable.js"></script>
+    <!-- tabulator.js -->
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
 </head>
 <body>
 '''
@@ -517,7 +522,7 @@ class SimSummary(object):
     were added above and inserting those files into an HTML template 
     for the ensemble.'''
     # do not index content of dirs having these names
-    sim_dir_no_index = set(('export', 'log', 'spc', 'sys', 'log_sim', 'run', 'html'))
+    sim_dir_no_index = set(('export', 'log', 'drm', 'spc', 'sys', 'log_sim', 'run', 'html'))
     # NOTE: The following two lists are the main hook for adding new plot families to the
     # generated HTML:
     #  -- "graphics_map" associates a file pattern (e.g., /det-radlum*) to
@@ -589,6 +594,8 @@ class SimSummary(object):
         self.tables = defaultdict(list) # dict-of-list
         self.path_graphics = defaultdict(dict) # dict-of-dict
         self.csvs = []
+        self.readme_info = '' # one-line summary
+        self.readme_file = '' # filename
 
     def add(self, filename):
         r'''Dispatcher: adds filename to the correct category of item.'''
@@ -598,6 +605,8 @@ class SimSummary(object):
             self.add_path_graphic(filename)
         elif filename.endswith('.png') or filename.endswith('.pdf'):
             self.add_graphic(filename)
+        elif filename.endswith(('/README.md', '/README.html')):
+            self.add_readme(filename)
         elif filename.endswith('.md'):
             self.add_table(filename)
         elif '/drm/' in filename:
@@ -666,6 +675,13 @@ class SimSummary(object):
         self.csvs.append(filename)
         return
         
+    def add_readme(self, filename):
+        # in the function call, need to zero-out the "root" argument
+        # d is the Ensemble base directory, and d is the path down
+        meta, meta_fn = obtain_metadata_info('', os.path.dirname(filename))
+        self.readme_info = meta
+        self.readme_file = meta_fn
+
     def render_table(self, hh, t_file):
         r'''Renders a table, in a markdown-format file, as html.
 
@@ -933,7 +949,24 @@ class SimSummary(object):
         r'''Write path information, typically from multiple seeds, to separate html.'''
         for seed in self.path_graphics.keys():
             self.render_path(seed, filename_tmpl % seed)
-                    
+
+    def put_file_counts(self):
+        # make an object
+        info = dict()
+        info['index_path_count'] = sum([len(g) for _,g in self.graphics.items()])
+        info['index_path_gfx'] = len(self.path_graphics)
+        info['index_gfx_count'] = sum([len(g) for _,g in self.path_graphics.items()])
+        #info['experiment'] = "s_c1_0.01_c3_0.99"
+        info['readme_info'] = self.readme_info
+        info['readme_file'] = self.readme_file
+        # dump the object
+        fn = 'index-files.json'
+        with open(fn, 'w') as fp:
+            if False:
+                print('Dumping to: {fn}')
+            json.dump(info, fp, indent=2)
+
+
 ############################################################
 #
 # One-line Sim Summaries
@@ -945,15 +978,21 @@ def exp_summary(d):
 
     If d is None: instead, return the header corresponding to the summary.
 
-    TODONT: It is *not worthwhile* to attempt to roll up graphics file counts
-    from ensembles in to the tables covering Experiments/Families. Note, 
-    these counts cannot be known at the time of reduction, only after all 
-    graphics have been added, or at HTML generation time. 
-    Because HTML generation only *sometimes* recurses into subdirectories, 
-    the rolled-up count is in general not known and kept up-to-date. So 
-    the rolled-up count can only sometimes be known at HTML-generation time. 
-    Further, it mostly provides value at the ensemble-summary level, and this 
-    is where the count is tractable to glob for. Let. It. Go.'''
+    '''
+    
+    # TODONT: It is *not worthwhile* to attempt to roll up graphics file counts
+    # from ensembles in to the tables covering Experiments/Families. Note, 
+    # these counts cannot be known at the time of reduction, only after all 
+    # graphics have been added, or at HTML generation time. 
+    # Because HTML generation only *sometimes* recurses into subdirectories, 
+    # the rolled-up count is in general not known and kept up-to-date. So 
+    # the rolled-up count can only sometimes be known at HTML-generation time. 
+    # Further, it mostly provides value at the ensemble-summary level, and this 
+    # is where the count is tractable to glob for. Let. It. Go.
+    # TODO: (2025) The tabulator.js version has obsoleted this warning.
+    # We now generate summarizer files (index-files.json, index-files-byname.json).
+    # The dataflow needs to be documented
+
     # Load the reduction summary file, reduce-info.csv
     rv = reduce_info_summary(d)
     return rv
@@ -987,6 +1026,106 @@ def sim_summary(d):
     rv['path_gfx']   = path_gfx
     rv['gfx_count']  = gfx_count
     return rv
+
+def sim_filecount_glob(d, prefix=''):
+    r'''Count files, mostly graphics, in one simulation directory 
+
+    If d is None: instead, return the header corresponding to the summary.'''
+    # return value template
+    rv = {
+        f'{prefix}path_count':0,
+        f'{prefix}path_gfx':0,
+        f'{prefix}gfx_count':0}
+    # the quick-out for header info
+    if d is None:
+        return rv
+    # quick-out: glob will not work on nested structures - return 0
+    if d.endswith(('.exp', '.fam')):
+        return rv
+    # Performance note: the globs below run for each non-Family/Experiment
+    # subdir below sims/ (i.e., if d itself has DRM's) when indexing the 
+    # Sandbox. (2023/10: About 2/3 of the runtime is running these globs.)
+    # Rather than being clever, the best solution is to put the old Ensembles
+    # into a Family at the top-level, cutting runtime of many indexing
+    # components including this one.
+    # 
+    # number of unique paths that were indexed in any way
+    # typical name: SEED-X-Y.(png|mp4), e.g.:
+    #   SEED-obs-keepout-char.png
+    #   SEED-obs-timeline.png
+    #   SEED-final.png
+    #   SEED.mp4
+    #path_count = len(set(fn.split('-')[0] for fn in glob.glob(os.path.join(d, 'path/[0-9]*-*.*'))))
+    # number of path graphics
+    path_gfx = 0
+    path_set = set()
+    path_gfx_re = re.compile('(\d+).*\.(png|mp4)$')
+    p = os.path.join(d, 'path')
+    if os.path.isdir(p):
+        for entry in os.scandir(p):
+            if not entry.is_file(): continue
+            m = path_gfx_re.match(entry.name)
+            if not m: continue
+            path_gfx += 1
+            path_set.add(m.group(1)) # capture the seed part
+    #path_gfx = (len(glob.glob(os.path.join(d, 'path/[0-9]*.png'))) +
+    #            len(glob.glob(os.path.join(d, 'path/[0-9]*.mp4'))))
+    path_count = len(path_set)
+
+    # total graphic file counts (non-path, and path-ens is non-path)
+    gfx_count = 0
+    # count {d}/gfx/*.png
+    p = os.path.join(d, 'gfx')
+    if os.path.isdir(p):
+        for entry in os.scandir(p):
+            if entry.is_file() and entry.name.endswith('.png'):
+                gfx_count += 1
+    # add in {d}/path-ens/*.png
+    p = os.path.join(d, 'path-ens')
+    if os.path.isdir(p):
+        for entry in os.scandir(p):
+            if entry.is_file() and entry.name.endswith('.png'):
+                gfx_count += 1
+
+    #gfx_count  = (len(glob.glob(os.path.join(d, 'gfx/*.png'))) +
+    #              len(glob.glob(os.path.join(d, 'path-ens/*.png'))))
+
+    # insert the extra data, just retrieved above
+    rv[f'{prefix}path_count'] = path_count
+    rv[f'{prefix}path_gfx']   = path_gfx
+    rv[f'{prefix}gfx_count']  = gfx_count
+    return rv
+
+def sim_filecount(d, prefix=''):
+    r'''Obtain file-count, mostly graphics, in one simulation directory 
+
+    If d is None: instead, return the header corresponding to the summary.'''
+    # return value template
+    rv = {
+        f'{prefix}path_count':0,
+        f'{prefix}path_gfx':0,
+        f'{prefix}gfx_count':0}
+    # the quick-out for header info
+    if d is None:
+        return rv
+
+    fn = os.path.join(d, 'index-files.json')
+    if not os.path.isfile(fn):
+        # print('* Sad path')
+        # needed when indexing hasn't been re-done by this code
+        rv = sim_filecount_glob(d, prefix=prefix)
+    else:
+        #print('* Happy path')
+        with open(os.path.join(d, 'index-files.json'), 'r') as fp:
+            rv = json.load(fp)
+
+    # insert the extra data, just retrieved above
+    #rv[f'{prefix}path_count'] = path_count
+    #rv[f'{prefix}path_gfx']   = path_gfx
+    #rv[f'{prefix}gfx_count']  = gfx_count
+
+    return rv
+
 
 def reduce_info_summary(d):
     r'''Summarize one simulation directory as an OrderedDict of strings.
@@ -1072,6 +1211,8 @@ def index_ensemble(args, path_sim, uplink):
         sim_info.render(fn, uplink)
         # render_paths handles all the seeds
         sim_info.render_paths(os.path.join(outdir, 'path-%s.html'))
+        # drop a summary of file counts
+        sim_info.put_file_counts()
 
 def obtain_metadata_info(root, d):
     '''Find a one-line information block for a group, if it exists'''
@@ -1079,7 +1220,8 @@ def obtain_metadata_info(root, d):
         '''Grab first nontrivial line as the "title"'''
         for l in fp.readlines():
             if l.strip():
-                meta = l.strip().replace('#', '')
+                # final strip() removes whitespace after #
+                meta = l.strip().replace('#', '').strip()
                 return meta
         return ''
     def meta_from_html(fp):
@@ -1124,6 +1266,21 @@ def index_group(args, startpath, title, uplink):
     This function corresponds to Experiments and Families: groups of sims.
     If args.recurse, descend recursively and summarize all child directories
     as well. This may imply a recursive call to this routine.'''
+
+    # optionally descend into startpath/*/
+    # (-r => args.recurse, not usually done, make html-all is only current target)
+    # TODO: perhaps put at top of function, so that the parents can use
+    #   indexing results from children
+    # TODO: lightly tested
+    # TODO: will call index_one_sim on logdirs, etc.
+    if args.recurse:
+        for entry in os.scandir(startpath):
+            if entry.name.startswith('.'): continue
+            if entry.is_dir():
+                d = os.path.join(startpath, entry.name)
+                # print(f'I_G:   recursive call into {d = }')
+                index_one_sim(args, d)
+
     # output HTML file
     filename = os.path.join(startpath, 'index.html')
     with HTML_helper(filename, title) as hh:
@@ -1145,49 +1302,60 @@ def index_group(args, startpath, title, uplink):
                 hh.paragraph('Experiment descriptive ' + hh.link(fn_stem, 'README', inner=True))
                 break
         # table of individual sims
-        # make the table be sortable so that the JS sorter knows about it
-        hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
-        item_num = 0
-        for root, dirs, files in os.walk(startpath):
-            # loop over dirs (i.e., sims enclosed by startpath)
-            for d in sorted(dirs):
-                #print('I_G:   looping on {}'.format(d))
-                # 1: make table row with: link to the sim html + sim summary
-                #     no recursive descent in this block
-                if d.endswith('.exp') or d.endswith('.fam'):
-                    # alink is an HTML fragment as a string
-                    alink = hh.link(f'{d}/index.html', d, inner=True)
-                    # augment alink (the row "name" field) with README.txt info ("extra")
-                    extra, extra_fn = obtain_metadata_info(root, d)
-                    if extra:
-                        # tooltip HTML element classes are picked up by CSS styles (no JS needed)
-                        dingbat = '&#9432;' # currently a circled "i"
-                        extra_span = hh.span(html.escape(extra), **{'class': 'tooltiptext'})
-                        alink += hh.link(extra_fn, f'&nbsp;{dingbat}{extra_span}', inner=True, **{'class': 'tooltip'})
-                    properties = exp_summary(os.path.join(root, d))
-                    hh.table_row([alink] + list(properties.values()))
-                    item_num += 1
-                elif os.path.isdir(os.path.join(root, d, 'drm')):
-                    alink = hh.link(f'{d}/html/index.html', d, inner=True)
-                    properties = sim_summary(os.path.join(root, d))
-                    # format the properties as a row
-                    hh.table_row([alink] + list(properties.values()))
-                    item_num += 1
-                else:
-                    pass # dir name not recognized, skip it
-                # 2: recursively descend into sims/d (no-op if d not recognized)
-                if args.recurse:
-                    # d already has the sims/ prefix
-                    #print('I_G:   recursive call {}'.format(d))
-                    index_one_sim(args, os.path.join(root, d))
-            # finished all dirs below startpath -- do not descend further with os.walk()
-            break
-        # summary over the whole set of ensembles in the table (root/reduce-info.csv)
-        properties = exp_summary(startpath)
-        #properties = sim_summary(None)
-        hh.table_foot()
-        hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
-        hh.table_end()
+        vanilla_tables = False
+        if vanilla_tables:
+            # make the table be sortable so that the JS sorter knows about it
+            hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
+            item_num = 0
+            # FIXME: os.walk misleads (we only go down one level) - use os.listdir()
+            for root, dirs, files in os.walk(startpath):
+                # loop over dirs (i.e., sims enclosed by startpath)
+                for d in sorted(dirs):
+                    #print('I_G:   looping on {}'.format(d))
+                    # 1: make table row with: link to the sim html + sim summary
+                    #     no recursive descent in this block
+                    if d.endswith('.exp') or d.endswith('.fam'):
+                        # alink is an HTML fragment as a string
+                        alink = hh.link(f'{d}/index.html', d, inner=True)
+                        # augment alink (the row "name" field) with README.txt info ("extra")
+                        extra, extra_fn = obtain_metadata_info(root, d)
+                        if extra:
+                            # tooltip HTML element classes are picked up by CSS styles (no JS needed)
+                            dingbat = '&#9432;' # currently a circled "i"
+                            extra_span = hh.span(html.escape(extra), **{'class': 'tooltiptext'})
+                            alink += hh.link(extra_fn, f'&nbsp;{dingbat}{extra_span}',
+                                             inner=True, **{'class': 'tooltip'})
+                        properties = exp_summary(os.path.join(root, d))
+                        hh.table_row([alink] + list(properties.values()))
+                        item_num += 1
+                    elif os.path.isdir(os.path.join(root, d, 'drm')):
+                        alink = hh.link(f'{d}/html/index.html', d, inner=True)
+                        properties = sim_summary(os.path.join(root, d))
+                        # format the properties as a row
+                        hh.table_row([alink] + list(properties.values()))
+                        item_num += 1
+                    else:
+                        pass # dir name not recognized, skip it
+                # finished all dirs below startpath -- do not descend further with os.walk()
+                break
+            # summary over the whole set of ensembles in the table (root/reduce-info.csv)
+            properties = exp_summary(startpath)
+            #properties = sim_summary(None)
+            hh.table_foot()
+            hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
+            hh.table_end()
+        else:
+            hh.paragraph('Tabulated summary is below.', br=True)
+            hh.div('<!-- tabulation goes here -->', id="scenario-table")
+            # (presently, filenames are hard-coded, which is OK)
+            ## # set up path to the data CSVs, and label mode, for the JS viewer
+            ## hh.script('var ens_path_root = "../path-ens";', literal=True)
+            ## hh.script([
+            ##    'var ens_tab_root = "../path-ens";',
+            ##    'var ens_tab_mode = "ensemble";'],
+            ##          literal=True)
+            hh.script(WWW_RES/'ensemble-tabulator.js')
+
         hh.paragraph('In the summary, ensemble size is cumulative.', br=True)
         hh.text('Simulation date reflects the most recent simulation run below this level.', br=True)
         hh.text('Reduction date and user reflect the most recent reduction below this level.', br=True)
@@ -1196,8 +1364,44 @@ def index_group(args, startpath, title, uplink):
         hh.text('&nbsp;Earths (Det.) = Number of successful Earth detections, repeat visits not counted.', br=True)
         hh.text('&nbsp;Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted.', br=True)
         hh.text('&nbsp;Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted.', br=True)
+        
+    # make a summary of graphical files
+    if not vanilla_tables:
+        prop_all = []
+        # TODO: sub os.scandir() for efficiency
+        for entry in os.listdir(startpath):
+            d = os.path.join(startpath, entry)
+            if not os.path.isdir(d): continue
+            if d.endswith(('.exp', '.fam')) or os.path.isdir(os.path.join(d, 'drm')):
+                properties = sim_filecount(d, prefix='index_')
+                properties['experiment'] = entry
+                prop_all.append(properties)
+        out_fn = os.path.join(startpath, 'index-files-byname.json')
+        with open(out_fn, 'w') as fp:
+            if args.DIAGNOSE:
+                print('Dumping index to: %s' % out_fn)
+            json.dump(prop_all, fp, indent=2)
+        out_fn = os.path.join(startpath, 'index-files.json')
+        with open(out_fn, 'w') as fp:
+            if args.DIAGNOSE:
+                print('Dumping index to: %s' % out_fn)
+            rm_info, rm_file = obtain_metadata_info(startpath, '')
+            prop_total = property_total(prop_all)
+            prop_total['readme_info'] = rm_info
+            prop_total['readme_file'] = rm_file
+            json.dump(prop_total, fp, indent=2)
     return
 
+def property_total(properties):
+    skipped_keys = set(['experiment', 'readme_info', 'readme_file'])
+    if not properties:
+        return {}
+    p_tot = defaultdict(int)
+    for p1 in properties:
+        for key in p1:
+            if key in skipped_keys: continue
+            p_tot[key] += p1[key]
+    return dict(**p_tot)
 
 ############################################################
 #
@@ -1292,7 +1496,7 @@ def main(args):
 
     In our usage, a "sim" is the name of a simulation scenario, whether
     an ensemble, an Experiment, or a Family.
-    Algorithm: If -i was supplied, add the parents of each given SIM
+    Algorithm: If -i was supplied, add the chain of parents of each given SIM
     to the list of sims_to_visit. The ordering is such that branches/leaves 
     are visited first, and then the path from the branch/leaf up to the root.
     Conceptually -i augments the path upward from SIM to root.
@@ -1338,10 +1542,24 @@ if __name__ == '__main__':
                       dest='DIAGNOSE', action='count', default=0)
     args = parser.parse_args()
     
+    # measure elapsed time
+    time_start = time.time()
+
     # set umask in hopes that files/dirs will be group-writable
     os.umask(0o002)
 
+    # program name, for convenience
+    args.progname = os.path.basename(sys.argv[0])
+    
+    # Announce updated version
+    print(f'{args.progname}: tabulator.js summarizer version.')
+
     main(args)
+
+    # report elapsed time
+    time_delta = time.time() - time_start
+    print(f'{args.progname}: Done. Elapsed time: {time_delta:.3f}s.')
+
     sys.exit(0)
 
 

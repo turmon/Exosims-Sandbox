@@ -69,6 +69,8 @@ table.gfx td:first-child {
     font-weight: bold;
 }
 
+/* Navigation menu at top of Scenario pages */
+
 /* See: https://codepen.io/blindside85/pen/ClnIE
  * Multilevel Nav Menu Dropdowns
  * A pen by Jesse Dupuy
@@ -160,6 +162,25 @@ nav li a:hover {
   position: absolute;
   left: -9999em;
   top: 0;
+}
+
+/*
+ * Suppress so-called "spinner boxes" or "spin boxes" on
+ * <input type="number"> HTML input elements.
+ * Input elements are used in my own code augmenting the "tabulator"
+ * JS widget (currently named "ensemble-tabulator.js").
+ * These input elements appear at the column heads for row-filtering,
+ * and the spinner boxes take up a lot of room and just increment by 1.
+ */
+/* Safari, chrome */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* firefox */
+input[type=number] {
+    -moz-appearance:textfield;
 }
 
 /* 
