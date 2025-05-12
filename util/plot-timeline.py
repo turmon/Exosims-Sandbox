@@ -273,8 +273,10 @@ class SimulationRun(object):
         self.timeMultiplier = t_mult
         # FIXME: for ohTime, use what is in the starlight suppression system
         #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
+        # FIXME: could use (or attempt to use) the as-written Sandbox outspec 
+        # (.../log/outspec/NNN.json), rather than assuming we know the default value
         self.ohTime = self.outspec.get('ohTime', 0.2) # [days] -- overhead time
-        self.settlingTime = self.outspec['settlingTime'] # [days] -- settling time
+        self.settlingTime = self.outspec.get('settlingTime', 1.0) # [days] -- settling time
         self.missionLife = self.outspec['missionLife'] * 365.25 # [days]
         self.charMargin = self.outspec.get('charMargin', 0.15) # [dimensionless] - Exosims default
 
