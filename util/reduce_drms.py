@@ -2421,6 +2421,26 @@ class SimulationRun(object):
             rv['h_' + n] = np.histogram(yac[n], DETECTION_TIME_BINS)[0]
         # the list of keys that we're returning ... for use in later steps
         rv['_yield_time_keys'] = ['h_' + n for n in names]
+
+        # make an index of target depletion
+        # the trailing half-month keeps us away from edge conditions
+        # (we need this to contain exactly 12 bins)
+        bins_final_year = DETECTION_TIME_BINS[1:] > (DETECTION_TIME_BINS[-1]-365+30/2)
+        # ratio of (events in final year) / (total events)
+        # (set 0/0 to 0, idea being that targets are "depleted" in this case)
+        depletion_ratio = lambda name: np.nan_to_num(
+            np.sum(rv['h_' + name][bins_final_year]).astype(float) / np.sum(rv['h_' + name]).astype(float))
+        rv['_depletion_keys'] = []
+        with np.errstate(divide='ignore'):
+            # char, all planets
+            n = 'time_char_%s_%s_%s_%s' % ('full', 'allplan', 'uniq', 'union')
+            rv[k := 'deplete_char_allplan'] = depletion_ratio(n)
+            rv['_depletion_keys'].append(k)
+            # char, earth
+            n = 'time_char_%s_%s_%s_%s' % ('full', 'earth', 'uniq', 'union')
+            rv[k := 'deplete_char_earth'] = depletion_ratio(n)
+            rv['_depletion_keys'].append(k)
+        
         # return the pooled result
         return rv
 
@@ -2729,7 +2749,8 @@ class EnsembleSummary(object):
                                'funnel', 'detfunnel', 
                                'per_star_yield', 'per_star_promotion', 'resource_analysis',
                                'summarize_revisits', 'visit_time', 
-                               'earth_char', 'yield_time', 'radlum', 'earth', 'delta_v'):
+                               'earth_char', 'yield_time', 'depletion', 
+                               'radlum', 'earth', 'delta_v'):
             # e.g., all 'promo_count' attrs are found by looking up '_promo_count_keys' in reductions
             attrs_new = self.get_key_family_attrs(reductions, '_%s_keys' % key_family)
             attrs_auto.extend(attrs_new)
@@ -2890,6 +2911,7 @@ class EnsembleSummary(object):
                     chars_earth_unique=(self.summary['exoE_char_full_mean'] +
                                         self.summary['exoE_char_part_mean']),
                     chars_earth_strict=self.summary['exoE_char_strict_mean'],
+                    targ_dep_all=self.summary['deplete_char_allplan_mean'],
                         )
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=sorted(info.keys()))

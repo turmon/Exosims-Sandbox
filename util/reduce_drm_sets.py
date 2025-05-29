@@ -203,6 +203,7 @@ class EnsembleRun(object):
             ('detections_earth_unique', float, 0.0),
             ('chars_earth_unique', float, 0.0),
             ('chars_earth_strict', float, 0.0),
+            ('targ_dep_all', float, 0.0),
             # not used in the roll-up
             ('detections_unique_mean', float, 0.0),
             ('chars_unique_mean', float, 0.0), 
@@ -444,6 +445,7 @@ class EnsembleSummary(object):
             'chars_earth_unique',
             'detections_earth_all',
             'detections_earth_unique',
+            'targ_dep_all',
             'ensemble_size',
             ]
         # take parameter-list, if any, from first param entry in self.index_csv
