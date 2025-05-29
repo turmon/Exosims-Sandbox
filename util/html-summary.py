@@ -522,7 +522,8 @@ class SimSummary(object):
     were added above and inserting those files into an HTML template 
     for the ensemble.'''
     # do not index content of dirs having these names
-    sim_dir_no_index = set(('export', 'log', 'drm', 'spc', 'sys', 'log_sim', 'run', 'html'))
+    # ('drm' not skipped b/c we use it to count ensemble size)
+    sim_dir_no_index = set(('export', 'log', 'spc', 'sys', 'log_sim', 'run', 'html'))
     # NOTE: The following two lists are the main hook for adding new plot families to the
     # generated HTML:
     #  -- "graphics_map" associates a file pattern (e.g., /det-radlum*) to
