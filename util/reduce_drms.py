@@ -2428,18 +2428,25 @@ class SimulationRun(object):
         bins_final_year = DETECTION_TIME_BINS[1:] > (DETECTION_TIME_BINS[-1]-365+30/2)
         # ratio of (events in final year) / (total events)
         # (set 0/0 to 0, idea being that targets are "depleted" in this case)
-        depletion_ratio = lambda name: np.nan_to_num(
-            np.sum(rv['h_' + name][bins_final_year]).astype(float) / np.sum(rv['h_' + name]).astype(float))
+        def depletion_ratio(rv, name):
+            h_name = 'h_' + name
+            null_value = np.array(0.0)
+            if h_name not in rv:
+                return null_value # e.g., chars = 0 case
+            else:
+                c_final = np.sum(rv[h_name][bins_final_year]).astype(float)
+                c_full = np.sum(rv[h_name]).astype(float)
+                return null_value if c_final == 0 else c_final / c_full
+
         rv['_depletion_keys'] = []
-        with np.errstate(divide='ignore'):
-            # char, all planets
-            n = 'time_char_%s_%s_%s_%s' % ('full', 'allplan', 'uniq', 'union')
-            rv[k := 'deplete_char_allplan'] = depletion_ratio(n)
-            rv['_depletion_keys'].append(k)
-            # char, earth
-            n = 'time_char_%s_%s_%s_%s' % ('full', 'earth', 'uniq', 'union')
-            rv[k := 'deplete_char_earth'] = depletion_ratio(n)
-            rv['_depletion_keys'].append(k)
+        # char, all planets
+        n = 'time_char_%s_%s_%s_%s' % ('full', 'allplan', 'uniq', 'union')
+        rv[k := 'deplete_char_allplan'] = depletion_ratio(rv, n)
+        rv['_depletion_keys'].append(k)
+        # char, earth
+        n = 'time_char_%s_%s_%s_%s' % ('full', 'earth', 'uniq', 'union')
+        rv[k := 'deplete_char_earth'] = depletion_ratio(rv, n)
+        rv['_depletion_keys'].append(k)
         
         # return the pooled result
         return rv
