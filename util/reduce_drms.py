@@ -2422,34 +2422,72 @@ class SimulationRun(object):
         # the list of keys that we're returning ... for use in later steps
         rv['_yield_time_keys'] = ['h_' + n for n in names]
 
-        # make an index of target depletion
-        # the trailing half-month keeps us away from edge conditions
-        # (we need this to contain exactly 12 bins)
-        bins_final_year = DETECTION_TIME_BINS[1:] > (DETECTION_TIME_BINS[-1]-365+30/2)
-        # ratio of (events in final year) / (total events)
-        # (set 0/0 to 0, idea being that targets are "depleted" in this case)
-        def depletion_ratio(rv, name):
-            h_name = 'h_' + name
-            null_value = np.array(0.0)
-            if h_name not in rv:
-                return null_value # e.g., chars = 0 case
-            else:
-                c_final = np.sum(rv[h_name][bins_final_year]).astype(float)
-                c_full = np.sum(rv[h_name]).astype(float)
-                return null_value if c_final == 0 else c_final / c_full
+        # make an index of target depletion using the events-vs-time accumulator
+        # that we already have; they will be injected in the final result
+        rv2 = self.target_depletion_subanalysis(names, yac)
+        rv2['_target_depletion_keys'] = list(rv2.keys())
 
-        rv['_depletion_keys'] = []
-        # char, all planets
-        n = 'time_char_%s_%s_%s_%s' % ('full', 'allplan', 'uniq', 'union')
-        rv[k := 'deplete_char_allplan'] = depletion_ratio(rv, n)
-        rv['_depletion_keys'].append(k)
-        # char, earth
-        n = 'time_char_%s_%s_%s_%s' % ('full', 'earth', 'uniq', 'union')
-        rv[k := 'deplete_char_earth'] = depletion_ratio(rv, n)
-        rv['_depletion_keys'].append(k)
-        
         # return the pooled result
+        return {**rv, **rv2}
+
+
+    def target_depletion_subanalysis(self, names, yac):
+        r'''
+        Uses the yield accumulator (list of times of yield events) to
+        find metrics for target depletion
+        Note: the most chacteristic field of interest is:
+          'time_char_%s_%s_%s_%s' % ('full', 'allplan', 'uniq', 'union')
+        '''
+        rv = dict()
+        for n in names:
+            # 1: Filter. These keys will not be used to find any
+            # target depletion value, not even a placeholder.
+            # filter down to just chars
+            if 'time_char' not in n:
+                continue # skip detections
+            # filter out some others that don't seem interesting
+            # revisits, red/blue bands
+            if ('_revi' in n or
+                '_red' in n or
+                '_blue' in n):
+                continue
+            # 2: Compute metrics. All keys below here will have a metric.
+            # define the names: n_orig is the source name, and we strip off
+            # the leading time_ to make the destination name
+            n_orig = n
+            n_dest = n[5:]
+            # no yield at all in that category => yac[n_orig] will not have anything
+            # filled in - but yac is a list-accumulator, so the slot will materialize
+            # as empty. Fill in a dummy value if the materialized list is [].
+            if len(yac[n_orig]) == 0:
+                slope0, slope1, slope2 = np.array(0.0), np.array(0.0), np.array(0.0)
+                t80 = np.array(np.nan)
+            else:
+                ycn = yac[n_orig]
+                # TODO: key off missionLife instead
+                # ratio: (last year yield) / (full yield), and friends
+                c_sta_1 = len([y1 for y1 in ycn if y1 < (1*365.25)])
+                c_fin_1 = len([y1 for y1 in ycn if y1 > (DETECTION_TIME_BINS[-1] - 1*365.25)])
+                c_fin_2 = len([y1 for y1 in ycn if y1 > (DETECTION_TIME_BINS[-1] - 2*365.25)])
+                c_total = len(ycn)
+                slope0 = np.array(c_sta_1 / c_total) if c_total > 0 else np.array(0.0)
+                slope1 = np.array(c_fin_1 / c_total) if c_total > 0 else np.array(0.0)
+                slope2 = np.array((c_fin_2-c_fin_1) / c_total) if c_total > 0 else np.array(0.0)
+                # time-to-yield: mission time where we reach 80% of full yield
+                # t80: we round down, and we are not interpolating -- if yield = 7
+                # then n80 = 0.80 * 7 = 5.6 -> 5 and we take the time of the
+                # 5'th successful char, at index = 4.
+                # If yield = 1, n80 = 0.8 -> 0 and we want index (-1). We cheat
+                # this one and take the time of the first and only char.
+                N_yield = len(ycn)
+                n80 = int(np.floor(0.80 * N_yield))
+                t80 = np.array(ycn[max(n80 - 1, 0)])
+            rv[f'tdep_slope_yp1_{n_dest}'] = slope0 # year 1
+            rv[f'tdep_slope_ym1_{n_dest}'] = slope1 # final year
+            rv[f'tdep_slope_ym2_{n_dest}'] = slope2 # final-but-one year
+            rv[f'tdep_t80_{n_dest}'] = t80 # time-to-80%
         return rv
+
 
     def visit_time_analysis(self):
         r'''Extracts visits-vs-time information from a DRM structure, for a SINGLE Exosims run.
@@ -2756,7 +2794,7 @@ class EnsembleSummary(object):
                                'funnel', 'detfunnel', 
                                'per_star_yield', 'per_star_promotion', 'resource_analysis',
                                'summarize_revisits', 'visit_time', 
-                               'earth_char', 'yield_time', 'depletion', 
+                               'earth_char', 'yield_time', 'target_depletion', 
                                'radlum', 'earth', 'delta_v'):
             # e.g., all 'promo_count' attrs are found by looking up '_promo_count_keys' in reductions
             attrs_new = self.get_key_family_attrs(reductions, '_%s_keys' % key_family)
@@ -2918,7 +2956,9 @@ class EnsembleSummary(object):
                     chars_earth_unique=(self.summary['exoE_char_full_mean'] +
                                         self.summary['exoE_char_part_mean']),
                     chars_earth_strict=self.summary['exoE_char_strict_mean'],
-                    targ_dep_all=self.summary['deplete_char_allplan_mean'],
+                    # target depletion metrics
+                    targ_dep_slope_all=self.summary['tdep_slope_ym1_char_full_allplan_uniq_union_mean'],
+                    targ_dep_t80_all=self.summary['tdep_t80_char_full_allplan_uniq_union_mean'],
                         )
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=sorted(info.keys()))
@@ -3300,6 +3340,28 @@ class EnsembleSummary(object):
                 # dictionary mapping field -> value
                 d = {f:self.summary[f][i] for f in visit_time_fields}
                 w.writerow(d)
+        ensure_permissions(fn)
+
+        # 11: target-depletion analysis
+        fn = args.outfile % ('target-depletion', 'csv')
+        print('\tDumping to %s' % fn)
+        # compose the names of all fields to be saved
+        # initial list
+        target_depletion_fields = []
+        # qoi = quantities-of-interest
+        #   these are created by the ..._analysis() routine and relayed to here
+        target_depletion_qoi = self.auto_keys.get('target_depletion', [])
+        # add the names of more fields to be saved
+        target_depletion_fields.extend([ (x + '_' + y)
+                                    for x in target_depletion_qoi
+                                    for y in basic_stats])
+        # NB: target_depletion_* quantities are scalars!
+        with open(fn, 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=target_depletion_fields)
+            w.writeheader()
+            # dictionary mapping field -> value
+            d = {f:self.summary[f] for f in target_depletion_fields}
+            w.writerow(d)
         ensure_permissions(fn)
 
         # copy script to JSON file

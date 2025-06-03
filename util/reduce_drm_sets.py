@@ -203,7 +203,9 @@ class EnsembleRun(object):
             ('detections_earth_unique', float, 0.0),
             ('chars_earth_unique', float, 0.0),
             ('chars_earth_strict', float, 0.0),
-            ('targ_dep_all', float, 0.0),
+            # target depletion (new 2025/06)
+            ('targ_dep_slope_all', float, 0.0),
+            ('targ_dep_t80_all', float, 0.0),
             # not used in the roll-up
             ('detections_unique_mean', float, 0.0),
             ('chars_unique_mean', float, 0.0), 
@@ -431,7 +433,8 @@ class EnsembleSummary(object):
         '''
 
         # FIXME: JSON was added later and it shows. We should generate what-to-write,
-        # and then write it to CSV, JSON, or both as a second step. (See /dev/null below.)
+        # and then write it to CSV, JSON, or both as a second step.
+        # (See /dev/null below.)
         # But the present implementation is completely functional.
 
         if 'csv' in otype:
@@ -445,7 +448,9 @@ class EnsembleSummary(object):
             'chars_earth_unique',
             'detections_earth_all',
             'detections_earth_unique',
-            'targ_dep_all',
+            # target depletion (new 2025/06)
+            'targ_dep_slope_all',
+            'targ_dep_t80_all',
             'ensemble_size',
             ]
         # take parameter-list, if any, from first param entry in self.index_csv
