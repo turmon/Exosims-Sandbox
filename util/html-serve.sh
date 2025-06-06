@@ -16,7 +16,7 @@
 # and visit the above URL on your own system (e.g., laptop).
 #
 # Usage:
-#   html-serve.sh [-h] [-p PORT] [-s apache|simple] MODE
+#   html-serve.sh [-h] [-p PORT] [-r ROOT] [-s apache|simple] MODE
 #
 # where MODE is one of:
 #   ensure: if no server is running, start one
@@ -30,6 +30,9 @@
 #  -p PORT   => gives the HTTP port number.  Default is 8090.
 #  -s apache => use apache2/httpd server (default)
 #  -s simple => use python SimpleHTTPServer (less performant)
+#  -r ROOT   => use the named dir as document root
+#               (usually a system-dependent fixed dir is used,
+#               try -r $(pwd) for the working directory)
 #  -h        => shows this help text.
 #
 # Implementation:
@@ -120,7 +123,7 @@ SERVER_VARDIR=Local/www-service/var
 port=$DEFAULT_PORT
 server=$DEFAULT_SERVER
 verbosity=normal
-while getopts "hqp:s:" opt; do
+while getopts "hqp:r:s:" opt; do
     case $opt in
 	s)
 	    # server flavor
@@ -132,6 +135,11 @@ while getopts "hqp:s:" opt; do
 	    port="$OPTARG"
             [ "$verbosity" = normal ] && echo "${PROGNAME}: Operating port set to: $port"
 	    ;;
+	r)
+            # document root
+            DOC_ROOT="$OPTARG"
+            [ "$verbosity" = normal ] && echo "${PROGNAME}: Document root set to: $DOC_ROOT"
+           ;;
 	q)
 	    verbosity=quiet
 	    ;;
