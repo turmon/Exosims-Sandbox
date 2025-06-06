@@ -2956,9 +2956,12 @@ class EnsembleSummary(object):
                     chars_earth_unique=(self.summary['exoE_char_full_mean'] +
                                         self.summary['exoE_char_part_mean']),
                     chars_earth_strict=self.summary['exoE_char_strict_mean'],
-                    # target depletion metrics
-                    targ_dep_slope_all=self.summary['tdep_slope_ym1_char_full_allplan_uniq_union_mean'],
-                    targ_dep_t80_all=self.summary['tdep_t80_char_full_allplan_uniq_union_mean'],
+                    # target depletion metrics -- if no chars, they will not exist
+                    # these eventually land in a .json, and NaNs in json aren't OK
+                    targ_dep_slope_all=self.summary.get(
+                        'tdep_slope_ym1_char_full_allplan_uniq_union_mean', 0.0),
+                    targ_dep_t80_all=self.summary.get(
+                        'tdep_t80_char_full_allplan_uniq_union_mean', 0.0),
                         )
         with open(fn, 'w') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=sorted(info.keys()))
