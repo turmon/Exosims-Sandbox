@@ -673,6 +673,9 @@ def expand_infile_arg(args):
         # expand into: [d/reduce-info.csv for d in infiles if is_dir(d)]
         # one-liner is possible, but want to allow granular operation timing
         for infile1 in infiles:
+            if not os.path.isdir(infile1):
+                print(f"{args.progname}: Named directory {infile1} not present, skipping.")
+                continue
             for entry in os.scandir(infile1):
                 if entry.is_dir():
                     if os.path.isfile(os.path.join(entry.path, 'reduce-info.csv')):

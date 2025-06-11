@@ -1275,6 +1275,9 @@ def index_group(args, startpath, title, uplink):
     # TODO: lightly tested
     # TODO: will call index_one_sim on logdirs, etc.
     if args.recurse:
+        if not os.path.isdir(startpath):
+            print(f'{args.progname}: Given path {startpath} not present. Skipping.')
+            return
         for entry in os.scandir(startpath):
             if entry.name.startswith('.'): continue
             if entry.is_dir():
