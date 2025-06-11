@@ -12,7 +12,8 @@ Options:
   + `-O outfile` gives a template (containing exactly two occurrences of %s) for
      file outputs.  This is optional, but is best to supply.
   + `-j N` means to use N parallel workers to process the files.  By default,
-     about 2/3 of the available cores will be used (20 on aftac1, 30 on aftac2).
+     about 1/3 of the available cores will be used (25 on mustang*), which balances
+     parallel makes (outside this routine) and parallel reductions (within it).
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
   + `-D TYPE` gives a (string) TYPE that is inserted into the DEBUG variable in the 
      script, and which can be used to print a selected TYPE of debug output.
@@ -3485,7 +3486,7 @@ if __name__ == '__main__':
                             default=0)
     parser.add_argument('-D', help='debugging output type (string)', type=str, default='', dest='debug')
     parser.add_argument('-j', '--jobs', help=' #jobs, default = %(default)d',
-                      type=int, dest='jobs', default=int(N_CPU*0.65))
+                      type=int, dest='jobs', default=max(1,int(N_CPU*0.35)))
     args = parser.parse_args()
     
     # measure elapsed time

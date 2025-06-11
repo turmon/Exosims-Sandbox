@@ -12,7 +12,8 @@ and:
      file outputs.  This is optional - output will go to the ENS parent
      directory, according to Sandbox conventions, if not given.
      So, -O is normally not needed, but is good for debugging.
-  -j N means to use N parallel workers to process the files (default 1).
+  -j N means to use N parallel workers to read files (default 1).
+     Parallelism is vestigial; it slows processing on current hosts.
      If N = 0 or 1, no parallel workers are used: fastest for our
      small workload, and helpful for debugging.
   -i indexfile names a JSON index file (by convention, s_index.json) that 
