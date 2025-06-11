@@ -31,8 +31,10 @@
 #  -s apache => use apache2/httpd server (default)
 #  -s simple => use python SimpleHTTPServer (less performant)
 #  -r ROOT   => use the named dir as document root
-#               (usually a system-dependent fixed dir is used,
-#               try -r $(pwd) for the working directory)
+#               (on servers, a system-dependent fixed dir is used
+#               by default; on macos, the working directory; 
+#               use -r $(pwd) for the working directory if you
+#               have your own local install)
 #  -h        => shows this help text.
 #
 # Implementation:
