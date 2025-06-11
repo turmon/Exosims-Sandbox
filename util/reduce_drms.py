@@ -82,8 +82,6 @@ Options:
 # The relative ease of incrementally adding another analysis mode is of course the
 # reason the above technical debt has accumulated.
 
-from __future__ import division
-from __future__ import absolute_import
 import argparse
 import sys
 import shutil
@@ -92,6 +90,7 @@ import copy
 import time
 import json
 import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1' # before "import numpy"
 import gc
 import csv
 import re
