@@ -1,10 +1,10 @@
 from __future__ import print_function
 
-from ipyparallel import Client
+# from ipyparallel import Client
 from EXOSIMS.Prototypes.SurveyEnsemble import SurveyEnsemble 
 from EXOSIMS.util.get_module import get_module
 import time
-from IPython.core.display import clear_output
+# from IPython.core.display import clear_output
 import sys
 import os
 
@@ -70,6 +70,7 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         else:
             arglist = dict()
         # access the cluster
+        from ipyparallel import Client
         self.rc = Client(**arglist)
         self.dview = self.rc[:]
         self.dview.block = True
@@ -159,7 +160,7 @@ class IPClusterEnsembleJPL2(SurveyEnsemble):
         progress = 0
         while not ar.ready():
             ar.wait(10.)
-            clear_output(wait=True)
+            # clear_output(wait=True)
             if ar.progress == 0:
                 forecast = 'not yet able to forecast time remaining.'
             elif ar.progress > progress:
