@@ -1,0 +1,21 @@
+{
+    "arrival_time": "arrival_time",
+    "__seed__": true,
+    "__obs_num__": true,
+    "__plan_num__": true,
+    "__header__": true,
+    "__match__": "char_status",
+    "__planet__": {
+	"Mp": "Mp"
+    },
+    "__star__": {
+	"Spec": "Spec",
+	"Name": "Name",
+	"dist": "dist",
+	"luminosity": "L",
+	"comp0": "comp0"
+    },
+    "__eval__": {
+	"char_time": "char_info[0]['char_time']"
+    }
+}

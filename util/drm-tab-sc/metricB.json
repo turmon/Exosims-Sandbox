@@ -1,0 +1,21 @@
+{
+  "__seed__": true,
+  "__obs_num__": true,
+  "__header__": true,
+  "__match__": "char_info",
+  "__star__": {
+    "Name": "Name"
+  },
+  "instName0": "char_info.0.char_mode.instName",
+  "char_SNR0": "char_info.0.char_SNR",
+  "char_status0": "char_info.0.char_status",
+  "instName1": "char_info.1.char_mode.instName",
+  "char_SNR1": "char_info.1.char_SNR",
+  "char_status1": "char_info.1.char_status",
+  "instName2": "char_info.2.char_mode.instName",
+  "char_SNR2": "char_info.2.char_SNR",
+  "char_status2": "char_info.2.char_status",
+  "instName3": "char_info.3.char_mode.instName",
+  "char_SNR3": "char_info.3.char_SNR",
+  "char_status3": "char_info.3.char_status"
+}

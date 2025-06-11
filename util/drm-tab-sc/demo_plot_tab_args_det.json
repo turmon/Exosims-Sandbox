@@ -1,0 +1,25 @@
+{
+    "arrival_time": "arrival_time",
+    "det_SNR":      "det_SNR",
+    "det_comp":     "det_comp",
+    "det_time":     "det_time",
+    "det_status":   "det_status",
+    "WA":           "det_params.WA",
+    "dMag":         "det_params.dMag",
+    "fEZ":          "det_params.fEZ",
+    "__seed__": true,
+    "__obs_num__": true,
+    "__plan_num__": true,
+    "__header__": true,
+    "__match__": "det_mode",
+    "__planet__": {
+	"Mp": "Mp"
+    },
+    "__star__": {
+	"Spec": "Spec",
+	"Name": "Name",
+	"dist": "dist",
+	"luminosity": "L",
+	"comp0": "comp0"
+    }
+}

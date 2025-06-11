@@ -1,0 +1,14 @@
+{
+    "__seed__": true,
+    "__obs_num__": true,
+    "__header__": true,
+    "__match__": "char_info",
+    "instName": "char_info.0.char_mode.instName",
+    "IWA": "char_info.0.char_mode.IWA",
+    "WA":  "char_info.0.char_params.WA",
+    "char_SNR": "char_info.0.char_SNR",
+    "char_status": "char_info.0.char_status",
+    "__star__": {
+	"Name": "Name"
+    }
+}
