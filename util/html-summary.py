@@ -1060,7 +1060,7 @@ def sim_filecount_glob(d, prefix=''):
     # number of path graphics
     path_gfx = 0
     path_set = set()
-    path_gfx_re = re.compile('(\d+).*\.(png|mp4)$')
+    path_gfx_re = re.compile(r'(\d+).*\.(png|mp4)$')
     p = os.path.join(d, 'path')
     if os.path.isdir(p):
         for entry in os.scandir(p):
