@@ -138,7 +138,8 @@ if [ -z "$out_opt" ]; then
     out_opt=$(echo "$drm" | sed -e 's|.pkl$|-%s.%s|' -e 's|/drm/|/path/|')
     echo "${PROGNAME}: From DRM, guess outfile template is \`$out_opt'."
 fi
-if [ $(echo "ZZZ${out_opt}ZZZ" | awk -F %s '{print NF == 3}') -ne 1 ]; then
+# ensure exactly 2 "%s" in output file pattern (portable)
+if [ $(echo "ZZZ${out_opt}ZZZ" | grep -Fo "%s" | wc -l) -ne 2 ]; then
    echo "${PROGNAME}: Error: -o template must contain two %s markers" >&2
    exit 1
 fi
