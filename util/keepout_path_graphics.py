@@ -81,6 +81,7 @@ import json
 import six.moves.cPickle as pickle
 import random
 import time
+import shutil
 from collections import Counter
 import EXOSIMS
 import EXOSIMS.MissionSim
@@ -816,7 +817,9 @@ def make_graphics(args, xspecs):
         #plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
         #FFMpegWriter = animation.writers['ffmpeg']
         # turmon 12/2021: this is fragile: path to ffmpeg on the sec383 systems
-        plt.rcParams['animation.ffmpeg_path'] = '/usr/local/anaconda3/envs/python39/bin/ffmpeg'
+        # turmon 07/2025: seems no longer needed on sec383, regular /bin/ffmpeg is OK
+        #                 removed in favor of taking what's in PATH
+        #plt.rcParams['animation.ffmpeg_path'] = '/usr/local/anaconda3/envs/python39/bin/ffmpeg'
         FFMpegWriter = animation.FFMpegWriter
         movie = FFMpegWriter(fps=15, bitrate=2500)
         movie.setup(fig, out_movie, 200) # last arg is dpi
@@ -1349,6 +1352,10 @@ if __name__ == '__main__':
     
     if args.ra_dec_coord:
         print('WARNING: outputs in poorly-tested ra/dec coords, use -e for equatorial.')
+
+    if not shutil.which('ffmpeg'):
+        print(f'{args.progname}: ffmpeg not found in PATH. Fatal.', file=sys.stderr)
+        sys.exit(1)
 
     # load extra specs, if any
     #    -- this isn't used (11/2023), but leaving it for now
