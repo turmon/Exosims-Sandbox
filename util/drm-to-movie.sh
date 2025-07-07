@@ -15,11 +15,15 @@
 #
 # where:
 #  -F   signals to make only the final frame.  Don't use -l with -F.
-#  -l N is the movie length in years.  Use -l 0 to use the "missionLife" in the script.
+#  -l N is the movie length in years.
+#       Supply -l 0 to use the "missionLife" in the script.
 #       Default is the keepout_path_graphics default, 0.5 years.
 #  -d D is the delta-t between frames in days.
 #       Default is the keepout_path_graphics default, 5 days.
 #  -c   signals to output certain cumulative graphics.
+#
+# and less-used options are:
+#  -C   signals to write a coronagraph-only movie, even if a starshade is present
 #  -f   signals to output frame-by-frame graphics.  Don't use with -F.
 #  -D   means to load the python debugger while running -- developer use only
 #
@@ -50,8 +54,9 @@ umask 002
 ko_opts=
 py_opts=
 cume_out=0
+coro_force=0
 frame_out=0
-while getopts "hDFfcd:l:" opt; do
+while getopts "hDFfcCd:l:" opt; do
     case $opt in
 	D)
 	    # python debugging
@@ -70,6 +75,10 @@ while getopts "hDFfcd:l:" opt; do
 	c)
 	    # cumulative output, 0/1
 	    cume_out=1
+	    ;;
+	C)
+	    # force coronagraph-only movie even if starshade mission, 0/1
+	    coro_force=1
 	    ;;
 	d)
 	    # delta between frames in days
@@ -130,8 +139,18 @@ fi
 
 ### Output files and directories
 
+# alt movie filename for coro-force
+if [ $coro_force -eq 1 ]; then
+    echo "${PROGNAME}: Coronagraph-only movie output."
+    coro_string='-coro'
+    coro_opt="-C"
+else
+    coro_string=
+    coro_opt=
+fi
+
 # output files
-movie=sims/$script/path/$drm_num.mp4
+movie=sims/$script/path/$drm_num${coro_string}.mp4
 movie_dir=$(dirname $movie)
 
 # ensure the directory
@@ -152,7 +171,7 @@ fi
 
 # support frame-by-frame output
 if [ $frame_out = 1 ]; then
-    frame_dir=sims/$script/path/${drm_num}-frames
+    frame_dir=sims/$script/path/${drm_num}${coro_string}-frames
     if [ ! -d "$frame_dir" ]; then
 	mkdir -p "$frame_dir" 
 	chmod g+w "$frame_dir"
@@ -162,6 +181,7 @@ fi
 
 ### Invocation of the command
 
+### Commented out: old PYTHONPATH manipulations
 # Formerly:
 ## pick up Exosims from its default location
 #export PYTHONPATH=$(pwd)/EXOSIMS:$(pwd)/Local
@@ -175,10 +195,8 @@ if python -c 'import EXOSIMS' ; then
     # this seeming indirection is needed, see add-sims.sh
     source=$(python -c 'import EXOSIMS.Prototypes; import os.path as p; print(p.dirname(p.dirname(p.dirname(EXOSIMS.Prototypes.__file__))))')
     echo "${PROGNAME}: Using EXOSIMS from $source"
-    preamble=
 else
-    echo "${PROGNAME}: Cannot import EXOSIMS from your python. Setting PYTHONPATH to use Sandbox EXOSIMS"
-    preamble="PYTHONPATH=EXOSIMS"
+    echo "${PROGNAME}: Cannot import EXOSIMS from your python. Expect fatal error." >&2
 fi    
 
 # 2023-08: deleted the below: keepout_path_graphics now uses the Prototype SurveyEnsemble
@@ -186,5 +204,5 @@ fi
 
 # $ko_opts is unquoted so as to separate the various words within it
 # $py_opts, same (typically is empty)
-$preamble python $py_opts util/keepout_path_graphics.py -e $ko_opts \
-	--drm $drm --spc $spc --movie "$movie" "$script_fn"
+python $py_opts util/keepout_path_graphics.py $coro_opt -e $ko_opts \
+	--drm "$drm" --spc "$spc" --movie "$movie" "$script_fn"

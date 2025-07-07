@@ -32,6 +32,8 @@
 # optionally:
 #
 # + -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
+# + -C     -- make a coronagraph-only movie, even if a starshade is present.
+#             (only affects movie and final frame, not cumulative keepout)
 # + -f DIR -- the directory name for .png frame-by-frame output
 # + -c DIR -- the directory name for cumulative keepout output
 # + --drm FILE -- the file containing the DRM as a pickle
@@ -896,10 +898,7 @@ def make_graphics(args, xspecs):
     # array of all kogood vectors: re-initialize within loop when we know the size
     kogoods_coro, kogoods_shade = None, None
 
-    #if shadeMode:
-    #    import pdb; pdb.set_trace()
-
-    print('Beginning simulation propagation through time...')
+    print(f'{args.progname}: Beginning simulation propagation through time...')
     Ntime = len(currentTimes)
     for i in range(Ntime):
         # print progress if needed
@@ -991,7 +990,10 @@ def make_graphics(args, xspecs):
         # (if no starshade, i.e. OS.haveOcculter == False, doesn't matter)
         # FIXME: if starshade-only, koangleArr is 1x?x?, if hybrid, is 2x?x?
         # shade_sys = 1 if (koangleArr.shape[0] == 2) else 0
-        shade_sys = -1 # instead of if(...), take the last entry!
+        if not args.force_coro:
+            shade_sys = -1 # instead of if(...), take the last entry!
+        else:
+            shade_sys = 0 # take the coronagraph as the "shade" (misleading)
         
         if out_frames or out_movie:
             # create figure
@@ -1018,7 +1020,8 @@ def make_graphics(args, xspecs):
 
                 # starshade is largely drawn as transparent, other bodies are not
                 alpha = 0.17 if j <= 2 else 0.9
-                # special case: if occulter, show the (large) keepout-region due to Sun (j=0)
+                # special case: if occulter, show large (koMax) keepout-region due to Sun (j=0)
+                # FIXME: not well-tested for Occulter + force_coro
                 if OS.haveOcculter and (j == 0) and koangleArr[shade_sys,j,1] < 180:
                     # [1,j,1] => first index is for system (shade = 1), second for body (j=0 for Sun),
                     # last is for the max angle (0 for min KO, 1 for max KO)
@@ -1030,9 +1033,15 @@ def make_graphics(args, xspecs):
                     paths = mplc.LineCollection(lola, linewidths=1.5, color='gray', **opts)
                     ax.add_artist(paths)
 
+                # which StarlightSuppressionSystem to choose keepout from?
+                if OS.haveOcculter and not args.force_coro and (j == 0):
+                    # if occulter (and not forcing coro), use occulter keepout
+                    ko_sys = -1
+                else:
+                    ko_sys = 0
                 # draw a non-circular boundary for a planet
                 # lola = longitude and latitude path of circle of size koangle around xB,yB
-                lola, closed = spherical_cap(xB[j], yB[j], koangleArr[0,j,0])
+                lola, closed = spherical_cap(xB[j], yB[j], koangleArr[ko_sys,j,0])
                 opts = dict(facecolors='gray', alpha=alpha) if closed else {}
                 #opts = dict(alpha=alpha) if closed else {}
                 paths = mplc.LineCollection(lola, linewidths=1.5, color=colors[j], **opts)
@@ -1150,20 +1159,27 @@ def make_graphics(args, xspecs):
                           **title_style)
             plt.tick_params(axis='both', which='major', **tick_style)
 
+            ## Plot stars, showing keepout
+            # which StarlightSuppressionSystem to choose star keepout from?
+            if OS.haveOcculter and not args.force_coro:
+                # occulter: show only occulter Keepout (arbitrary)
+                ko_sys = -1
+            else:
+                ko_sys = 0
             # plot stars (visible and kept-out) with plt.scatter
             # zorder makes them appear behind the detections/characterizations,
-            # to avoid clutter, we don't show the underlying target if dets/chars
+            # to de-clutter, do not re-plot underlying star if prior dets/chars exist
             scatter_props = dict(s=5, edgecolors='none', zorder=10)
             color_ok = np.array((.6, .6, .6), ndmin=2) # [visible]  gray
             color_ko = np.array((.0, .0, .0), ndmin=2) # [kept-out] black
-            plt.scatter(xT[np.logical_and( kogood[0,:,0], ~star_shown)],
-                        yT[np.logical_and( kogood[0,:,0], ~star_shown)], c=color_ok, **scatter_props)
-            plt.scatter(xT[np.logical_and(~kogood[0,:,0], ~star_shown)],
-                        yT[np.logical_and(~kogood[0,:,0], ~star_shown)], c=color_ko, **scatter_props)
+            plt.scatter(xT[np.logical_and( kogood[ko_sys,:,0], ~star_shown)],
+                        yT[np.logical_and( kogood[ko_sys,:,0], ~star_shown)], c=color_ok, **scatter_props)
+            plt.scatter(xT[np.logical_and(~kogood[ko_sys,:,0], ~star_shown)],
+                        yT[np.logical_and(~kogood[ko_sys,:,0], ~star_shown)], c=color_ko, **scatter_props)
             # Need to skip transparent=True if the starshade keepout is shown,
             # otherwise the gray axis background will be turned transparent.
             # the gray axis background to transparent, which conflicts
-            # with the way the occluder keepout is shown.
+            # with the way the occulter keepout is shown.
             savefig_opts = dict() if axis_color_fixed else dict(transparent=True) 
             # image file output
             if out_frames:
@@ -1326,6 +1342,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--delta', help='delta-time [days], default = %(default).2f',
                       type=float, dest='delta_t', default=5.0)
     parser.add_argument('-e', '--equatorial', help='equatorial coordinates, default = False',
+                      action='store_true')
+    parser.add_argument('-C', '--force_coro', help='movie shows coro keepout even if starshade, default = False',
                       action='store_true')
     
     args = parser.parse_args()

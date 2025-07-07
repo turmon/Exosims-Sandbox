@@ -620,11 +620,20 @@ class SimSummary(object):
 
         TODO: Getting a little cumbersome at this point.
         '''
+        seed = None
         if '-frames/' in filename:
             pass # skip frame-by-frame graphics
+        elif filename.endswith('-coro-final.png'):
+            # force-coronagraph (-C) final frame
+            seed = re.sub(r'.*/([0-9]+)-coro-final\.png', r'\1', filename)
+            self.path_graphics[seed]['coro-final'] = filename
         elif filename.endswith('-final.png'):
             seed = re.sub(r'.*/([0-9]+)-final\.png', r'\1', filename)
             self.path_graphics[seed]['final'] = filename
+        elif filename.endswith('-coro.mp4'):
+            # force-coronagraph (-C) movie
+            seed = re.sub(r'.*/([0-9]+)-coro\.mp4', r'\1', filename)
+            self.path_graphics[seed]['coro-movie'] = filename
         elif filename.endswith('.mp4'):
             seed = re.sub(r'.*/([0-9]+)\.mp4', r'\1', filename)
             self.path_graphics[seed]['movie'] = filename
@@ -652,6 +661,13 @@ class SimSummary(object):
                 self.path_graphics[seed][key].append(filename)
             except KeyError:
                 self.path_graphics[seed][key] = [filename]
+        # some indication of likely future trouble, typically from rogue filename
+        if seed is not None:
+            try:
+                int(seed)
+            except ValueError:
+                print(f'From {filename}, could not extract integer seed. Error may ensue.', file=sys.stderr)
+
 
     def add_graphic(self, filename):
         if filename.endswith('.pdf'):
@@ -928,6 +944,13 @@ class SimSummary(object):
                     hh.link(WWW_DOC/'path-movie.html', 'format description', inner=True),
                     br=True)
                 hh.video(info['movie'])
+            else:
+                hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')
+            if 'coro-movie' in info:
+                hh.paragraph('Coronagraph-only path movie ' +
+                    hh.link(WWW_DOC/'path-movie.html', 'format description', inner=True),
+                    br=True)
+                hh.video(info['coro-movie'])
             else:
                 hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')
             # cumulative images
