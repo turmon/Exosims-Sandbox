@@ -8,6 +8,8 @@ function plot_drm_yield_times(dest_tmpl, mode, t_info, t_yield_time)
 % uniq, revisit) vs. time - within the t_det_time table.  We later created 
 % a newer table (t_yield_time) that has det/char, and allplanets/earth,
 % and multiband char info.  This latter table is the one we're using.
+% That is, for these plots, we use reduce-yield-time.csv 
+% but *not* reduce-times.csv.
 %
 % Inputs:
 %   string dest_tmpl
@@ -18,7 +20,14 @@ function plot_drm_yield_times(dest_tmpl, mode, t_info, t_yield_time)
 % Outputs:
 %   (to disk)
 % 
-% See Also:  
+% See Also: 
+%
+% Produces plots entitled: 
+%  det-time-char-allplan-full-cume.png
+%  det-time-char-allplan-part-cume.png
+%  det-time-det-allplan-cume.png
+%  det-time-det-earth-cume.png
+
 
 % 
 % Error checking
