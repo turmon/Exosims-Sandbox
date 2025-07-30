@@ -11,7 +11,7 @@ where:
 
 Most helpful Sandbox usage:
 
-  PYTHONPATH=EXOSIMS plot-keepout-and-obs.py Scripts/FOO.json sims/FOO/drm/SEED.pkl 
+  plot-keepout-and-obs.py Scripts/FOO.json sims/FOO/drm/SEED.pkl 
 
 where FOO.json is a script, and SEED.pkl is a DRM.  Output will be placed in the working directory 
 unless -o path/to/output/%s.%s or the like is given.
@@ -139,14 +139,27 @@ class SimulationRun(object):
         #
         # set up auxiliary quantities
         #
-        mode_det = [mode for mode in outspec['observingModes'] if 'detection' in mode.keys()]
-        if len(mode_det) > 1:
+        def is_detection(mode):
+            r'''Scripts specify this in several ways.'''
+            if 'spectro' in mode['instName']:
+                return False
+            if 'detection' in mode and mode['detection']:
+                return True
+            if 'detectionMode' in mode and mode['detectionMode']:
+                return True
+            return False
+        
+        mode_det = [mode for mode in outspec['observingModes'] if is_detection(mode)]
+        if len(mode_det) > 0:
             t_mult = mode_det[0].get('timeMultiplier', 1.0) # exosims default = 1.0
         else:
             # if no detection modes, give a warning, but continue
             t_mult = 1.0
-            sys.stderr.write('No detection modes found, using timeMultiplier = %f\n' % t_mult)
+            sys.stderr.write('Warning: No detection modes found.\n')
+            sys.stderr.write('Note: Using timeMultiplier = %f\n' % t_mult)
         self.timeMultiplier = t_mult
+        # Note: the specs (from the script) does not have to contain these numbers; we are
+        # in some cases repeating the Exosims default in case they aren't present.
         # FIXME: there is also a char_margin parameter
         # FIXME: for ohTime, use what is in the starlight suppression system
         #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
@@ -211,6 +224,8 @@ class SimulationRun(object):
         self.koTimesObj = koTimes
         # koTimes is an offset from mission start, in days
         self.koTimes = (koTimes - startTime).value
+        self.star_name = TL.Name
+        self.nStars = TL.nStars
         
     def get_obs_times(self):
         r'''Extract observation start and end times, place in object.
@@ -307,12 +322,15 @@ class plotKeepoutContainer(object):
         return '\n'.join(texts)
 
     def plot_keepout_panel(self, sim, char_only=False):
-        r'''Plot one panel; char_only means only show characterization events.'''
+        r'''Plot one panel that contains several time ranges.
+
+        char_only means only show characterization events.'''
         # plot attributes for a "collection" of events
-        LF = 2 if char_only else 1
+        # This is where line-width attributes are set
+        LF = 1.5 if char_only else 1
         plot_attributes = [
-            ('Coronagraph', dict(linewidth=1*LF, color='blue'),  ('det_t0',  'det_dt',  'det_sind' )),
-            ('Starshade',   dict(linewidth=2*LF, color='green'), ('char_t0', 'char_dt', 'char_sind' ))]
+            ('Coronagraph', dict(linewidth=2*LF, color='blue'),  ('det_t0',  'det_dt',  'det_sind' )),
+            ('Starshade',   dict(linewidth=3*LF, color='green'), ('char_t0', 'char_dt', 'char_sind' ))]
             
         # sind_show = the segment of the target list to show
         N_sind_all = sim.koMap.shape[1]
@@ -324,43 +342,66 @@ class plotKeepoutContainer(object):
         # thus: result = 0 if detection-mode, or if coronagraph-only;
         # result = 1 if char_only and starshade
         koMap_layer = (sim.koMap.shape[0]-1) if char_only else 0
-        # one figure for whole plot
-        fig = plt.figure(figsize=(18,20))
         # subplots starting at t_first days, each covering t_cover days
         t_first = 0 # [days]
         t_cover = 365 # [days]
-        for n_plot in range(5):
-            ax = fig.add_subplot(5, 1, n_plot+1)
-            t_str = 'Year %d' % (n_plot+1)
-            self.plot_keepout_range(ax, plot_attributes, sim, t_str, koMap_layer, sind_show, 
-                                    (t_first+n_plot*t_cover, t_first+(n_plot+1)*t_cover))
+        # how many ranges can we show per figure?
+        # (range-plot height is constant + Nstar*height)
+        fig_height = 20 # inches
+        N_star = int(sum(sind_show))
+        N_range_per_fig = max(1, int(fig_height / (0.8 + N_star*0.1)))
+        # number of range plots (each 1 year long)
+        N_range_all = int(np.round(sim.missionLife/365.25)) # (# years = # range plots)
+        # number of figures
+        N_fig = int(np.ceil(N_range_all / N_range_per_fig))
 
-        plt.subplots_adjust(hspace=0.5)
-        # add text
-        if False:
-            text = self.panel_legend(plot_attributes, sim)
-            plt.figtext(0.02, 0.05, text, verticalalignment='center', weight='bold', fontsize=16)
-        # overall title
-        title = (
-            'Timeline: Keepout Overlaid with Observations',
-            'Showing Characterization Targets and Keepout' if char_only else \
-              'Showing All Observations with Detection Keepout',
-            'Detections: Blue; Characterizations: Green; Obscured: Gray')
-        plt.suptitle('\n'.join(title), weight='bold', fontsize=20)
-        # show the plot
-        plt.show(block=False)
-        fname = 'obs-keepout-char' if char_only else 'obs-keepout-all'
-        plt.savefig(self.args.outpath % (fname, 'png'), **SAVEFIG_OPTS)
-        # plt.savefig(self.args.outpath % (fname, 'pdf'))
-        plt.close()
+        print(f'Making {N_fig} figures for {N_star} stars')
+        # record the number of range plots made across all figures
+        n_range_tot = 0
+        for n_fig in range(N_fig):
+            # outer completness check
+            if n_range_tot > N_range_all:
+                break
+            # create figure to hold time-range subplots
+            fig = plt.figure(figsize=(18,fig_height))
+            for n_plot in range(N_range_per_fig):
+                # check for completness
+                n_range_tot += 1
+                if n_range_tot > N_range_all:
+                    break # (outer loop will break too)
+                ax = fig.add_subplot(N_range_per_fig, 1, n_plot+1)
+                t_str = f'Year {n_range_tot}'
+                self.plot_keepout_range(ax, plot_attributes, sim, t_str, koMap_layer, sind_show, 
+                                        (t_first+(n_range_tot-1)*t_cover, t_first+(n_range_tot)*t_cover))
+
+            # make room for large title/axis on each time-range subplot
+            plt.subplots_adjust(hspace=0.8)
+            # add text (disabled: legend will overlap content)
+            if False:
+                text = self.panel_legend(plot_attributes, sim)
+                plt.figtext(0.02, 0.05, text, verticalalignment='center', weight='bold', fontsize=16)
+            # overall title
+            title = (
+                        'Timeline: Keepout Overlaid with Observations',
+                        'Showing Characterization Targets and Keepout' if char_only else \
+                        'Showing All Observations with Detection Keepout',
+                        'Detections: Blue; Characterizations: Green; Obscured: Gray')
+            plt.suptitle('\n'.join(title), weight='bold', fontsize=20)
+            # show the plot
+            plt.show(block=False)
+            # filenames of form "obs-keepout-all", "obs-keepout-all-pg2", etc.
+            fname = 'obs-keepout-char' if char_only else 'obs-keepout-all'
+            if n_fig > 0:
+                fname = fname + f'-pg{n_fig+1}'
+            plt.savefig(self.args.outpath % (fname, 'png'), **SAVEFIG_OPTS)
+            # plt.savefig(self.args.outpath % (fname, 'pdf'))
+            plt.close()
 
 
     def plot_keepout_range(self, ax, plot_attrs, sim, lbl, koMap_layer, sind_show, t_range):
+        r'''Lowest level of basic plot, showing keepout over one time range.'''
         # plot parameters
         #   title, y-pos, y-width, color(s), (t0_attr, dt_attr)
-        # put up the plots
-
-        #import pdb; pdb.set_trace()
 
         # [1] -- the base keepout image
         ko_t_index = np.logical_and(sim.koTimes >= t_range[0], sim.koTimes <= t_range[1])
@@ -389,13 +430,27 @@ class plotKeepoutContainer(object):
             self.plot_keepout_single(ax, pl_kwargs, sind_show, 
                                          t0_all[t_index], dt_all[t_index], sind_all[t_index])
 
-        ## plot styling
+        # [3] -- plot styling
         self.style_plot()
+
         # plot labeling info
         #y_lbl = [attrs[0] for attrs in plot_attrs if not attrs[0].startswith('-')]
         #y_pos = [attrs[1] for attrs in plot_attrs if not attrs[0].startswith('-')]
         #y_del = max([attrs[2] for attrs in plot_attrs if not attrs[0].startswith('-')])/2.0 # half-height
-        ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+
+        # [4] -- axes
+        #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True, min_n_ticks=1))
+        # this is also the number of stars
+        star_names = sim.star_name[sind_show]
+        sn_len = max([len(sn) for sn in star_names])
+        ax.set_yticks(np.arange(len(star_names)))
+        # pad with digit-width space ("figure space")
+        ax.set_yticklabels(np.array([sn.ljust(sn_len, "\u2007") for sn in star_names]))
+        # justifies on left, but assumes zero width
+        for inx, tl in enumerate(ax.get_yticklabels()):
+            if inx % 2 == 0:
+                tl.set_horizontalalignment('left')
+        # ax.yaxis.set_tick_params(labelsize=12) # (automatic is better)
         # plot labeling
         ax.set_xlim(t_range)
         #ax.set_ylim((min(y_pos)-y_del-1, max(y_pos)+y_del+1)) # pad by 1
@@ -423,6 +478,7 @@ class plotKeepoutContainer(object):
             if yval >= 0:
                 # the plot lines seem to have a border that I can't turn off
                 ax.plot((t0[i], t0[i]+dt[i]), (yval, yval), **pl_kwargs)
+
 
 def main(args):
     # load the simulation run

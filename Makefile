@@ -115,8 +115,7 @@ SELECT_RUN_PROG=util/select_runs.py -q
 #   (these run rather quickly)
 TIMELINE_PROG=util/plot-obs-timelines.sh
 #   program for making (per-drm) keepout + observation timelines
-#   (these can be a little slow)
-KEEPOUT_PROG=PYTHONPATH=Local util/plot-keepout-and-obs.py
+KEEPOUT_PROG=util/plot-keepout-and-obs.py
 # drm path-movie maker, generating command lines like:
 #   drm-to-movie.sh -c -l 0 sims/HabEx_4m_TS_dmag26p0_20180206/drm/297992296.pkl
 #   -c specifies to make the cumulative plots as well (which does not
