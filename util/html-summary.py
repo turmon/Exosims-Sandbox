@@ -620,6 +620,11 @@ class SimSummary(object):
 
         TODO: Getting a little cumbersome at this point.
         '''
+        def ensure_list_present(d, key):
+            '''Helper: ensure that d[key] is set up as a list.'''
+            if key not in d:
+                d[key] = []
+
         seed = None
         if '-frames/' in filename:
             pass # skip frame-by-frame graphics
@@ -647,12 +652,24 @@ class SimSummary(object):
         elif filename.endswith('star-obs-trace.png'):
             seed = re.sub(r'.*/([0-9]+)-star-obs-trace\.png', r'\1', filename)
             self.path_graphics[seed]['star-obs-trace'] = filename
+        # keepout-all: unadorned, and we also have -part2, -part3, etc.
         elif filename.endswith('obs-keepout-all.png'):
             seed = re.sub(r'.*/([0-9]+)-obs-keepout-all\.png', r'\1', filename)
-            self.path_graphics[seed]['obs-keepout-all'] = filename
+            ensure_list_present(self.path_graphics[seed], 'obs-keepout-all')
+            self.path_graphics[seed]['obs-keepout-all'].insert(0, filename)
+        elif filename.endswith('.png') and '-obs-keepout-all-part' in filename:
+            seed = re.sub(r'.*/([0-9]+)-obs-keepout-all-part([0-9]+)\.png', r'\1', filename)
+            ensure_list_present(self.path_graphics[seed], 'obs-keepout-all')
+            self.path_graphics[seed]['obs-keepout-all'].append(filename)
+        # keepout-char: unadorned, and we also have -part2, -part3, etc.
         elif filename.endswith('obs-keepout-char.png'):
             seed = re.sub(r'.*/([0-9]+)-obs-keepout-char\.png', r'\1', filename)
-            self.path_graphics[seed]['obs-keepout-char'] = filename
+            ensure_list_present(self.path_graphics[seed], 'obs-keepout-char')
+            self.path_graphics[seed]['obs-keepout-char'].insert(0, filename)
+        elif filename.endswith('.png') and '-obs-keepout-char-part' in filename:
+            seed = re.sub(r'.*/([0-9]+)-obs-keepout-char-part([0-9]+)\.png', r'\1', filename)
+            ensure_list_present(self.path_graphics[seed], 'obs-keepout-char')
+            self.path_graphics[seed]['obs-keepout-char'].append(filename)
         elif filename.endswith('.png'):
             seed = re.sub(r'.*/path/([0-9]+)-cume/.*\.png', r'\1', filename)
             # split out corona/starshade
@@ -911,13 +928,19 @@ class SimSummary(object):
             else:
                 hh.paragraph('Star-Observation trace not available.  Generate with: make ... obs-timeline-N')
             # path keepout
+            #   lists below are guaranteed non-empty if they exist; first element is always the first
+            #   part, but later ones may be unsorted
             hh.header('Keepout and Observations')
+            keepout_present = False
             if 'obs-keepout-all' in info:
-                img_target = info['obs-keepout-all']
-                hh.image(img_target, width=70)
-                img_target = info['obs-keepout-char']
-                hh.image(img_target, width=70)
-            else:
+                keepout_present = True
+                for img_target in info['obs-keepout-all'][:1] + sorted(info['obs-keepout-all'][1:]):
+                    hh.image(img_target, width=70)
+            if 'obs-keepout-char' in info:
+                keepout_present = True
+                for img_target in info['obs-keepout-char'][:1] + sorted(info['obs-keepout-char'][1:]):
+                    hh.image(img_target, width=70)
+            if not keepout_present:
                 hh.paragraph('Keepout timeline not available.  Generate with: make ... keepout-N')
             # path summary
             hh.header('Path Overview')
