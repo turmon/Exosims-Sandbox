@@ -22,7 +22,6 @@ Michael Turmon, JPL, 04/2019 -- created based on an idea by Dean Keithly
 
 """
 
-from __future__ import print_function
 import os
 import sys
 import csv
@@ -307,7 +306,9 @@ class plotKeepoutContainer(object):
         # plt.rc('font', weight='bold')
 
     def panel_legend(self, plot_attrs, sim):
-        r'''Deduce a legend from what we plot.'''
+        r'''Deduce a legend from what we plot.
+
+        This is currently unused because the legend overplots the content.'''
         texts = []
         for plot_num in range(len(plot_attrs)):
             # unpack
@@ -355,7 +356,7 @@ class plotKeepoutContainer(object):
         # number of figures
         N_fig = int(np.ceil(N_range_all / N_range_per_fig))
 
-        print(f'Making {N_fig} figures for {N_star} stars')
+        print(f'{self.args.progname}: Making {N_fig} figure(s) for {N_star} star(s).')
         # record the number of range plots made across all figures
         n_range_tot = 0
         for n_fig in range(N_fig):
@@ -389,10 +390,10 @@ class plotKeepoutContainer(object):
             plt.suptitle('\n'.join(title), weight='bold', fontsize=20)
             # show the plot
             plt.show(block=False)
-            # filenames of form "obs-keepout-all", "obs-keepout-all-pg2", etc.
+            # filenames of form "obs-keepout-all", "obs-keepout-all-part2", etc.
             fname = 'obs-keepout-char' if char_only else 'obs-keepout-all'
             if n_fig > 0:
-                fname = fname + f'-pg{n_fig+1}'
+                fname = fname + f'-part{n_fig+1}'
             plt.savefig(self.args.outpath % (fname, 'png'), **SAVEFIG_OPTS)
             # plt.savefig(self.args.outpath % (fname, 'pdf'))
             plt.close()
@@ -486,15 +487,18 @@ def main(args):
     # reduce DRM to get observation times
     sim.get_obs_times()
     # instantiate an Exosims object to get keepout for this sim
-    print('%s: Instantiating an Exosims object.' % args.progname)
+    print(f'{args.progname}: Instantiating an Exosims object.')
+    print(f'{args.progname}  ------------')
     sim.get_keepout()
-    print('%s: Finished with the Exosims object.' % args.progname)
+    print(f'{args.progname}  ------------')
+    print(f'{args.progname}: Finished with the Exosims object.')
     # open a plot container object
     plotter = plotKeepoutContainer(args)
     # make plots
     plotter.plot_keepout_panel(sim)
     plotter.plot_keepout_panel(sim, char_only=True)
-    print('%s: Done.' % args.progname)
+    print(f'{args.progname}: Done.')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Plot timeline of keepout and observations reported in DRMs.", epilog='')
