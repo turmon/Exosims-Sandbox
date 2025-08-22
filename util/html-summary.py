@@ -510,6 +510,16 @@ class TableDescription(object):
         self.text = text
         self.filename = filename
     
+# container class for html out-link information
+class HTMLDescription(object):
+    title = 'Outward link'
+    text = 'This is a document.'
+    filename = ''
+    def __init__(self, title, text, filename):
+        self.title = title
+        self.text = text
+        self.filename = filename
+    
 
 class SimSummary(object):
     r'''Summarize one ensemble to HTML.
@@ -588,11 +598,27 @@ class SimSummary(object):
             WWW_DOC / 'detection-tabulation.html')
         }
 
+    # html_map: maps filename -> tag
+    # (str,tag) means if filename contains 'str', it is an html of type 'tag'
+    # and will be shown in-line with the associated graphics in "graphics_show".
+    # descriptive text is associated with the tag in "htmls_show" below
+    htmls_map = [
+        ('/sched/detection-visits.html', 'perstar-det'),
+        ]
+    # tag: HD() means the as-shown-in-html information for html out-link of type 'tag' is HD
+    htmls_show = {
+        'perstar-det': HTMLDescription(
+            'Detection Visit Report',
+            '''Shows first-visit detection across all stars.''',
+            ''),
+        }
+
     def __init__(self, sim_dir, name=''):
         self.name = name if name else sim_dir
         self.Ndrm = 0
         self.graphics = defaultdict(list) # dict-of-list
         self.tables = defaultdict(list) # dict-of-list
+        self.htmls = defaultdict(list) # dict-of-list
         self.path_graphics = defaultdict(dict) # dict-of-dict
         self.csvs = []
         self.readme_info = '' # one-line summary
@@ -610,6 +636,8 @@ class SimSummary(object):
             self.add_readme(filename)
         elif filename.endswith('.md'):
             self.add_table(filename)
+        elif filename.endswith('.html'):
+            self.add_html_doc(filename)
         elif '/drm/' in filename:
             self.add_drm(filename)
         elif filename.endswith('.csv'):
@@ -700,6 +728,12 @@ class SimSummary(object):
                 self.tables[tag].append(filename)
                 break
 
+    def add_html_doc(self, filename):
+        for fn_str, tag in self.htmls_map:
+            if fn_str in filename:
+                self.htmls[tag].append(filename)
+                break
+
     def add_drm(self, filename):
         if filename.endswith(('.pkl', '.drm')):
             self.Ndrm += 1
@@ -715,6 +749,10 @@ class SimSummary(object):
         meta, meta_fn = obtain_metadata_info('', os.path.dirname(filename))
         self.readme_info = meta
         self.readme_file = meta_fn
+
+    def render_html_doc(self, hh, doc_file):
+        r'''Renders an html document, as link to html.'''
+        hh.paragraph('Linked ' + hh.link('../' + doc_file, 'document', inner=True))
 
     def render_table(self, hh, t_file):
         r'''Renders a table, in a markdown-format file, as html.
@@ -811,6 +849,21 @@ class SimSummary(object):
                 # optional caption
                 if SECTION_HEADS[tag]:
                     hh.paragraph(SECTION_HEADS[tag])
+                # html sub-documents, if any, are at section top (ad hoc at the moment)
+                if tag in self.htmls_show and len(self.htmls[tag]) > 0:
+                    # print(f'Rendering {self.htmls[tag]}')
+                    # "t_desc" abstracts the table explanation
+                    t_desc = self.htmls_show[tag]
+                    hh.header(f'Links for {t_desc.title}', level=3)
+                    if t_desc.text:
+                        hh.paragraph(t_desc.text, br=True)
+                    if t_desc.filename:
+                        hh.paragraph(hh.link(t_desc.filename,
+                                    'Rules for counting', inner=True) +
+                            ' in these tables',
+                            br=True)
+                    for doc in self.htmls[tag]:
+                        self.render_html_doc(hh, doc)
                 # tables, if any, are at section top (ad hoc at the moment)
                 if tag in self.tables_show and len(self.tables[tag]) > 0:
                     # print(f'Rendering {self.tables[tag]}')

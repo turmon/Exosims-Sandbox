@@ -21,6 +21,7 @@
 #   html:          re-generate the index.html that summarizes the given scenario
 #   html-only:     same as html, but do not re-reduce the data or remake graphics.
 #   path-ensemble: make lon/lat plots of slews taken by an ensemble.
+#   star-visit:    per-star tabulation of successful detection visits
 #   path-movie-N:  make "N" path-movies and final frames 
 #   path-final-N:  make "N" final frames, only
 #   obs-timeline-N:make "N" observing-target timelines
@@ -108,6 +109,8 @@ GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
+# generates detection visits report
+STAR_VISIT_PROG=util/star_visit_pmf_tabulate.py
 # select a given number of runs from a single Scenario (e.g., for timelines)
 SELECT_RUN_PROG=util/select_runs.py -q
 # Programs analogous to the path-movie maker...
@@ -259,6 +262,19 @@ sims/$(S)/tbl/table-status.txt: sims/$(S)/reduce-info.csv
 	@ echo "Make: Tables into $(@D) ..."
 	@ rm -f sims/$(S)/tbl/table-*.*
 	$(TABLES_PROG) -o sims/$(S)/tbl/table-%s.%s all sims/$(S)/reduce-%s.%s
+
+########################################
+## Detection visits tables - for scheduler analysis
+##
+.PHONY: star-visits
+# delegate to the html document
+star-visits: script-exists sims/$(S)/sched/detection-visits.html
+
+# one ensemble's detection visit document
+sims/$(S)/sched/detection-visits.html: sims/$(S)/drm
+	@ echo "Make: Detection visits document into $(@D) ..."
+	$(STAR_VISIT_PROG) sims/$(S)
+
 
 ########################################
 ## Path ensemble graphics - starshade slew map
