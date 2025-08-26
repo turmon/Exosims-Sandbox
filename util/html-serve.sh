@@ -28,13 +28,11 @@
 #
 # and:
 #  -p PORT   => gives the HTTP port number.  Default is 8090.
-#  -s apache => use apache2/httpd server (default)
-#  -s simple => use python SimpleHTTPServer (less performant)
+#  -s apache => use apache2/httpd server (default, fussy config)
+#  -s simple => use python httpd.server (less performant)
 #  -r ROOT   => use the named dir as document root
-#               (on servers, a system-dependent fixed dir is used
-#               by default; on macos, the working directory; 
-#               use -r $(pwd) for the working directory if you
-#               have your own local install)
+#               (default is the working dir, this is always correct,
+#               this option is vestigial)
 #  -h        => shows this help text.
 #
 # Implementation:
@@ -64,12 +62,19 @@ heartbeat=sims/heartbeat.html
 umask 002
 
 # runtime context -- very location-specific
+CONTEXT=Unknown
+SUBTEXT=Unknown
 if [ -d /proj/exep ]; then
     # s383 cluster
     CONTEXT=s383
 elif [ -d /projects/exo_yield ]; then
     # JPL supercomputer (gattaca)
     CONTEXT=jplsc
+    if [[ $(pwd) == /scratch/* ]]; then
+      SUBTEXT=scratch
+    elif [[ $(pwd) == /projects/* ]]; then
+      SUBTEXT=projects
+    fi
 elif [ -d /Users ]; then
     CONTEXT=macos
 else
@@ -79,7 +84,7 @@ fi
 
 # current working directory - httpd needs absolute pathnames
 CURR_DIR=$(pwd)
-# default port
+# default port (can be changed)
 DEFAULT_PORT=8090
 # default server
 DEFAULT_SERVER=apache
@@ -98,6 +103,10 @@ if [[ $CONTEXT = s383 ]]; then
     # formatting arguments to stat (GNU/linux stat)
     STAT_FORMAT=("-c" "Started by %U on %y")
 elif [ $CONTEXT = jplsc ]; then
+    # clear LD_LIBRARY_PATH for /usr/sbin/httpd
+    # (the default library path pulls in erronenous shared libraries;
+    # gattaca2 sets LD_LIBRARY_PATH in "module load ...")
+    export LD_LIBRARY_PATH=
     SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
     SERVER_GROUP=exo-yield
     DOC_ROOT=/projects/exo_yield/Sandbox/hwo
@@ -105,6 +114,10 @@ elif [ $CONTEXT = jplsc ]; then
     MOD_ROOT=modules/
     # formatting arguments to stat (GNU/linux stat)
     STAT_FORMAT=("-c" "Started by %U on %y")
+    # change /scratch default port to not interfere with /projects server
+    if [ "$SUBTEXT" = scratch ]; then
+      DEFAULT_PORT=8091
+    fi
 elif [ $CONTEXT = macos ]; then
     SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
     SERVER_GROUP=staff
@@ -249,10 +262,10 @@ if [[ "$mode" == start ]]; then
 	      -c "ServerName localhost" \
 	      -c "Listen localhost:$port"
     elif [[ "$server" == "simple" ]]; then
-	# python SimpleHTTPServer: single-threaded, does not support returning
+	# python httpd.server: single-threaded, does not support returning
 	# byte ranges, which makes .mp4s not render in Safari.
 	# mostly-daemonized: nohup, stdout to /dev/null, sterrr to logfile
-	# (07/2024: this mostly works)
+	# (07/2025: this mostly works)
 	nohup python -m http.server "$port" -b localhost 1>/dev/null 2>> "$SERVER_LOG" &
 	# capture server PID - last backgrounded command
 	server_pid_var=$!
