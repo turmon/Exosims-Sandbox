@@ -24,10 +24,13 @@
 #   start:  start the server on the given port
 #   stop:   stop the server on the given port
 #   status: list the servers running, if any
-#   init:   check that server status files work: should be unneeded.
+#   defaults:   echo server, port, etc., and exit
 #
 # and:
-#  -p PORT   => gives the HTTP port number.  Default is 8090.
+#  -p PORT   => gives the HTTP port number.  Default is:
+#                 8090: mustang, gattaca2 /projects
+#                 8091: gattaca2 /scratch
+#                 8100: macOS
 #  -s apache => use apache2/httpd server (default, but has fussy 
 #               internal config which can fail after OS upgrades)
 #  -s simple => use python httpd.server (less performant, less fussy)
@@ -37,11 +40,12 @@
 #  -h        => shows this help text.
 #
 # Implementation:
-# -- Status files are kept in these files:
-#    Local/www-service/var/http-HOST.PORT.*
-# where PORT is typically 8090.
-# There is a server error log (.log) and a file containing the process ID (PID)
-# of the server (.pid).
+# Status is kept in these files:
+#      Local/www-service/var/http-HOST.PORT.*
+# where PORT is given above (unless set manually).
+# There is:
+#    -- a server error log (.log) 
+#    -- a file containing the process ID (PID) of the server (.pid).
 # The PID is used to signal the running server to exit.  If the basic "stop" 
 # MODE of this command does not work, you can kill the server by sending TERM
 # to process ID (pid) named in that file. "ps ufx" can also be helpful to
@@ -361,10 +365,28 @@ elif [[ "$mode" == ensure ]]; then
 	# OK to be noisy if it's down
 	echo "${PROGNAME}: Server is down on port $port"
 	echo "${PROGNAME}: Attempting to restart"
+        # clever recursive call
 	set +x
 	$0 -p "$port" -s "$server" start
     fi
 
+elif [[ "$mode" == defaults ]]; then
+    #
+    # report defaults
+    #
+    echo "${PROGNAME}: server: $server"
+    if [[ "$server" == "apache" ]]; then
+	echo "${PROGNAME}: namely: $SERVER_HTTPD loading modules from $MOD_ROOT"
+    elif [[ "$server" == "simple" ]]; then
+	echo "${PROGNAME}: namely: python -m http.server"
+    else
+        # (is caught elsewhere, but retain for clarity)
+	echo "${PROGNAME}: unrecognized server"
+        exit 1
+    fi
+    echo "${PROGNAME}: port: $port"
+    echo "${PROGNAME}: documents directory: $DOC_ROOT"
+    exit 0
 
 else
     echo "${PROGNAME}: Unrecognized mode input $mode." >&2
