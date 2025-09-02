@@ -28,8 +28,9 @@
 #
 # and:
 #  -p PORT   => gives the HTTP port number.  Default is 8090.
-#  -s apache => use apache2/httpd server (default, fussy config)
-#  -s simple => use python httpd.server (less performant)
+#  -s apache => use apache2/httpd server (default, but has fussy 
+#               internal config which can fail after OS upgrades)
+#  -s simple => use python httpd.server (less performant, less fussy)
 #  -r ROOT   => use the named dir as document root
 #               (default is the working dir, this is always correct,
 #               this option is vestigial)
@@ -61,7 +62,9 @@ heartbeat=sims/heartbeat.html
 # attempt to give group-write to created files
 umask 002
 
-# runtime context -- very location-specific
+##
+## Find runtime context -- very location-specific
+##
 CONTEXT=Unknown
 SUBTEXT=Unknown
 if [ -d /proj/exep ]; then
@@ -90,7 +93,9 @@ DEFAULT_PORT=8090
 DEFAULT_SERVER=apache
 
 
-## defaults
+##
+## set location-specific defaults
+##
 # SERVER_HTTPD: apache/httpd server binary
 # SERVER_GROUP: whole group is allowed to kill the server
 # DOC_ROOT: httpd needs to know the rooted dir of the content
@@ -115,8 +120,10 @@ elif [ $CONTEXT = jplsc ]; then
     # formatting arguments to stat (GNU/linux stat)
     STAT_FORMAT=("-c" "Started by %U on %y")
     # change /scratch default port to not interfere with /projects server
+    # note: /projects/exo_yield but /scratch/exo-yield (!)
     if [ "$SUBTEXT" = scratch ]; then
       DEFAULT_PORT=8091
+      DOC_ROOT=/scratch/exo-yield/Sandbox/hwo
     fi
 elif [ $CONTEXT = macos ]; then
     SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
@@ -135,6 +142,9 @@ SERVER_CONFIG=Local/www-service/config/httpd-apache2.4.conf
 # directory for log and PID files produced by httpd
 SERVER_VARDIR=Local/www-service/var
 
+##
+## process options which may modify defaults
+##
 port=$DEFAULT_PORT
 server=$DEFAULT_SERVER
 verbosity=normal
@@ -171,13 +181,13 @@ while getopts "hqp:r:s:" opt; do
 done
 shift $((OPTIND-1))
 
-# enforce 1 argument
+# enforce 1 argument (the "mode")
 if [ $# -ne 1 ]; then
-   echo "${PROGNAME}: Error: Need exactly one argument, use -h for help." >&2
+   echo "${PROGNAME}: Error: Need exactly one mode argument, use -h for help." >&2
    exit 1
 fi
 
-# extract the mode
+# extract the mode argument
 mode="$1"
 
 # check port number
@@ -222,6 +232,13 @@ function setup {
     rm -f "$SERVER_PID"
 }
 
+
+######################################################################
+#
+# main routine
+#   (if/elif/else switch on mode)
+#
+######################################################################
 
 if [[ "$mode" == start ]]; then
     #
