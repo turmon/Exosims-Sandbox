@@ -1,3 +1,6 @@
+Different ways to do templating
 
-Using json-xform.py
+test: Using a shell for loop and "sed"
+
+trial: Using json-xform.py
 
