@@ -40,9 +40,12 @@
 # page is generated with the timelines in it.
 #
 # Context:
-#   - Your working directory is the /scratch Sandbox
-#   - Your scripts are in a Family/Experiment in the /scratch Sandbox
+#   - Your working directory is the /scratch or /scratch-edge Sandbox
+#   - Your scripts are in a Family/Experiment in same Sandbox
 #   - You should be in the Python VENV you wish to use
+#
+# The script submits to the "slurm" or "edge" cluster, depending on 
+# your working directory (/scratch vs. /scratch-edge). 
 #
 # Example:
 # 
@@ -218,11 +221,9 @@ nscript=$(wc -l < $scenario_file)
 
 # which queue should we submit to
 if [[ "$(pwd)" == /scratch-edge/* ]]; then
-    s_queue=edge
-elif [[ "$(pwd)" == /scratch/* ]]; then
-    s_queue=compute
-elif [[ "$(pwd)" == /scratch-jp/* ]]; then
-    s_queue=compute
+    s_cluster=edge
+elif [[ "$(pwd)" == /scratch/* || "$(pwd)" == /scratch-jpl/* ]]; then
+    s_cluster=slurm
 else
     echo "\${PROGNAME}: Error: Unknown cluster" >&2
     exit 1
@@ -245,7 +246,8 @@ cat << EOF >> $batch_file
 #SBATCH -J Exo-AddSims
 #SBATCH -o $batch_log_dir/%A/stdout-%a.log
 #SBATCH -e $batch_log_dir/%A/stderr-%a.log
-#SBATCH -p $s_queue
+#SBATCH -p compute     # --partition
+#SBATCH -M $s_cluster  # --clusters
 #SBATCH -N 1
 #SBATCH -n $jobs
 #SBATCH --mem=$((1 + $jobs * 2 / 3))G      # no decimals (2025/09: 16 jobs ~= 5.4GB)
