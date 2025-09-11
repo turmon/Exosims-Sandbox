@@ -41,7 +41,7 @@
 #
 # Options:
 #   -h        => show this help message and exit.
-#   -A        => run using Afta's (aftac1/2/3 -- 18 + 23 + 23 jobs = 64 jobs)
+#   -0        => generate caches first, then do the requested SEEDS
 #   -S        => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
 #   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
 #   -c        => chatty console output (for debugging) even if #SEEDS > 1
@@ -99,8 +99,13 @@ BATCH=0
 CHATTY=0
 ECHO_CMD=0
 ALL=0
-while getopts "AHSZDhbcj:p:x:qv:PO:" opt; do
+CACHE=0
+while getopts "0AHSZDhbcj:p:x:qv:PO:" opt; do
     case $opt in
+	0)
+	    # generate cache files first
+	    CACHE=1
+	    ;;
 	A)
 	    # use remote machines
 	    ALL=1
@@ -170,6 +175,8 @@ while getopts "AHSZDhbcj:p:x:qv:PO:" opt; do
 	    ;;
     esac
 done
+# save the original args for possible -0
+orig_args=( "$@" )
 shift $((OPTIND-1))
 
 # enforce 2 arguments
@@ -179,7 +186,20 @@ if [ $# -ne 2 ]; then
 fi
 
 SCRIPT="$1"
-SEEDS=$2
+SEEDS="$2"
+
+##
+## Recursive call if -0
+##
+if [[ $CACHE -eq 1 && "$SEEDS" != "=0" ]]; then
+    # the && above prevents infinite recursion
+    echo "${PROGNAME}: Generating caches (=0) before main run ($SEEDS)."
+    echo "${PROGNAME}: { ---------------"
+    # array construct: "all but the last argument" (the seed)
+    ${PROGNAME} "${orig_args[@]::${#orig_args[@]}-1}" =0
+    echo "${PROGNAME}: } ---------------"
+    echo "${PROGNAME}: Returned OK from generating caches."
+fi
 
 ##
 ## Handle SEEDS
@@ -269,6 +289,7 @@ fi
 
 if [ ! -r $SCRIPT ]; then
     echo "${PROGNAME}: Error: Could not read the script file \`${SCRIPT}'"
+    echo "${PROGNAME}: Fatal: Could not read the script file \`${SCRIPT}'" >&2
     exit 1
 fi
 # basename for sim results is derived from script name: if it's in
