@@ -33,12 +33,12 @@ More-complex actual usage line:
 # Michael Turmon, JPL
 # 04/2019 - created
 # 10/2023 - added star names and char_status
+# 09/2025 - do better with overhead
 # based on an idea by Dean Keithly
 
 
-from __future__ import print_function
-from six.moves import range
-import six.moves.cPickle as pickle
+# import six.moves.cPickle as pickle
+import pickle
 import os
 import sys
 import csv
@@ -203,6 +203,10 @@ class ObservationInfo:
     name: str
     # observation status (success/fail/miss/partial)
     status: str
+    # overhead time before integration window (ohTime, settlingTime)
+    oh_0: float
+    # overhead time after main integration window (for timeMultiplier)
+    oh_1: float
 
 
 ########################################
@@ -270,6 +274,8 @@ class SimulationRun(object):
             # if no detection modes, give a warning, but continue
             t_mult = 1.0
             sys.stderr.write('No detection modes found, using timeMultiplier = %f\n' % t_mult)
+        # TODO:
+        # the timeMultiplier is mode-dependent; char modes can have a different one
         self.timeMultiplier = t_mult
         # FIXME: for ohTime, use what is in the starlight suppression system
         #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
@@ -285,13 +291,16 @@ class SimulationRun(object):
 
         Note on ohTime, settlingTime, and friends:
         - ohTime and settlingTime are waited-out at the *start* of the observing window.
-        The sequence for a series of detections is:
-           ohTime, settlingTime, det_time, ohTime, settlingTime, det_time, ...
-        In particular, ohTime and settlingTime are *not* part of det_time
-        - timeMultiplier is an integration time multiplier, equal to the number of discrete 
+        The sequence for a series of integrations is:
+           ohTime, settlingTime, integration_time, extra_time, ...
+           ohTime, settlingTime, integration_time, extra_time, ...
+        In particular, ohTime and settlingTime are *not* part of det_time or char_time
+           (the latter are *integration* windows)
+        - timeMultiplier is an integration-time multiplier, equal to the number of discrete 
           integrations needed to cover the full field of view, or the full wavelength band.
         '''
 
+        # fixme: ohtime, timeMultiplier are in general functions of mode
         ohTime = self.ohTime
         settlingTime = self.settlingTime
         timeMultiplier = self.timeMultiplier
@@ -307,7 +316,10 @@ class SimulationRun(object):
             s_name = self.spc['Name'][s_ind] if self.spc else ('#' + str(s_ind))
             if ('det_info' in obs) or ('det_time' in obs):
                 # a detection
-                obs_time = strip_units(obs['det_time'])*timeMultiplier + ohTime + settlingTime
+                det_time_noU = strip_units(obs['det_time'])
+                obs_time = det_time_noU * timeMultiplier + ohTime + settlingTime
+                obs_oh_0 = ohTime + settlingTime
+                obs_oh_1 = det_time_noU * (timeMultiplier-1)
                 det_t0.append(arrival_time)
                 det_dt.append(obs_time)
                 det_status = 'success' if np.any(obs['det_status']) else 'fail'
@@ -315,14 +327,24 @@ class SimulationRun(object):
                     det_counter[s_ind] += 1
                     if det_counter[s_ind] == 3:
                         det_status = 'promo' # (promo implies success)
-                det_oi.append(ObservationInfo('det', s_name, det_status))
+                det_oi.append(ObservationInfo('det', s_name, det_status, obs_oh_0, obs_oh_1))
             if has_char_info(obs):
                 # a characterization -- formerly, just an "else" -- assuming that all obs
                 #   were detections or characterizations
-                # Note: charMargin is already included in char_time
                 # Note: can have char_time = 0, we call this a "missed char" (failed just before obs)
-                # TODO: check if timeMultiplier is included in char_time (not critical, we don't use it)
-                char_time = strip_units(get_char_time(obs))
+                # Note: charMargin is already included in char_time_noU (it's the integration time)
+                # Note: overheads are not added to char_time_noU by coroOnly
+                # Exception?: do some schedulers include some overhead(s) in char_time?
+                # We must put timeMultiplier into char_time (in general though, it's mode-dependent)
+                char_time_noU = strip_units(get_char_time(obs))
+                if char_time_noU == 0:
+                    # "missed char" special case -- no obs was made
+                    char_time = 0.0
+                    obs_oh_0, obs_oh1 = 0.0, 0.0
+                else:
+                    char_time = char_time_noU * timeMultiplier + ohTime + settlingTime
+                    obs_oh_0 = ohTime + settlingTime
+                    obs_oh_1 = char_time_noU * (timeMultiplier-1)
                 if 'char_info' in obs:
                     char_info = obs['char_info'][0]
                 else:
@@ -349,7 +371,7 @@ class SimulationRun(object):
                 # save the information gathered
                 char_t0.append(arrival_time)
                 char_dt.append(char_time)
-                char_oi.append(ObservationInfo('char', s_name, char_status))
+                char_oi.append(ObservationInfo('char', s_name, char_status, obs_oh_0, obs_oh_1))
 
             # put the slew info in -- will be missing from coro-only DRMs, obs.get() covers this
             slew_time = strip_units(obs.get('slew_time', 0.0)) # [days]
@@ -357,7 +379,7 @@ class SimulationRun(object):
                 # e.g., first slew is length 0
                 slew_t0.append(arrival_time-slew_time)
                 slew_dt.append(slew_time)
-                slew_oi.append(ObservationInfo('slew', s_name, 'success'))
+                slew_oi.append(ObservationInfo('slew', s_name, 'success', 0.0, 0.0))
         
         # find mission duration (should perhaps use self.missionLife)
         last_arrival = 0.0 if len(self.drm) == 0 else strip_units(self.drm[-1]['arrival_time'])
@@ -515,7 +537,7 @@ class plotTimelineContainer(object):
         # plot attributes for a "collection"
         # [name] [vertical position] [vertical width] [colorsequence] [fieldnames]
         plot_attributes = [
-            ('Detection',     25, 8, ('cornflowerblue', 'lightblue'),   ('det_t0',  'det_dt',      'det_oi')),
+            ('Detection',     25, 8, ('cornflowerblue', 'skyblue'),   ('det_t0',  'det_dt',      'det_oi')),
             ('Spectra',       15, 8, ('mediumseagreen', 'lightgreen'),  ('char_t0', 'char_dt_pad', 'char_oi')),
             ('-Slew',         15, 2, ('lightgray', 'darkgray'),         ('slew_t0', 'slew_dt', None)),
             ('Other',          5, 8, ('sandybrown', 'peachpuff'),       ('ga_t0',   'ga_dt',   None))]
@@ -543,13 +565,19 @@ class plotTimelineContainer(object):
         # add lower legends
         t_props = dict(verticalalignment='center', weight='bold', fontsize=16)
         if True:
+            pg_bottom = 0.04
             text, infos = self.panel_legend(plot_attributes, sim)
-            plt.figtext(0.02, 0.05, text, **t_props)
+            plt.figtext(0.02, pg_bottom, text, **t_props)
             # (a proper legend with correct markers could be done)
             text = ('Observation Status [•]', 'Success', 'Promotion', 'Failed spectral char.', 'Partial spectral char.', 'Missed spectral char.')
-            plt.figtext(0.73, 0.05, '\n '.join(text), **t_props)
+            plt.figtext(0.73, pg_bottom, '\n '.join(text), **t_props)
             text = (' ', 'green', 'green box', 'red', 'orange', 'gray')
-            plt.figtext(0.90, 0.05, ' \n'.join(text), **t_props)
+            plt.figtext(0.90, pg_bottom, ' \n'.join(text), **t_props)
+            # within-obs legend
+            text = ('Within Selected Observations', 'Setup', 'Main integration', 'Extra time')
+            plt.figtext(0.35, pg_bottom, '\n '.join(text), **t_props)
+            text = (' ', 'black line', 'white stripe', 'gray line')
+            plt.figtext(0.48, pg_bottom, '\n '.join(text), **t_props)
             # this is writing the whole mission, so only do it once
             if t_first == 0 and debug_out:
                 fname = 'obs-timeline-info'
@@ -573,7 +601,7 @@ class plotTimelineContainer(object):
     def plot_timeline_collection(self, sim):
         # plot attributes for a "collection"
         plot_attributes = [
-            ('Coronagraph',   35, 8, ('cornflowerblue', 'lightblue'),     ('det_t0',  'det_dt' , 'det_oi')),
+            ('Coronagraph',   35, 8, ('cornflowerblue', 'skyblue'),     ('det_t0',  'det_dt' , 'det_oi')),
             ('Starshade',     25, 8, ('green', 'lightgreen'),   ('char_t0', 'char_dt', 'char_oi')),
             ('-Slew',         25, 2, ('lightgray', 'darkgray'), ('slew_t0', 'slew_dt', None)),
             ('HWC Parallel',  12, 2, ('khaki'),                 ('all_t0',  'all_dt' , None)),
@@ -653,6 +681,9 @@ class plotTimelineContainer(object):
                          bbox={'facecolor': 'white', 'edgecolor': 'none', 'alpha': 0.5, 'pad': 1})
             # point properties: ensure dots for obs-status come out on top of bars
             p_props = dict(marker='.', s=300, ec='black', zorder=10)
+            # line properties: for overhead (below status dots, above bars)
+            l_props_oh  = dict(linewidth=2, capstyle='butt', zorder=5)
+            l_props_int = dict(linewidth=5, capstyle='butt', zorder=5)
             # loop: place star-name text and obs-status
             alternate = -1 # +1/-1/+1/-1/...
             for i, oi in enumerate(obs_info):
@@ -671,6 +702,26 @@ class plotTimelineContainer(object):
                     ax.text(t0[i], center + alternate * width/2, oi.name, **t_props, **x_props)
                     # obs-status marker (one point)
                     ax.scatter(t0[i]+dt[i]/2, center, c=status2color[oi.status], **p_props)
+                    # Show overheads as lines (we're doing it for chars and dets)
+                    if oi.flavor == 'char' or oi.flavor == 'det':
+                        # center of lines (away from dots, away from text)
+                        center_off = center + alternate * width*0.17
+                        # start-of-obs overhead
+                        plt.hlines(y=center_off,
+                                   xmin=t0[i],
+                                   xmax=t0[i] + oi.oh_0,
+                                   **l_props_oh, colors='black')
+                        # integration time (without extraTime)
+                        plt.hlines(y=center_off,
+                                   xmin=t0[i] + oi.oh_0,
+                                   xmax=t0[i]+dt[i]-oi.oh_1,
+                                   **l_props_int, colors='white')
+                        # extraTime (if applicable)
+                        if oi.oh_1 > 0:
+                            plt.hlines(y=center_off,
+                                    xmin=t0[i]+dt[i]-oi.oh_1,
+                                    xmax=t0[i]+dt[i],
+                                    **l_props_oh, colors='dimgray')
 
 
 ###
@@ -679,7 +730,6 @@ class plotTimelineContainer(object):
 
 # allModes = outspec['observingModes']
 # mode1 = [mode for mode in allModes if 'detectionMode' in mode.keys() or 'detection' in mode.keys()]
-# assert len(mode1) >= 1, 'This needs to be enhanced'
 # mode = mode1[0]
 # if not 'timeMultiplier' in mode.keys():
 #     mode['timeMultiplier'] = 1.
