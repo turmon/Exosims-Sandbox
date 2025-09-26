@@ -14,6 +14,7 @@ function getJSON(response) {
     if (false) {
 	return {"error": status.toString(10)};
     } else {
+	console.log(status);
 	const error = new Error(status.toString(10));
 	return Promise.reject(error);
     }
@@ -157,9 +158,22 @@ Promise.allSettled(data)
 	const params_str = params.filter(p => {
 	    return typeof dataIndex0[p] !== 'number';});
 
+	// Cmd-click hides column
+	function handleHeaderClick(e, column) {
+            if (e.ctrlKey || e.metaKey) {
+                // Ctrl+Click or Cmd+Click to hide column
+                e.preventDefault();
+		column.hide();
+                // toggleColumn(column);
+                return false; // Prevent sorting
+            }
+            // Regular click will trigger sorting (handled by Tabulator)
+        }
+
 	// displays for numerical and string parameters
 	const param_col_num = params_num.map(p => {
 	    return {title:`&theta;: ${p}`, field:p,
+		    headerClick: handleHeaderClick,
 		    headerWordWrap:true,
 		    headerFilter:minMaxFilterEditor,
 		    headerFilterFunc:minMaxFilterFunction,
@@ -167,6 +181,7 @@ Promise.allSettled(data)
 		   };});
 	const param_col_str = params_str.map(p => {
 	    return {title:`&theta;: ${p}`, field:p, 
+		    headerClick: handleHeaderClick,
 		    headerWordWrap:true,
 		    headerFilter:"input",
 		   };});
@@ -189,10 +204,13 @@ Promise.allSettled(data)
 	// skip the info column is there's nothing present
 	const hasSomeReadmeInfo = dataFiles.some(item => (
 	    item.hasOwnProperty("readme_info") && (item.readme_info !== "")))
-	//console.log(hasSomeReadmeInfo)
+
+	// console.log(`Found README info: ${hasSomeReadmeInfo}`)
 
 	// augment dataReduce with dataFiles, as possible
+	// NOTE: NaNs in .jsons will cause parse errors upon decoding
 	// TODO: handle error if not paired
+	
 	const dataPlus = dataReduce.map(item => {
 	    const pairedItem = newMap.get(item.experiment);
 	    return {...item, ...pairedItem}
@@ -213,7 +231,7 @@ Promise.allSettled(data)
 	var table = new Tabulator("#scenario-table", {
 	    height:height_alloc, // set height (CSS or here) to enable Virtual DOM
             data: dataPlus, // assign data to table
-            sortOrderReverse: true, // does not seem to work?
+            // sortOrderReverse: true, // does not seem to work?
 	    layout: "fitColumns", // fit columns to width of table
 	    columns:[
 		{title:"Name", field:"experiment",
@@ -240,18 +258,24 @@ Promise.allSettled(data)
 		},
 		{title:"Ens. Size", field:"ensemble_size",
 		 headerWordWrap:true,
+		 headerClick: handleHeaderClick,
 		 bottomCalc:"sum"},
 		{title:"Last Sim. Date", field:"simtime", hozAlign:"center",
 		 headerWordWrap:true,
 		 bottomCalc:summaryDateCalc,
+		 headerClick: handleHeaderClick,
 		 headerFilter:"input"},
 		{title:"Reduction Date", field:"runtime", hozAlign:"center",
 		 headerWordWrap:true,
 		 bottomCalc:summaryDateCalc,
+		 headerClick: handleHeaderClick,
 		 headerFilter:"input"},
-		{title:"User", field:"user", headerFilter:"input"},
+		{title:"User", field:"user",
+		 headerClick: handleHeaderClick,
+		 headerFilter:"input"},
 		{title:"Earths (Det.)", field:"detections_earth_all", hozAlign:"left",
 		 headerWordWrap:true,
+		 headerClick: handleHeaderClick,
 		 headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction,
 		 headerFilterLiveFilter:false,
 		 formatter:"money", formatterParams:yieldFmtParams,
@@ -259,6 +283,7 @@ Promise.allSettled(data)
 		 bottomCalc:"max"},
 		{title:"Earths (Char.)", field:"chars_earth_unique", hozAlign:"left",
 		 headerWordWrap:true,
+		 headerClick: handleHeaderClick,
 		 headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction,
 		 headerFilterLiveFilter:false,
 		 formatter:"money", formatterParams:yieldFmtParams,
@@ -266,16 +291,20 @@ Promise.allSettled(data)
 		 bottomCalc:"max"},
 		{title:"Earths (Strict)", field:"chars_earth_strict", hozAlign:"left",
 		 headerWordWrap:true,
+		 headerClick: handleHeaderClick,
 		 headerFilter:minMaxFilterEditor, headerFilterFunc:minMaxFilterFunction,
 		 headerFilterLiveFilter:false,
 		 formatter:"money", formatterParams:yieldFmtParams,
 		 bottomCalcFormatter:"money", bottomCalcFormatterParams:yieldFmtParams,
 		 bottomCalc:"max"},
 		{title:"Ens. Graphs", field:"index_gfx_count", bottomCalc:"sum",
+		 headerClick: handleHeaderClick,
 		 headerWordWrap:true,},
 		{title:"Path Summ's", field:"index_path_count", bottomCalc:"sum",
+		 headerClick: handleHeaderClick,
 		 headerWordWrap:true,},
 		{title:"Path Graphs", field:"index_path_gfx", bottomCalc:"sum",
+		 headerClick: handleHeaderClick,
 		 headerWordWrap:true,},
 	    ].concat(param_col_str).concat(param_col_num),
 	});

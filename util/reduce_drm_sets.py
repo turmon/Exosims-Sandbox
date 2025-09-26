@@ -128,6 +128,17 @@ N_CPU = mproc.cpu_count()
 ###
 ########################################
 
+def nan2None(obj):
+    r'''Convert NaNs to None for JSON encoding'''
+    if isinstance(obj, dict):
+        return {k:nan2None(v) for k,v in obj.items()}
+    elif isinstance(obj, list):
+        return [nan2None(v) for v in obj]
+    elif isinstance(obj, float) and np.isnan(obj):
+        return None
+    return obj
+
+        
 def ensure_permissions(fn):
     r'''Ensure correct permissions on the named data file.  
     We use rw-rw-r-- = 664 (octal), to allow group-write.'''
@@ -285,6 +296,7 @@ def outer_load_and_reduce(f, sim_root='', verb=0):
     ensemble = EnsembleRun(f, sim_root)
     # dictionary for this single Ensemble
     return ensemble.summarize()
+
 
 class EnsembleSummary(object):
     r'''Compute, store, and dump summary information for a set of ensembles.'''
@@ -505,10 +517,9 @@ class EnsembleSummary(object):
             fn = args.outfile % (extension, 'json')
             print('\tDumping JSON to %s' % fn)
             with open(fn, 'w') as jsonfile:
-                json.dump(d_full, jsonfile, indent=2)
+                json.dump(nan2None(d_full), jsonfile, indent=2)
             ensure_permissions(fn)
 
-        
     def dump_results(self, args):
         r'''Dump multi-line summary data to files
 

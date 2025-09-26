@@ -1449,7 +1449,7 @@ def index_group(args, startpath, title, uplink):
             hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
             hh.table_end()
         else:
-            hh.paragraph('Tabulated summary is below.', br=True)
+            hh.paragraph('Tabulated summary is below. Click to sort, ctrl/cmd-click to hide.', br=True)
             hh.div('<!-- tabulation goes here -->', id="scenario-table")
             # (presently, filenames are hard-coded, which is OK)
             ## # set up path to the data CSVs, and label mode, for the JS viewer
