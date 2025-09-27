@@ -164,6 +164,8 @@ Promise.allSettled(data)
                 // Ctrl+Click or Cmd+Click to hide column
                 e.preventDefault();
 		column.hide();
+		// (this was just a subsidiary utility function to keep
+		// track of and display the hidden columns - I deleted)
                 // toggleColumn(column);
                 return false; // Prevent sorting
             }
