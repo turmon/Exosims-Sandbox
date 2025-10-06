@@ -28,6 +28,7 @@
 #   keepout-N:     make "N" keepout-vs-time plots
 #     (above targets make graphics for N arbitrary sims from the scenario, 
 #      N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
+#   tar-log:       replace scenario/log with its "tar" archive to save space
 #   status:        list the current contents of DRMs for this scenario (like "ls")
 # (2) Multi-script reduction and plotting
 #   Note, all these targets require an *experiment* name.
@@ -109,6 +110,8 @@ GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
+# make tarfile of log directory
+TAR_LOG_PROG=util/tar-log.sh
 # generates detection visits report
 STAR_VISIT_PROG=util/star_visit_pmf_tabulate.py
 # select a given number of runs from a single Scenario (e.g., for timelines)
@@ -155,7 +158,7 @@ experiment-exists:
 Makefile:;
 
 ########################################
-## Simulation status
+## Simulation status and misc
 
 # list drms that have been made
 status: script-exists
@@ -164,6 +167,11 @@ status: script-exists
 .PHONY: exp-preflight
 exp-preflight:
 	util/exp-preflight.sh Scripts/$(S)
+
+# compress logfiles, we don't require the Script/ here
+.PHONY: tar-log
+tar-log:
+	$(TAR_LOG_PROG) sims/$(S)
 
 ########################################
 ## Data reductions
