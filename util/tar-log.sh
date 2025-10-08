@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 #
-# tar-log.sh: archive log files for a scenario
+# tar-log.sh: archive log files for scenario(s)
 #
 # Make an archive of log files to save inodes on gattaca.
 #
 # Usage:
-#   `tar-log.sh SCENARIO`
+#   `tar-log.sh [-v] [-r] SCENARIO`
 #
-# where SCENARIO is a simulation directory (typically SCENARIO/drm, etc.,
-# exist within it).  The directory:
+# (1) If SCENARIO is an ensemble directory, then typically SCENARIO/drm, 
+# etc., exist within it.  The log directory
 #   SCENARIO/log
 # is compiled into a tarfile indexed with the current date, and the
-# *directory is removed*.
+# *log directory is removed*.
+# (2) If SCENARIO is a .fam/exp directory, then the log directory:
+#    SCENARIO/Batch/log
+# is compiled into a tarfile as above, and the *log directory is removed*.
+# Also, in this case, if -r is given, then we descend into the child
+# directories (.fam/.exp/ensemble), and compress their log directories also.
+# 
+# Give -v to increase verbosity.
 #
 # Simplest usage:
 # ```
