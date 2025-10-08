@@ -110,8 +110,8 @@ GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
-# make tarfile of log directory
-TAR_LOG_PROG=util/tar-log.sh
+# make tarfile of log directory (recursive)
+TAR_LOG_PROG=util/tar-log.sh -r
 # generates detection visits report
 STAR_VISIT_PROG=util/star_visit_pmf_tabulate.py
 # select a given number of runs from a single Scenario (e.g., for timelines)

@@ -219,15 +219,8 @@ fi
 
 nscript=$(wc -l < $scenario_file)
 
-# which queue should we submit to
-if [[ "$(pwd)" == /scratch-edge/* ]]; then
-    s_cluster=edge
-elif [[ "$(pwd)" == /scratch/* || "$(pwd)" == /scratch-jpl/* ]]; then
-    s_cluster=slurm
-else
-    echo "\${PROGNAME}: Error: Unknown cluster" >&2
-    exit 1
-fi
+# we can submit to slurm (jpl) or edge or all, depending on 
+# command line options or defaults
 
 
 # Typical run parameters
@@ -263,7 +256,6 @@ cat << EOF >> $batch_file
 #SBATCH -o $batch_log_dir/%A/stdout-%a.log
 #SBATCH -e $batch_log_dir/%A/stderr-%a.log
 #SBATCH -p compute     # --partition
-#SBATCH -M $s_cluster  # --clusters
 #SBATCH -N 1
 #SBATCH -n $jobs
 #SBATCH --mem=$((4 + $jobs * 2 / 3))G      # no decimals (2025/09: 16 jobs ~= 5.4GB)
@@ -275,6 +267,13 @@ cat << EOF >> $batch_file
 ############################
 # THIS IS A GENERATED FILE #
 ############################
+
+# 
+# Note: Provided you have "$script_dir" (including "$batch_src_dir")
+# in your cluster scratch directory, this batch file is cluster-agnostic:
+#  - You may submit this file to a specific cluster with sbatch -M
+#  - Without -M, sbatch will submit to the default cluster for that node
+#
 
 # fail-on-error, fail-on-undefined
 set -eu
