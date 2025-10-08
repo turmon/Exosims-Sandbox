@@ -46,8 +46,13 @@
 #   - Your scripts are in a Family/Experiment in same Sandbox
 #   - You should be in the Python VENV you wish to use
 #
-# The script submits to the "slurm" or "edge" cluster, depending on 
-# your working directory (/scratch vs. /scratch-edge). 
+# The generated script can be submitted to either the "slurm" or "edge" cluster, 
+# provided that the Experiment/Family exists in the Scripts/ directory
+# on the scratch for that cluster.  (You must copy the files
+# in `Scripts/...` between clusters yourself.) Just use `sbatch -M edge` or 
+# `sbatch -M slurm`. Or, `sbatch` without `-M` will submit to the default 
+# cluster for that node.
+# 
 #
 # Example:
 # 
