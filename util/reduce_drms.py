@@ -125,8 +125,9 @@ N_CPU = mproc.cpu_count()
 
 # Temporal binning of mission elapsed time for detection-time plot
 # (also for delta-v plot)
+# default is 5-year mission, but see UPDATE_GLOBALS below
 # np.arange(start_day, end_day, days_per_bin)
-DETECTION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5) # default is 5-year mission only
+DETECTION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5)
 
 # Temporal binning of certain events (slews, chars) -- days
 #   The histograms we compute for these events are normalized to sum to unity, 
@@ -3373,6 +3374,12 @@ class EnsembleSummary(object):
         shutil.copyfile(args.script_name, fn)
         ensure_permissions(fn)
                 
+        # copy an outspec to specific JSON file
+        fn = args.outfile % ('outspec', 'json')
+        print('\tCopying outspec to %s' % fn)
+        shutil.copyfile(args.specs_name, fn)
+        ensure_permissions(fn)
+
         # dump more info to JSON file
         fn = args.outfile % ('pool', 'json')
         pool = self.summary
@@ -3380,35 +3387,52 @@ class EnsembleSummary(object):
             json.dump(pool, outfile, sort_keys=True, indent=4, ensure_ascii=False,
                         separators=(',', ': '), default=array_encoder)
         ensure_permissions(fn)
+
                 
-def load_exosims_sim(script):
+def obtain_outspec(args):
+    r'''Identify a good "specs" (script) file using Sandbox structure
+
+    If the script takes Exosims defaults, it will not contain explicit
+    values for some parameters (like settlingTime). But the outspec will.
+    This function tries to find the outspec within the logfiles, in
+    preference to the script, so that the defaults will be explicit.'''
+    # try to get some outspec nearby the .pkl, else, the script itself
+
+    # parent of parent:
+    # sims/Yokohama_Extended.fam/Trials.fam/s_dbug_YX_NIR_D8.0/drm/397016230.pkl
+    #   -> 
+    # sims/Yokohama_Extended.fam/Trials.fam/s_dbug_YX_NIR_D8.0
+    sim_root = os.path.dirname(os.path.dirname(args.infile[0]))
+    if os.path.isdir(spec_dir := os.path.join(sim_root, 'run')):
+        # 2022'ish logfiles: .../run/outspec_SEED.json
+        path_pat = os.path.join(spec_dir, 'outspec_*.json')
+    elif os.path.isdir(spec_dir := os.path.join(sim_root, 'log', 'outspec')):
+        # 2023+ logfiles: .../log/outspec/SEED.json
+        path_pat = os.path.join(spec_dir, '*.json')
+    else:
+        path_pat = ''
+    # settle for anything
+    paths = glob.glob(path_pat)
+    # try to do better than the original script
+    return paths[0] if paths else args.script_name
+
+
+def load_exosims_sim(args):
     r'''Extract fields from an Exosims sim corresponding to the DRMs being reduced.
 
     We return a "god object" with only the fields we need present.
     For now: ohTime and settlingTime.
     None is returned if the script could not be loaded.'''
-    # load the specs
+
+    # identify and load a good "specs"
+    args.specs_name = obtain_outspec(args)
     try:
-        with open(script, 'r') as fp:
+        with open(args.specs_name, 'r') as fp:
             specs = json.load(fp)
     except IOError:
-        print('Could not open implied script file <%s>.' % script)
-        print('Promotion analysis will be skipped.')
+        print('%s: Could not open implied script/specs file <%s>.' % (args.progname, args.specs_name))
+        print('%s: Promotion analysis will be skipped.', (args.progname, ))
         return None
-    # skipping the SU initialization, specs are now enough
-    if False:
-        # we need to be able to load a script
-        import EXOSIMS
-        from EXOSIMS.util.get_module import get_module_from_specs
-        # initialize just the simulated universe
-        # with clause suppresses chatter on stdout/stderr during object creation
-        # note: this alters the contents of the specs dictionary
-        dev_null = open(os.devnull, 'w')
-        with RedirectStreams(stdout=dev_null, stderr=dev_null):
-            SU_module = get_module_from_specs(specs, 'SimulatedUniverse')
-            SU = SU_module(**specs)
-        #import pdb; pdb.set_trace()
-        print('%s: Target List has %d stars.' % (args.progname, len(SU.TargetList.MsTrue)))
 
     # formulate the simulation-summary object -- only the fields we need
     rv = {}
@@ -3457,7 +3481,7 @@ def load_exosims_sim(script):
 
 def main(args):
     print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
-    args.sim_info = load_exosims_sim(args.script_name)
+    args.sim_info = load_exosims_sim(args)
     UPDATE_GLOBALS(args.sim_info)
     lazy = True
     ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
@@ -3475,8 +3499,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Summarize DRMs.",
                                      epilog='')
-    parser.add_argument('drm', metavar='DRM', nargs='*', default='.',
-                            help='drm file, or directory thereof')
+    parser.add_argument('drm', metavar='DRM', nargs='*', default=[],
+                            help='drm file(s)')
     parser.add_argument('-s', '--script', type=str, default='',
                             help='Exosims JSON script used for these DRMs.')
     parser.add_argument('-O', '--outfile', type=str, default='',
@@ -3501,7 +3525,9 @@ if __name__ == '__main__':
     args.progname = os.path.basename(sys.argv[0])
     
     # preserve input args separately
-    args.infile = args.drm
+    args.infile = args.drm[:]
+
+    # check edge cases
     if len(args.infile) == 1 and '*' in os.path.basename(args.infile[0]):
         # the wildcard appears here when invoked with arg .../drm/*.pkl, and there are no .pkl's
         # this fix is a bit hacky (there "could" be a drm with a star in its name),
@@ -3510,7 +3536,8 @@ if __name__ == '__main__':
         print('%s: Subsequent reduction error is likely.' % args.progname)
         args.infile = []
     if len(args.infile) == 0:
-        print('%s: No input DRMs.' % args.progname)
+        print('%s: No input DRMs. Exiting.' % args.progname)
+        sys.exit(0)
 
     # get the experiment name from the directory
     #   this is brittle, but have to do something
