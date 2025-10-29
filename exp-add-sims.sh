@@ -72,8 +72,8 @@
 #   
 ##
 
-# fail-on-error, fail-on-undefined
-set -eu
+# fail-on-error, fail-on-undefined, fail-on-pipe-error
+set -euo pipefail
 
 PROGNAME=$(basename $0)
 
