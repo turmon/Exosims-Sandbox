@@ -326,6 +326,10 @@ export PYTHONPATH=${EXO_PATH}:$(pwd)/Local
 # 6/2019: sometimes we run out of threads, if many parallel instances?
 export OPENBLAS_NUM_THREADS=8
 
+# 10/2025: Avoid error thrown by (PlanetPhysicalModel/Forecaster.py) when opening
+# an HDF5 data file, during initialization, when many jobs are started on gattaca2:
+# Unable to synchronously open file (unable to lock file, errno = 37, error message = 'No locks available'
+export HDF5_USE_FILE_LOCKING="FALSE"
 
 # options for gnu parallel - rather complex
 # 1: multiple machines
@@ -339,7 +343,7 @@ export OPENBLAS_NUM_THREADS=8
 #   EXOSIMS_PARAMS: variable is used in JSON scripts for .fits files, etc.
 #   TQDM_DISABLE: allow to kill the python "tqdm" package progress bar
 #   note: parallel does not object if you give --env FOO when FOO is unset
-par_env_var_names=(PATH PYTHONPATH VIRTUAL_ENV EXOSIMS_PARAMS OPENBLAS_NUM_THREADS TQDM_DISABLE)
+par_env_var_names=(PATH PYTHONPATH VIRTUAL_ENV EXOSIMS_PARAMS OPENBLAS_NUM_THREADS HDF5_USE_FILE_LOCKING TQDM_DISABLE)
 declare -a PAR_ENV_OPTS
 for name in "${par_env_var_names[@]}"; do
     PAR_ENV_OPTS+=("--env" "$name")
