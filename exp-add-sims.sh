@@ -141,8 +141,8 @@ if [ $# -ne 2 ]; then
    exit 2
 fi
 
-# seeds is a count for now
-script_dir="$1"
+# remove trailing / if present
+script_dir="${1%/}"
 seeds="$2"
 
 # need an existing Scripts/.../*.{fam,exp}
@@ -274,7 +274,8 @@ cat << EOF >> $batch_file
 ############################
 
 # 
-# Note: Provided you have "$script_dir" (including "$batch_src_dir")
+# Note: Provided you have "$script_dir" 
+# (including "$batch_src_dir")
 # in your cluster scratch directory, this batch file is cluster-agnostic:
 #  - You may submit this file to a specific cluster with sbatch -M
 #  - Without -M, sbatch will submit to the default cluster for that node
@@ -305,6 +306,8 @@ echo "\${PROGNAME}: Running on cluster: \$SLURM_CLUSTER_NAME"
 echo "\${PROGNAME}: Running on node(s): \$SLURM_JOB_NODELIST"
 echo "\${PROGNAME}: Parallelism here: \$SLURM_NTASKS"
 
+# randomized delay - max 1sec - 10/2025 getting file access errors
+sleep \$(echo \$RANDOM/32768 | bc -l)
 
 ############################################################
 # Configure the runtime environment
