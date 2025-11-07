@@ -90,7 +90,7 @@ import copy
 import time
 import json
 import os
-os.environ['OPENBLAS_NUM_THREADS'] = '1' # before "import numpy"
+os.environ['OPENBLAS_NUM_THREADS'] = '4' # before "import numpy"
 import gc
 import csv
 import re

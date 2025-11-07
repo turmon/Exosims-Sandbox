@@ -100,6 +100,7 @@ import argparse
 import sys
 import time
 import os
+os.environ['OPENBLAS_NUM_THREADS'] = '4' # before "import numpy"
 import copy
 import csv
 import json
