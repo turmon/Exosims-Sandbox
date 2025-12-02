@@ -110,6 +110,8 @@ GRAPHICS_PROG=util/plot_drms.sh
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
+# make tarfile of data directories
+TAR_DATA_PROG=util/tar-data.sh
 # make tarfile of log directory (recursive)
 TAR_LOG_PROG=util/tar-log.sh -r
 # generates detection visits report
@@ -150,7 +152,8 @@ script-exists:
 	@ [ -r Scripts/$(S).json -o -d Scripts/$(S) ] || \
 		(echo "Require a script file \`Scripts/$(S).json' or experiment directory \`Scripts/$(S)'" && exit 1)
 experiment-exists:
-	@ [ -d Scripts/$(S) ]
+	@ [ -d Scripts/$(S) ] || \
+		(echo "Require an experiment/family directory \`Scripts/$(S)'" && exit 1)
 
 .PHONY: script-exists experiment-exists default
 
@@ -168,10 +171,20 @@ status: script-exists
 exp-preflight:
 	util/exp-preflight.sh Scripts/$(S)
 
-# compress logfiles, we don't require the Script/ here
+# compress logfiles - don't require script-exists
 .PHONY: tar-log
 tar-log:
 	$(TAR_LOG_PROG) sims/$(S)
+
+# compress data-files - don't require script-exists
+.PHONY: tar-data
+tar-data:
+	$(TAR_DATA_PROG) sims/$(S)
+
+# compress low-yield (-l) data-files - don't require script-exists
+.PHONY: tar-some-data
+tar-some-data:
+	$(TAR_DATA_PROG) -l sims/$(S)
 
 ########################################
 ## Data reductions
