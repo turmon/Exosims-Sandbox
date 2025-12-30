@@ -3389,7 +3389,7 @@ class EnsembleSummary(object):
         ensure_permissions(fn)
 
                 
-def obtain_outspec(args):
+def obtain_outspec(args, announce=True):
     r'''Identify a good "specs" (script) file using Sandbox structure
 
     If the script takes Exosims defaults, it will not contain explicit
@@ -3414,7 +3414,10 @@ def obtain_outspec(args):
     # settle for anything
     paths = glob.glob(path_pat)
     # try to do better than the original script
-    return paths[0] if paths else args.script_name
+    rv = paths[0] if paths else args.script_name
+    if paths and announce:
+        print(f"{args.progname}: Params from outspec: {rv}")
+    return rv
 
 
 def load_exosims_sim(args):
@@ -3422,10 +3425,13 @@ def load_exosims_sim(args):
 
     We return a "god object" with only the fields we need present.
     For now: ohTime and settlingTime.
-    None is returned if the script could not be loaded.'''
+    None is returned if the script could not be loaded. '''
+
+    # Developer note: the "specs" may be the original (human-compiled) input script,
+    # or the outspec as written by Exosims. The code here must tolerate either.
 
     # identify and load a good "specs"
-    args.specs_name = obtain_outspec(args)
+    args.specs_name = obtain_outspec(args, announce=True)
     try:
         with open(args.specs_name, 'r') as fp:
             specs = json.load(fp)
@@ -3441,19 +3447,26 @@ def load_exosims_sim(args):
     if 'occHIPs' not in specs:
         top_HIPs = []
     else:
-        occHIPs_path = specs['occHIPs']
-        # occHIPs_path = os.path.join(EXOSIMS.__path__[0], 'Scripts', occHIPs_path)
-        try:
-            with open(occHIPs_path, 'r') as ofile:
-                HIPsfile = ofile.read()
-        except IOError:
-            print("%s: Could not open occHIPs file `%s'." % (args.progname, occHIPs_path))
-            print("%s: Continuing with null occHIPs list." % (args.progname, ))
-            HIPsfile = ''
-        if ',' in HIPsfile:
-            occHIPs = HIPsfile.split(',')
+        # obtain occHIPs, the list of Hipparcos numbers
+        if isinstance(specs['occHIPs'], list):
+            # it is a literal list
+            occHIPs = specs['occHIPs']
         else:
-            occHIPs = HIPsfile.split('\n')
+            # it is a filename
+            occHIPs_path = specs['occHIPs']
+            # occHIPs_path = os.path.join(EXOSIMS.__path__[0], 'Scripts', occHIPs_path)
+            try:
+                with open(occHIPs_path, 'r') as ofile:
+                    HIPs_text = ofile.read()
+            except IOError:
+                print("%s: Could not open occHIPs file `%s'." % (args.progname, occHIPs_path))
+                print("%s: Continuing with null occHIPs list." % (args.progname, ))
+                HIPs_text = ''
+            if ',' in HIPs_text:
+                occHIPs = HIPs_text.split(',')
+            else:
+                occHIPs = HIPs_text.split('\n')
+        # strip surrounding spaces
         occHIPs = [hip.strip() for hip in occHIPs]
         # restrict to topstars
         topstars = specs.get('topstars', 0)
