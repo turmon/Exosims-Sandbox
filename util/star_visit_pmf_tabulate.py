@@ -3,7 +3,7 @@ r"""
  star_visit_pmf_tabulate: make per-star table of detection visits
 
  Usage:
-  star_visit_pmf_tabulate.py SCENARIO
+  star_visit_pmf_tabulate.py [-N n] SCENARIO
 
  where:
    SCENARIO: a scenario-summary directory (containing a "drm" subdirectory,
@@ -15,6 +15,9 @@ r"""
   At present, two files:
     detection-visits.html: a HTML table listing stars and detection visits
     detection-visits.csv: the CSV version of the above table, for later analysis
+
+  Optionally:
+    -N n => cap the number of DRMs examined to "n", to speed testing.
 
 """
 
@@ -196,6 +199,13 @@ def get_drm(args, seed_file):
     return ok, drm, spc
 
 
+def standardize(spc, entry):
+    r'''tieredScheduler_DD DRMs sometimes do not have star_name in the DRM.
+    (as of 2025/12)'''
+    # in-place modification
+    if 'star_name' not in entry:
+        entry['star_name'] = spc['Name'][entry['star_ind']]
+
 
 def process_drms(args):
     r'''Do all data processing for the entire ensemble of DRMs'''
@@ -237,6 +247,7 @@ def process_drms(args):
         # group observations by star name
         per_star_obs = defaultdict(list)
         for entry in drm:
+            standardize(spc, entry)
             per_star_obs[entry['star_name']].append(entry)
 
         # process each star’s observations
@@ -255,7 +266,8 @@ def process_drms(args):
             # get the completeness of this star from the SPC
             # (there's also an sInd in the obs)
             sInd = np.where(spc['Name'] == star_name)[0]
-            int_comp = spc['int_comp'][sInd]
+            # the ending [0] unboxes the length-1 array
+            int_comp = spc['int_comp'][sInd][0]
 
             # Note: char_comp and char_time are phased out
             # look for the latest detection within the observation timeline
@@ -276,7 +288,7 @@ def process_drms(args):
                 time_value = getattr(det_time, 'value', det_time)
                 rank = completeness / time_value
             else:
-                completeness, rank = float('nan'), float('nan')
+                completeness, rank = np.array(float('nan')), np.array(float('nan'))
             star_completeness[star_name].append(completeness)
             star_rank[star_name].append(rank)
 
@@ -445,6 +457,9 @@ if __name__ == '__main__':
     if not args.outdir:
         args.outdir = os.path.join(args.scenario, 'sched')
         
+    # some starshade DRMs do not have star_name
+    args.our_star_name = False
+
     # call the main
     ok = main(args)
     if ok:

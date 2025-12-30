@@ -21,7 +21,7 @@
 #   html:          re-generate the index.html that summarizes the given scenario
 #   html-only:     same as html, but do not re-reduce the data or remake graphics.
 #   path-ensemble: make lon/lat plots of slews taken by an ensemble.
-#   star-visit:    per-star tabulation of successful detection visits
+#   star-visits:   per-star tabulation of successful detection visits
 #   path-movie-N:  make "N" path-movies and final frames 
 #   path-final-N:  make "N" final frames, only
 #   obs-timeline-N:make "N" observing-target timelines
