@@ -73,8 +73,11 @@ using either of two notations. Below, suppose "obs" is one entry in the DRM.
           `-e "np.sum(det_status == 1)"`
     2. No comma-separated lists are allowed, due to ambiguity.
     3. The full SPC is available, if desired, using `spc[...]`, so
-       `-e "spc['Spec'][star_ind]`  <==> `-S Spec`
+       `-e "spc['Spec'][star_ind]"`  <==> `-S Spec`
        See below for more on `-S`.
+    4. "Boxing" the result of `-e` allows the value to be scalar-expanded
+       across multiple planets (cf. `-P` below). For star name:
+       `-e "[spc['Name'][star_ind]]"`  <==> `-S Name`
 
 For either `-a` or `-e`, the resulting column can be custom-named with 
 a `label:attr` construct, such as
