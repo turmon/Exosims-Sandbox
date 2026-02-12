@@ -17,13 +17,13 @@ import os
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
 
+# Verbosity (also set from mode)
+VERBOSE = 1
 
-import matplotlib.pyplot as plt
+# overlay imports
 import matplotlib.image as mpimg
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pathlib import Path
-import numpy as np
-import os
 
 
 def plot_drm_planet_overlay(ax_dest, mode=None):
@@ -225,6 +225,10 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
     """
     
     # Load data using the source template
+    # update global verbosity
+    global VERBOSE
+    VERBOSE = mode.get('verbose', VERBOSE)
+
     try:
         info_file = src_tmpl % ("info", "csv")
         t_info = pd.read_csv(info_file)
@@ -365,8 +369,10 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
         if dest_tmpl:
             for ext in ext_list:
                 fn_gfx = dest_tmpl % (dest_name, ext)
-                print(f'\tExporting to {fn_gfx}')
+                if VERBOSE:
+                    print(f'\tExport: {fn_gfx}')
                 # figure background is transparent, axes not transparent
+                # FIXME: disabled because of overlay confusion
                 #fig.patch.set_facecolor('none')
                 fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
     

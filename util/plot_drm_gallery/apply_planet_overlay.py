@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+# Still here for reference
+# This is the original converted file - this was inserted into
+# plot_drm_radlum.py and modified there
+
 """
 Plot a three-planet decorative underlay
 

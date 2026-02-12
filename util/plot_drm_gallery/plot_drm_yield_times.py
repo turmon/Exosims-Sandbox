@@ -29,6 +29,9 @@ import os
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
 
+# Verbosity (also set from mode)
+VERBOSE = 1
+
 
 def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
     """
@@ -57,6 +60,10 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
     """
     
     # Load data using the source template
+    # update global verbosity
+    global VERBOSE
+    VERBOSE = mode.get('verbose', VERBOSE)
+
     try:
         info_file = src_tmpl % ("info", "csv")
         t_info = pd.read_csv(info_file)
@@ -123,7 +130,8 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
         if dest_tmpl:
             for ext in ext_list:
                 fn_gfx = dest_tmpl % (dest_name, ext)
-                print(f'\tExporting to {fn_gfx}')
+                if VERBOSE:
+                    print(f'\tExport: {fn_gfx}')
                 # figure background is transparent, axes not transparent
                 fig.patch.set_facecolor('none')
                 fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')

@@ -19,6 +19,8 @@ from . import common_style as cs
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
 
+# Verbosity (also set from mode)
+VERBOSE = 1
 
 def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
     """
@@ -48,6 +50,10 @@ def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
         earth-char-hist-phi-log.png
     """
     
+    # update global verbosity
+    global VERBOSE
+    VERBOSE = mode.get('verbose', VERBOSE)
+
     # Load data using the source template
     try:
         info_file = src_tmpl % ("info", "csv")
@@ -126,7 +132,8 @@ def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
         if dest_tmpl:
             for ext in ext_list:
                 fn_gfx = dest_tmpl % (dest_name, ext)
-                print(f'\tExporting to {fn_gfx}')
+                if VERBOSE:
+                    print(f'\tExport: {fn_gfx}')
                 # figure background is transparent, axes not transparent
                 # Increased DPI (2.5x magnification factor) for these dense plots
                 fig.patch.set_facecolor('none')

@@ -9,6 +9,7 @@ with the appropriate arguments.
 
 import sys
 import os
+import time
 import argparse
 import pandas as pd
 import importlib
@@ -26,7 +27,7 @@ PROGNAME = os.path.basename(sys.argv[0])
 #   - function: function name to call within the module
 #   - csv_files: list of CSV file identifiers (used with src_tmpl)
 #   - enabled: whether to run this plot
-#   - mode: additional mode dict to merge with global mode (optional)
+#   - mode: additional mode dict to merge with overall mode (optional)
 PLOT_REGISTRY = [
     {
         'name': 'yield_times',
@@ -121,7 +122,8 @@ def signal_plot_end(args):
     fn_output = args.dest_tmpl % ('info', 'txt')
     with open(fn_output, 'w') as fp:
         print(f"Graphics written by {os.getenv('USER')}", file=fp);
-        print(f"From runs reduced on {args.reduce_info.get('runtime', 'N/A')}",
+        print(f"Ensemble of N={args.reduce_info.get('ensemble_size', 'N/A')} runs", file=fp)
+        print(f"Runs were reduced on {args.reduce_info.get('runtime', 'N/A')}",
               file=fp, flush=True);
     # ensure group-writable
     os.chmod(fn_output, 0o664)
@@ -155,7 +157,7 @@ def check_csv_files(src_tmpl, csv_files, plot_name):
     return True
 
 
-def run_plot(plot_config, src_tmpl, dest_tmpl, global_mode, verbose=False):
+def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
     """
     Run a single plot function
     
@@ -167,10 +169,8 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, global_mode, verbose=False):
         Template string for input CSV files
     dest_tmpl : str
         Template string for output graphics files
-    global_mode : dict
-        Global mode settings
-    verbose : bool
-        Whether to print verbose output
+    overall_mode : dict
+        Universal mode settings, passed to each plotter
         
     Returns
     -------
@@ -183,9 +183,16 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, global_mode, verbose=False):
     csv_files = plot_config['csv_files']
     plot_mode = plot_config.get('mode', {})
     
+    # this function's verbosity verbosity = overall verbosity
+    verbose = overall_mode['verbose']
+
+    # Merge global mode with plot-specific mode
+    # Plot-specific mode takes precedence
+    merged_mode = {**overall_mode, **plot_mode}
+    
     # Skip if disabled
     if not plot_config.get('enabled', True):
-        if verbose:
+        if verbose > 1:
             print(f"Skipping {name} (disabled in registry)")
         return True
     
@@ -193,13 +200,9 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, global_mode, verbose=False):
     if not check_csv_files(src_tmpl, csv_files, name):
         return False
     
-    # Merge global mode with plot-specific mode
-    # Plot-specific mode takes precedence
-    merged_mode = {**global_mode, **plot_mode}
-    
     try:
         # Import the module
-        if verbose:
+        if verbose > 1:
             print(f"Running {name}...")
         
         module = importlib.import_module(f"plot_drm_gallery.{module_name}")
@@ -208,7 +211,7 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, global_mode, verbose=False):
         # Call the plot function
         plot_function(src_tmpl, dest_tmpl, merged_mode)
         
-        if verbose:
+        if verbose > 1:
             print(f"  {name} completed successfully")
         
         return True
@@ -265,12 +268,16 @@ Optional arguments:
                        help='Skip the specified plot (by name), can be repeated')
     parser.add_argument('--list', action='store_true',
                        help='List all available plots and exit')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Print verbose progress messages')
+    parser.add_argument('--verbose', '-v', action='count', default=1, 
+                       help='Verbosity')
+    parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
     
     args = parser.parse_args()
     args.progname = os.path.basename(sys.argv[0])
+    start_time = time.perf_counter()
     
+    if args.quiet: args.verbose = 0
+
     # List plots if requested
     if args.list:
         print("Available plots:")
@@ -281,7 +288,7 @@ Optional arguments:
         return 0
     
     # Create global mode dictionary
-    global_mode = {'op': args.mode_op}
+    overall_mode = {'op': args.mode_op, 'verbose': args.verbose}
     
     # Determine which plots to run
     plots_to_run = []
@@ -303,7 +310,7 @@ Optional arguments:
         for plot in PLOT_REGISTRY:
             if plot['name'] not in args.skip:
                 plots_to_run.append(plot)
-            elif args.verbose:
+            elif args.verbose > 1:
                 print(f"Skipping {plot['name']} (--skip)")
     
     # get basic information into args.reduce_info
@@ -322,11 +329,11 @@ Optional arguments:
         raise
 
     # Run the plots
-    if args.verbose:
+    if args.verbose > 1:
         print(f"Running {len(plots_to_run)} plots...")
         print(f"Source template: {args.src_tmpl}")
         print(f"Destination template: {args.dest_tmpl}")
-        print(f"Global mode: {global_mode}")
+        print(f"Overall mode: {overall_mode}")
         print()
     
     success_count = 0
@@ -334,7 +341,7 @@ Optional arguments:
     skip_count = 0
     
     for plot in plots_to_run:
-        result = run_plot(plot, args.src_tmpl, args.dest_tmpl, global_mode, args.verbose)
+        result = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode)
         if result:
             success_count += 1
         elif result is False:
@@ -345,12 +352,14 @@ Optional arguments:
             skip_count += 1
     
     # Summary
-    if args.verbose or fail_count > 0:
-        print()
-        print(f"Summary: {success_count} succeeded, {fail_count} failed, {skip_count} skipped")
+    if args.verbose > 0 or fail_count > 0:
+        print(f"{args.progname}: {success_count} ok, {fail_count} failed, {skip_count} skipped")
+    run_time = time.perf_counter() - start_time
+    # unconditionally print 
+    print(f"{args.progname}: Done. (Elapsed time: {run_time:.2f} s)")
     
-    # 
-    if fail_count > 0:
+    # FIXME: need a better criterion than "perfect"
+    if fail_count == 0:
         signal_plot_end(args)
 
     # Return non-zero if any plots failed
