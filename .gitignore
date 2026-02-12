@@ -17,6 +17,7 @@ EXOSIMS
 ipyparallel/*
 
 # python byte-compiled files
+__pycache__
 *.pyc
 
 # vi backup files
