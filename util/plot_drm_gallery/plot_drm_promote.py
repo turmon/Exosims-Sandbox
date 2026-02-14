@@ -187,7 +187,7 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
     # Uniform error bar properties
     ebar_props = {"marker": '.',
                   "linewidth": 1.7,
-                  "errorevery": 1,
+                  "errorevery": 4,
                   "elinewidth": 1,
                   "capsize": 1.5}
     

@@ -109,6 +109,9 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
         ylim = ax.get_ylim()
         ax.set_ylim(max(0, ylim[0]), ylim[1])
         
+        # tight x axis limits - was losing too much space
+        ax.autoscale(enable=True, axis='x', tight=True)
+
         # Format the title
         title2 = plot_make_title(t_info)
         
@@ -148,6 +151,10 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
               file=sys.stderr)
         sys.exit(1)
     
+    # Manual line color order
+    # line_colors = ['tab:blue', 'tab:red', 'tab:orange']
+    line_colors = ['tab:blue', 'tab:green', 'tab:orange']
+
     # Uniform error bar properties
     ebar_props = {"marker": '.',
                   "linewidth": 1.7,
@@ -246,9 +253,10 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
                 f_std = f'{name}_std'
                 
                 ax.errorbar(tsamp + t_offsets[n], 
-                           t_yield_time[f_mean].values,
-                           yerr=t_yield_time[f_std].values,
-                           linewidth=1)  # NB: skinny
+                            t_yield_time[f_mean].values,
+                            yerr=t_yield_time[f_std].values,
+                            color=line_colors[n],
+                            **ebar_props)
             
             style_yield_plot(
                 ax,
@@ -275,9 +283,10 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
             cume_std = np.sqrt(np.cumsum(t_yield_time[f_std].values ** 2))
             
             ax.errorbar(tsamp + t_offsets[n],
-                       cume_mean,
-                       yerr=cume_std,
-                       **ebar_props)
+                        cume_mean,
+                        yerr=cume_std,
+                        color=line_colors[n],
+                        **ebar_props)
         
         style_yield_plot(
             ax,

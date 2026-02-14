@@ -368,5 +368,5 @@ Optional arguments:
 
 if __name__ == '__main__':
     # ensure group-writable from the start
-    os.umask(0o664)
+    os.umask(0o002)
     sys.exit(main())

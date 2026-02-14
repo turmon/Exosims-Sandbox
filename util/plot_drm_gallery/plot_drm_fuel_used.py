@@ -81,8 +81,8 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     ####################################################################
     
     # Manual line color order
-    # line_colors = ['tab:blue', 'tab:red', 'tab:orange']
-    line_colors = ['tab:blue', 'tab:orange', 'black']
+    # purple is for slew, black for total
+    line_colors = ['tab:purple', 'tab:orange', 'black']
 
     # uniform error bar properties
     ebar_props = {"marker": '.',

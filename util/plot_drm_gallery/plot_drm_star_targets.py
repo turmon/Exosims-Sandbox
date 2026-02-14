@@ -140,7 +140,10 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
         ax.set_yscale('log')  # semilog
         ax.set_xlim(dist_axis_limit)  # clip distance
         ax.autoscale(enable=True, axis='y', tight=True)  # tight on Y
-        ax.grid(True)
+        # major grids
+        ax.grid(True) 
+        # minor y grid
+        ax.grid(which='minor', axis='y', linestyle=':', linewidth='0.5', color='black', alpha=0.5)
         
         # Colorbar
         ylabel_string = f'{obs_name} [{obs_unit}]'
@@ -311,10 +314,11 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
                         cmap=cmap,
                         marker='.')
     
+    # log for tInt
     ax.set_xscale('log')
     
     # Plot/axis styles
-    title1 = 'Cumulative Integration Time vs. Detections, Shaded by First-Observation Time'
+    title1 = 'Cumulative Integration Time vs. Detections\nShaded by First-Observation Time'
     title2 = plot_make_title(t_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
@@ -322,6 +326,8 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     ax.set_ylabel('Mean Yield [count]', fontweight='bold')
     ax.tick_params(labelsize=13)
     ax.grid(True)
+    # minor x grid (log [d])
+    ax.grid(which='minor', axis='x', linestyle=':', linewidth='0.5', color='black', alpha=0.5)
     
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label('Time of First Obs. [day]', fontweight='bold')
@@ -341,10 +347,11 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
                         cmap=cmap,
                         marker='.')
     
+    # log for tInt
     ax.set_xscale('log')
     
     # Plot/axis styles
-    title1 = 'Cumulative Integration Time vs. Characterizations, Shaded by First-Observation Time'
+    title1 = 'Cumulative Integration Time vs. Characterizations\nShaded by First-Observation Time'
     title2 = plot_make_title(t_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
@@ -352,6 +359,8 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     ax.set_ylabel('Mean Characterizations [count]', fontweight='bold')
     ax.tick_params(labelsize=13)
     ax.grid(True)
+    # minor x grid (log [d])
+    ax.grid(which='minor', axis='x', linestyle=':', linewidth='0.5', color='black', alpha=0.5)
     
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label('Time of First Obs. [day]', fontweight='bold')

@@ -139,8 +139,9 @@ def plot_drm_time_used(src_tmpl, dest_tmpl, mode):
         sys.exit(1)
     
     # Manual line color order
-    # line_colors = ['tab:blue', 'tab:red', 'tab:orange']
-    line_colors = ['tab:blue', 'tab:green', 'tab:orange']
+    # for the obstime plot -- purple for slews
+    line_colors = ['tab:blue', 'tab:green', 'tab:purple']
+    # line_colors = ['tab:blue', 'tab:green', 'tab:orange']
 
     # Uniform error bar properties
     ebar_props = {"marker": '.',

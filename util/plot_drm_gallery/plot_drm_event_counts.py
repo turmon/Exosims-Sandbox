@@ -105,6 +105,9 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
         ylim = ax.get_ylim()
         ax.set_ylim(max(0, ylim[0]), ylim[1])
         
+        # Clip X at 0 - was seeing significant negative extension
+        xlim = ax.get_xlim()
+        ax.set_xlim(0, xlim[1])
         # Format the title
         title2 = plot_make_title(t_info)
         
@@ -169,6 +172,9 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
     # Indexes to plot
     inx = slice(0, 150)
     
+    # only using one for now
+    slew_colors = ['tab:purple', 'tab:gray']
+
     # Put the above-selected counts on one plot
     for n, name in enumerate(names):
         f_mean = f'{name}_mean'
@@ -178,7 +184,7 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
 
         ax.plot(ct_samp_1[inx] + ct_offsets_1[n],
                 t_counts[f_mean].values[inx],
-                color=line_colors[n],
+                color=slew_colors[n],
                 **plot_props)
         # (error bars just confuse this plot)
     
@@ -239,13 +245,18 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     
-    # Detections, etc.
+    # Dets/chars -- plot order changed in python vs. matlab to harmonize "char" colors
     names = ['h_event_count_det_rvplan', 'h_event_count_char_rvplan', 'h_event_count_char']
     names_legend = ['Detections, RV Targets', 'Characterizations, RV Targets', 'Characterizations, Any']
     n_plot = len(names)
     # Indexes to plot (event counts)
     inx = slice(0, 500)
     
+    # Ordinary chars are plotted last, and take color index 1
+    # special color for RV chars
+    # FIXME: not working RN
+    rv_line_colors = [line_colors[0],  'tab:olive', line_colors[1]]
+
     # This guard is needed for old reductions
     if 'h_event_count_det_rvplan_mean' in t_counts.columns:
         
@@ -259,7 +270,11 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
             std_avg = np.sqrt(np.maximum(0.0, 
                 uniform_filter1d(t_counts[f_std].values ** 2, size=3, mode='nearest')))
             
-            extra_props = {'zorder': 2} if 'char' in name else {'zorder': 1}
+            # chars on top, 
+            extra_props = {
+                'zorder': 2 if 'char' in name else 1,
+                'linestyle': ':' if 'char_rv' in name else '-'
+                }
             ax.plot(ct_samp_1[inx], mean_avg[inx],
                     color=line_colors[n],
                     **extra_props,

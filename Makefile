@@ -107,6 +107,7 @@ REDUCE_PROG=util/reduce_drms.py
 REDUCE_ENS_PROG=util/reduce_drm_sets.py -E
 # programs used for matlab/python graphics
 GRAPHICS_PROG=util/plot_drms.sh
+GRAPHALT_PROG=util/plot_drms_driver.py
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
@@ -259,6 +260,7 @@ $(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(subst 
 
 ########################################
 ## Graphics - detections, fuel use
+## (original Matlab version)
 ##
 .PHONY: graphics
 # delegate to the graphics status file
@@ -269,6 +271,22 @@ sims/$(S)/gfx/det-info.txt: sims/$(S)/reduce-info.csv
 	@ echo "Make: Graphics plotting into $(@D) ..."
 	@ rm -f sims/$(S)/gfx/det-*.*
 	$(GRAPHICS_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
+	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
+########################################
+## Graphics - detections, fuel use
+## (matplotlib version)
+##
+.PHONY: graphics-alt
+# delegate to an ALT graphics status file
+graphics-alt: script-exists sims/$(S)/gfx/det-info-ALT.txt
+
+# just one ensemble's graphics
+# the cp moves the "ALT" sentinel file into place
+sims/$(S)/gfx/det-info-ALT.txt: sims/$(S)/reduce-info.csv
+	@ echo "Make: mpl Graphics plotting into $(@D) ..."
+	@ rm -f sims/$(S)/gfx/det-*.*
+	$(GRAPHALT_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
+	@ cp -p sims/$(S)/gfx/det-info.txt sims/$(S)/gfx/det-info-ALT.txt
 	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
 
 ########################################
