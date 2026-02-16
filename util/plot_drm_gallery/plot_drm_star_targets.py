@@ -17,7 +17,10 @@ import argparse
 import sys
 import os
 # uniform plot appearance
-from . import common_style as cs
+try:
+    from . import common_style as cs
+except ImportError:
+    import common_style as cs
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
