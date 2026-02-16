@@ -4,6 +4,7 @@ Common styles, functions, etc.
 
 """
 
+import os
 import pandas as pd
 
 
@@ -31,7 +32,7 @@ class PlotTracker:
                 if facecolor is not None:
                     fig.patch.set_facecolor(facecolor)
                 fig.savefig(fn_gfx, dpi=dpi, bbox_inches='tight')
-                self._files.append(fn_gfx)
+                self._files.append(os.path.basename(fn_gfx))
 
     def get_files(self):
         """Return list of filenames written."""
