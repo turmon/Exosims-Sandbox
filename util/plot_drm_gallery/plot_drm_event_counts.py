@@ -13,6 +13,8 @@ import argparse
 import sys
 import os
 from scipy.ndimage import uniform_filter1d
+# uniform plot appearance
+from . import common_style as cs
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
@@ -82,22 +84,6 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
     # File extensions to write
     ext_list = ['png']
     
-    # Helper function to create title from t_info
-    def plot_make_title(t_info):
-        """Create plot title from metadata"""
-        if t_info.empty:
-            rv = ''
-        elif 'experiment' in t_info:
-            exp_name = str.strip(t_info['experiment'].iloc[0])
-            if len(exp_name) < 50:
-                chaser = f", Ensemble Size {t_info['ensemble_size'].iloc[0]}"
-            else:
-                chaser = ''
-            rv = exp_name + chaser
-        else:
-            rv = ''
-        return rv
-    
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_count_plot(ax, title1, xtext, ytext, legtext):
         """Style the count plot with title, labels, and legend"""
@@ -109,7 +95,7 @@ def plot_drm_event_counts(src_tmpl, dest_tmpl, mode):
         xlim = ax.get_xlim()
         ax.set_xlim(0, xlim[1])
         # Format the title
-        title2 = plot_make_title(t_info)
+        title2 = cs.plot_make_title(t_info)
         
         # Set title (preventing special interpretation of _) with bold
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')

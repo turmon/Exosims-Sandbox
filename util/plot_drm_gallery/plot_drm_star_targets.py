@@ -16,6 +16,8 @@ import matplotlib.cm as cm
 import argparse
 import sys
 import os
+# uniform plot appearance
+from . import common_style as cs
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
@@ -108,29 +110,12 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     # Color for un-observed stars
     unseen_color = np.array([1, 1, 1]) * 0.7
     
-    # Helper function to create title from t_info
-    def plot_make_title(t_info):
-        """Create plot title from metadata"""
-        if t_info.empty:
-            rv = ''
-        elif 'experiment' in t_info:
-            exp_name = str.strip(t_info['experiment'].iloc[0])
-            if len(exp_name) < 50:
-                chaser = f", Ensemble Size {t_info['ensemble_size'].iloc[0]}"
-            else:
-                chaser = ''
-            rv = exp_name + chaser
-        else:
-            rv = ''
-        return rv
-
-    
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_scatter_plot(ax, obs_name, obs_unit):
         """Style the scatter plot with title, labels, and colorbar"""
         # Plot/axis styles
         title1 = f'Luminosity vs. Distance, Shaded by {obs_name}'
-        title2 = plot_make_title(t_info)
+        title2 = cs.plot_make_title(t_info)
         
         # Set title (preventing special interpretation of _) with bold
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
@@ -319,7 +304,7 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     
     # Plot/axis styles
     title1 = 'Cumulative Integration Time vs. Detections\nShaded by First-Observation Time'
-    title2 = plot_make_title(t_info)
+    title2 = cs.plot_make_title(t_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax.set_xlabel('Integration Time [d]', fontweight='bold')
@@ -352,7 +337,7 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     
     # Plot/axis styles
     title1 = 'Cumulative Integration Time vs. Characterizations\nShaded by First-Observation Time'
-    title2 = plot_make_title(t_info)
+    title2 = cs.plot_make_title(t_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax.set_xlabel('Integration Time [d]', fontweight='bold')

@@ -13,6 +13,8 @@ import matplotlib.patches as patches
 import argparse
 import sys
 import os
+# uniform plot appearance
+from . import common_style as cs
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
@@ -308,22 +310,6 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
     # File extensions to write
     ext_list = ['png']
     
-    # Helper function to create title from t_info
-    def plot_make_title(t_info):
-        """Create plot title from metadata"""
-        if t_info.empty:
-            rv = ''
-        elif 'experiment' in t_info:
-            exp_name = str.strip(t_info['experiment'].iloc[0])
-            if len(exp_name) < 50:
-                chaser = f", Ensemble Size {t_info['ensemble_size'].iloc[0]}"
-            else:
-                chaser = ''
-            rv = exp_name + chaser
-        else:
-            rv = ''
-        return rv
-    
     # Inner function: rectangle underlay
     def place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra):
         """Place vertical stripes to visually group planets of same radius class"""
@@ -389,7 +375,7 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
         ax.set_ylim(max(0, ylim[0]), ylim[1])
         
         title1 = f'{obs_type} vs. Insolation and Planet Radius'
-        title2 = plot_make_title(t_info)
+        title2 = cs.plot_make_title(t_info)
         
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
         ax.set_xlabel('Planet Type and Size', fontweight='bold')
