@@ -5,6 +5,8 @@ Common styles, functions, etc.
 """
 
 import os
+import sys
+import pandas as pd
 
 
 class PlotTracker:
@@ -53,4 +55,20 @@ def plot_make_title(reduce_info):
     else:
         rv = ''
     return rv
-    
+
+
+def load_csv_files(src_tmpl, csv_files):
+    """Load CSV files and return as a list of DataFrames.
+
+    For use by standalone plot scripts. Exits on failure.
+    """
+    dataframes = []
+    for csv_name in csv_files:
+        csv_path = src_tmpl % (csv_name, 'csv')
+        try:
+            dataframes.append(pd.read_csv(csv_path))
+        except Exception as e:
+            print(f"Fatal: Could not load CSV file '{csv_path}': {e}", file=sys.stderr)
+            sys.exit(1)
+    return dataframes
+

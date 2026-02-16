@@ -22,24 +22,24 @@ PROGNAME = os.path.basename(sys.argv[0])
 # Verbosity (also set from mode)
 VERBOSE = 1
 
-def plot_drm_event_counts(reduce_info, src_tmpl, dest_tmpl, mode):
+def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     """
     Plot event counts in a drm-set
-    
-    Plots of event-counts such as number of slews, characterizations, 
+
+    Plots of event-counts such as number of slews, characterizations,
     detections, averaged over an ensemble.
-    
+
     Parameters
     ----------
-    src_tmpl : str
-        Template string for input file paths with two %s placeholders
-        Example: "data/%s.%s" will be filled with ("info", "csv"), 
-        ("counts", "csv"), and ("earth_counts", "csv")
+    reduce_info : dict
+        Metadata dict from reduce-info.csv
+    plot_data : list of DataFrame
+        Pre-loaded CSV data [event-counts, earth-char-count]
     dest_tmpl : str
         Template string for output file paths with two %s placeholders
     mode : dict
         Dictionary with 'op' key containing operation mode string
-        
+
     Outputs
     -------
     Saves plots to disk with names:
@@ -49,25 +49,13 @@ def plot_drm_event_counts(reduce_info, src_tmpl, dest_tmpl, mode):
         earth-char-count.png
         earth-char-count-strict.png, earth-char-count-all.png
     """
-    
-    # Load data using the source template
+
     # update global verbosity
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        counts_file = src_tmpl % ("event-counts", "csv")
-        t_counts = pd.read_csv(counts_file)
-    except Exception as e:
-        print(f"{PROGNAME}: Fatal: Could not load counts file: {e}", file=sys.stderr)
-        sys.exit(1)
-    
-    try:
-        earth_counts_file = src_tmpl % ("earth-char-count", "csv")
-        t_earth_counts = pd.read_csv(earth_counts_file)
-    except Exception as e:
-        print(f"Warning: Could not load earth-counts file: {e}", file=sys.stderr)
-        t_earth_counts = pd.DataFrame()
+    # Unpack CSV data
+    t_counts, t_earth_counts = plot_data
     
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'event-counts' not in mode.get('op', ''):
@@ -433,9 +421,10 @@ the plot name and file extension.
     info_file = args.src_tmpl % ("info", "csv")
     reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
 
-    # Run the plotting function
+    # Load CSV data and run the plotting function
+    plot_data = cs.load_csv_files(args.src_tmpl, ['event-counts', 'earth-char-count'])
     try:
-        plot_drm_event_counts(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_event_counts(reduce_info, plot_data, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)

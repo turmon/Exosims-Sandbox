@@ -26,23 +26,24 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_star_targets(reduce_info, src_tmpl, dest_tmpl, mode):
+def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     """
     Plot yield, etc., against star targets in a drm-set
-    
+
     Make, and write out, plots of various quantities pertaining to each
     star target in a set of DRMs.
-    
+
     Parameters
     ----------
-    src_tmpl : str
-        Template string for input file paths with two %s placeholders
-        Example: "data/%s.%s" will be filled with ("info", "csv") and ("star_targ", "csv")
+    reduce_info : dict
+        Metadata dict from reduce-info.csv
+    plot_data : list of DataFrame
+        Pre-loaded CSV data [star-target]
     dest_tmpl : str
         Template string for output file paths with two %s placeholders
     mode : dict
         Dictionary with 'op' key containing operation mode string
-        
+
     Outputs
     -------
     Saves plots to disk with names:
@@ -57,18 +58,13 @@ def plot_drm_star_targets(reduce_info, src_tmpl, dest_tmpl, mode):
         perstar-char-earth-rank.png, perstar-char-earth-frac.png
         perstar-det-tint-yield.png, perstar-char-tint-yield.png
     """
-    
-    # Load data using the source template
+
     # update global verbosity
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        star_targ_file = src_tmpl % ("star-target", "csv")
-        t_star_targ = pd.read_csv(star_targ_file)
-    except Exception as e:
-        print('Star target plots: skipping (re-run reduction?).')
-        return []
+    # Unpack CSV data
+    t_star_targ, = plot_data
 
     # Allow skipping these plots so we don't fail on old reductions
     if t_star_targ.empty:
@@ -381,9 +377,10 @@ the plot name and file extension.
     info_file = args.src_tmpl % ("info", "csv")
     reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
 
-    # Run the plotting function
+    # Load CSV data and run the plotting function
+    plot_data = cs.load_csv_files(args.src_tmpl, ['star-target'])
     try:
-        plot_drm_star_targets(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_star_targets(reduce_info, plot_data, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)

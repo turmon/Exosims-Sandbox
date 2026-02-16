@@ -129,35 +129,25 @@ def signal_plot_end(args):
     os.chmod(fn_output, 0o664)
 
 
-def check_csv_files(src_tmpl, csv_files, plot_name):
-    """
-    Check if required CSV files exist
-    
-    Parameters
-    ----------
-    src_tmpl : str
-        Template string for CSV file paths
-    csv_files : list of str
-        List of CSV file identifiers
-    plot_name : str
-        Name of the plot (for error messages)
-        
-    Returns
-    -------
-    bool
-        True if all files exist, False otherwise
-    """
+def load_csv_files(src_tmpl, csv_files, plot_name):
+    """Load CSV files, returning list of DataFrames or None if any missing."""
+    dataframes = []
     for csv_file in csv_files:
         filepath = src_tmpl % (csv_file, 'csv')
-        # FIXME: this is not always actually an error, but it may not matter
         if not os.path.exists(filepath):
             print(f"{PROGNAME}: Warning: CSV file '{filepath}' not found, skipping {plot_name} plot",
                   file=sys.stderr)
-            return False
-    return True
+            return None
+        try:
+            dataframes.append(pd.read_csv(filepath))
+        except Exception as e:
+            print(f"{PROGNAME}: Warning: Could not read '{filepath}': {e}, skipping {plot_name} plot",
+                  file=sys.stderr)
+            return None
+    return dataframes
 
 
-def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode, reduce_info):
+def run_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
     """
     Run a single plot function
 
@@ -165,14 +155,14 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode, reduce_info):
     ----------
     plot_config : dict
         Configuration dictionary for the plot
+    reduce_info : dict
+        Metadata dict from reduce-info.csv, passed to each plotter
     src_tmpl : str
         Template string for input CSV files
     dest_tmpl : str
         Template string for output graphics files
     overall_mode : dict
         Universal mode settings, passed to each plotter
-    reduce_info : dict
-        Metadata dict from reduce-info.csv, passed to each plotter
 
     Returns
     -------
@@ -198,20 +188,21 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode, reduce_info):
             print(f"Skipping {name} (disabled in registry)")
         return True, []
 
-    # Check if required CSV files exist
-    if not check_csv_files(src_tmpl, csv_files, name):
+    # Load required CSV files
+    plot_data = load_csv_files(src_tmpl, csv_files, name)
+    if plot_data is None:
         return False, []
-    
+
     try:
         # Import the module
         if verbose > 1:
             print(f"Running {name}...")
-        
+
         module = importlib.import_module(f"plot_drm_gallery.{module_name}")
         plot_function = getattr(module, function_name)
-        
+
         # Call the plot function
-        files_written = plot_function(reduce_info, src_tmpl, dest_tmpl, merged_mode)
+        files_written = plot_function(reduce_info, plot_data, dest_tmpl, merged_mode)
         if files_written is None:
             files_written = []
 
@@ -332,7 +323,7 @@ Optional arguments:
         print(f"{args.progname}: Fatal: A file exists already at '{dir_path}'.", file=sys.stedrr)
         raise
 
-    # Run the plots
+    # Make the plots
     if args.verbose > 1:
         print(f"Running {len(plots_to_run)} plots...")
         print(f"Source template: {args.src_tmpl}")
@@ -346,7 +337,7 @@ Optional arguments:
     all_records = []
 
     for plot in plots_to_run:
-        result, files_written = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode, args.reduce_info)
+        result, files_written = run_plot(plot, args.reduce_info, args.src_tmpl, args.dest_tmpl, overall_mode)
         if result:
             success_count += 1
         elif result is False:
@@ -371,15 +362,17 @@ Optional arguments:
 
     # Summary
     if args.verbose > 0 or fail_count > 0:
-        print(f"{args.progname}: {success_count} ok, {fail_count} failed, {skip_count} skipped")
+        print(f"{args.progname}: Plot Sets:  {success_count} ok, {fail_count} failed, {skip_count} skipped")
+        print(f"{args.progname}: Plot Files: {len(all_records)}")
     run_time = time.perf_counter() - start_time
     # unconditionally print 
     print(f"{args.progname}: Done. (Elapsed time: {run_time:.2f} s)")
     
-    # FIXME: need a better criterion than "perfect"
+    # FIXME: need a better criterion than "perfect", see also just below
     if fail_count == 0:
         signal_plot_end(args)
 
+    # FIXME: this exit code is inconsistent with the signaling above
     # Return non-zero if any plots failed
     return 1 if fail_count > 0 else 0
 

@@ -35,23 +35,24 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_yield_times(reduce_info, src_tmpl, dest_tmpl, mode):
+def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
     """
     Plot detection/characterization times in a drm-set
-    
-    Time-series plots of detections, characterizations - plotted vs. 
+
+    Time-series plots of detections, characterizations - plotted vs.
     mission elapsed time.
-    
+
     Parameters
     ----------
-    src_tmpl : str
-        Template string for input file paths with two %s placeholders
-        Example: "data/%s.%s" will be filled with ("info", "csv") and ("yield_time", "csv")
+    reduce_info : dict
+        Metadata dict from reduce-info.csv
+    plot_data : list of DataFrame
+        Pre-loaded CSV data [yield-time]
     dest_tmpl : str
         Template string for output file paths with two %s placeholders
     mode : dict
         Dictionary with 'op' key containing operation mode string
-        
+
     Outputs
     -------
     Saves plots to disk with names:
@@ -60,18 +61,13 @@ def plot_drm_yield_times(reduce_info, src_tmpl, dest_tmpl, mode):
         det-time-det-allplan-cume.png
         det-time-det-earth-cume.png
     """
-    
-    # Load data using the source template
+
     # update global verbosity
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        yield_time_file = src_tmpl % ("yield-time", "csv")
-        t_yield_time = pd.read_csv(yield_time_file)
-    except Exception as e:
-        print(f"{PROGNAME}: Fatal: Could not load yield-time file: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Unpack CSV data
+    t_yield_time, = plot_data
     
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'yield_time' not in mode.get('op', ''):
@@ -311,9 +307,10 @@ the plot name and file extension.
     info_file = args.src_tmpl % ("info", "csv")
     reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
 
-    # Run the plotting function
+    # Load CSV data and run the plotting function
+    plot_data = cs.load_csv_files(args.src_tmpl, ['yield-time'])
     try:
-        plot_drm_yield_times(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_yield_times(reduce_info, plot_data, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)

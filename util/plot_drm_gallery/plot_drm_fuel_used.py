@@ -16,41 +16,37 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_fuel_used(reduce_info, src_tmpl, dest_tmpl, mode):
+def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     """
     Plot fuel use versus time in a drm-set
-    
+
     Time-series plots of fuel use. The "t_fuel" input is the same as
     "t_det_time" elsewhere -- it contains more than just fuel.
-    
+
     Parameters
     ----------
-    src_tmpl : str
-        Template string for input file paths with two %s placeholders
-        Example: "data/%s.%s" will be filled with ("info", "csv") and ("fuel", "csv")
+    reduce_info : dict
+        Metadata dict from reduce-info.csv
+    plot_data : list of DataFrame
+        Pre-loaded CSV data [times]
     dest_tmpl : str
         Template string for output file paths (should contain {} for name and extension)
     mode : dict
         Dictionary with operation mode settings
-        
+
     Outputs
     -------
     Saves plots to disk with names:
         fuel.png
         delta-v.png
     """
-    
-    # Load data using the source template
+
     # update global verbosity
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        fuel_file = src_tmpl % ("times", "csv")
-        t_fuel = pd.read_csv(fuel_file)
-    except Exception as e:
-        print(f"Error: Could not load fuel file: {e}")
-        sys.exit(1)
+    # Unpack CSV data
+    t_fuel, = plot_data
     
     # File extensions to write
     ext_list = ['png']
@@ -242,8 +238,9 @@ the plot name and file extension.
     info_file = args.src_tmpl % ("info", "csv")
     reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
 
-    # Run the plotting function
-    plot_drm_fuel_used(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
+    # Load CSV data and run the plotting function
+    plot_data = cs.load_csv_files(args.src_tmpl, ['times'])
+    plot_drm_fuel_used(reduce_info, plot_data, args.dest_tmpl, mode)
     
 
 if __name__ == '__main__':

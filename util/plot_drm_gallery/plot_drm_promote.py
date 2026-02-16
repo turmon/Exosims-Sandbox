@@ -22,24 +22,24 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_promote(reduce_info, src_tmpl, dest_tmpl, mode):
+def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     """
     Plot target promotion counts in a drm-set
-    
+
     Time-series plots of target promotion criteria
     Histograms of planet-counts meeting criteria
-    
+
     Parameters
     ----------
-    src_tmpl : str
-        Template string for input file paths with two %s placeholders
-        Example: "data/%s.%s" will be filled with ("info", "csv"), 
-        ("promote", "csv"), and ("phist", "csv")
+    reduce_info : dict
+        Metadata dict from reduce-info.csv
+    plot_data : list of DataFrame
+        Pre-loaded CSV data [promote, promote-hist]
     dest_tmpl : str
         Template string for output file paths with two %s placeholders
     mode : dict
         Dictionary with 'op' key containing operation mode string
-        
+
     Outputs
     -------
     Saves plots to disk with names:
@@ -51,25 +51,13 @@ def plot_drm_promote(reduce_info, src_tmpl, dest_tmpl, mode):
         phist-star-2year.png, phist-star-3year.png
         phist-star-span-2year.png, phist-star-span-3year.png
     """
-    
-    # Load data using the source template
+
     # update global verbosity
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        promote_file = src_tmpl % ("promote", "csv")
-        t_promote = pd.read_csv(promote_file)
-    except Exception as e:
-        print(f"Promotion plots: No data. Skipping.")
-        return []
-
-    try:
-        phist_file = src_tmpl % ("promote-hist", "csv")
-        t_phist = pd.read_csv(phist_file)
-    except Exception as e:
-        print(f"Promotion plots: No data. Skipping.")
-        return []
+    # Unpack CSV data
+    t_promote, t_phist = plot_data
 
     # Skip plots if the input was empty
     if t_promote.empty or t_phist.empty:
@@ -485,9 +473,10 @@ the plot name and file extension.
     info_file = args.src_tmpl % ("info", "csv")
     reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
 
-    # Run the plotting function
+    # Load CSV data and run the plotting function
+    plot_data = cs.load_csv_files(args.src_tmpl, ['promote', 'promote-hist'])
     try:
-        plot_drm_promote(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_promote(reduce_info, plot_data, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
