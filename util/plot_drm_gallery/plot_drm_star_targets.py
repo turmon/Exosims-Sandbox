@@ -75,17 +75,17 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
         t_star_targ = pd.read_csv(star_targ_file)
     except Exception as e:
         print('Star target plots: skipping (re-run reduction?).')
-        return
-    
+        return []
+
     # Allow skipping these plots so we don't fail on old reductions
     if t_star_targ.empty:
         print('Star target plots: skipping (re-run reduction?).')
-        return
-    
+        return []
+
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'perstar' not in mode.get('op', ''):
         print('Star target plots: skipping, as directed.')
-        return
+        return []
     
     # Common data
     
@@ -106,7 +106,11 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
     # Color for un-observed stars
     unseen_color = np.array([1, 1, 1]) * 0.7
     
@@ -138,15 +142,8 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, file_tag):
         """Write the current figure to various files"""
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (file_tag, ext)
-                if VERBOSE:
-                    print(f'\tExport: {fn_gfx}')
-                # figure background is transparent, axes not transparent
-                fig.patch.set_facecolor('none')
-                fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+        tracker.write_plots(fig, file_tag, dest_tmpl, verbose=VERBOSE)
+
     # Graphics setup
     
     # Zero-visit (unseen) stars are not the same as zero-yield stars
@@ -352,6 +349,8 @@ def plot_drm_star_targets(src_tmpl, dest_tmpl, mode):
     
     write_plots(fig, 'perstar-char-tint-yield')
     plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():

@@ -174,8 +174,8 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
         
     Returns
     -------
-    bool
-        True if plot succeeded, False otherwise
+    tuple of (bool, list)
+        (True, files_written) if plot succeeded, (False, []) otherwise
     """
     name = plot_config['name']
     module_name = plot_config['module']
@@ -194,11 +194,11 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
     if not plot_config.get('enabled', True):
         if verbose > 1:
             print(f"Skipping {name} (disabled in registry)")
-        return True
-    
+        return True, []
+
     # Check if required CSV files exist
     if not check_csv_files(src_tmpl, csv_files, name):
-        return False
+        return False, []
     
     try:
         # Import the module
@@ -209,25 +209,27 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
         plot_function = getattr(module, function_name)
         
         # Call the plot function
-        plot_function(src_tmpl, dest_tmpl, merged_mode)
-        
+        files_written = plot_function(src_tmpl, dest_tmpl, merged_mode)
+        if files_written is None:
+            files_written = []
+
         if verbose > 1:
             print(f"  {name} completed successfully")
-        
-        return True
-        
+
+        return True, files_written
+
     except ImportError as e:
         print(f"{PROGNAME}: Fatal: Could not import {module_name}: {e}",
               file=sys.stderr)
-        return False
+        return False, []
     except AttributeError as e:
         print(f"{PROGNAME}: Fatal: Function {function_name} not found in {module_name}: {e}",
               file=sys.stderr)
-        return False
+        return False, []
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Error running {name}: {e}",
               file=sys.stderr)
-        return False
+        return False, []
 
 
 def main():
@@ -339,9 +341,10 @@ Optional arguments:
     success_count = 0
     fail_count = 0
     skip_count = 0
-    
+    all_records = []
+
     for plot in plots_to_run:
-        result = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode)
+        result, files_written = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode)
         if result:
             success_count += 1
         elif result is False:
@@ -350,7 +353,20 @@ Optional arguments:
         else:
             # None or other means it was skipped
             skip_count += 1
-    
+        # Collect records: associate each file with its routine and csv_files
+        routine = plot['function']
+        csv_files = plot['csv_files']
+        for gfx_file in files_written:
+            all_records.append((gfx_file, routine, csv_files))
+
+    # Write the tabulation CSV
+    if all_records:
+        fn_csv = args.dest_tmpl % ('plot-list', 'csv')
+        with open(fn_csv, 'w') as fp:
+            fp.write('graphics_file,routine,csv_files\n')
+            for gfx_file, routine, csv_files in all_records:
+                fp.write(f'{gfx_file},{routine},{";".join(csv_files)}\n')
+
     # Summary
     if args.verbose > 0 or fail_count > 0:
         print(f"{args.progname}: {success_count} ok, {fail_count} failed, {skip_count} skipped")

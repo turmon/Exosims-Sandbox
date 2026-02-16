@@ -61,7 +61,16 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
+    # Inner function: write the current figure to files
+    def write_plots(fig, dest_name):
+        """Write the current figure to various files"""
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE)
+
     ####################################################################
     # Setup
     ####################################################################
@@ -85,7 +94,7 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     # Check if fuel data exists
     if 'h_time_fuel_slew_mean' not in t_fuel.columns:
         print('No fuel use in the given table, skipping.')
-        return
+        return []
     
     # Create figure
     fig, ax = plt.subplots(figsize=(8.5, 5))
@@ -135,15 +144,8 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     ax.grid(True)
     
     # Write the plot out
-    if dest_tmpl:
-        for ext in ext_list:
-            fn_gfx = dest_tmpl % ('fuel', ext)
-            if VERBOSE:
-                print(f'\tExport: {fn_gfx}')
-            # figure background is transparent, axes not transparent
-            fig.patch.set_facecolor('none')
-            fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+    write_plots(fig, 'fuel')
+
     plt.close(fig)
     
     ####################################################################
@@ -153,7 +155,7 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     # Check if delta-v data exists
     if 'h_time_delta_v_slew_cume_mean' not in t_fuel.columns:
         print('No delta-v in the given table, skipping. Redo reduce to fix.')
-        return
+        return tracker.get_files()
     
     # Create figure
     fig, ax = plt.subplots(figsize=(8.5, 5))
@@ -205,16 +207,11 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     ax.grid(True)
     
     # Write the plot out
-    if dest_tmpl:
-        for ext in ext_list:
-            fn_gfx = dest_tmpl % ('delta-v', ext)
-            if VERBOSE:
-                print(f'\tExport: {fn_gfx}')
-            # figure background is transparent, axes not transparent
-            fig.patch.set_facecolor('none')
-            fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+    write_plots(fig, 'delta-v')
+
     plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():

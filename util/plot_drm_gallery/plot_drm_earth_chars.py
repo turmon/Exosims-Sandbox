@@ -72,11 +72,15 @@ def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'earth-chars' not in mode.get('op', ''):
         print('Earth char attempt plots: skipping, as directed.')
-        return
+        return []
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
     # Helper function to create title from t_info
     # def plot_make_title(t_info):
     #     """Create plot title from metadata"""
@@ -129,21 +133,13 @@ def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (dest_name, ext)
-                if VERBOSE:
-                    print(f'\tExport: {fn_gfx}')
-                # figure background is transparent, axes not transparent
-                # Increased DPI (2.5x magnification factor) for these dense plots
-                fig.patch.set_facecolor('none')
-                fig.savefig(fn_gfx, dpi=250, bbox_inches='tight')
-    
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE, dpi=250)
+
     # For missions without chars, the table will be basically empty.
     # Skip such tables, there is nothing to do.
     if 'is_success' not in t_earth_chars.columns:
         print('\tNo char info, skipping earth chars plots')
-        return
+        return []
     
     # Booleans
     ok = t_earth_chars['is_success'].values > 0
@@ -403,6 +399,8 @@ def plot_drm_earth_chars(src_tmpl, dest_tmpl, mode):
     
     write_plots(fig, 'earth-char-hist-phi-log')
     plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():

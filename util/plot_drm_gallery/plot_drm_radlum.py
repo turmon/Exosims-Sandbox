@@ -255,7 +255,7 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'radlum' not in mode.get('op', ''):
         print('Radius/luminosity plots: skipping, as directed.')
-        return
+        return []
     
     ##################################################################
     # Common data and functions
@@ -309,7 +309,11 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
     # Inner function: rectangle underlay
     def place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra):
         """Place vertical stripes to visually group planets of same radius class"""
@@ -352,16 +356,9 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (dest_name, ext)
-                if VERBOSE:
-                    print(f'\tExport: {fn_gfx}')
-                # figure background is transparent, axes not transparent
-                # FIXME: disabled because of overlay confusion
-                #fig.patch.set_facecolor('none')
-                fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+        # FIXME: facecolor disabled because of overlay confusion
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE, facecolor=None)
+
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_bar_plot(ax, obs_type):
         """Style the bar plot with title, labels, and formatting"""
@@ -798,6 +795,8 @@ def plot_drm_radlum(src_tmpl, dest_tmpl, mode):
         # Write the plots
         write_plots(fig, plot_file)
         plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():

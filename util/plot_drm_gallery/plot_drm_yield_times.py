@@ -83,11 +83,15 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'yield_time' not in mode.get('op', ''):
         print('Yield time plots: skipping, as directed.')
-        return
+        return []
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_yield_plot(ax, title1, ytext, legtext):
         """Style the yield plot with title, labels, and legend"""
@@ -116,15 +120,8 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (dest_name, ext)
-                if VERBOSE:
-                    print(f'\tExport: {fn_gfx}')
-                # figure background is transparent, axes not transparent
-                fig.patch.set_facecolor('none')
-                fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE)
+
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
     t_offsets = [0, 10, 5]
@@ -282,6 +279,8 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
         )
         write_plots(fig, f'{fname}-cume')
         plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():

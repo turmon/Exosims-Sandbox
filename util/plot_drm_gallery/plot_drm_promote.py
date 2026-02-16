@@ -69,28 +69,32 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
         t_promote = pd.read_csv(promote_file)
     except Exception as e:
         print(f"Promotion plots: No data. Skipping.")
-        return
-    
+        return []
+
     try:
         phist_file = src_tmpl % ("promote-hist", "csv")
         t_phist = pd.read_csv(phist_file)
     except Exception as e:
         print(f"Promotion plots: No data. Skipping.")
-        return
-    
+        return []
+
     # Skip plots if the input was empty
     if t_promote.empty or t_phist.empty:
         print('Promotion plots: No data. Skipping.')
-        return
-    
+        return []
+
     # Skip unless mode.op contains our name or a *
     if '*' not in mode.get('op', '') and 'promote' not in mode.get('op', ''):
         print('Promotion plots: skipping, as directed.')
-        return
+        return []
     
     # File extensions to write
     ext_list = ['png']
-    
+
+    # Track output files
+    tracker = cs.PlotTracker()
+    tracker.set_ext_list(ext_list)
+
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_promote_plot(ax, title1, ytext, legtext):
         """Style the promotion plot with title, labels, and legend"""
@@ -144,15 +148,8 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (dest_name, ext)
-                if VERBOSE:
-                    print(f'\tExport: {fn_gfx}')
-                # figure background is transparent, axes not transparent
-                fig.patch.set_facecolor('none')
-                fig.savefig(fn_gfx, dpi=200, bbox_inches='tight')
-    
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE)
+
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
     # (fourth offset is rarely used)
@@ -217,7 +214,7 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
     # so all plots will fail
     if skipping:
         print(f'\t{PROGNAME}: Skipping promotion plots (re-run reduction, or no DRMs?).')
-        return
+        return tracker.get_files()
     
     style_promote_plot(ax, 
                       'All Planets: Cumulative Promotions vs. Detector Time',
@@ -356,7 +353,7 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
     canary = 'h_phist_t1_count_hzone_mean'
     if t_phist.empty or canary not in t_phist.columns:
         print(f'\t{PROGNAME}: No {canary} in promotion table ("phist"), skipping')
-        return
+        return tracker.get_files()
     
     x_values = t_phist['h_phist_count_lo'].values
     names_legend = ['Obs. Count', 'Obs. Span', 'Promotion']
@@ -455,6 +452,8 @@ def plot_drm_promote(src_tmpl, dest_tmpl, mode):
     style_phist_plot(ax, title_tmpl_span % ('By Star, with Earthlike', '3 Years'), names_legend_span)
     write_plots(fig, 'phist-star-span-3year')
     plt.close(fig)
+
+    return tracker.get_files()
 
 
 def main():
