@@ -33,7 +33,7 @@ PLOT_REGISTRY = [
         'name': 'yield_times',
         'module': 'plot_drm_yield_times',
         'function': 'plot_drm_yield_times',
-        'csv_files': ['info', 'yield-time'],
+        'csv_files': ['yield-time'],
         'enabled': True,
         'mode': {},  # Additional mode settings for this plot
     },
@@ -41,7 +41,7 @@ PLOT_REGISTRY = [
         'name': 'fuel_used',
         'module': 'plot_drm_fuel_used',
         'function': 'plot_drm_fuel_used',
-        'csv_files': ['info', 'times'],
+        'csv_files': ['times'],
         'enabled': True,
         'mode': {},
     },
@@ -49,7 +49,7 @@ PLOT_REGISTRY = [
         'name': 'events',
         'module': 'plot_drm_events',
         'function': 'plot_drm_events',
-        'csv_files': ['info', 'events'],
+        'csv_files': ['events'],
         'enabled': True,
         'mode': {},
     },
@@ -57,7 +57,7 @@ PLOT_REGISTRY = [
         'name': 'event_counts',
         'module': 'plot_drm_event_counts',
         'function': 'plot_drm_event_counts',
-        'csv_files': ['info', 'event-counts', 'earth-char-count'],
+        'csv_files': ['event-counts', 'earth-char-count'],
         'enabled': True,
         'mode': {},
     },
@@ -65,7 +65,7 @@ PLOT_REGISTRY = [
         'name': 'visit_times',
         'module': 'plot_drm_visit_times',
         'function': 'plot_drm_visit_times',
-        'csv_files': ['info', 'visit-time'],
+        'csv_files': ['visit-time'],
         'enabled': True,
         'mode': {},
     },
@@ -73,7 +73,7 @@ PLOT_REGISTRY = [
         'name': 'time_used',
         'module': 'plot_drm_time_used',
         'function': 'plot_drm_time_used',
-        'csv_files': ['info', 'times'],
+        'csv_files': ['times'],
         'enabled': True,
         'mode': {},
     },
@@ -81,7 +81,7 @@ PLOT_REGISTRY = [
         'name': 'promote',
         'module': 'plot_drm_promote',
         'function': 'plot_drm_promote',
-        'csv_files': ['info', 'promote', 'promote-hist'],
+        'csv_files': ['promote', 'promote-hist'],
         'enabled': True,
         'mode': {},
     },
@@ -89,7 +89,7 @@ PLOT_REGISTRY = [
         'name': 'star_targets',
         'module': 'plot_drm_star_targets',
         'function': 'plot_drm_star_targets',
-        'csv_files': ['info', 'star-target'],
+        'csv_files': ['star-target'],
         'enabled': True,
         'mode': {},
     },
@@ -97,7 +97,7 @@ PLOT_REGISTRY = [
         'name': 'earth_chars',
         'module': 'plot_drm_earth_chars',
         'function': 'plot_drm_earth_chars',
-        'csv_files': ['info', 'earth-char-list'],
+        'csv_files': ['earth-char-list'],
         'enabled': True,
         'mode': {},
     },
@@ -105,7 +105,7 @@ PLOT_REGISTRY = [
         'name': 'radlum',
         'module': 'plot_drm_radlum',
         'function': 'plot_drm_radlum',
-        'csv_files': ['info', 'radlum', 'earth'],
+        'csv_files': ['radlum', 'earth'],
         'enabled': True,
         'mode': {},
     },
@@ -157,10 +157,10 @@ def check_csv_files(src_tmpl, csv_files, plot_name):
     return True
 
 
-def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
+def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode, reduce_info):
     """
     Run a single plot function
-    
+
     Parameters
     ----------
     plot_config : dict
@@ -171,7 +171,9 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
         Template string for output graphics files
     overall_mode : dict
         Universal mode settings, passed to each plotter
-        
+    reduce_info : dict
+        Metadata dict from reduce-info.csv, passed to each plotter
+
     Returns
     -------
     tuple of (bool, list)
@@ -209,7 +211,7 @@ def run_plot(plot_config, src_tmpl, dest_tmpl, overall_mode):
         plot_function = getattr(module, function_name)
         
         # Call the plot function
-        files_written = plot_function(src_tmpl, dest_tmpl, merged_mode)
+        files_written = plot_function(reduce_info, src_tmpl, dest_tmpl, merged_mode)
         if files_written is None:
             files_written = []
 
@@ -344,7 +346,7 @@ Optional arguments:
     all_records = []
 
     for plot in plots_to_run:
-        result, files_written = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode)
+        result, files_written = run_plot(plot, args.src_tmpl, args.dest_tmpl, overall_mode, args.reduce_info)
         if result:
             success_count += 1
         elif result is False:

@@ -35,7 +35,7 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
+def plot_drm_yield_times(reduce_info, src_tmpl, dest_tmpl, mode):
     """
     Plot detection/characterization times in a drm-set
     
@@ -67,13 +67,6 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
     VERBOSE = mode.get('verbose', VERBOSE)
 
     try:
-        info_file = src_tmpl % ("info", "csv")
-        t_info = pd.read_csv(info_file)
-    except Exception as e:
-        print(f"Warning: Could not load info file: {e}", file=sys.stderr)
-        t_info = pd.DataFrame()
-    
-    try:
         yield_time_file = src_tmpl % ("yield-time", "csv")
         t_yield_time = pd.read_csv(yield_time_file)
     except Exception as e:
@@ -103,7 +96,7 @@ def plot_drm_yield_times(src_tmpl, dest_tmpl, mode):
         ax.autoscale(enable=True, axis='x', tight=True)
 
         # Format the title
-        title2 = cs.plot_make_title(t_info)
+        title2 = cs.plot_make_title(reduce_info)
         
         # Set title (preventing special interpretation of _) with bold
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
@@ -313,10 +306,14 @@ the plot name and file extension.
     
     # Create mode dictionary
     mode = {'op': args.mode_op}
-    
+
+    # Read info file and convert to dict
+    info_file = args.src_tmpl % ("info", "csv")
+    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+
     # Run the plotting function
     try:
-        plot_drm_yield_times(args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_yield_times(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)

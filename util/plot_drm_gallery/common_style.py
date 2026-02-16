@@ -5,7 +5,6 @@ Common styles, functions, etc.
 """
 
 import os
-import pandas as pd
 
 
 class PlotTracker:
@@ -39,15 +38,15 @@ class PlotTracker:
         return list(self._files)
 
 
-# Helper function to create title from t_info
-def plot_make_title(t_info):
-    """Create plot title from metadata"""
-    if t_info.empty:
+# Helper function to create title from reduce_info dict
+def plot_make_title(reduce_info):
+    """Create plot title from metadata dict"""
+    if not reduce_info:
         rv = ''
-    elif 'experiment' in t_info:
-        exp_name = str.strip(t_info['experiment'].iloc[0])
+    elif 'experiment' in reduce_info:
+        exp_name = str.strip(reduce_info['experiment'])
         if len(exp_name) < 50:
-            chaser = f", Ensemble Size {t_info['ensemble_size'].iloc[0]}"
+            chaser = f", Ensemble Size {reduce_info['ensemble_size']}"
         else:
             chaser = ''
         rv = exp_name + chaser

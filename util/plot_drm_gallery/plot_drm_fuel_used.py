@@ -16,7 +16,7 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
+def plot_drm_fuel_used(reduce_info, src_tmpl, dest_tmpl, mode):
     """
     Plot fuel use versus time in a drm-set
     
@@ -45,13 +45,6 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     global VERBOSE
     VERBOSE = mode.get('verbose', VERBOSE)
 
-    try:
-        info_file = src_tmpl % ("info", "csv")
-        t_info = pd.read_csv(info_file)
-    except Exception as e:
-        print(f"Warning: Could not load info file: {e}")
-        t_info = pd.DataFrame()
-    
     try:
         fuel_file = src_tmpl % ("times", "csv")
         t_fuel = pd.read_csv(fuel_file)
@@ -125,7 +118,7 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     
     # Plot/axis styles
     title1 = 'Cumulative Fuel Use vs. Time'
-    title2 = cs.plot_make_title(t_info)
+    title2 = cs.plot_make_title(reduce_info)
     
     # Control axis y-range:
     # negative not allowed
@@ -188,7 +181,7 @@ def plot_drm_fuel_used(src_tmpl, dest_tmpl, mode):
     
     # Plot/axis styles
     title1 = 'Cumulative Delta-V vs. Time'
-    title2 = cs.plot_make_title(t_info)
+    title2 = cs.plot_make_title(reduce_info)
     
     # Control axis y-range:
     # negative not allowed
@@ -244,9 +237,13 @@ the plot name and file extension.
     
     # Create mode dictionary
     mode = {'op': args.mode_op}
-    
+
+    # Read info file and convert to dict
+    info_file = args.src_tmpl % ("info", "csv")
+    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+
     # Run the plotting function
-    plot_drm_fuel_used(args.src_tmpl, args.dest_tmpl, mode)
+    plot_drm_fuel_used(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
     
 
 if __name__ == '__main__':

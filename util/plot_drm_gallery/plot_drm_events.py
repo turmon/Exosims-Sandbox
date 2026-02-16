@@ -22,7 +22,7 @@ PROGNAME = os.path.basename(sys.argv[0])
 VERBOSE = 1
 
 
-def plot_drm_events(src_tmpl, dest_tmpl, mode):
+def plot_drm_events(reduce_info, src_tmpl, dest_tmpl, mode):
     """
     Plot event durations in a drm-set
     
@@ -54,13 +54,6 @@ def plot_drm_events(src_tmpl, dest_tmpl, mode):
     VERBOSE = mode.get('verbose', VERBOSE)
 
     try:
-        info_file = src_tmpl % ("info", "csv")
-        t_info = pd.read_csv(info_file)
-    except Exception as e:
-        print(f"Warning: Could not load info file: {e}", file=sys.stderr)
-        t_info = pd.DataFrame()
-    
-    try:
         events_file = src_tmpl % ("events", "csv")
         t_events = pd.read_csv(events_file)
     except Exception as e:
@@ -87,7 +80,7 @@ def plot_drm_events(src_tmpl, dest_tmpl, mode):
         ax.set_ylim(max(0, ylim[0]), ylim[1])
         
         # Format the title
-        title2 = cs.plot_make_title(t_info)
+        title2 = cs.plot_make_title(reduce_info)
         
         # Set title (preventing special interpretation of _) with bold
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
@@ -388,10 +381,14 @@ the plot name and file extension (default: "scenario/gfx/det-%s.%s").
     
     # Create mode dictionary
     mode = {'op': args.mode_op}
-    
+
+    # Read info file and convert to dict
+    info_file = args.src_tmpl % ("info", "csv")
+    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+
     # Run the plotting function
     try:
-        plot_drm_events(args.src_tmpl, args.dest_tmpl, mode)
+        plot_drm_events(reduce_info, args.src_tmpl, args.dest_tmpl, mode)
     except Exception as e:
         print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
