@@ -236,7 +236,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example usage:
-    python driver.py "data/%s.%s" "output/det-%s.%s"
+    python plot_drm_driver.py "data/%s.%s" "output/det-%s.%s"
     
 The first argument is the source template with two %%s placeholders that will be
 filled with CSV file identifiers (e.g., "info", "yield_time") and "csv".
@@ -245,11 +245,13 @@ The second argument is the destination template with two %%s placeholders for
 the plot name and file extension.
 
 Optional arguments:
-    --mode_op OP        Set the global mode operation string (default: "*")
     --only PLOT         Run only the specified plot (by name)
-    --skip PLOT         Skip the specified plot (by name), can be repeated
+    --skip PLOT         Skip the specified plot (by name), can repeat
     --list              List all available plots and exit
-    --verbose           Print verbose progress messages
+    --mode_op OP        Global mode.op string (default: ""; "+" => extra plots)
+    --pdf               Graphical output to PDF also
+    --verbose, -v       More verbose progress messages (repeat for even more)
+    --quiet             Minimal output
         """
     )
     
@@ -257,14 +259,15 @@ Optional arguments:
                        help='Source template string (e.g., "data/%%s.%%s")')
     parser.add_argument('dest_tmpl', type=str,
                        help='Destination template string (e.g., "output/det-%%s.%%s")')
-    parser.add_argument('--mode_op', type=str, default='*',
-                       help='All-plot mode operation string (default: "*")')
     parser.add_argument('--only', type=str, metavar='PLOT',
                        help='Run only the specified plot (by name)')
     parser.add_argument('--skip', type=str, action='append', default=[], metavar='PLOT',
                        help='Skip the specified plot (by name), can be repeated')
     parser.add_argument('--list', action='store_true',
                        help='List all available plots and exit')
+    parser.add_argument('--mode_op', type=str, default='',
+                       help='All-plot mode operation string (default: "")')
+    parser.add_argument('--pdf', action='store_true', help='Output PDFs also')
     parser.add_argument('--verbose', '-v', action='count', default=1, 
                        help='Verbosity')
     parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
@@ -287,7 +290,7 @@ Optional arguments:
     overall_mode = {
         'op': args.mode_op,
         'verbose': args.verbose,
-        'ext_list': ['png']
+        'ext_list': ['png'] + (['pdf'] if args.pdf else [])
         }
     
     ##
@@ -322,7 +325,7 @@ Optional arguments:
     del df_info
     
     # ensure the directory
-    dir_path = os.path.dirname(args.src_tmpl % ('dummy', 'txt'))
+    dir_path = os.path.dirname(args.dest_tmpl % ('dummy', 'txt'))
     try:
         os.makedirs(dir_path, exist_ok=True)
     except FileExistsError:

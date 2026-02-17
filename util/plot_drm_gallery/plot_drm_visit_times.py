@@ -108,7 +108,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     # Uniform error bar properties
     ebar_props = {"marker": '.',
                   "linewidth": 1.7,
-                  "errorevery": 1,
+                  "errorevery": 4,
                   "elinewidth": 1,
                   "capsize": 1.5}
     
@@ -159,10 +159,15 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
             f'Return {dtxt}'
         ]
         
-        # A: Monthly plot (currently disabled)
+        # A: Monthly plot (typically disabled)
         if do_incremental_plot:
             fig, ax = plt.subplots(figsize=(8.5, 5))
             
+            # thinner linewidth for incremental plots
+            ebar_props_incr = dict(ebar_props,
+                                   errorevery=2,
+                                   elinewidth=0.7)
+        
             # Plot each timeseries
             for n, name in enumerate(names):
                 f_mean = f'{name}_mean'
@@ -172,7 +177,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
                             t_visit_time[f_mean].values,
                             yerr=t_visit_time[f_std].values,
                             color=line_colors[n],
-                            **ebar_props)  # NB: skinny
+                            **ebar_props_incr)
             
             style_visit_plot(
                 ax,

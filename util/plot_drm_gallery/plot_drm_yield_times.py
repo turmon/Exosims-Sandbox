@@ -120,7 +120,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
     # Uniform error bar properties
     ebar_props = {"marker": '.',
                   "linewidth": 1.7,
-                  "errorevery": 1,
+                  "errorevery": 4,
                   "elinewidth": 1,
                   "capsize": 1.5}
     
@@ -204,7 +204,12 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
             f'Revisit {dtxt}'
         ]
         
-        # A: Monthly plot (currently disabled)
+        # thinner, but show more bars b/c it's highly variable
+        ebar_props_monthly = dict(ebar_props,
+                                  errorevery=2,
+                                  elinewidth=0.7,
+                                  )
+        # A: Monthly plot (often disabled)
         if do_incremental_plot:
             fig, ax = plt.subplots(figsize=(8.5, 5))
             
@@ -217,7 +222,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
                             t_yield_time[f_mean].values,
                             yerr=t_yield_time[f_std].values,
                             color=line_colors[n],
-                            **ebar_props)
+                            **ebar_props_monthly)
             
             style_yield_plot(
                 ax,
@@ -230,9 +235,8 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
         
         # B: Cumulative plot
         # Note: we derive the error bars here
-        
         fig, ax = plt.subplots(figsize=(8.5, 5))
-        
+
         # Plot each timeseries with cumulative values
         for n, name in enumerate(names):
             f_mean = f'{name}_mean'

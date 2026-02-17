@@ -108,7 +108,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     # Uniform error bar properties
     ebar_props = {"marker": '.',
                   "linewidth": 1.7,
-                  "errorevery": 1,
+                  "errorevery": 4,
                   "elinewidth": 1,
                   "capsize": 1.5}
     
@@ -166,8 +166,9 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         f_std = f'{name}_std'
         
         # Note: thinner linewidth for incremental plots
-        ebar_props_incr = ebar_props.copy()
-        ebar_props_incr['linewidth'] = 1
+        ebar_props_incr = dict(ebar_props,
+                               errorevery=2,
+                               elinewidth=0.7)
         
         ax.errorbar(tsamp + t_offsets[n],
                     t_det_time[f_mean].values,
