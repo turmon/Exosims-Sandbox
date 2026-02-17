@@ -21,9 +21,6 @@ except ImportError:
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
 
-# Verbosity (also set from mode)
-VERBOSE = 1
-
 
 def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     """
@@ -55,10 +52,6 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         phist-star-span-2year.png, phist-star-span-3year.png
     """
 
-    # update global verbosity
-    global VERBOSE
-    VERBOSE = mode.get('verbose', VERBOSE)
-
     # Unpack CSV data
     t_promote, t_phist = plot_data
 
@@ -67,8 +60,8 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         print('Promotion plots: No data. Skipping.')
         return []
 
-    # Skip unless mode.op contains our name or a *
-    if '*' not in mode.get('op', '') and 'promote' not in mode.get('op', ''):
+    # Allow skipping this way
+    if '0' in mode.get('op', ''):
         print('Promotion plots: skipping, as directed.')
         return []
     
@@ -132,7 +125,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=VERBOSE)
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
 
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
@@ -464,13 +457,17 @@ the plot name and file extension.
                        help='Source template string (e.g., "data/%%s.%%s")')
     parser.add_argument('dest_tmpl', type=str,
                        help='Destination template string (e.g., "output/det-%%s.%%s")')
-    parser.add_argument('--mode_op', type=str, default='*',
-                       help='Operation mode (default: "*")')
-    
+    parser.add_argument('--mode_op', type=str, default='',
+                       help='Operation mode, default: "" (normal)')
+    parser.add_argument('--verbose', '-v', action='count', default=1,
+                       help='Verbosity')
+    parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
+
     args = parser.parse_args()
-    
+    if args.quiet: args.verbose = 0
+
     # Create mode dictionary
-    mode = {'op': args.mode_op}
+    mode = {'op': args.mode_op, 'verbose': args.verbose}
 
     # Read info file and convert to dict
     info_file = args.src_tmpl % ("info", "csv")
@@ -478,12 +475,14 @@ the plot name and file extension.
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['promote', 'promote-hist'])
-    try:
-        plot_drm_promote(reduce_info, plot_data, args.dest_tmpl, mode)
-    except Exception as e:
-        print(f"{PROGNAME}: Fatal: Unexpected error: {e}", file=sys.stderr)
-        sys.exit(1)
+    rv = plot_drm_promote(reduce_info, plot_data, args.dest_tmpl, mode)
+    return rv
 
 
 if __name__ == '__main__':
-    main()
+    rv = main()
+    if rv is None:
+        print(f"Plots failed. Error signaled.", file=sys.stderr)
+    else:
+        print(f"Done. Wrote {len(rv)} plot(s).")
+    sys.exit(1 if rv is None else 0)

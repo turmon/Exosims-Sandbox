@@ -130,7 +130,9 @@ def signal_plot_end(args):
 
 
 def load_csv_files(src_tmpl, csv_files, plot_name):
-    """Load CSV files, returning list of DataFrames or None if any missing."""
+    """Load CSV files, returning list of DataFrames or None if any missing.
+
+    Missing files are just warnings."""
     dataframes = []
     for csv_file in csv_files:
         filepath = src_tmpl % (csv_file, 'csv')
@@ -147,7 +149,7 @@ def load_csv_files(src_tmpl, csv_files, plot_name):
     return dataframes
 
 
-def run_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
+def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
     """
     Run a single plot function
 
@@ -182,47 +184,47 @@ def run_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
     # Plot-specific mode takes precedence
     merged_mode = {**overall_mode, **plot_mode}
     
-    # Skip if disabled
-    if not plot_config.get('enabled', True):
-        if verbose > 1:
-            print(f"Skipping {name} (disabled in registry)")
-        return True, []
-
     # Load required CSV files
     plot_data = load_csv_files(src_tmpl, csv_files, name)
     if plot_data is None:
+        if verbose > 1:
+            print(f"{PROGNAME}: Skipping {name}: source data incomplete.")
         return False, []
 
     try:
-        # Import the module
         if verbose > 1:
-            print(f"Running {name}...")
-
+            print(f"{PROGNAME}: Running {name}...")
+        # Import the module
         module = importlib.import_module(f"plot_drm_gallery.{module_name}")
         plot_function = getattr(module, function_name)
 
         # Call the plot function
         files_written = plot_function(reduce_info, plot_data, dest_tmpl, merged_mode)
         if files_written is None:
-            files_written = []
-
+            # plot_function signals a hard error or "fail"
+            # presently unused, but perhaps useful
+            return None, []
         if verbose > 1:
-            print(f"  {name} completed successfully")
-
+            print(f"{PROGNAME}: {name} successful.")
         return True, files_written
 
+    # these are (probably!) configuration errors, not datafile errors
+    # we turn them in to skips, hopeful that they'll be noticed and fixed
     except ImportError as e:
-        print(f"{PROGNAME}: Fatal: Could not import {module_name}: {e}",
+        print(f"{PROGNAME}: Skipping {name}: Could not import {module_name}: {e}",
               file=sys.stderr)
         return False, []
     except AttributeError as e:
-        print(f"{PROGNAME}: Fatal: Function {function_name} not found in {module_name}: {e}",
+        print(f"{PROGNAME}: Skipping {name}: Function {function_name} not in {module_name}: {e}",
               file=sys.stderr)
         return False, []
     except Exception as e:
-        print(f"{PROGNAME}: Fatal: Error running {name}: {e}",
+        # random exception is a hard error
+        print(f"{PROGNAME}: Error running {function_name}(). Re-raising the exception.",
               file=sys.stderr)
-        return False, []
+        raise
+        # alternately: can mask the exception -- decided not, to allow debugging
+        # return None, []
 
 
 def main():
@@ -256,7 +258,7 @@ Optional arguments:
     parser.add_argument('dest_tmpl', type=str,
                        help='Destination template string (e.g., "output/det-%%s.%%s")')
     parser.add_argument('--mode_op', type=str, default='*',
-                       help='Global mode operation string (default: "*")')
+                       help='All-plot mode operation string (default: "*")')
     parser.add_argument('--only', type=str, metavar='PLOT',
                        help='Run only the specified plot (by name)')
     parser.add_argument('--skip', type=str, action='append', default=[], metavar='PLOT',
@@ -269,9 +271,8 @@ Optional arguments:
     
     args = parser.parse_args()
     args.progname = os.path.basename(sys.argv[0])
-    start_time = time.perf_counter()
-    
     if args.quiet: args.verbose = 0
+    start_time = time.perf_counter()
 
     # List plots if requested
     if args.list:
@@ -280,16 +281,18 @@ Optional arguments:
             status = "enabled" if plot.get('enabled', True) else "disabled"
             csv_list = ", ".join(plot['csv_files'])
             print(f"  {plot['name']:20s} ({status:8s}) - CSVs: {csv_list}")
-        return 0
+        return 0 # status = OK
     
     # Create global mode dictionary
     overall_mode = {'op': args.mode_op, 'verbose': args.verbose}
     
-    # Determine which plots to run
+    ##
+    ## Determine list of plots to make
+    ##
     plots_to_run = []
     
     if args.only:
-        # Run only the specified plot
+        # queue up only the specified plot
         found = False
         for plot in PLOT_REGISTRY:
             if plot['name'] == args.only:
@@ -297,16 +300,16 @@ Optional arguments:
                 found = True
                 break
         if not found:
-            print(f"{PROGNAME}: Fatal: Plot '{args.only}' not found in registry",
+            print(f"{args.progname}: Error: Plot '{args.only}' not found in registry",
                   file=sys.stderr)
-            return 1
+            return 1 # error-out
     else:
-        # Run all plots except those in skip list
+        # queue up all enabled/unskipped plots
         for plot in PLOT_REGISTRY:
-            if plot['name'] not in args.skip:
+            if (plot['name'] not in args.skip) and plot.get('enabled', True):
                 plots_to_run.append(plot)
             elif args.verbose > 1:
-                print(f"Skipping {plot['name']} (--skip)")
+                print(f"{args.progname}: Skipping {plot['name']}")
     
     # get basic information into args.reduce_info
     fn_info = args.src_tmpl % ('info', 'csv')
@@ -321,30 +324,33 @@ Optional arguments:
     except FileExistsError:
         # runs if the path exists, but is a file
         print(f"{args.progname}: Fatal: A file exists already at '{dir_path}'.", file=sys.stedrr)
-        raise
+        return 1 # error-out
 
-    # Make the plots
+    ##
+    ## Make the desired plots
+    ##
     if args.verbose > 1:
-        print(f"Running {len(plots_to_run)} plots...")
-        print(f"Source template: {args.src_tmpl}")
-        print(f"Destination template: {args.dest_tmpl}")
-        print(f"Overall mode: {overall_mode}")
-        print()
-    
-    success_count = 0
+        print(f"{args.progname}: Running {len(plots_to_run)} plot sets.")
+        print(f"{args.progname}: \tSource template: {args.src_tmpl}")
+        print(f"{args.progname}: \tDestination template: {args.dest_tmpl}")
+
+    ok_count = 0
     fail_count = 0
     skip_count = 0
     all_records = []
-
     for plot in plots_to_run:
-        result, files_written = run_plot(plot, args.reduce_info, args.src_tmpl, args.dest_tmpl, overall_mode)
-        if result:
-            success_count += 1
-        elif result is False:
-            # False means it ran but failed
+        ok, files_written = run_one_plot(plot,
+                                         args.reduce_info,
+                                         args.src_tmpl,
+                                         args.dest_tmpl,
+                                         overall_mode)
+        if ok is True:
+            ok_count += 1
+        elif ok is None:
+            # None: it ran but hard error was signaled by the plot routine
             fail_count += 1
         else:
-            # None or other means it was skipped
+            # simple False means it was skipped (e.g., incomplete data)
             skip_count += 1
         # Collect records: associate each file with its routine and csv_files
         routine = plot['function']
@@ -352,6 +358,9 @@ Optional arguments:
         for gfx_file in files_written:
             all_records.append((gfx_file, routine, csv_files))
 
+    ##
+    ## Report what we did
+    ##
     # Write the tabulation CSV
     if all_records:
         fn_csv = args.dest_tmpl % ('plot-list', 'csv')
@@ -360,21 +369,28 @@ Optional arguments:
             for gfx_file, routine, csv_files in all_records:
                 fp.write(f'{gfx_file},{routine},{";".join(csv_files)}\n')
 
-    # Summary
-    if args.verbose > 0 or fail_count > 0:
-        print(f"{args.progname}: Plot Sets:  {success_count} ok, {fail_count} failed, {skip_count} skipped")
+    if args.verbose > 0 or skip_count > 0 or fail_count > 0:
+        print(f"{args.progname}: Plot Sets:  {ok_count} ok, {skip_count} skipped, {fail_count} failed")
         print(f"{args.progname}: Plot Files: {len(all_records)}")
     run_time = time.perf_counter() - start_time
     # unconditionally print 
-    print(f"{args.progname}: Done. (Elapsed time: {run_time:.2f} s)")
+    print(f"{args.progname}: Done. ({len(all_records)} files in {run_time:.2f} s)")
     
-    # FIXME: need a better criterion than "perfect", see also just below
+    # Return value policy:
+    #  - Plot failure due to data-file-not-found and some other minor
+    #    issues is a warning, not an error
+    #    (Although the dependent plot files will not be made.)
+    #  - Failure due to other causes is an error
+    #       - A plot function can return None to signal hard error
+    # For a warning, "signal_plot_end" is performed so that the build system
+    # records this step as finished. Zero (success) exit status is returned.
+    # For an error, the early exit ensures that "signal_plot_end" is not performed
+    # here, and nonzero exit status is returned.
     if fail_count == 0:
         signal_plot_end(args)
-
-    # FIXME: this exit code is inconsistent with the signaling above
-    # Return non-zero if any plots failed
-    return 1 if fail_count > 0 else 0
+    else:
+        print(f"{args.progname}: Failed {fail_count} plot set(s). Run incomplete.", file=sys.stderr)
+    return 0 if fail_count == 0 else 1
 
 
 if __name__ == '__main__':
