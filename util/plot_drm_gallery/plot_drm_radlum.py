@@ -229,11 +229,6 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_radlum, t_earth = plot_data
     
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Radius/luminosity plots: skipping, as directed.')
-        return []
-    
     ##################################################################
     # Common data and functions
     ##################################################################
@@ -574,7 +569,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         if len(plot_spec) != 5:
             print(f"{PROGNAME}: Fatal: Plot selector {plot_num} has wrong number of elements",
                   file=sys.stderr)
-            sys.exit(1)
+            return None # fatal
         
         plot_prop_x = plot_spec[0]
         plot_prop = plot_spec[1]
@@ -707,7 +702,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         if len(plot_spec) != 3:
             print(f"{PROGNAME}: Fatal: Plot selector {plot_num} has wrong number of elements",
                   file=sys.stderr)
-            sys.exit(1)
+            return None # fatal
         
         plot_prop = plot_spec[0]
         plot_title_raw = plot_spec[1]

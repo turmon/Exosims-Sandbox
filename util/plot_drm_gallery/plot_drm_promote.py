@@ -57,14 +57,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
 
     # Skip plots if the input was empty
     if t_promote.empty or t_phist.empty:
-        print('Promotion plots: No data. Skipping.')
+        print(f'{PROGNAME}: Promotion plots: No data. Skipping.')
         return []
 
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Promotion plots: skipping, as directed.')
-        return []
-    
     # File extensions to write
     ext_list = ['png']
 
@@ -136,9 +131,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_promote['h_promo_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in promote file: {e}", 
+        print(f"{PROGNAME}: Must skip: Missing required column in promote file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # Manual line color order
     # line_colors = ['tab:blue', 'tab:red', 'tab:orange']

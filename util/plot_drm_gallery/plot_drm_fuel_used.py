@@ -44,11 +44,6 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_fuel, = plot_data
 
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Fuel-use plots: skipping, as directed.')
-        return []
-
     # File extensions to write
     ext_list = ['png']
 

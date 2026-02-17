@@ -53,11 +53,6 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_counts, t_earth_counts = plot_data
     
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Event-count plots: skipping, as directed.')
-        return []
-    
     # File extensions to write
     ext_list = ['png']
 
@@ -101,9 +96,10 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     try:
         ct_samp_1 = t_counts['h_event_count_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in counts file: {e}", 
+        print(f"{PROGNAME}: Missing required column in counts file: 'h_event_count_lo'", 
               file=sys.stderr)
-        sys.exit(1)
+        # Will kill every plot, so it's a hard error
+        return None
     
     # Offsets on bars in the plot -- unused at present
     ct_offsets_1 = [0]  # counts units
@@ -266,9 +262,9 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     try:
         ct_samp_1 = t_earth_counts['h_earth_char_count_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in earth_counts file: {e}", 
+        print(f"{PROGNAME}: Missing required column in earth_counts file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # Offsets on bars in the plot -- unused at present
     ct_offsets_1 = [0, 0]  # counts units
@@ -286,7 +282,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping earth chars ({f_mean}): redo make reduce to fix.')
+            print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix.')
             continue
         
         ax.plot(ct_samp_1 + ct_offsets_1[n],
@@ -325,7 +321,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping earth chars ({f_mean}): redo make reduce to fix')
+            print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix')
             continue
         
         ax.bar(ct_samp_1 + ct_offsets_1[n],

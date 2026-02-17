@@ -53,13 +53,11 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
         visit-time-char-cume.png
     """
 
+    # Make extra plots?
+    do_incremental_plot = '+' in mode.get('op', '')
+    
     # Unpack CSV data
     t_visit_time, = plot_data
-    
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Visit time plots: skipping, as directed.')
-        return []
     
     # File extensions to write
     ext_list = ['png']
@@ -103,9 +101,9 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_visit_time['h_det_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in visit_time file: {e}", 
+        print(f"{PROGNAME}: Must skip: Missing required column in visit_time file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # Manual line color order
     # line_colors = ['tab:blue', 'tab:red', 'tab:orange']
@@ -124,7 +122,6 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     
     # Needed for each item here: 
     # {fieldnames, plot title, filename}
-    
     fig_roster = [
         {
             'names': ['h_visit_det_visit', 'h_visit_det_uniq', 'h_visit_det_revi'],
@@ -137,9 +134,6 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
             'fname': 'visit-time-char'
         }
     ]
-    
-    # Do not make incremental/monthly plots
-    do_incremental_plot = False
     
     # Iterate over all figures in the roster
     for fig_info in fig_roster:
@@ -159,7 +153,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
                 break
         
         if skipping:
-            print(f'\tSkipping {fname} plot (missing field)')
+            print(f'{PROGNAME}: \tSkipping {fname} plot (missing field)')
             continue
         
         # Legend names

@@ -52,13 +52,11 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         obstime-cume.png
     """
 
+    # Make extra plots?
+    do_incremental_plot = '+' in mode.get('op', '')
+    
     # Unpack CSV data
     t_det_time, = plot_data
-    
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Det time plots: skipping, as directed.')
-        return []
     
     # File extensions to write
     ext_list = ['png']
@@ -102,9 +100,9 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_det_time['h_det_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in det_time file: {e}", 
+        print(f"{PROGNAME}: Skipping due to missing required column in det_time file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return tracker.get_files()
     
     # Manual line color order
     # for the obstime plot -- purple for slews
@@ -147,14 +145,14 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     plt.close(fig)
     
     ####################################################################
-    # 2023-11: exit before making Incremental plots
+    # 2023-11: return before making Incremental plots
     ####################################################################
     
-    if True:
+    if not do_incremental_plot:
         return tracker.get_files()
 
-    # Note: The code below is unreachable (as in the original MATLAB)
-    # but is kept for reference in case incremental plots are needed later
+    # Note: The code below is not usually run, and not tested
+    # it is kept in case incremental plots are needed later
     
     ####################################################################
     # Slews and Characterization vs. time -- Incremental
@@ -182,11 +180,14 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
                     **ebar_props_incr)
     
     style_det_plot(ax,
-                  'Mission Observation Scheduling (Incremental) vs. Mission Time',
-                  'Incremental Time Used [days/month]',
-                  names_legend)
+                   'Mission Observation Scheduling (Incremental) vs. Mission Time',
+                   'Incremental Time Used [days/month]',
+                   names_legend)
     write_plots(fig, 'obstime-incr')
     plt.close(fig)
+
+    # end of function
+    return tracker.get_files()
 
 
 def main():

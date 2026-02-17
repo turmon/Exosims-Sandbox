@@ -51,11 +51,6 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_events, = plot_data
     
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Event plots: skipping, as directed.')
-        return []
-    
     # File extensions to write
     ext_list = ['png']
 
@@ -98,9 +93,9 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         tsamp_1 = t_events['h_event_b1_duration_lo'].values
         tsamp_2 = t_events['h_event_b2_duration_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in events file: {e}", 
+        print(f"{PROGNAME}: Must skip: Missing required column in events file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # Offsets on bars in the plot -- unused at present
     t_offsets_0 = [0]  # days units

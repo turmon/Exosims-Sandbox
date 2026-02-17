@@ -62,13 +62,11 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
         det-time-det-earth-cume.png
     """
 
+    # Make extra plots?
+    do_incremental_plot = '+' in mode.get('op', '')
+    
     # Unpack CSV data
     t_yield_time, = plot_data
-    
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Yield time plots: skipping, as directed.')
-        return []
     
     # File extensions to write
     ext_list = ['png']
@@ -115,9 +113,9 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_yield_time['h_det_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in yield_time file: {e}", 
+        print(f"{PROGNAME}: Will skip: Missing required column in yield_time file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # Manual line color order
     # line_colors = ['tab:blue', 'tab:red', 'tab:orange']
@@ -180,8 +178,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
         }
     ]
     
-    # 2023-11: skip the monthly a/k/a incremental plots
-    do_incremental_plot = False
+    # 2023-11: typically skip the monthly a/k/a incremental plots
     
     # Iterate over all figures in the roster
     for fig_info in fig_roster:

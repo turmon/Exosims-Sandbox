@@ -12,9 +12,14 @@ import pandas as pd
 class PlotTracker:
     """Track graphics files written by a plot routine."""
 
-    def __init__(self):
-        self._files = []               # list of filenames written
-        self._ext_list = ['png']       # default
+    def __init__(self, ext_list=None):
+        # list of filenames written
+        self._files = []               
+        # file extensions to make
+        if ext_list is None:
+            self._ext_list = ['png'] # default
+        else:
+            self._ext_list = ext_list[:]
 
     def set_ext_list(self, ext_list):
         """Set the file extensions for subsequent writes."""
@@ -25,15 +30,14 @@ class PlotTracker:
         """Write figure to file(s) and record what was written."""
         if ext_list is None:
             ext_list = self._ext_list
-        if dest_tmpl:
-            for ext in ext_list:
-                fn_gfx = dest_tmpl % (dest_name, ext)
-                if verbose:
-                    print(f'\tExport: {fn_gfx}')
-                if facecolor is not None:
-                    fig.patch.set_facecolor(facecolor)
-                fig.savefig(fn_gfx, dpi=dpi, bbox_inches='tight')
-                self._files.append(os.path.basename(fn_gfx))
+        for ext in ext_list:
+            fn_gfx = dest_tmpl % (dest_name, ext)
+            if verbose:
+                print(f'\tExport: {fn_gfx}')
+            if facecolor is not None:
+                fig.patch.set_facecolor(facecolor)
+            fig.savefig(fn_gfx, dpi=dpi, bbox_inches='tight')
+            self._files.append(os.path.basename(fn_gfx))
 
     def get_files(self):
         """Return list of filenames written."""
@@ -60,7 +64,7 @@ def plot_make_title(reduce_info):
 def load_csv_files(src_tmpl, csv_files):
     """Load CSV files and return as a list of DataFrames.
 
-    For use by standalone plot scripts. Exits on failure.
+    For use by standalone plot scripts (not the driver). Exits on failure.
     """
     dataframes = []
     for csv_name in csv_files:

@@ -19,8 +19,6 @@ try:
 except ImportError:
     import common_style as cs
 
-# Program name for error messages
-PROGNAME = os.path.basename(sys.argv[0])
 
 def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     """
@@ -54,34 +52,15 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_earth_chars, = plot_data
     
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Earth char attempt plots: skipping, as directed.')
+    # For missions without chars, the table will be basically empty.
+    # Skip such tables, there is nothing to do.
+    if 'is_success' not in t_earth_chars.columns:
+        print('\tNo char info, skipping earth chars plots')
         return []
     
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
-    # Helper function to create title from t_info
-    # def plot_make_title(t_info):
-    #     """Create plot title from metadata"""
-    #     if t_info.empty:
-    #         rv = ''
-    #     elif 'experiment' in t_info:
-    #         exp_name = str.strip(t_info['experiment'].iloc[0])
-    #         if len(exp_name) < 50:
-    #             chaser = f", Ensemble Size {t_info['ensemble_size'].iloc[0]}"
-    #         else:
-    #             chaser = ''
-    #         rv = exp_name + chaser
-    #     else:
-    #         rv = ''
-    #     return rv
-    
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_wa_dmag_plot(ax, title1, bartext):
         """Style the WA/dMag plot with title, labels, and colorbar"""
@@ -120,12 +99,6 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         """Write the current figure to various files"""
         tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'], dpi=250)
 
-    # For missions without chars, the table will be basically empty.
-    # Skip such tables, there is nothing to do.
-    if 'is_success' not in t_earth_chars.columns:
-        print('\tNo char info, skipping earth chars plots')
-        return []
-    
     # Booleans
     ok = t_earth_chars['is_success'].values > 0
     ok2 = (t_earth_chars['is_success'].values == 0) & (t_earth_chars['n_success'].values > 0)

@@ -67,12 +67,9 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         print('Star target plots: skipping (re-run reduction?).')
         return []
 
-    # Allow skipping this way
-    if '0' in mode.get('op', ''):
-        print('Star target plots: skipping, as directed.')
-        return []
-    
-    # Common data
+    ##
+    ## Common data
+    ##
     
     # Color map
     if False:
@@ -137,9 +134,9 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         seen = (t_star_targ['h_star_det_visit_mean'].values > 0)
         earth = (t_star_targ['h_star_det_earth_cume_mean'].values > 0)
     except KeyError as e:
-        print(f"{PROGNAME}: Fatal: Missing required column in star_targ file: {e}", 
+        print(f"{PROGNAME}: Must skip: Missing required column in star_targ file: {e}", 
               file=sys.stderr)
-        sys.exit(1)
+        return []
     
     # The plot_menu variable controls the properties that are plotted
     # in standard distance/luminosity coordinates. Each entry is one
@@ -218,7 +215,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         if len(plot_spec) != 6:
             print(f"{PROGNAME}: Fatal: Plot selector {plot_num} has wrong number of elements",
                   file=sys.stderr)
-            sys.exit(1)
+            return None # fatal
         
         plot_prop = plot_spec[0]   # property to plot
         plot_xform = plot_spec[1]  # transformation of the property

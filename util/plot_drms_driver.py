@@ -284,7 +284,11 @@ Optional arguments:
         return 0 # status = OK
     
     # Create global mode dictionary
-    overall_mode = {'op': args.mode_op, 'verbose': args.verbose}
+    overall_mode = {
+        'op': args.mode_op,
+        'verbose': args.verbose,
+        'ext_list': ['png']
+        }
     
     ##
     ## Determine list of plots to make
