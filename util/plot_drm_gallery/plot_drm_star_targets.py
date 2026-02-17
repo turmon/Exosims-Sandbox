@@ -86,12 +86,8 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     # Clip target plots at 30 pc
     dist_axis_limit = [0.0, 30.0]
     
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
     # Color for un-observed stars
     unseen_color = np.array([1, 1, 1]) * 0.7

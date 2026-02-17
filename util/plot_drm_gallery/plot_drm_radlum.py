@@ -279,12 +279,8 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Makes a 9x9 diagonal into a 9x3 set of stacked plots
     collapse = np.tile(np.eye(n_lum), (n_rad, 1))
     
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
     # Inner function: rectangle underlay
     def place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra):

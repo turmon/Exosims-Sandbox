@@ -44,12 +44,8 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_fuel, = plot_data
 
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):

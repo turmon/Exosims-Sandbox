@@ -59,12 +59,8 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_visit_time, = plot_data
     
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_visit_plot(ax, title1, ytext, legtext):

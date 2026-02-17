@@ -60,12 +60,8 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         print(f'{PROGNAME}: Promotion plots: No data. Skipping.')
         return []
 
-    # File extensions to write
-    ext_list = ['png']
-
     # Track output files
-    tracker = cs.PlotTracker()
-    tracker.set_ext_list(ext_list)
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_promote_plot(ax, title1, ytext, legtext):
