@@ -47,7 +47,7 @@ Running simulations is separate from make: use `add-sims.sh` to submit simulatio
 
 1. **Run**: `add-sims.sh` → `Local/sandbox_driver.py` → EXOSIMS → `sims/SCENARIO/drm/*.pkl` + `spc/*.spc`
 2. **Reduce**: `util/reduce_drms.py` loads pickled DRMs, computes statistics → `sims/SCENARIO/reduce-*.csv`
-3. **Plot**: `util/plot_drms_driver.py` reads CSVs, dispatches to modular plot functions → `sims/SCENARIO/gfx/*.png`
+3. **Plot**: `util/plot_drm_driver.py` reads CSVs, dispatches to modular plot functions → `sims/SCENARIO/gfx/*.png`
 4. **Present**: `util/html-summary.py` generates browsable HTML → `sims/SCENARIO/html/`
 
 ### Directory Layout
@@ -62,10 +62,10 @@ Running simulations is separate from make: use `add-sims.sh` to submit simulatio
 
 ### Plot Gallery System
 
-Plots are table-driven via `PLOT_REGISTRY` in `util/plot_drms_driver.py`. Each entry references a module in `util/plot_drm_gallery/` (e.g., `plot_drm_yield_times.py`). To add a new plot type:
+Plots are table-driven via `PLOT_REGISTRY` in `util/plot_drm_driver.py`. Each entry references a module in `util/plot_drm_gallery/` (e.g., `plot_drm_yield_times.py`). To add a new plot type:
 
 1. Create `util/plot_drm_gallery/plot_drm_NEWNAME.py` with a function `plot_drm_NEWNAME(args, mode)`
-2. Register it in `PLOT_REGISTRY` in `util/plot_drms_driver.py`
+2. Register it in `PLOT_REGISTRY` in `util/plot_drm_driver.py`
 3. Shared styling helpers are in `util/plot_drm_gallery/common_style.py`
 
 ### Data Reduction

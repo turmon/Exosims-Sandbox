@@ -107,7 +107,7 @@ REDUCE_PROG=util/reduce_drms.py
 REDUCE_ENS_PROG=util/reduce_drm_sets.py -E
 # programs used for matlab/python graphics
 GRAPHICS_PROG=util/plot_drms.sh
-GRAPHALT_PROG=util/plot_drms_driver.py
+GRAPHALT_PROG=util/plot_drm_driver.py
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
