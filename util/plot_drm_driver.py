@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 """
-Driver script to generate all DRM plots
+Driver script to generate all Ensemble-level DRM plots
 
 This script orchestrates the execution of all DRM plotting functions in a
 table-driven manner, loading CSV files and calling each plotting function
 with the appropriate arguments.
+
+See the `plot_drm_gallery/README.md` for:
+- Design information
+- How to make a new plot type
+- How to backtrack from plots to the function and data in them
 """
 
 import sys
@@ -28,6 +33,10 @@ PROGNAME = os.path.basename(sys.argv[0])
 #   - csv_files: list of CSV file identifiers (used with src_tmpl)
 #   - enabled: whether to run this plot
 #   - mode: additional mode dict to merge with overall mode (optional)
+#     Keys now in use: verbose, op, ext_list
+#     Note that this will override the command line.
+#     Probably most useful for increasing or decreasing the number of plots
+#     typically made by a given function
 PLOT_REGISTRY = [
     {
         'name': 'yield_times',
@@ -361,9 +370,9 @@ Optional arguments:
         else:
             # simple False means it was skipped (e.g., incomplete data)
             skip_count += 1
-        # Collect records: associate each file with its routine and csv_files
+        # Collect records: associate each plot with its function and data files
         routine = plot['function']
-        csv_files = plot['csv_files']
+        csv_files = [os.path.basename(args.src_tmpl % (f, 'csv')) for f in plot['csv_files']]
         for gfx_file in files_written:
             all_records.append((gfx_file, routine, csv_files))
 

@@ -232,8 +232,8 @@ used. Here are some lines for example:
 
 ```
 graphics_file,routine,csv_files
-det-time-det-allplan-month.png,plot_drm_yield_times,yield-time
-det-event-count-slew.png,plot_drm_event_counts,event-counts;earth-char-count
+det-time-det-allplan-month.png,plot_drm_yield_times,reduce-yield-time.csv
+det-event-count-slew.png,plot_drm_event_counts,reduce-event-counts.csv;reduce-earth-char-count.csv
 ```
 
 This table allows you to solve problems like:
