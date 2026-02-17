@@ -168,8 +168,10 @@ def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
 
     Returns
     -------
-    tuple of (bool, list)
-        (True, files_written) if plot succeeded, (False, []) otherwise
+    tuple of (bool or None, list)
+        (True, files_written) if plot succeeded,
+        (False, []) if plot was skipped (missing data, import error),
+        (None, []) if plot function signaled a hard error
     """
     name = plot_config['name']
     module_name = plot_config['module']
@@ -177,7 +179,7 @@ def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
     csv_files = plot_config['csv_files']
     plot_mode = plot_config.get('mode', {})
     
-    # this function's verbosity verbosity = overall verbosity
+    # this function's verbosity = overall verbosity
     verbose = overall_mode['verbose']
 
     # Merge global mode with plot-specific mode
@@ -239,7 +241,7 @@ Example usage:
     python plot_drm_driver.py "data/%s.%s" "output/det-%s.%s"
     
 The first argument is the source template with two %%s placeholders that will be
-filled with CSV file identifiers (e.g., "info", "yield_time") and "csv".
+filled with CSV file identifiers (e.g., "info", "yield-time") and "csv".
 
 The second argument is the destination template with two %%s placeholders for
 the plot name and file extension.
@@ -330,7 +332,7 @@ Optional arguments:
         os.makedirs(dir_path, exist_ok=True)
     except FileExistsError:
         # runs if the path exists, but is a file
-        print(f"{args.progname}: Fatal: A file exists already at '{dir_path}'.", file=sys.stedrr)
+        print(f"{args.progname}: Fatal: A file exists already at '{dir_path}'.", file=sys.stderr)
         return 1 # error-out
 
     ##

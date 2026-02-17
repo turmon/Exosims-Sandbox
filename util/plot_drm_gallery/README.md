@@ -1,6 +1,6 @@
-# Plot Gallery -- Modular Matplotlib Plotting System
+# Plot Gallery -- Modular Plots for Ensembles
 
-A registry-driven, modular plotting system for EXOSIMS DRM ensemble results.
+A registry-driven, modular plotting system for reduced EXOSIMS DRM ensembles.
 Each module is a self-contained plot generator that can run standalone or be
 dispatched by the central driver (`plot_drm_driver.py`).
 
@@ -10,7 +10,7 @@ dispatched by the central driver (`plot_drm_driver.py`).
 
 ```
 util/plot_drm_gallery/
-  __init.py__               Package init (note the non-standard name)
+  __init__.py               Package init
   common_style.py           Shared PlotTracker class, title helper, CSV loader
   plot_drm_earth_chars.py   Earth characterization scatter plots
   plot_drm_event_counts.py  Detection/characterization event count bar charts
@@ -33,14 +33,14 @@ util/plot_drm_driver.py    Registry, CSV loading, dispatch loop
 
 ### Data Flow
 
-1. `reduce_drms.py` produces CSV files: `sims/SCENARIO/reduce-CSVID.csv`
+1. `reduce_drms.py` produces CSV files: `sims/SCENARIO/reduce-TYPE.csv`
 2. The driver (or standalone module) loads CSVs into pandas DataFrames
 3. Plot functions receive DataFrames, produce matplotlib figures
 4. Figures are saved to disk as PNGs (and optionally PDFs) via `PlotTracker`
 
 The file-naming convention uses printf-style templates with two `%s` slots:
 
-- **Source template**: `src_tmpl % (csv_id, "csv")` -- e.g.,
+- **Source template**: `src_tmpl % (TYPE, "csv")` -- e.g.,
   `"sims/scenario/reduce-%s.%s" % ("times", "csv")`
   yields `sims/scenario/reduce-times.csv`
 
@@ -48,7 +48,7 @@ The file-naming convention uses printf-style templates with two `%s` slots:
   `"sims/scenario/gfx/det-%s.%s" % ("fuel", "png")`
   yields `sims/scenario/gfx/det-fuel.png`
 
-### PLOT_REGISTRY
+### Plot Registry
 
 Dispatch is table-driven via `PLOT_REGISTRY` in `plot_drm_driver.py`. Each
 entry is a dict with these keys:
@@ -79,7 +79,8 @@ Current registry entries:
 
 ### The `mode` Dict
 
-Every plot function receives a `mode` dict. Standard keys:
+Every plot function receives a `mode` dict -- a package to flow information
+downward to the plot code. Standard keys:
 
 - `op` (str) -- operation mode string. Empty string is normal; `"+"` requests
   extra/optional plots.
@@ -87,15 +88,17 @@ Every plot function receives a `mode` dict. Standard keys:
 - `ext_list` (list[str]) -- file extensions to write, e.g. `['png']` or
   `['png', 'pdf']`.
 
-The driver constructs a global mode dict from CLI flags, then merges any
+The driver constructs an overall mode dict from CLI flags, then merges any
 per-plot `mode` overrides from the registry entry before calling the plot
 function.
 
 ### The `reduce_info` Dict
 
-Metadata from `reduce-info.csv`, converted to a dict. Common keys include
-`experiment` (scenario name) and `ensemble_size` (number of DRM runs). Passed
-to every plot function for use in titles via `cs.plot_make_title(reduce_info)`.
+Metadata from the top-level summary file `reduce-info.csv`, converted to a dict. 
+
+Keys we use include `experiment` (scenario name) and `ensemble_size`
+(number of runs/DRMs). Passed to every plot function for use in
+titles via `cs.plot_make_title(reduce_info)`.
 
 
 ## Usage
@@ -118,7 +121,7 @@ Options:
 Typical Makefile invocation:
 
 ```bash
-python util/plot_drm_driver.py \
+util/plot_drm_driver.py \
     "sims/MyScript/reduce-%s.%s" \
     "sims/MyScript/gfx/det-%s.%s"
 ```
@@ -126,7 +129,7 @@ python util/plot_drm_driver.py \
 Run a single plot:
 
 ```bash
-python util/plot_drm_driver.py \
+util/plot_drm_driver.py \
     "sims/MyScript/reduce-%s.%s" \
     "sims/MyScript/gfx/det-%s.%s" \
     --only fuel_used -v
@@ -137,10 +140,9 @@ python util/plot_drm_driver.py \
 Each plot module has its own `main()` and can run independently:
 
 ```bash
-python util/plot_drm_gallery/plot_drm_fuel_used.py \
+util/plot_drm_gallery/plot_drm_fuel_used.py \
     "sims/MyScript/reduce-%s.%s" \
-    "sims/MyScript/gfx/det-%s.%s" \
-    -v
+    "sims/MyScript/gfx/det-%s.%s"
 ```
 
 Options are the same subset: `--mode_op`, `-v`/`--verbose`, `-q`/`--quiet`.
@@ -178,9 +180,9 @@ driver does this centrally when dispatching).
 5. **Test standalone**, then test via the driver:
    ```bash
    # standalone
-   python util/plot_drm_gallery/plot_drm_NEWNAME.py SRC_TMPL DEST_TMPL -v
+   util/plot_drm_gallery/plot_drm_NEWNAME.py SRC_TMPL DEST_TMPL
    # via driver
-   python util/plot_drm_driver.py SRC_TMPL DEST_TMPL --only NEWNAME -v
+   util/plot_drm_driver.py SRC_TMPL DEST_TMPL --only NEWNAME
    ```
 
 ### Plot Function Contract
@@ -204,97 +206,8 @@ def plot_drm_NEWNAME(reduce_info, plot_data, dest_tmpl, mode):
 
 **Must use** `PlotTracker` for all file output so files are tracked correctly.
 
-### Canonical Skeleton
 
-```python
-#!/usr/bin/env python
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import argparse
-import sys
-import os
-
-try:
-    from . import common_style as cs
-except ImportError:
-    import common_style as cs
-
-PROGNAME = os.path.basename(sys.argv[0])
-
-
-def plot_drm_NEWNAME(reduce_info, plot_data, dest_tmpl, mode):
-    """Plot DESCRIPTION."""
-
-    # Unpack CSV data (order matches csv_files in registry)
-    t_data, = plot_data
-
-    # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
-
-    def write_plots(fig, dest_name):
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
-
-    # --- Create figure ---
-    fig, ax = plt.subplots(figsize=(8.5, 5))
-
-    # ... plotting code ...
-
-    # Titles and labels
-    title1 = 'Descriptive Plot Title'
-    title2 = cs.plot_make_title(reduce_info)
-    ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('X Label', fontweight='bold')
-    ax.set_ylabel('Y Label', fontweight='bold')
-    ax.tick_params(labelsize=13)
-    ax.grid(True)
-
-    write_plots(fig, 'plot-stem-name')
-    plt.close(fig)
-
-    return tracker.get_files()
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Plot DESCRIPTION',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument('src_tmpl', type=str,
-                        help='Source template (e.g., "sims/scenario/reduce-%%s.%%s")')
-    parser.add_argument('dest_tmpl', type=str,
-                        help='Destination template (e.g., "sims/scenario/gfx/det-%%s.%%s")')
-    parser.add_argument('--mode_op', type=str, default='',
-                        help='Operation mode (default: "")')
-    parser.add_argument('--verbose', '-v', action='count', default=1,
-                        help='Verbosity')
-    parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
-
-    args = parser.parse_args()
-    if args.quiet: args.verbose = 0
-
-    mode = {'op': args.mode_op, 'verbose': args.verbose}
-
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
-
-    plot_data = cs.load_csv_files(args.src_tmpl, ['your-csv-id'])
-    rv = plot_drm_NEWNAME(reduce_info, plot_data, args.dest_tmpl, mode)
-    return rv
-
-
-if __name__ == '__main__':
-    rv = main()
-    if rv is None:
-        print(f"Plots failed. Error signaled.", file=sys.stderr)
-    else:
-        print(f"Done. Wrote {len(rv)} plot(s).")
-    sys.exit(1 if rv is None else 0)
-```
-
-
-## Styling Conventions
+### Styling Conventions
 
 All plot modules should follow these conventions for visual consistency:
 
@@ -304,43 +217,30 @@ All plot modules should follow these conventions for visual consistency:
 - **Axis labels**: bold (`fontweight='bold'`)
 - **Tick labels**: size 13
 - **Grid**: on (`ax.grid(True)`)
-- **DPI**: 200 (PlotTracker default)
-- **Facecolor**: transparent (`'none'`, PlotTracker default)
-- **Import pattern**: dual import for package vs. standalone use:
-  ```python
-  try:
-      from . import common_style as cs
-  except ImportError:
-      import common_style as cs
-  ```
 
 
-## PlotTracker Reference
+## Associating Plots with Functions and Data
 
-`PlotTracker` in `common_style.py` manages writing figures and tracking output
-filenames.
+`PlotTracker` in `common_style.py` is the centralized funnel for
+writing figures.  This allows tracking all output filenames, and
+the function they came from.
 
-### Constructor
+`PlotTracker` allows us to generate a metadata table (in the standard `gfx`
+directory with the plots) called `det_plot_list.csv`. This maps graphics
+filenames to (1) the plot function that produced them; (2) the data they 
+used. Here are some lines for example:
 
-```python
-PlotTracker(ext_list=None)
+```
+graphics_file,routine,csv_files
+det-time-det-allplan-month.png,plot_drm_yield_times,yield-time
+det-event-count-slew.png,plot_drm_event_counts,event-counts;earth-char-count
 ```
 
-- `ext_list` -- list of file extensions to write (default: `['png']`)
+This table allows you to solve problems like:
 
-### Methods
+- If a problem is seen in `det-time-det-allplan-month.png`, it can be
+  found in the `plot_drm_yield_times` function.
 
-**`write_plots(fig, dest_name, dest_tmpl, ext_list=None, verbose=True, dpi=200, facecolor='none')`**
+- If you want to reproduce the plot in `det-event-count-slew.png`, you can
+  find the data in `reduce-event-counts.csv` and `reduce-earth-char-count.csv`.
 
-Write `fig` to one file per extension. The output path is
-`dest_tmpl % (dest_name, ext)`. If `ext_list` is given, it overrides the
-instance default for this call only.
-
-**`set_ext_list(ext_list)`**
-
-Replace the instance-level extension list for subsequent writes.
-
-**`get_files()`**
-
-Return a list of all basenames written so far. This is the standard return
-value from plot functions.
