@@ -124,9 +124,18 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Table of wa/dmag plots to make.
     # Format: textual full name, abbreviated name, index variable
     dprops = {'s': 300}
-    pprops = {'s': 100, 'alpha': 0.5}
+    pprops = {'s': 60, 'alpha': 0.5}
+    # for the plentiful markers showing all observations made
+    # lw=0.5 makes slender markers
+    obs_props = dict(s=10, c=[[0.5, 0.5, 0.5]], marker='+', lw=0.5)
+
+    # for the inset box
+    text_box_props = dict(
+        verticalalignment='center',
+        fontsize=10)
     
     # Eliminated deep-dive plots, 2024/12
+    # Note: could add this back in and make only if "extra" requested
     plot_roster = [
         ['Promoted', 'promo', promo, pprops]
     ]
@@ -146,30 +155,29 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         
-        ax.scatter(ec_wa[ok], ec_dmag[ok], s=10, c=[[0.5, 0.5, 0.5]], marker='+')
+        ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
         ps = ax.scatter(ec_wa[fail & c_inx], ec_dmag[fail & c_inx], 
                        c=ec_snr[fail & c_inx], marker='.', **gprops)
-        ps2 = ax.scatter(ec_wa[ok2 & c_inx], ec_dmag[ok2 & c_inx], s=10,
-                        c=ec_snr[ok2 & c_inx], marker='x')
-        
-        ax_lim = ax.axis()
-        txt_x = (ax_lim[0] + ax_lim[1]) / 2  # x midline for text annotations
-        txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]  # y midline for text annotations
+        ps2 = ax.scatter(ec_wa[ok2 & c_inx], ec_dmag[ok2 & c_inx], s=16,
+                        c=ec_snr[ok2 & c_inx], marker='x', lw=2)
         
         style_wa_dmag_plot(ax,
             f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Char. SNR',
             'Char SNR')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
-                  f'Failed {full_name} Chars ({np.sum(fail & c_inx)})',
-                  f'Split Multi-Earth {full_name} Chars ({np.sum(ok2 & c_inx)})'],
-                 loc='upper right')
+                   f'Failed {full_name} Chars ({np.sum(fail & c_inx)})',
+                   f'Split Multi-Earth {full_name} Chars ({np.sum(ok2 & c_inx)})'],
+                  loc='upper right')
         
         # Easy chars sub-legend
+        ax_lim = ax.axis()
+        txt_x = (ax_lim[0] + ax_lim[1]) / 2  # x midline for text annotations
+        txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]  # y midline for text annotations
         ax.text(txt_x, txt_y,
-               f'"Easy" Characterizations within red box:\n'
-               f'  {np.sum(easy & ok)} Successful\n'
-               f'  {np.sum(easy & c_inx & fail)} Failed (counting {full_name} only)',
-               fontsize=13)
+                f'"Easy" Characterizations within red box:\n'
+                f'  {np.sum(easy & ok)} Successful\n'
+                f'  {np.sum(easy & c_inx & fail)} Failed (counting {full_name} only)',
+                **text_box_props)
         
         write_plots(fig, f'earth-char-wa-dmag-{abbr_name}-snr')
         plt.close(fig)
@@ -180,27 +188,26 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         
-        ax.scatter(ec_wa[ok], ec_dmag[ok], s=10, c=[[0.5, 0.5, 0.5]], marker='+')
+        ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
         ps = ax.scatter(ec_wa[~ok & c_inx], ec_dmag[~ok & c_inx],
                        c=np.log10(ec_phi[~ok & c_inx]), marker='.', **gprops)
         
-        ax_lim = ax.axis()
-        
         style_wa_dmag_plot(ax,
             f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Log Phi',
-            'log$_{{10}}$(?) : truncated at -2')
+            '\nlog$_{10}(\Phi)$ : truncated at -2')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
                   f'Failed {full_name} Chars ({np.sum(~ok & c_inx)})'],
-                 loc='upper right')
+                  loc='upper right')
         
         # Easy chars sub-legend
+        ax_lim = ax.axis() # xmin, xmax, ymin, ymax
         txt_x = (ax_lim[0] + ax_lim[1]) / 2
         txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]
         ax.text(txt_x, txt_y,
                f'"Easy" Characterizations within red box:\n'
                f'  {np.sum(easy & ok)} Successful\n'
                f'  {np.sum(easy & c_inx & ~ok)} Failed (counting {full_name} only)',
-               fontsize=13)
+               **text_box_props)
         
         # -2 on log10 scale = 0.01 = 5 magnitudes
         ps.set_clim(-2, 0)
@@ -214,10 +221,10 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         
-        ax.scatter(ec_wa[ok], ec_dmag[ok], s=10, c=[[0.5, 0.5, 0.5]], marker='+')
-        ps = ax.scatter(ec_wa[~ok & c_inx], ec_dmag[~ok & c_inx],
-                       c=ec_vmag[~ok & c_inx] + ec_dmag[~ok & c_inx], 
-                       marker='.', **gprops)
+        ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
+        ax.scatter(ec_wa[~ok & c_inx], ec_dmag[~ok & c_inx],
+                   c=ec_vmag[~ok & c_inx] + ec_dmag[~ok & c_inx], 
+                   marker='.', **gprops)
         
         ax_lim = ax.axis()
         
@@ -235,7 +242,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
                f'"Easy" Characterizations within red box:\n'
                f'  {np.sum(easy & ok)} Successful\n'
                f'  {np.sum(easy & c_inx & ~ok)} Failed (counting {full_name} only)',
-               fontsize=13)
+               **text_box_props)
         
         write_plots(fig, f'earth-char-wa-dmag-{abbr_name}-vmag')
         plt.close(fig)
@@ -249,16 +256,25 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         # Adjusted dmag - improvement possible
         ec_dmagPhi = ec_dmag + np.maximum(-5, 2.5 * np.log10(np.minimum(0.7, ec_phi) / 0.7))
         
-        ax.scatter(ec_wa[ok], ec_dmag[ok], s=10, c=[[0.5, 0.5, 0.5]], marker='+')
-        ps = ax.scatter(ec_wa[~ok & c_inx], ec_dmagPhi[~ok & c_inx],
+        ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
+        ax.scatter(ec_wa[~ok & c_inx], ec_dmagPhi[~ok & c_inx],
                        c=ec_phi[~ok & c_inx], marker='.', **gprops)
         
         style_wa_dmag_plot(ax,
             f'{full_name}: Earth Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
-            'Lambertian ?')
+            'Lambertian $\Phi$')
         ax.legend(['Successful Chars', f'Failed {full_name} Chars'],
                  loc='upper right')
         
+        # Easy chars sub-legend
+        txt_x = (ax_lim[0] + ax_lim[1]) / 2
+        txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]
+        ax.text(txt_x, txt_y,
+               f'"Easy" Characterizations within red box:\n'
+               f'  {np.sum(easy & ok)} Successful\n'
+               f'  {np.sum(easy & c_inx & ~ok)} Failed (counting {full_name} only)',
+               **text_box_props)
+
         write_plots(fig, f'earth-char-wa-dmag-{abbr_name}-zzz-dmag')
         plt.close(fig)
     
@@ -277,6 +293,10 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     
     fig = plt.figure(figsize=(8.5, 5))
     
+    # bar-plot properties
+    bar_props = dict(
+        edgecolor='black',
+        linewidth=0.5)
     # Brighten the colormap
     cmap = plt.cm.jet(np.linspace(0, 1, 256))
     cmap = 0.5 + 0.5 * cmap  # brighten
@@ -291,33 +311,54 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     
     h_bins1 = 0.5 * (h_bins[:-1] + h_bins[1:])
     
+    have_deep = sum(h_deep) > 0
+
     # Create dual-axis plot
     ax1 = fig.add_subplot(111)
     ax2 = ax1.twinx()
     
     # Left axis: stacked bar chart
     width = h_bins[1] - h_bins[0]
-    ax1.bar(h_bins1, h_deep_fail, width=width, label='Deep-dive Targets')
-    ax1.bar(h_bins1, h_promo_fail, width=width, bottom=h_deep_fail, label='Promoted Targets')
+    ax1.bar(h_bins1, h_deep_fail, width=width,
+           label=f'Deep-dive Targets{"" if have_deep else " (N/A)"}',
+           color='tab:blue',
+           **bar_props)
+    ax1.bar(h_bins1, h_promo_fail, width=width,
+            bottom=h_deep_fail,
+            label='Promoted Targets',
+            color='tab:olive',
+            **bar_props)
     
+    plot_props = {
+        "marker": '.',
+        "linewidth": 1.7,
+        }
+
     # Right axis: failure probability lines
     # Avoid division by zero
-    deep_fail_rate = np.divide(h_deep_fail, h_deep, out=np.zeros_like(h_deep_fail, dtype=float), 
-                               where=h_deep != 0)
-    promo_fail_rate = np.divide(h_promo_fail, h_promo, out=np.zeros_like(h_promo_fail, dtype=float),
-                                where=h_promo != 0)
-    ax2.plot(h_bins1, deep_fail_rate, linewidth=2)
-    ax2.plot(h_bins1, promo_fail_rate, linewidth=2)
+    deep_fail_rate = np.divide(h_deep_fail, h_deep,
+                               out=np.zeros_like(h_deep_fail, dtype=float), 
+                               where=(h_deep > 0))
+    promo_fail_rate = np.divide(h_promo_fail, h_promo,
+                                out=np.zeros_like(h_promo_fail, dtype=float),
+                                where=(h_promo > 0))
+    ax2.plot(h_bins1, deep_fail_rate, color='tab:blue', **plot_props)
+    ax2.plot(h_bins1, promo_fail_rate, color='tab:olive', **plot_props)
     
     # Style the plot
     ax1.grid(True)
+    ax1.set_axisbelow(True) # grid below bars
     title1 = 'Failed Earth Characterizations vs. Lambertian Phi (Whole Ensemble)'
     ax1.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax1.set_xlabel('Lambertian Reflectance Phi', **tprops)
-    ax1.set_ylabel('Number of Failed Characterizations [count]', **tprops)
-    ax2.set_ylabel('Failure Probability', fontsize=13, **tprops)
+    ax1.set_ylabel('Number of Failed Characterizations (bars) [count]', **tprops)
+    ax2.set_ylabel('Failure Probability (Lines)', fontsize=13, **tprops)
     ax1.tick_params(labelsize=13)
     ax2.tick_params(labelsize=13)
+    # (decided against -- the elevated 0 is OK)
+    #ax1.set_ylim(bottom=0, top=None)
+    #ax2.set_ylim(bottom=0, top=None)
+
     ax1.legend()
     
     write_plots(fig, 'earth-char-hist-phi')
@@ -329,7 +370,11 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     
-    # Brighten jet colormap
+    # bar-plot properties
+    bar_props = dict(
+        edgecolor='black',
+        linewidth=0.5)
+    # Brighten jet colormap (?)
     plt.set_cmap('jet')
     
     delta = 0.4
@@ -339,18 +384,28 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     h_deep, _ = np.histogram(2.5 * np.log10(ec_phi[~ok & deep]),
                             bins=np.concatenate([[-np.inf], h_bins_log]))
     
+    have_deep = sum(h_deep) > 0
+
     h_bins1 = 0.5 * (h_bins_log[:-1] + h_bins_log[1:])
     h_bins1 = np.concatenate([[h_bins1[0] - delta], h_bins1])  # add leftmost bin
     
     width = delta
-    ax.bar(h_bins1, h_deep, width=width, label='Deep-dive Targets')
-    ax.bar(h_bins1, h_promo, width=width, bottom=h_deep, label='Promoted Targets')
+    ax.bar(h_bins1, h_deep, width=width,
+           label=f'Deep-dive Targets{"" if have_deep else " (N/A)"}',
+           color='tab:blue',
+           **bar_props)
+    ax.bar(h_bins1, h_promo, width=width, 
+           bottom=h_deep,
+           color='tab:olive',
+           label='Promoted Targets',
+           **bar_props)
     
     # Style the plot
     ax.grid(True)
+    ax.set_axisbelow(True) # grid below bars
     title1 = 'Failed Earth Characterizations vs. Magnitude Difference (Whole Ensemble)'
     ax.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Lambertian Reflectance Phi, as Magnitude (2.5 log$_{{10}}$ ?)', **tprops)
+    ax.set_xlabel('Lambertian Reflectance Phi, as Magnitude (2.5 log$_{10} \Phi$)', **tprops)
     ax.set_ylabel('Number of Failed Characterizations [count]', **tprops)
     ax.legend()
     ax.tick_params(labelsize=13)

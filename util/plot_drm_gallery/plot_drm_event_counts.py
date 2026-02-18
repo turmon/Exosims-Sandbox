@@ -82,6 +82,8 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         ax.tick_params(labelsize=13)
         ax.grid(True)
+        # grid below bars -- needed for bar-plots
+        ax.set_axisbelow(True)
     
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
@@ -290,19 +292,30 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     # Clip the x-range, ensure 0 gets an explicit bin
     ax.set_xlim(-0.5, 50)
     ax.set_ylim(bottom=0, top=None)
-    style_count_plot(ax, 'Number of Earths Characterized',
-                    'Number of Earths [count]',
-                    'Frequency [density]', names_legend)
+    style_count_plot(ax,
+                     'Number of Earths Characterized',
+                     'Number of Earths [count]',
+                     'Frequency [density]', names_legend)
     write_plots(fig, 'earth-char-count')
     plt.close(fig)
+    
+    ####################################################################
+    # Version 2 -- Common
+    ####################################################################
+    
+    bar_color = [70/255, 130/255, 180/255]  # SteelBlue
+    # bar-plot properties
+    bar_props = dict(
+        color=bar_color,
+        edgecolor='black',
+        linewidth=0.5)
+
     
     ####################################################################
     # Version 2/a: Showing one mode only, bars (strict)
     ####################################################################
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
-    
-    bar_color = [70/255, 130/255, 180/255]  # SteelBlue
     
     # Earth char counts appearing in this plot
     names = ['h_earth_char_strict']
@@ -322,7 +335,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         ax.bar(ct_samp_1 + ct_offsets_1[n],
               t_earth_counts[f_mean].values,
-              color=bar_color)
+              **bar_props)
         # (error bars just confuse this plot)
     
     # Clip the x-range
@@ -358,7 +371,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         ax.bar(ct_samp_1 + ct_offsets_1[n],
               t_earth_counts[f_mean].values,
-              color=bar_color)
+              **bar_props)
         # (error bars just confuse this plot)
     
     # Clip the x-range
