@@ -96,16 +96,16 @@ def plot_drm_planet_overlay(ax_dest, mode=None):
         # Set planet positions within the enclosing axis
         # positions are x0, y0, xsize, ysize
         # size is relative to radius property of the corresponding planet class
-        ctrline = 0.83  # centerline of the left-to-right line of planets
-        size_base = 0.06
-        size_rel = np.array([3.0, 4.5, 7.0, 12.0, 22.0*j_pre]) # relative size of planets
+        ctrline = 0.87  # centerline of the left-to-right line of planets
+        size_base = 0.055
+        size_rel = np.array([1.0, 3.5, 7.0, 12.0, 22.0*j_pre]) # relative size of planets
         size_img = size_base * size_rel
         ppos = [
-            [0.15, ctrline - size_img[0]/2, size_img[0], size_img[0]],
-            [0.33, ctrline - size_img[1]/2, size_img[1], size_img[1]],
-            [0.41, ctrline - size_img[2]/2, size_img[2], size_img[2]],
-            [0.47, ctrline - size_img[3]/2, size_img[3], size_img[3]],
-            [0.66, ctrline - size_img[4]/2 + 0.05, size_img[4], size_img[4]]
+            [0.24, ctrline - size_img[0]/2, size_img[0], size_img[0]],
+            [0.35, ctrline - size_img[1]/2, size_img[1], size_img[1]],
+            [0.44, ctrline - size_img[2]/2, size_img[2], size_img[2]],
+            [0.52, ctrline - size_img[3]/2, size_img[3], size_img[3]],
+            [0.66, ctrline - size_img[4]/2 + 0.19, size_img[4], size_img[4]]
         ]
     
     # Make planet underlay
@@ -122,80 +122,45 @@ def plot_drm_planet_overlay(ax_dest, mode=None):
             print(f"Warning: Planet image file '{pfile}' not found, skipping")
             continue
         
-        # FIXME: this big try/catch is too coarse-grained
+        # Load underlay image -- RGBA
         try:
-            # Load underlay image
             im_orig = mpimg.imread(pfile)
-            
-            # Handle alpha channel
-            if im_orig.shape[2] == 4:
-                # Image has alpha channel
-                alfa_orig = im_orig[:, :, 3]
-                im_rgb = im_orig[:, :, :3]
-            else:
-                # No alpha channel, create opaque alpha
-                alfa_orig = np.ones(im_orig.shape[:2])
-                im_rgb = im_orig
-            
-            # Crop image and alpha map
-            pcrop = pcrops[p]  # crop info, for convenience
-            # pcrop = [top, left, bottom, right]
-            if pcrop[0] > 0 or pcrop[1] > 0 or pcrop[2] > 0 or pcrop[3] > 0:
-                im = im_rgb[pcrop[0]:im_rgb.shape[0]-pcrop[2], 
-                           pcrop[1]:im_rgb.shape[1]-pcrop[3], :]
-                alfa = alfa_orig[pcrop[0]:alfa_orig.shape[0]-pcrop[2], 
-                                pcrop[1]:alfa_orig.shape[1]-pcrop[3]]
-            else:
-                im = im_rgb
-                alfa = alfa_orig
-            
-            # Create an inset axis for the underlay
-            # Position is [x0, y0, width, height] in figure fraction
-            pos = ppos[p]
-            # I tried 2 ways, an "inset axis" (original, axis object) and
-            # a new axis within in the figure (tinkering, figure object)
-            if False:
-                ax1 = inset_axes(ax_dest,
-                             width=f'{pos[2]*100}%', height=f'{pos[3]*100}%',
-                             loc='lower left',
-                             bbox_to_anchor=(pos[0], pos[1], pos[2], pos[3]),
-                             bbox_transform=ax_dest.transAxes,
-                             borderpad=0)
-            else:
-                # in this case it's a figure not an axis, coords are shrunken
-                ax1 = ax_dest.add_axes([pos[0], pos[1]*0.75, pos[2]*0.5, pos[3]*0.5],
-                                       zorder=3,
-                                       facecolor='blue'
-                                       )
-            
-            ### FIXME: frustrated, current status:
-            ### -- zorder still not allowing bars above planet images, why?
-            ### -- alpha channel of the images is not working end-to-end
-            ###       - "alfa" *is* a float, it does change properties
-            ###       - but the thing that shows through is black, not the lower axis
-
-            # Plot the image into the axis (including transparency info)
-            ax1.imshow(im, alpha=alfa, aspect='equal', zorder=1)
-            
-            # Set axis parameters
-            ax1.set_facecolor('none')  # make the axis itself transparent
-            ax1.set_aspect('equal')    # 1:1 aspect ratio so planet-images are circles
-            
-            # Turn off axis adornments
-            ax1.set_xticks([])
-            ax1.set_yticks([])
-            ax1.axis('off')
-            
-            # zorder: above rectangles, below plotted bars/lines
-            # note double-set with add_axes above
-            ax1.set_zorder(5)
-            
-            # Record the underlay axis, ax1
-            ax_list.append(ax1)
-            
         except Exception as e:
             print(f"Warning: Could not load planet image '{pfile}': {e}")
             continue
+            
+        # Crop image
+        # pcrop = [top, left, bottom, right]
+        pcrop = pcrops[p]
+        sI, sJ = im_orig.shape[0:2]
+        im = im_orig[pcrop[0]:sI-pcrop[2], pcrop[1]:sJ-pcrop[3], :]
+        
+        # Create an axis for the underlay
+        # Position is [x0, y0, width, height] in figure fraction
+        pos = ppos[p]
+        ZO = -1 # z-order -- duplicative, almost surely
+        # I also tried an "inset axis" (on the original, axis object)
+        # but it did not work right away, so I added a new figure axis.
+        ax1 = ax_dest.add_axes(
+            [pos[0], pos[1]*0.75, pos[2]*0.5, pos[3]*0.5], zorder=ZO)
+        
+        # Plot the image into the axis (including transparency info)
+        ax1.imshow(im, aspect='equal',zorder=ZO)
+            
+        # Make the axis (its background) transparent
+        ax1.patch.set_alpha(0)
+            
+        # zorder: above "underlaid" rectangles, below plotted bars/lines
+        ax1.set_zorder(ZO)
+            
+        # Turn off axis adornments
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.axis('off')
+            
+        # Record the overlay axis, ax1
+        ax_list.append(ax1)
+            
     
     return ax_list
 
@@ -316,8 +281,10 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
                 (x2 - x1) - 2 * x_gap, # width
                 ylim[1] - ylim[0], # height
                 facecolor=fc,
+                alpha=0.3,
                 linestyle='none',
-                zorder=0
+                # zorder seems not to matter (!)
+                zorder=-1
             )
             ax.add_patch(rect)
     
@@ -325,14 +292,13 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
         # FIXME: facecolor disabled because of overlay confusion
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'], facecolor=None)
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_bar_plot(ax, obs_type):
         """Style the bar plot with title, labels, and formatting"""
         ax.grid(True, axis='y')
-        ax.set_xticks(x_bin_plus)
-        ax.set_xticklabels(lumens_plus)
+        ax.set_xticks(x_bin_plus, lumens_plus, rotation=30)
         ax.set_xlim([x_bin_plus[0] - 1, x_bin[-1] + 1])
         
         # Errorbars can go < 0
@@ -349,16 +315,20 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     
     # uniform errorbar() properties
     ebar_props = {
-        "linewidth": 1.5,
+        "linewidth": 1.8,
         "markersize": 5,
         "capsize": 2,
         "color": color_eb,
-        "zorder": 11 # on top
+        "zorder": 10 # on top
         }
     # position of all text blocks
     text_pos = (0.01, 0.98)
     # uniform bar() style -- on top
-    bar_style = {'width': 0.8, 'zorder': 10}
+    bar_style = {
+        'width': 0.8,
+        'edgecolor': 'black',
+        'linewidth': 0.5,
+        'zorder': 10}
 
     ##################################################################
     # Overall Planet Population
@@ -404,15 +374,16 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet overlay
-    # (Disabled)
-    #   Original call from claude:
-    #    ax_ulay = plot_drm_planet_overlay(ax, mode)
-    #   Tinkering with an alternate axis setup:
-    #    ax_ulay = plot_drm_planet_overlay(fig, mode)
-    #
+    ax_ulay = plot_drm_planet_overlay(fig, mode)
     # Rectangle underlay
     place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra)
     
+    # without this, the axis grid will over-write the planets
+    ax.set_facecolor('none')
+    # (below are related alternatives -- not duplicated elsewhere below)
+    #ax.patch.set_facecolor('none')
+    #fig.set_facecolor('none')
+
     # Write the plots
     write_plots(fig, 'radlum-population')
     plt.close(fig)
@@ -480,9 +451,11 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet + rectangle underlays
+    plot_drm_planet_overlay(fig, mode)
     place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra)
     
     # Write the plots
+    ax.set_facecolor('none')
     write_plots(fig, 'radlum-det')
     plt.close(fig)
     
@@ -544,9 +517,11 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet + rectangle underlays
+    plot_drm_planet_overlay(fig, mode)
     place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra)
     
     # Write the plots
+    ax.set_facecolor('none')
     write_plots(fig, 'radlum-det-all')
     plt.close(fig)
     
@@ -678,9 +653,11 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
         
         # Planet + rectangle underlays
+        plot_drm_planet_overlay(fig, mode)
         place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra)
         
         # Write the plots
+        ax.set_facecolor('none')
         write_plots(fig, plot_file)
         plt.close(fig)
     
@@ -692,7 +669,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         ['_', '', 'radlum-char-snr'],
     ]
     # marker adjustment because SNR plot is different
-    ebar_props_snr = dict(ebar_props, markersize=7, markerfacecolor='tab:blue')
+    ebar_props_snr = dict(ebar_props, markersize=8, markerfacecolor='tab:blue')
 
     for plot_num, plot_spec in enumerate(snr_plot_menu):
         if len(plot_spec) != 3:
@@ -723,9 +700,9 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         q75 = t_radlum[f'h_RpL_char_snr{plot_prop}q75'].values
         
         ax.errorbar(x_bin, q50,
-                   yerr=[q50 - q25, q75 - q50],
-                   fmt='o',
-                   **ebar_props_snr)
+                    yerr=[q50 - q25, q75 - q50],
+                    fmt='o',
+                    **ebar_props_snr)
         
         # Add Earth
         q50_e = t_earth[f'exoE_char_snr{plot_prop}q50'].values[0]
@@ -735,8 +712,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         ax.errorbar(-x_bin_xtra, q50_e,
                     yerr=[[q50_e - q25_e], [q75_e - q50_e]],
                     fmt='o',
-                    # markersize=10, 
-                    **ebar_props)
+                    **ebar_props_snr)
         
         # Limit plot y-range
         # (A) SNR cannot be negative, but error bars sometimes go < 0
@@ -755,12 +731,14 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
         
         # Planet + rectangle underlays
+        plot_drm_planet_overlay(fig, mode)
         place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra)
         
         # Put the axis grid on top of the above annotations
         ax.set_axisbelow(False)
         
         # Write the plots
+        ax.set_facecolor('none')
         write_plots(fig, plot_file)
         plt.close(fig)
 
