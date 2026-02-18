@@ -624,6 +624,25 @@ class SimSummary(object):
         self.csvs = []
         self.readme_info = '' # one-line summary
         self.readme_file = '' # filename
+        self.graphics_origin = self.load_graphics_origin()
+
+    def load_graphics_origin(self):
+        r'''If possible, load metadata of graphical file origins.'''
+        # Note that the big try/except will mask all errors!
+        maps = dict()
+        try:
+            # working dir is at top of sim
+            fn = 'gfx/det-plot-list.csv'
+            with open(fn, 'r') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    key = row.pop('graphics_file')
+                    maps[key] = row
+        except:
+            # For debugging: raise here
+            pass
+        return maps
+                     
 
     def add(self, filename):
         r'''Dispatcher: adds filename to the correct category of item.'''
@@ -911,10 +930,29 @@ class SimSummary(object):
                     if target:
                         hh.paragraph(f'No such plots.  Generate with: make S=... {target}')
                 else:
+                    # make a table of plots
                     hh.table_top(('Filename', 'Plot Preview'), elem_class='gfx')
                     for p in sorted(plots):
                         img = hh.image(p, width=100, inner=True)
-                        hh.table_row((os.path.basename(p), img))
+                        plot_base = os.path.basename(p)
+                        # look up where the file came from
+                        plot_info = self.graphics_origin.get(plot_base, dict())
+                        # if we found it, add a tooltip, if not, the filename only
+                        if 'routine' in plot_info:
+                            # tooltip HTML element classes are picked up by CSS styles (no JS needed)
+                            dingbat = '&#9432;' # a circled "i"
+                            # inner: displayed tooltip => <span> info </span>
+                            inner_span = hh.span(
+                                '<br>'.join(
+                                    [f"From: {plot_info['routine']}"] +
+                                    [f"Using: {f}" for f in plot_info['data_files'].split(';')]),
+                                **{'class': 'tooltiptext', 'style': 'text-align:left'})
+                            # outer: whole table cell => <span> img.png (i) [inner] </span>
+                            txt = hh.span(f'{plot_base} &nbsp;{dingbat}{inner_span}',
+                                             **{'class': 'tooltip'})
+                        else:
+                            txt = plot_base
+                        hh.table_row((txt, img))
                     hh.table_end()
             # single-run plots: path movies, keepout, obs-timelines
             hh.header('Single-Run Paths and Timelines')
@@ -1262,7 +1300,7 @@ def reduce_info_summary(d):
     unknown_value = '(n/a)' # ()'s help sort order
     try:
         with open(info_fn) as f:
-            info_items = csv.DictReader(f);
+            info_items = csv.DictReader(f)
             info = next(info_items) # it is a 1-line csv
         # make the return value
         rv = OrderedDict()

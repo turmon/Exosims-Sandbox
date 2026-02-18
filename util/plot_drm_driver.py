@@ -383,7 +383,7 @@ Optional arguments:
     if all_records:
         fn_csv = args.dest_tmpl % ('plot-list', 'csv')
         with open(fn_csv, 'w') as fp:
-            fp.write('graphics_file,routine,csv_files\n')
+            fp.write('graphics_file,routine,data_files\n')
             for gfx_file, routine, csv_files in all_records:
                 fp.write(f'{gfx_file},{routine},{";".join(csv_files)}\n')
 
