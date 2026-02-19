@@ -106,8 +106,8 @@ REDUCE_PROG=util/reduce_drms.py
 # (-E: expand the given "parent" dir to subdirs with Ensembles)
 REDUCE_ENS_PROG=util/reduce_drm_sets.py -E
 # programs used for matlab/python graphics
-GRAPHICS_PROG=util/plot_drms.sh
-GRAPHALT_PROG=util/plot_drm_driver.py
+GRAPHOLD_PROG=util/plot_drms.sh
+GRAPHICS_PROG=util/plot_drm_driver.py
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -q
 # generates tables
 TABLES_PROG=util/tabulate_csv.py -q
@@ -259,34 +259,43 @@ $(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(subst 
 
 
 ########################################
-## Graphics - detections, fuel use
-## (original Matlab version)
+## Graphics
 ##
-.PHONY: graphics
-# delegate to the graphics status file
-graphics: script-exists sims/$(S)/gfx/det-info.txt
 
-# just one ensemble's graphics
-sims/$(S)/gfx/det-info.txt: sims/$(S)/reduce-info.csv
-	@ echo "Make: Graphics plotting into $(@D) ..."
+.PHONY: graphics graphics-old graphics-clean graphics-extra
+# distinguished sentinel file for make dependency chain
+GRAPHICS_SENTINEL:=sims/$(S)/gfx/det-info.txt
+
+# ** This is the main graphics target **
+# delegate to the graphics sentinel file
+graphics: script-exists $(GRAPHICS_SENTINEL)
+
+# newer graphics - one ensemble
+$(GRAPHICS_SENTINEL): sims/$(S)/reduce-info.csv
+	@ echo "Make: Graphics (new-format) into $(@D) ..."
 	@ rm -f sims/$(S)/gfx/det-*.*
 	$(GRAPHICS_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
 	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
-########################################
-## Graphics - detections, fuel use
-## (matplotlib version)
-##
-.PHONY: graphics-alt
-# delegate to an ALT graphics status file
-graphics-alt: script-exists sims/$(S)/gfx/det-info-ALT.txt
 
-# just one ensemble's graphics
-# the cp moves the "ALT" sentinel file into place
-sims/$(S)/gfx/det-info-ALT.txt: sims/$(S)/reduce-info.csv
-	@ echo "Make: mpl Graphics plotting into $(@D) ..."
+# imperatively remove existing graphics, allowing clean re-make
+graphics-clean: script-exists
+	@ echo "Make: Removing old graphics in sims/$(S)/gfx ..."
+	rm -f sims/$(S)/gfx/det-*.*
+
+# legacy graphics - one ensemble
+# this is imperative, not delegated to $(GRAPHICS_SENTINEL)
+graphics-old: script-exists sims/$(S)/reduce-info.csv
+	@ echo "Make: Graphics (legacy) into sims/$(S)/gfx ..."
 	@ rm -f sims/$(S)/gfx/det-*.*
-	$(GRAPHALT_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
-	@ cp -p sims/$(S)/gfx/det-info.txt sims/$(S)/gfx/det-info-ALT.txt
+	$(GRAPHOLD_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
+	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
+
+# extra (and normal) graphics - one ensemble
+# this is imperative, not delegated to $(GRAPHICS_SENTINEL)
+graphics-extra: script-exists sims/$(S)/reduce-info.csv
+	@ echo "Make: Graphics (normal + extras) into sims/$(S)/gfx ..."
+	@ rm -f sims/$(S)/gfx/det-*.*
+	$(GRAPHICS_PROG) --mode_op + sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
 	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
 
 ########################################
