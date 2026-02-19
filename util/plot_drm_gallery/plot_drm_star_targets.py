@@ -139,16 +139,20 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     # plot, with a variable to plot, units, filename output, etc.
     #
     # Variable format in each row below:
-    #   'h_star_...'    -> entry in the t_star_targ table
-    #   passthru/np.log10 -> variable transform for the color-coding
-    #   True/False -> put on the "we visited this" overlay (for Earths)
-    #   'Title'    -> plot title
-    #   'unit'     -> plot color-coding label (x/y axis are always dist/lum)
-    #   'perstar_...' -> output filename component
+    #   'h_star_...'       -> entry in the t_star_targ table
+    #   passthru/quiet_log -> variable transform for the color-coding
+    #   True/False         -> put on the "we visited this" overlay (for Earths)
+    #   'Title'            -> plot title
+    #   'unit'             -> plot color-coding label (x/y axis are always dist/lum)
+    #   'perstar_...'      -> output filename component
     
     # Dummy function to pass matrix through unchanged
     passthru = lambda x: x
     
+    # Rank (_value_) is C/t, and it can be zero, resulting in warnings
+    # when the log is taken. This converts 0 => NaN, avoiding the warning
+    quiet_log10 = lambda x: np.log10(np.where(x > 0, x, np.nan))
+
     plot_menu = [
         ['h_star_det_plan_cume_mean', passthru, False,
          'Mean Total Detections', 'count',
@@ -180,25 +184,25 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         ['h_star_char_tInt_mean', passthru, False,
          'Mean Integration Time (Char.)', 'day',
          'perstar-char-t-int'],
-        ['h_star_det_plan_value_mean', np.log10, False,
+        ['h_star_det_plan_value_mean', quiet_log10, False,
          'Detection Rank', 'log$_{10}$ count/day',
          'perstar-det-allplan-rank'],
         ['h_star_det_plan_frac_mean', passthru, False,
          'Planets Detected/Planets Present', 'count/count',
          'perstar-det-allplan-frac'],
-        ['h_star_char_plan_value_mean', np.log10, False,
+        ['h_star_char_plan_value_mean', quiet_log10, False,
          'Characterization Rank', 'log$_{10}$ count/day',
          'perstar-char-allplan-rank'],
         ['h_star_char_plan_frac_mean', passthru, False,
          'Planets Characterized/Planets Present', 'count/count',
          'perstar-char-allplan-frac'],
-        ['h_star_det_earth_value_mean', np.log10, True,
+        ['h_star_det_earth_value_mean', quiet_log10, True,
          'Earth Detection Rank', 'log$_{10}$ count/day',
          'perstar-det-earth-rank'],
         ['h_star_det_earth_frac_mean', passthru, True,
          'Earths Detected/Earths Present', 'count/count',
          'perstar-det-earth-frac'],
-        ['h_star_char_earth_value_mean', np.log10, True,
+        ['h_star_char_earth_value_mean', quiet_log10, True,
          'Earth Characterization Rank', 'log$_{10}$ count/day',
          'perstar-char-earth-rank'],
         ['h_star_char_earth_frac_mean', passthru, True,
