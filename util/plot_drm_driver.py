@@ -41,20 +41,38 @@ PROGNAME = os.path.basename(sys.argv[0])
 #     typically made by a given function
 PLOT_REGISTRY = [
     {
+    # lots of plots => put near top
+        'name': 'star_targets',
+        'module': 'plot_drm_star_targets',
+        'function': 'plot_drm_star_targets',
+        'csv_files': ['star-target'],
+        'enabled': True,
+        'mode': {}, # extra mode settings for this plot
+    },
+    {
+    # lots of plots => put near top
+        'name': 'promote',
+        'module': 'plot_drm_promote',
+        'function': 'plot_drm_promote',
+        'csv_files': ['promote', 'promote-hist'],
+        'enabled': True,
+        'mode': {},
+    },
+    {
+        'name': 'radlum',
+        'module': 'plot_drm_radlum',
+        'function': 'plot_drm_radlum',
+        'csv_files': ['radlum', 'earth'],
+        'enabled': True,
+        'mode': {},
+    },
+    {
         'name': 'yield_times',
         'module': 'plot_drm_yield_times',
         'function': 'plot_drm_yield_times',
         'csv_files': ['yield-time'],
         'enabled': True,
-        'mode': {},  # Additional mode settings for this plot
-    },
-    {
-        'name': 'fuel_used',
-        'module': 'plot_drm_fuel_used',
-        'function': 'plot_drm_fuel_used',
-        'csv_files': ['times'],
-        'enabled': True,
-        'mode': {},
+        'mode': {},  
     },
     {
         'name': 'events',
@@ -81,6 +99,14 @@ PLOT_REGISTRY = [
         'mode': {},
     },
     {
+        'name': 'fuel_used',
+        'module': 'plot_drm_fuel_used',
+        'function': 'plot_drm_fuel_used',
+        'csv_files': ['times'],
+        'enabled': True,
+        'mode': {},
+    },
+    {
         'name': 'time_used',
         'module': 'plot_drm_time_used',
         'function': 'plot_drm_time_used',
@@ -89,34 +115,10 @@ PLOT_REGISTRY = [
         'mode': {},
     },
     {
-        'name': 'promote',
-        'module': 'plot_drm_promote',
-        'function': 'plot_drm_promote',
-        'csv_files': ['promote', 'promote-hist'],
-        'enabled': True,
-        'mode': {},
-    },
-    {
-        'name': 'star_targets',
-        'module': 'plot_drm_star_targets',
-        'function': 'plot_drm_star_targets',
-        'csv_files': ['star-target'],
-        'enabled': True,
-        'mode': {},
-    },
-    {
         'name': 'earth_chars',
         'module': 'plot_drm_earth_chars',
         'function': 'plot_drm_earth_chars',
         'csv_files': ['earth-char-list'],
-        'enabled': True,
-        'mode': {},
-    },
-    {
-        'name': 'radlum',
-        'module': 'plot_drm_radlum',
-        'function': 'plot_drm_radlum',
-        'csv_files': ['radlum', 'earth'],
         'enabled': True,
         'mode': {},
     },
