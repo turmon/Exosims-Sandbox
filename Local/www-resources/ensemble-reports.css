@@ -82,6 +82,7 @@ body {
 nav ul {
     font-weight: bold;
     background-color: lightsteelblue;
+    z-index: 10; /* nav floats above JS plot widget and tooltips */
 }
 nav li {
     position: relative;
@@ -110,14 +111,14 @@ nav li a:hover {
 .level-1 {
     /*border-bottom: 1px solid #71200f;*/
     position:fixed;
-    padding-left: 2em;
+    padding-left: 1em;
     border: 2px solid DarkRed;
     top:0;
 }
 .level-2,
 .level-3 {
-    padding-left: 1em;
-    min-width: 20em; /* menu item width */
+    padding-left: 0.5em;
+    min-width: 20em; /* menu item width, 2026/02 is minimal to fit */
     border: 2px solid DarkRed;
 }
 
