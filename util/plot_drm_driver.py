@@ -16,6 +16,8 @@ import sys
 import os
 import time
 import argparse
+import matplotlib
+matplotlib.use('Agg')
 import pandas as pd
 import importlib
 from pathlib import Path
@@ -238,6 +240,22 @@ def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
         # return None, []
 
 
+def _worker_run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
+    """Module-level wrapper for multiprocessing.
+
+    Same as run_one_plot, but prints the full traceback in the worker
+    process before re-raising, so the user sees clear error output
+    even though multiprocessing truncates remote tracebacks."""
+    try:
+        return run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode)
+    except Exception:
+        import traceback
+        name = plot_config.get('name', '???')
+        print(f"{PROGNAME}: Exception in worker for '{name}':\n"
+              f"{traceback.format_exc()}", file=sys.stderr, flush=True)
+        raise
+
+
 def main():
     """
     Main driver function
@@ -259,6 +277,7 @@ Optional arguments:
     --only PLOT         Run only the specified plot (by name)
     --skip PLOT         Skip the specified plot (by name), can repeat
     --list              List all available plots and exit
+    --jobs N, -j N      Number of parallel workers (default: auto; 0 or 1 for serial)
     --mode_op OP        Global mode.op string (default: ""; "+" => extra plots)
     --pdf               Graphical output to PDF also
     --verbose, -v       More verbose progress messages (repeat for even more)
@@ -279,7 +298,9 @@ Optional arguments:
     parser.add_argument('--mode_op', type=str, default='',
                        help='All-plot mode operation string (default: "")')
     parser.add_argument('--pdf', action='store_true', help='Output PDFs also')
-    parser.add_argument('--verbose', '-v', action='count', default=1, 
+    parser.add_argument('--jobs', '-j', type=int, default=None, metavar='N',
+                       help='Number of parallel workers (default: auto; 0 or 1 for serial)')
+    parser.add_argument('--verbose', '-v', action='count', default=1,
                        help='Verbosity')
     parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
     
@@ -345,6 +366,14 @@ Optional arguments:
         return 1 # error-out
 
     ##
+    ## Compute effective job count
+    ##
+    n_plots = len(plots_to_run)
+    if args.jobs is None:
+        args.jobs = min(os.cpu_count(), (n_plots + 1) // 2)
+    args.jobs = min(args.jobs, n_plots)  # never more workers than plots
+
+    ##
     ## Make the desired plots
     ##
     if args.verbose > 1:
@@ -352,16 +381,32 @@ Optional arguments:
         print(f"{args.progname}: \tSource template: {args.src_tmpl}")
         print(f"{args.progname}: \tDestination template: {args.dest_tmpl}")
 
+    if args.jobs <= 1:
+        # Serial execution -- exceptions re-raised for debugging
+        results = []
+        for plot in plots_to_run:
+            results.append(run_one_plot(plot,
+                                        args.reduce_info,
+                                        args.src_tmpl,
+                                        args.dest_tmpl,
+                                        overall_mode))
+    else:
+        # Parallel execution
+        import multiprocessing as mp
+        if args.verbose > 0:
+            print(f"{args.progname}: Using {args.jobs} parallel workers.")
+        with mp.Pool(processes=args.jobs) as pool:
+            results = pool.starmap(
+                _worker_run_one_plot,
+                [(plot, args.reduce_info, args.src_tmpl, args.dest_tmpl,
+                  overall_mode) for plot in plots_to_run])
+
+    # Tally results
     ok_count = 0
     fail_count = 0
     skip_count = 0
     all_records = []
-    for plot in plots_to_run:
-        ok, files_written = run_one_plot(plot,
-                                         args.reduce_info,
-                                         args.src_tmpl,
-                                         args.dest_tmpl,
-                                         overall_mode)
+    for plot, (ok, files_written) in zip(plots_to_run, results):
         if ok is True:
             ok_count += 1
         elif ok is None:
