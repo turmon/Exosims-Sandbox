@@ -221,16 +221,27 @@ def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
             print(f"{PROGNAME}: {name} successful.")
         return True, files_written
 
-    # these are (probably!) configuration errors, not datafile errors
-    # we turn them in to skips, hopeful that they'll be noticed and fixed
+    # These handlers catch configuration errors (bad name in PLOT_REGISTRY),
+    # not code errors within the plot modules themselves.
     except ImportError as e:
-        print(f"{PROGNAME}: Skipping {name}: Could not import {module_name}: {e}",
-              file=sys.stderr)
-        return False, []
+        # Distinguish "gallery module not found" (registry typo) from
+        # "gallery module has a bad import" (code bug).  Only the former
+        # is a skip; the latter must propagate as a hard error.
+        target = f"plot_drm_gallery.{module_name}"
+        if isinstance(e, ModuleNotFoundError) and e.name == target:
+            print(f"{PROGNAME}: Skipping {name}: Could not import {module_name}: {e}",
+                  file=sys.stderr)
+            return False, []
+        raise
     except AttributeError as e:
-        print(f"{PROGNAME}: Skipping {name}: Function {function_name} not in {module_name}: {e}",
-              file=sys.stderr)
-        return False, []
+        # importlib.import_module succeeded, but the function name is wrong.
+        # Only skip if the module lacks the attribute; if the error came from
+        # inside the plot function, let it propagate.
+        if not hasattr(module, function_name):
+            print(f"{PROGNAME}: Skipping {name}: Function {function_name} not in {module_name}: {e}",
+                  file=sys.stderr)
+            return False, []
+        raise
     except Exception as e:
         # random exception is a hard error
         print(f"{PROGNAME}: Error running {function_name}(). Re-raising the exception.",
