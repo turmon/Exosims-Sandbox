@@ -25,6 +25,7 @@ import os
 import sys
 import pickle
 import argparse
+import warnings
 from collections import defaultdict
 import pandas as pd
 import numpy as np
@@ -72,6 +73,21 @@ def dump_vanilla(args, pmf_df, outfile):
     <h2>Detection Visit Report</h2>
     '''
 
+    # HTML technical explanation
+    explanation = r"""<p>
+    Ndet is the number of detections, across the ensemble,
+    for the named star. This is also the number of samples
+    going in to the PMF columns P(Vn).
+    <p>
+    Nchar is the number of characterizations, across the ensemble,
+    for the named star, and also the number of samples going
+    in to the PMF columns P(CVn).
+    <p>
+    P(Vn) (respectively, P(CVn)) is the probability, across the ensemble, that
+    the n'th detection (resp., characterization) visit was
+    the first successful visit.
+    """
+
     # dict of column formatters
     formatters = {}
     for col in pmf_df.columns:
@@ -88,7 +104,7 @@ def dump_vanilla(args, pmf_df, outfile):
         f.write(body_begin % (args.scenario_short, args.scenario_id, args.Nens))
         # f.write(f"<p>Scenario: {scenario_id}</p>\n")
         # f.write(styled.to_html())
-        f.write(f"<p>Ndet is the number of detections, across the ensemble, for the named star. This is also the number of samples going in to the PMF columns P(Vn).\n</p>")
+        f.write(explanation)
         f.write(
             pmf_df.to_html(
                 formatters=formatters,
@@ -207,13 +223,35 @@ def standardize(spc, entry):
         entry['star_name'] = spc['Name'][entry['star_ind']]
 
 
+def get_char_status(obs):
+    r'''Abstract away obs differences. True iff any band, any planet had success.'''
+    final_status = False
+    if 'char_info' in obs:
+        char_info = obs['char_info']
+    else:
+        char_info = [obs]
+    # written w/o comprehensions because it may need generalization
+    for char in char_info:
+        char_status = char['char_status']
+        if np.any(char_status == 1):
+            final_status = True
+    return final_status
+
+ 
 def process_drms(args):
     r'''Do all data processing for the entire ensemble of DRMs'''
     
-    # counters and storage for detections and per-star completeness & rank
+    # counters and storage for detections
     first_detection_counts = defaultdict(int)
     star_first_detection_counts = defaultdict(lambda: defaultdict(int))
     total_star_detections = defaultdict(int)
+
+    # counters and storage for chars
+    first_char_counts = defaultdict(int)
+    star_first_char_counts = defaultdict(lambda: defaultdict(int))
+    total_star_chars = defaultdict(int)
+
+    # storage for per-star completeness & rank
     star_completeness = defaultdict(list)
     star_rank = defaultdict(list)
 
@@ -246,11 +284,14 @@ def process_drms(args):
         ## 
         # group observations by star name
         per_star_obs = defaultdict(list)
+        per_star_chr = defaultdict(list)
         for entry in drm:
             standardize(spc, entry)
             per_star_obs[entry['star_name']].append(entry)
+            if 'char_status' in entry:
+                per_star_chr[entry['star_name']].append(entry)
 
-        # process each star’s observations
+        # process each star's detection observations
         for star_name, obs_list in per_star_obs.items():
 
             # check for the first detection (need a 1 in det_status)
@@ -292,6 +333,21 @@ def process_drms(args):
             star_completeness[star_name].append(completeness)
             star_rank[star_name].append(rank)
 
+        # process each star's characterization observations
+        #   grafted on later: should perhaps be a separate tabulation
+        #   undecided if should count char visits or char successes or both
+        for star_name, obs_list in per_star_chr.items():
+            # check on which visit chars happened
+            for idx, obs in enumerate(obs_list):
+                # abstract away multi-band chars, multi-planets, etc.
+                # True iff any band had any success
+                char_status = get_char_status(obs)
+                # count successes
+                if char_status:
+                    first_char_counts[idx + 1] += 1
+                    star_first_char_counts[star_name][idx + 1] += 1
+                    total_star_chars[star_name] += 1
+
     # Summarize
     if Nskip > 0:
         print(f'{args.progname}: Skipped {Nskip}, loaded {Nens} DRM/SPC files.')
@@ -303,18 +359,28 @@ def process_drms(args):
     ## 2 -- Average across ensemble
     ## 
 
-    # compute averages across all stars
-    avg_star_completeness = {
-        k: np.nanmean(v) for k, v in star_completeness.items()
-    }
-    avg_star_rank = {
-        k: np.nanmean(v) for k, v in star_rank.items()
-    }
+    with warnings.catch_warnings():
+        # suppress warning for all-nan values (no successful obs?)
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        # average across all obs for star k
+        avg_star_completeness = {
+            k: np.nanmean(v) for k, v in star_completeness.items()
+        }
+        avg_star_rank = {
+            k: np.nanmean(v) for k, v in star_rank.items()
+        }
 
-    # figure out the maximum visit number seen in order to scale the table
-    # columns accordingly
+    # maximum visit number seen
+    # (make a uniform number of PMF entries, and table columns)
     max_visits = max(
         (max(v.keys(), default=0) for v in star_first_detection_counts.values()),
+        default=0
+    )
+
+    # maximum characterization number
+    # (make a uniform number of PMF entries, and table columns)
+    max_visits_char = max(
+        (max(v.keys(), default=0) for v in star_first_char_counts.values()),
         default=0
     )
 
@@ -324,18 +390,36 @@ def process_drms(args):
 
     # accumulate star-by-star summaries
     star_data = []
+    tau = 0.0
     for star_name, visit_counts in star_first_detection_counts.items():
+        # we key off of detections, but we compile chars too
+        char_visit_counts = star_first_char_counts.get(star_name, dict())
+                                                 
         # Make a summary row for this star
         total_detects = total_star_detections[star_name]
         pmf_columns = {}
-        tau = 0.0
         for visit in range(1, max_visits + 1):
             prob = visit_counts.get(visit, 0) / total_detects
             # drop the count if it is <= tau (is negligible)
-            tau = 0.0
             pmf_columns[f'P(V{visit})'] = (
                 f'{prob:.2f}' if prob > tau else ''
             )
+
+        # char summary columns for this star
+        total_chars = total_star_chars[star_name]
+        char_pmf = {}
+        for visit in range(1, max_visits_char + 1):
+            # this 0/0 can happen ... stars without a successful char (?)
+            if total_chars > 0:
+                prob = char_visit_counts.get(visit, 0) / total_chars
+            else:
+                prob = 0.0
+            # drop the count if it is <= tau (is negligible)
+            char_pmf[f'P(CV{visit})'] = (
+                f'{prob:.2f}' if prob > tau else ''
+            )
+
+        # add the row
         star_data.append({
             'Star': star_name,
             'Spec': spc_lookup('Spec', spc, star_name),
@@ -344,7 +428,9 @@ def process_drms(args):
             'Completeness': avg_star_completeness.get(star_name, np.nan),
             'Rank (C/t [1/day])': avg_star_rank.get(star_name, np.nan),
             'Ndet': total_detects,
-            **pmf_columns
+            **pmf_columns,
+            'Nchar': total_chars,
+            **char_pmf
         })
 
     # make a dataframe, and sort by rank
@@ -380,17 +466,17 @@ def dump(args, pmf_df):
         print(f"{args.progname}: Warning: Output table will be empty.")
 
     # switch output formats
-    # PANDAS_TABLE = True
-    PANDAS_TABLE = False
-
-    if PANDAS_TABLE:
+    if args.pandas:
         dump_pandas(args, pmf_df, output_doc)
     else:
         dump_vanilla(args, pmf_df, output_doc)
     print(f"{args.progname}: Table saved to {output_doc}")
 
     # dump also as csv -- convert the "no visits" entries to 0.0
-    visit_columns = [col for col in pmf_df.columns if 'P(V' in col]
+    # (keep it simple)
+    visit_columns = (
+        [col for col in pmf_df.columns if 'P(V' in col] +
+        [col for col in pmf_df.columns if 'P(CV' in col])
 
     # Replace empty strings with 0.0 in those columns
     pmf_df[visit_columns] = pmf_df[visit_columns].replace('', 0.0)
@@ -442,6 +528,7 @@ if __name__ == '__main__':
     parser.add_argument('scenario', metavar='SCENARIO', help='single scenario directory name')
     parser.add_argument('-o', '--outdir', metavar='DIR', help='output directory name (default = SCENARIO/sched)', default='')
     parser.add_argument('-N', '--Nmax', type=int, default=0, help='Limit on DRM count (limits runtime to ease testing; default=ALL)')
+    parser.add_argument('--pandas', help='pandas HTML generator', action='store_true')
     parser.add_argument('-v', help='verbosity', action='count', dest='verbose',
                             default=0)
     args = parser.parse_args()
