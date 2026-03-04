@@ -84,8 +84,8 @@ def dump_vanilla(args, pmf_df, outfile):
     in to the PMF columns P(CVn).
     <p>
     P(Vn) (respectively, P(CVn)) is the probability, across the ensemble, that
-    the n'th detection (resp., characterization) visit was
-    the first successful visit.
+    the n'th detection visit (resp., characterization visit)
+    was the first successful one.
     """
 
     # dict of column formatters
