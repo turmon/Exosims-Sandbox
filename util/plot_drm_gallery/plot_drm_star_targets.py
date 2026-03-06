@@ -59,6 +59,9 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         perstar-det-tint-yield.png, perstar-char-tint-yield.png
     """
 
+    # Make extra plots?
+    extra_plots = '+' in mode.get('op', '')
+
     # Unpack CSV data
     t_star_targ, = plot_data
 
@@ -153,62 +156,66 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     # when the log is taken. This converts 0 => NaN, avoiding the warning
     quiet_log10 = lambda x: np.log10(np.where(x > 0, x, np.nan))
 
-    plot_menu = [
-        ['h_star_det_plan_cume_mean', passthru, False,
-         'Mean Total Detections', 'count',
-         'perstar-det-allplan-cume'],
-        ['h_star_det_plan_uniq_mean', passthru, False,
-         'Mean Unique Detections', 'count',
-         'perstar-det-allplan-uniq'],
-        ['h_star_det_earth_cume_mean', passthru, True,
-         'Mean Total Detections: Earth', 'count',
-         'perstar-det-earth-cume'],
-        ['h_star_det_earth_uniq_mean', passthru, True,
-         'Mean Unique Detections: Earth', 'count',
-         'perstar-det-earth-uniq'],
-        ['h_star_char_plan_cume_mean', passthru, False,
-         'Mean Total Characterizations', 'count',
-         'perstar-char-allplan-cume'],
-        ['h_star_char_plan_uniq_mean', passthru, False,
-         'Mean Unique Characterizations', 'count',
-         'perstar-char-allplan-uniq'],
-        ['h_star_char_earth_cume_mean', passthru, True,
-         'Mean Total Characterizations: Earth', 'count',
-         'perstar-char-earth-cume'],
-        ['h_star_char_earth_uniq_mean', passthru, True,
-         'Mean Unique Characterizations: Earth', 'count',
-         'perstar-char-earth-uniq'],
-        ['h_star_det_tInt_mean', passthru, False,
-         'Mean Integration Time (Det.)', 'day',
-         'perstar-det-t-int'],
-        ['h_star_char_tInt_mean', passthru, False,
-         'Mean Integration Time (Char.)', 'day',
-         'perstar-char-t-int'],
-        ['h_star_det_plan_value_mean', quiet_log10, False,
-         'Detection Rank', 'log$_{10}$ count/day',
-         'perstar-det-allplan-rank'],
-        ['h_star_det_plan_frac_mean', passthru, False,
-         'Planets Detected/Planets Present', 'count/count',
-         'perstar-det-allplan-frac'],
-        ['h_star_char_plan_value_mean', quiet_log10, False,
-         'Characterization Rank', 'log$_{10}$ count/day',
-         'perstar-char-allplan-rank'],
-        ['h_star_char_plan_frac_mean', passthru, False,
-         'Planets Characterized/Planets Present', 'count/count',
-         'perstar-char-allplan-frac'],
-        ['h_star_det_earth_value_mean', quiet_log10, True,
-         'Earth Detection Rank', 'log$_{10}$ count/day',
-         'perstar-det-earth-rank'],
-        ['h_star_det_earth_frac_mean', passthru, True,
-         'Earths Detected/Earths Present', 'count/count',
-         'perstar-det-earth-frac'],
-        ['h_star_char_earth_value_mean', quiet_log10, True,
-         'Earth Characterization Rank', 'log$_{10}$ count/day',
-         'perstar-char-earth-rank'],
-        ['h_star_char_earth_frac_mean', passthru, True,
-         'Earths Characterized/Earths Present', 'count/count',
-         'perstar-char-earth-frac'],
-    ]
+    if not extra_plots:
+        # these are best made by the interactive plot tool now
+        plot_menu = []
+    else:
+        plot_menu = [
+                ['h_star_det_plan_cume_mean', passthru, False,
+                 'Mean Total Detections', 'count',
+                 'perstar-det-allplan-cume'],
+                ['h_star_det_plan_uniq_mean', passthru, False,
+                 'Mean Unique Detections', 'count',
+                 'perstar-det-allplan-uniq'],
+                ['h_star_det_earth_cume_mean', passthru, True,
+                 'Mean Total Detections: Earth', 'count',
+                 'perstar-det-earth-cume'],
+                ['h_star_det_earth_uniq_mean', passthru, True,
+                 'Mean Unique Detections: Earth', 'count',
+                 'perstar-det-earth-uniq'],
+                ['h_star_char_plan_cume_mean', passthru, False,
+                 'Mean Total Characterizations', 'count',
+                 'perstar-char-allplan-cume'],
+                ['h_star_char_plan_uniq_mean', passthru, False,
+                 'Mean Unique Characterizations', 'count',
+                 'perstar-char-allplan-uniq'],
+                ['h_star_char_earth_cume_mean', passthru, True,
+                 'Mean Total Characterizations: Earth', 'count',
+                 'perstar-char-earth-cume'],
+                ['h_star_char_earth_uniq_mean', passthru, True,
+                 'Mean Unique Characterizations: Earth', 'count',
+                 'perstar-char-earth-uniq'],
+                ['h_star_det_tInt_mean', passthru, False,
+                 'Mean Integration Time (Det.)', 'day',
+                 'perstar-det-t-int'],
+                ['h_star_char_tInt_mean', passthru, False,
+                 'Mean Integration Time (Char.)', 'day',
+                 'perstar-char-t-int'],
+                ['h_star_det_plan_value_mean', quiet_log10, False,
+                 'Detection Rank', 'log$_{10}$ count/day',
+                 'perstar-det-allplan-rank'],
+                ['h_star_det_plan_frac_mean', passthru, False,
+                 'Planets Detected/Planets Present', 'count/count',
+                 'perstar-det-allplan-frac'],
+                ['h_star_char_plan_value_mean', quiet_log10, False,
+                 'Characterization Rank', 'log$_{10}$ count/day',
+                 'perstar-char-allplan-rank'],
+                ['h_star_char_plan_frac_mean', passthru, False,
+                 'Planets Characterized/Planets Present', 'count/count',
+                 'perstar-char-allplan-frac'],
+                ['h_star_det_earth_value_mean', quiet_log10, True,
+                 'Earth Detection Rank', 'log$_{10}$ count/day',
+                 'perstar-det-earth-rank'],
+                ['h_star_det_earth_frac_mean', passthru, True,
+                 'Earths Detected/Earths Present', 'count/count',
+                 'perstar-det-earth-frac'],
+                ['h_star_char_earth_value_mean', quiet_log10, True,
+                 'Earth Characterization Rank', 'log$_{10}$ count/day',
+                 'perstar-char-earth-rank'],
+                ['h_star_char_earth_frac_mean', passthru, True,
+                 'Earths Characterized/Earths Present', 'count/count',
+                 'perstar-char-earth-frac'],
+            ]
     
     # This loop runs through the table above
     for plot_num, plot_spec in enumerate(plot_menu):
@@ -266,8 +273,8 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     # Change to another plot format
     ####################################################################
     
-    # Alternative Plot: tInt vs. yield -- Detections
     ####################################################################
+    # Alternative Plot: tInt vs. yield -- Detections
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     
@@ -299,8 +306,8 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     write_plots(fig, 'perstar-det-tint-yield')
     plt.close(fig)
     
-    # Alternative Plot: tInt vs. yield -- Characterizations
     ####################################################################
+    # Alternative Plot: tInt vs. yield -- Characterizations
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     

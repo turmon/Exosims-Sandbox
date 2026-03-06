@@ -326,7 +326,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     ax1.bar(h_bins1, h_promo_fail, width=width,
             bottom=h_deep_fail,
             label='Promoted Targets',
-            color='tab:olive',
+            color='xkcd:pumpkin',
             **bar_props)
     
     plot_props = {
@@ -343,7 +343,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
                                 out=np.zeros_like(h_promo_fail, dtype=float),
                                 where=(h_promo > 0))
     ax2.plot(h_bins1, deep_fail_rate, color='tab:blue', **plot_props)
-    ax2.plot(h_bins1, promo_fail_rate, color='tab:olive', **plot_props)
+    ax2.plot(h_bins1, promo_fail_rate, color='xkcd:pumpkin', **plot_props)
     
     # Style the plot
     ax1.grid(True)
@@ -396,7 +396,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
            **bar_props)
     ax.bar(h_bins1, h_promo, width=width, 
            bottom=h_deep,
-           color='tab:olive',
+           color='xkcd:pumpkin',
            label='Promoted Targets',
            **bar_props)
     
