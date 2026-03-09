@@ -50,6 +50,9 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         earth-char-count-strict.png, earth-char-count-all.png
     """
 
+    # Make extra plots?
+    extra_plots = '+' in mode.get('op', '')
+
     # Unpack CSV data
     t_counts, t_earth_counts = plot_data
     
@@ -245,10 +248,10 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     plt.close(fig)
     
     ####################################################################
-    # Earth Characterization Counts
+    # Earth Characterization Counts -- Combined line plot
     ####################################################################
     
-    # Allow early exit if data not present
+    # Allow early exit now if data not present
     if t_earth_counts.empty:
         return tracker.get_files()
     
@@ -300,7 +303,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     plt.close(fig)
     
     ####################################################################
-    # Version 2 -- Common
+    # Plot Format 2 -- Bar plots
     ####################################################################
     
     bar_color = [70/255, 130/255, 180/255]  # SteelBlue
@@ -312,43 +315,45 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
 
     
     ####################################################################
-    # Version 2/a: Showing one mode only, bars (strict)
+    # Format 2/a: "Strict chars", bar-plot
     ####################################################################
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     
-    # Earth char counts appearing in this plot
-    names = ['h_earth_char_strict']
-    names_legend = ''  # 1 set of bars -> suppress legend
-    n_plot = len(names)
-    
-    # Put the above-selected counts on one plot
-    # *** NB: this bar-plot will fail for N_plot > 1
-    for n, name in enumerate(names):
-        f_mean = f'{name}_mean'
-        f_std = f'{name}_std'
-        
-        # Guard against out-of-date csv files for strict mode
-        if f_mean not in t_earth_counts.columns:
-            print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix')
-            continue
-        
-        ax.bar(ct_samp_1 + ct_offsets_1[n],
-              t_earth_counts[f_mean].values,
-              **bar_props)
-        # (error bars just confuse this plot)
-    
-    # Clip the x-range
-    ax.set_xlim(-0.5, 50)
-    ax.set_ylim(bottom=0, top=None)
-    style_count_plot(ax, 'Number of Earths Characterized',
-                    'Number of Earths [count]',
-                    'Frequency [density]', names_legend)
-    write_plots(fig, 'earth-char-count-strict')
-    plt.close(fig)
+    # (usually skipped: distinction is not usually important)
+    if extra_plots:
+        # Earth char counts appearing in this plot
+        names = ['h_earth_char_strict']
+        names_legend = ''  # 1 set of bars -> suppress legend
+        n_plot = len(names)
+
+        # Put the above-selected counts on one plot
+        # *** NB: this bar-plot will fail for N_plot > 1
+        for n, name in enumerate(names):
+            f_mean = f'{name}_mean'
+            f_std = f'{name}_std'
+
+            # Guard against out-of-date csv files for strict mode
+            if f_mean not in t_earth_counts.columns:
+                print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix')
+                continue
+
+            ax.bar(ct_samp_1 + ct_offsets_1[n],
+                  t_earth_counts[f_mean].values,
+                  **bar_props)
+            # (error bars just confuse this plot)
+
+        # Clip the x-range
+        ax.set_xlim(-0.5, 50)
+        ax.set_ylim(bottom=0, top=None)
+        style_count_plot(ax, 'Number of Earths Characterized',
+                        'Number of Earths [count]',
+                        'Frequency [density]', names_legend)
+        write_plots(fig, 'earth-char-count-strict')
+        plt.close(fig)
     
     ####################################################################
-    # Version 2/b: Showing one mode only, bars (all)
+    # Format 2/b: "All chars" only, bar-plot
     ####################################################################
     
     fig, ax = plt.subplots(figsize=(8.5, 5))

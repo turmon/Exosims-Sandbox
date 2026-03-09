@@ -49,6 +49,9 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         earth-char-hist-phi-log.png
     """
 
+    # Make extra plots?
+    extra_plots = '+' in mode.get('op', '')
+
     # Unpack CSV data
     t_earth_chars, = plot_data
     
@@ -135,7 +138,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         fontsize=10)
     
     # Eliminated deep-dive plots, 2024/12
-    # Note: could add this back in and make only if "extra" requested
+    # Note: could add that back in and make only if "extra-plots" requested
     plot_roster = [
         ['Promoted', 'promo', promo, pprops]
     ]
@@ -251,32 +254,33 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         # WA/dMag, shading = Adjusted Dmag
         ################################################################
         
-        fig, ax = plt.subplots(figsize=(8.5, 5))
-        
-        # Adjusted dmag - improvement possible
-        ec_dmagPhi = ec_dmag + np.maximum(-5, 2.5 * np.log10(np.minimum(0.7, ec_phi) / 0.7))
-        
-        ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
-        ax.scatter(ec_wa[~ok & c_inx], ec_dmagPhi[~ok & c_inx],
-                       c=ec_phi[~ok & c_inx], marker='.', **gprops)
-        
-        style_wa_dmag_plot(ax,
-            f'{full_name}: Earth Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
-            'Lambertian $\Phi$')
-        ax.legend(['Successful Chars', f'Failed {full_name} Chars'],
-                 loc='upper right')
-        
-        # Easy chars sub-legend
-        txt_x = (ax_lim[0] + ax_lim[1]) / 2
-        txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]
-        ax.text(txt_x, txt_y,
-               f'"Easy" Characterizations within red box:\n'
-               f'  {np.sum(easy & ok)} Successful\n'
-               f'  {np.sum(easy & c_inx & ~ok)} Failed (counting {full_name} only)',
-               **text_box_props)
+        if extra_plots:
+            fig, ax = plt.subplots(figsize=(8.5, 5))
 
-        write_plots(fig, f'earth-char-wa-dmag-{abbr_name}-zzz-dmag')
-        plt.close(fig)
+            # Adjusted dmag - improvement possible
+            ec_dmagPhi = ec_dmag + np.maximum(-5, 2.5 * np.log10(np.minimum(0.7, ec_phi) / 0.7))
+
+            ax.scatter(ec_wa[ok], ec_dmag[ok], **obs_props)
+            ax.scatter(ec_wa[~ok & c_inx], ec_dmagPhi[~ok & c_inx],
+                           c=ec_phi[~ok & c_inx], marker='.', **gprops)
+
+            style_wa_dmag_plot(ax,
+                f'{full_name}: Earth Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
+                'Lambertian $\Phi$')
+            ax.legend(['Successful Chars', f'Failed {full_name} Chars'],
+                     loc='upper right')
+
+            # Easy chars sub-legend
+            txt_x = (ax_lim[0] + ax_lim[1]) / 2
+            txt_y = 0.7 * ax_lim[2] + 0.3 * ax_lim[3]
+            ax.text(txt_x, txt_y,
+                   f'"Easy" Characterizations within red box:\n'
+                   f'  {np.sum(easy & ok)} Successful\n'
+                   f'  {np.sum(easy & c_inx & ~ok)} Failed (counting {full_name} only)',
+                   **text_box_props)
+
+            write_plots(fig, f'earth-char-wa-dmag-{abbr_name}-zzz-dmag')
+            plt.close(fig)
     
     ####################################################################
     # Remaining plots

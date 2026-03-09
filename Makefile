@@ -279,7 +279,7 @@ $(GRAPHICS_SENTINEL): sims/$(S)/reduce-info.csv
 
 # imperatively remove existing graphics, allowing clean re-make
 graphics-clean: script-exists
-	@ echo "Make: Removing old graphics in sims/$(S)/gfx ..."
+	@ echo "Make: Removing existing graphics in sims/$(S)/gfx ..."
 	rm -f sims/$(S)/gfx/det-*.*
 
 # legacy graphics - one ensemble

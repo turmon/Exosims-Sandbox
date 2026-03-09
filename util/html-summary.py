@@ -95,24 +95,25 @@ WWW_DOC = WWW_RES / 'doc'
 DUMMY_IMAGE = WWW_RES / 'image-not-found.png'
 
 # section heads, one for each category of graphic
+# (see also: graphics_map)
 SECTION_HEADS = {
-        'radlum': '',
-        'rad-sma': '''"Throughput" is the proportion of planets present, that were characterized
+    'radlum': '',
+    'rad-sma': '''"Throughput" is the proportion of planets present, that were characterized
             in the way indicated. Not-a-number entries in this plot correspond to 0/0 conditions
             arising due to planet types not present in the selected population.
             The "Popuation" plot allows verification that planets are being generated at the 
             correct rate, e.g., verification of eta<sub>Earth</sub>.''',
-        'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
+    'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
             Frequency values between plots when x-axis units are the same are comparable,
             but if units change, the frequencies are not directly comparable.
             Off-scale durations are not shown.''',
-        'event-count': '''All detection and characterization counts are attempts, 
+    'event-count': '''All detection and characterization counts are attempts, 
              without regard to success.''',
-        'visit-time': '''Counts in these plots represent the number of target stars visited or re-visited. 
+    'visit-time': '''Counts in these plots represent the number of target stars visited or re-visited. 
              <p>Time axis is mission clock time. Time-axis for the various lines is offset slightly to 
              reduce overplotting of multiple time series.''',
-        'yield': '''<b>Plots:</b> Time axis is mission clock time. 
+    'yield': '''<b>Plots:</b> Time axis is mission clock time. 
              The time axis for the various quantities (All/Unique/Revisit)
              is offset slightly to 
              reduce overplotting of multiple time series.
@@ -126,12 +127,12 @@ SECTION_HEADS = {
              <b>Plot/Table relationship:</b> Table entries for
              Detected (cumulative) give the final
              achieved value shown on the Detections plots.''',
-        'cume': '''Time axis is mission clock time. 
+    'cume': '''Time axis is mission clock time. 
              Time-axis for the various lines is offset slightly to 
              reduce overplotting of multiple time series.''',
-        'perstar-det':  '',
-        'perstar-char': '',
-        'det-funnel': '''Progression of detection observations, separated into
+    'perstar-det':  '',
+    'perstar-char': '',
+    'det-funnel': '''Progression of detection observations, separated into
             all observed stars, and only promoted stars.
             <p>
             Attempts means all detection attempts on that target. 
@@ -139,7 +140,7 @@ SECTION_HEADS = {
             one of three modes), or success.
             Repeat detection attempts result in a count of successful detections.
             ''',
-        'promote': '''Funnel analysis from detection to characterization, 
+    'promote': '''Funnel analysis from detection to characterization, 
             separated into deep dive targets and promoted targets.  
             <p>Promotions in the
             <em>table</em> are determined
@@ -153,10 +154,12 @@ SECTION_HEADS = {
             <p>
             Some x-axis units in this section are in terms of cumulative
             detection integration time rather than mission clock time.''',
-        'earth-char': '''Promotions here are all determined 
-            using the promoted_stars variable output at the end of the simulation.''',
-        'path': '',
-         }
+    'earth-char': '''Promotions here are all determined 
+         using the promoted_stars variable output at the end of the simulation.''',
+    'observing': '''Observing conditions (phi, working angle, delta magnitude)
+         during characterization of earthlike planets.''',
+    'path': '',
+    }
 
 def ensure_permissions(fn):
     r'''Ensure correct permissions on the named data file.  
@@ -541,26 +544,32 @@ class SimSummary(object):
     #  a symbolic tag ("radlum").
     #  -- "graphics_show" gives a list of symbolic tags to put into HTML sections (in the
     #  order given), and the displayed section names.
+    # Additionally, see the SECTION_HEADS variable at the top of the file.
     #
     # graphics_map: maps filename -> tag
     # list-of-pairs: (str,tag) means if filename contains 'str', it is a graphic of type 'tag'
-    graphics_map = [('/det-perstar-det', 'perstar-det'),
-                        ('/det-perstar-char', 'perstar-char'),
-                        ('/det-radlum', 'radlum'),
-                        ('/det-rad-sma', 'rad-sma'),
-                        ('/det-duration', 'duration'),
-                        ('/det-event-count', 'event-count'),
-                        ('/det-visit-time', 'visit-time'),
-                        ('/det-time', 'yield'),
-                        ('/det-cume', 'cume'), ('/det-detects', 'cume'), # these plots are now in yield
-                        ('/det-fuel', 'cume'),
-                        ('/det-delta-v', 'cume'),
-                        ('/det-obstime', 'cume'),
-                        ('/det-promote', 'promote'),
-                        ('/det-phist', 'promote'),
-                        ('/det-earth-char-', 'earth-char'),
-                        ('/det-earth-char-count', 'earth-char'),
-                        ('/path-ens/path-', 'path')]
+    graphics_map = [
+        ('/det-perstar-det', 'perstar-det'),
+        ('/det-perstar-char', 'perstar-char'),
+        ('/det-radlum', 'radlum'),
+        ('/det-rad-sma', 'rad-sma'),
+        ('/det-duration', 'duration'),
+        ('/det-event-count', 'event-count'),
+        ('/det-visit-time', 'visit-time'),
+        ('/det-time', 'yield'),
+        ('/det-cume', 'cume'),
+        ('/det-detects', 'cume'), # these plots are now in yield
+        ('/det-fuel', 'cume'),
+        ('/det-delta-v', 'cume'),
+        ('/det-obstime', 'cume'),
+        ('/det-promote', 'promote'),
+        ('/det-phist', 'promote'),
+        # next two placed before /det-earth-char so they will match first
+        ('/det-earth-char-hist-phi', 'observing'),
+        ('/det-earth-char-wa-dmag', 'observing'),
+        ('/det-earth-char-', 'earth-char'),
+        ('/det-earth-char-count', 'earth-char'),
+        ('/path-ens/path-', 'path')]
     # tag: GD() means that graphics of type "tag" have the given description
     # Note: the order here gives the order of presentation!
     graphics_show = {
@@ -575,6 +584,7 @@ class SimSummary(object):
         'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics', filename=WWW_DOC/'per-star-metrics.html'),
         'promote':     GraphicsDescription('Target Promotion',           'graphics', infotype='Information'),
         'earth-char':  GraphicsDescription('Earth Characterizations',    'graphics'),
+        'observing':   GraphicsDescription('Characterization Observing', 'graphics'), # TODO: docs?
         'path':        GraphicsDescription('Full-Ensemble Path',         'path-ensemble')
         }
     # tables_map: maps filename -> tag

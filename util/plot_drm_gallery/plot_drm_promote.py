@@ -359,13 +359,14 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # A: HZ Plot
     
     if 'hz-plot' in plot_menu:
-        fig, ax = plt.subplots(figsize=(8.5, 5))
-        ax.plot(x_values, t_phist['h_phist_t1_count_hzone_mean'].values + del_offset, ls_ct,
-                x_values, t_phist['h_phist_t1_span_hzone_mean'].values, ls_sp,
-                x_values, t_phist['h_phist_t1_promo_hzone_mean'].values, ls_pr)
-        style_phist_plot(ax, title_tmpl % ('Habitable Zone', '2 Years'), names_legend)
-        write_plots(fig, 'phist-hzone-2year')
-        plt.close(fig)
+        if extra_plots:
+            fig, ax = plt.subplots(figsize=(8.5, 5))
+            ax.plot(x_values, t_phist['h_phist_t1_count_hzone_mean'].values + del_offset, ls_ct,
+                    x_values, t_phist['h_phist_t1_span_hzone_mean'].values, ls_sp,
+                    x_values, t_phist['h_phist_t1_promo_hzone_mean'].values, ls_pr)
+            style_phist_plot(ax, title_tmpl % ('Habitable Zone', '2 Years'), names_legend)
+            write_plots(fig, 'phist-hzone-2year')
+            plt.close(fig)
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         ax.plot(x_values, t_phist['h_phist_t2_count_hzone_mean'].values + del_offset, ls_ct,
@@ -379,13 +380,14 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # B: Earth plot
     
     if 'earth-plot' in plot_menu:
-        fig, ax = plt.subplots(figsize=(8.5, 5))
-        ax.plot(x_values, t_phist['h_phist_t1_count_earth_mean'].values + del_offset, ls_ct,
-                x_values, t_phist['h_phist_t1_span_earth_mean'].values, ls_sp,
-                x_values, t_phist['h_phist_t1_promo_earth_mean'].values, ls_pr)
-        style_phist_plot(ax, title_tmpl % ('Earthlike', '2 Years'), names_legend)
-        write_plots(fig, 'phist-earth-2year')
-        plt.close(fig)
+        if extra_plots:
+            fig, ax = plt.subplots(figsize=(8.5, 5))
+            ax.plot(x_values, t_phist['h_phist_t1_count_earth_mean'].values + del_offset, ls_ct,
+                    x_values, t_phist['h_phist_t1_span_earth_mean'].values, ls_sp,
+                    x_values, t_phist['h_phist_t1_promo_earth_mean'].values, ls_pr)
+            style_phist_plot(ax, title_tmpl % ('Earthlike', '2 Years'), names_legend)
+            write_plots(fig, 'phist-earth-2year')
+            plt.close(fig)
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         ax.plot(x_values, t_phist['h_phist_t2_count_earth_mean'].values + del_offset, ls_ct,
@@ -399,13 +401,14 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # C: Counting-by-Star plot
     
     if 'by-star' in plot_menu:
-        fig, ax = plt.subplots(figsize=(8.5, 5))
-        ax.plot(x_values, t_phist['h_phist_t1_count_star_mean'].values + del_offset, ls_ct,
-                x_values, t_phist['h_phist_t1_span_star_mean'].values, ls_sp,
-                x_values, t_phist['h_phist_t1_promo_star_mean'].values, ls_pr)
-        style_phist_plot(ax, title_tmpl % ('By Star, with Earthlike', '2 Years'), names_legend)
-        write_plots(fig, 'phist-star-2year')
-        plt.close(fig)
+        if extra_plots:
+            fig, ax = plt.subplots(figsize=(8.5, 5))
+            ax.plot(x_values, t_phist['h_phist_t1_count_star_mean'].values + del_offset, ls_ct,
+                    x_values, t_phist['h_phist_t1_span_star_mean'].values, ls_sp,
+                    x_values, t_phist['h_phist_t1_promo_star_mean'].values, ls_pr)
+            style_phist_plot(ax, title_tmpl % ('By Star, with Earthlike', '2 Years'), names_legend)
+            write_plots(fig, 'phist-star-2year')
+            plt.close(fig)
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         ax.plot(x_values, t_phist['h_phist_t2_count_star_mean'].values + del_offset, ls_ct,
@@ -425,14 +428,15 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                             'Obs. Span > T/2 (Outer HZ, Hypothet.)', 
                             'Obs. Span > T/2 (Actual Earthlike)']
         
-        fig, ax = plt.subplots(figsize=(8.5, 5))
-        ax.plot(x_values, t_phist['h_phist_t1_spanPlan_star_mean'].values + del_offset, ls_ct,
-                x_values, t_phist['h_phist_t1_spanHZ0_star_mean'].values, ls_sp,
-                x_values, t_phist['h_phist_t1_spanHZ1_star_mean'].values, ls_pr,
-                x_values, t_phist['h_phist_t1_spanEarth_star_mean'].values, ls_x)
-        style_phist_plot(ax, title_tmpl_span % ('By Star, with Earthlike', '2 Years'), names_legend_span)
-        write_plots(fig, 'phist-star-span-2year')
-        plt.close(fig)
+        if extra_plots:
+            fig, ax = plt.subplots(figsize=(8.5, 5))
+            ax.plot(x_values, t_phist['h_phist_t1_spanPlan_star_mean'].values + del_offset, ls_ct,
+                    x_values, t_phist['h_phist_t1_spanHZ0_star_mean'].values, ls_sp,
+                    x_values, t_phist['h_phist_t1_spanHZ1_star_mean'].values, ls_pr,
+                    x_values, t_phist['h_phist_t1_spanEarth_star_mean'].values, ls_x)
+            style_phist_plot(ax, title_tmpl_span % ('By Star, with Earthlike', '2 Years'), names_legend_span)
+            write_plots(fig, 'phist-star-span-2year')
+            plt.close(fig)
         
         fig, ax = plt.subplots(figsize=(8.5, 5))
         ax.plot(x_values, t_phist['h_phist_t2_spanPlan_star_mean'].values + del_offset, ls_ct,
