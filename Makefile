@@ -16,22 +16,24 @@
 # Targets:
 # (1) Data reduction and plotting
 #   All these targets require a scenario name.
-#   reduce:        reduce DRMs to tabulated CSV files for later plotting
-#   graphics:      make detections-vs-time plots, and radius-luminosity bar plots.
-#   html:          re-generate the index.html that summarizes the given scenario
-#   html-only:     same as html, but do not re-reduce the data or remake graphics.
-#   path-ensemble: make lon/lat plots of slews taken by an ensemble.
-#   star-visits:   per-star tabulation of successful detection visits
-#   path-movie-N:  make "N" path-movies and final frames 
-#   path-final-N:  make "N" final frames, only
-#   obs-timeline-N:make "N" observing-target timelines
-#   keepout-N:     make "N" keepout-vs-time plots
-#     (above targets make graphics for N arbitrary sims from the scenario, 
-#      N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
-#   tar-log:       replace scenario/log with its "tar" archive to save space
-#   status:        list the current contents of DRMs for this scenario (like "ls")
+#   reduce:          reduce DRMs to tabulated CSV files for later plotting
+#   graphics:        make detection/char plots, and radius-luminosity bar plots.
+#   graphics-extra:  make even more detection/char plots
+#   graphics-clean:  remove existing detection/char plots, to allow re-make
+#   html:            re-generate the index.html that summarizes the given scenario
+#   html-only:       same as html, but do not re-reduce the data or remake graphics.
+#   path-ensemble:   make lon/lat plots of slews taken by an ensemble.
+#   star-visits:     per-star tabulation of successful detection visits
+#   path-movie-N:    make "N" path-movies and final frames 
+#   path-final-N:    make "N" final frames, only
+#   obs-timeline-N:  make "N" observing-target timelines
+#   keepout-N:       make "N" keepout-vs-time plots
+#                    (the -N targets choose N arbitrary sims, where 
+#                    N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
+#   tar-log:         replace scenario/log with its "tar" archive to save space
+#   status:          list the current contents of DRMs for this scenario (like "ls")
 # (2) Multi-script reduction and plotting
-#   Note, all these targets require an *experiment* name.
+#   All these targets require an *experiment* name.
 #   exp-reduce:      makes "reduce" for all ensembles within the experiment
 #   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
