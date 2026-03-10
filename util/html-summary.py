@@ -1009,7 +1009,7 @@ class SimSummary(object):
             hh.link('index.html', 'Return to Ensemble Root')
             # summary
             hh.header('Overview')
-            hh.paragraph('Ensemble: <code>%s<code>\n' % self.name)
+            hh.paragraph('Ensemble: <code>%s</code>\n' % self.name)
             hh.paragraph('Seed: %s\n' % seed)
             hh.toc_here('Contents')
             # path timeline
