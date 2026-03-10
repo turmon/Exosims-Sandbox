@@ -16,6 +16,10 @@ import sys
 import os
 import time
 import argparse
+# Address "OpenBLAS blas_thread_init: RLIMIT_NPROC 300 current, 300 max"
+# before "import numpy", before multiprocessing
+os.environ['OPENBLAS_NUM_THREADS'] = '8' 
+import multiprocessing as mp
 import matplotlib
 matplotlib.use('Agg')
 import pandas as pd
@@ -393,6 +397,8 @@ Optional arguments:
         print(f"{args.progname}: Running {len(plots_to_run)} plot sets.")
         print(f"{args.progname}: \tSource template: {args.src_tmpl}")
         print(f"{args.progname}: \tDestination template: {args.dest_tmpl}")
+    elif args.verbose > 0:
+        print(f"{args.progname}: Destination: {os.path.dirname(args.dest_tmpl)}")
 
     if args.jobs <= 1:
         # Serial execution -- exceptions re-raised for debugging
@@ -405,7 +411,6 @@ Optional arguments:
                                         overall_mode))
     else:
         # Parallel execution
-        import multiprocessing as mp
         if args.verbose > 0:
             print(f"{args.progname}: Using {args.jobs} parallel workers.")
         with mp.Pool(processes=args.jobs) as pool:

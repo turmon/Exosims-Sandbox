@@ -33,7 +33,7 @@ class PlotTracker:
         for ext in ext_list:
             fn_gfx = dest_tmpl % (dest_name, ext)
             if verbose:
-                print(f'\tExport: {fn_gfx}')
+                print(f'\tExport: {os.path.basename(fn_gfx)}')
             if facecolor is not None:
                 fig.patch.set_facecolor(facecolor)
             fig.savefig(fn_gfx, dpi=dpi, bbox_inches='tight')
