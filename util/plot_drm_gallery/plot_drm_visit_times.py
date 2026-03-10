@@ -173,9 +173,13 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
                 f_mean = f'{name}_mean'
                 f_std = f'{name}_std'
                 
+                yerr = t_visit_time[f_std].values
+                if np.all(np.isnan(yerr)):
+                    yerr = None  # suppress UserWarning on all-NaN
+                            
                 ax.errorbar(tsamp + t_offsets[n], 
                             t_visit_time[f_mean].values,
-                            yerr=t_visit_time[f_std].values,
+                            yerr=yerr,
                             color=line_colors[n],
                             **ebar_props_incr)
             
@@ -203,6 +207,9 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
             cume_mean = np.cumsum(t_visit_time[f_mean].values)
             cume_std = np.sqrt(np.cumsum(t_visit_time[f_std].values ** 2))
             
+            if np.all(np.isnan(cume_std)):
+                    cume_std = None  # suppress UserWarning on all-NaN
+                            
             ax.errorbar(tsamp + t_offsets[n],
                         cume_mean,
                         yerr=cume_std,

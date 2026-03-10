@@ -337,6 +337,9 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Data, for convenience
     h_counts = t_radlum['h_RpL_population_mean'].values
     h_stds = t_radlum['h_RpL_population_std'].values
+
+    # suppress later errorbar warning in this case
+    if np.all(np.isnan(h_stds)): h_stds = None
     
     # Basic plot method: use a bar-plot with overlaid error bars
     # Separates h_counts into n_rad groups which will have repeating colors
@@ -355,6 +358,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Exo-earth barplot and errorbar
     ct_e = t_earth['exoE_population_mean'].values[0]
     eb_e = t_earth['exoE_population_std'].values[0]
+    if np.isnan(eb_e): eb_e = None
     ax.bar([-x_bin_xtra], [ct_e], color=[0.1, 0.7, 0.3], **bar_style)
     ax.errorbar(-x_bin_xtra, ct_e, eb_e, fmt='.', 
                 **ebar_props)
@@ -400,6 +404,11 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Pooled standard error of the sum: std = sqrt(std^2 + std^2)
     h_stds_alt2 = np.hypot(h_stds, h_stds_alt)
     
+    # suppress errorbars if they're all-Nan (UserWarning results)
+    if np.all(np.isnan(h_stds)):
+        h_stds, h_stds_alt2 = None, None
+    if np.all(np.isnan(h_stds_alt)):
+        h_stds_alt, h_stds_alt2 = None, None
     # Basic plot method
     h_grouped = np.diag(h_counts) @ collapse
     h_grouped_alt = np.diag(h_counts_alt) @ collapse
@@ -424,6 +433,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
                      t_earth['exoE_det_alt_mean'].values[0]])
     eb_e = np.hypot(t_earth['exoE_det_main_std'].values[0], 
                     t_earth['exoE_det_alt_std'].values[0])
+    if np.isnan(eb_e): eb_e = None
     # Stacked bars for earth
     ax.bar([-x_bin_xtra], [ct_e[0]], color=[0.1, 0.7, 0.3], **bar_style)
     ax.bar([-x_bin_xtra], [ct_e[1]], bottom=[ct_e[0]], 
@@ -470,6 +480,12 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     h_stds_alt = t_radlum['h_RpL_xdet_alt_std'].values
     h_stds_alt2 = np.hypot(h_stds, h_stds_alt)
     
+    # suppress errorbars if they're all-Nan (UserWarning results)
+    if np.all(np.isnan(h_stds)):
+        h_stds, h_stds_alt2 = None, None
+    if np.all(np.isnan(h_stds_alt)):
+        h_stds_alt, h_stds_alt2 = None, None
+
     h_grouped = np.diag(h_counts) @ collapse
     h_grouped_alt = np.diag(h_counts_alt) @ collapse
     
@@ -493,6 +509,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
                      t_earth['exoE_xdet_alt_mean'].values[0]])
     eb_e = np.hypot(t_earth['exoE_xdet_main_std'].values[0], 
                     t_earth['exoE_xdet_alt_std'].values[0])
+    if np.isnan(eb_e): eb_e = None
     ax.bar([-x_bin_xtra], [ct_e[0]], color=[0.1, 0.7, 0.3], **bar_style)
     ax.bar([-x_bin_xtra], [ct_e[1]], bottom=[ct_e[0]], 
            color=[0.1, 0.7, 0.3], **bar_style)
@@ -572,8 +589,16 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
             h_counts_alt = t_radlum[f'h_RpL_{plot_prop_x}char_part{plot_prop}mean'].values
             h_stds_alt = t_radlum[f'h_RpL_{plot_prop_x}char_part{plot_prop}std'].values
             h_stds_alt2 = np.hypot(h_stds, h_stds_alt)
+            # suppress errorbars if they're all-Nan (UserWarning results)
+            if np.all(np.isnan(h_stds)):
+                h_stds, h_stds_alt2 = None, None
+            if np.all(np.isnan(h_stds_alt)):
+                h_stds_alt, h_stds_alt2 = None, None
         else:
             h_counts_alt = None
+            # suppress errorbars if they're all-Nan (UserWarning results)
+            if np.all(np.isnan(h_stds)):
+                h_stds = None
             h_stds_alt = None
             h_stds_alt2 = None
         
@@ -611,6 +636,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
                 t_earth[f'exoE_{plot_prop_x}char_full{plot_prop}std'].values[0],
                 t_earth[f'exoE_{plot_prop_x}char_part{plot_prop}std'].values[0]
             )
+            if np.isnan(eb_e): eb_e = None
             ax.bar([-x_bin_xtra], [ct_e[0]], color=[0.1, 0.7, 0.3], **bar_style)
             ax.bar([-x_bin_xtra], [ct_e[1]], bottom=[ct_e[0]], 
                    color=[0.1, 0.7, 0.3], **bar_style)
@@ -619,6 +645,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         else:
             ct_e = t_earth[f'exoE_{plot_prop_x}char_{plot_prop}mean'].values[0]
             eb_e = t_earth[f'exoE_{plot_prop_x}char_{plot_prop}std'].values[0]
+            if np.isnan(eb_e): eb_e = None
             ax.bar([-x_bin_xtra], [ct_e], color=[0.1, 0.7, 0.3], **bar_style)
             ax.errorbar(-x_bin_xtra, ct_e, eb_e, fmt='.', 
                         **ebar_props)
@@ -698,9 +725,13 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         q50 = t_radlum[f'h_RpL_char_snr{plot_prop}q50'].values
         q25 = t_radlum[f'h_RpL_char_snr{plot_prop}q25'].values
         q75 = t_radlum[f'h_RpL_char_snr{plot_prop}q75'].values
+        if np.all(np.isnan(q25 + q75)):
+            yerr=None
+        else:
+            yerr=[q50 - q25, q75 - q50]
         
         ax.errorbar(x_bin, q50,
-                    yerr=[q50 - q25, q75 - q50],
+                    yerr=yerr,
                     fmt='o',
                     **ebar_props_snr)
         
@@ -708,9 +739,14 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         q50_e = t_earth[f'exoE_char_snr{plot_prop}q50'].values[0]
         q25_e = t_earth[f'exoE_char_snr{plot_prop}q25'].values[0]
         q75_e = t_earth[f'exoE_char_snr{plot_prop}q75'].values[0]
+        # suppress warning on all-NaN errorbar
+        if np.isnan(q25_e + q75_e):
+            eb_e = None  # give up
+        else:
+            eb_e = [[q50_e - q25_e], [q75_e - q50_e]]
         
         ax.errorbar(-x_bin_xtra, q50_e,
-                    yerr=[[q50_e - q25_e], [q75_e - q50_e]],
+                    yerr=eb_e,
                     fmt='o',
                     **ebar_props_snr)
         

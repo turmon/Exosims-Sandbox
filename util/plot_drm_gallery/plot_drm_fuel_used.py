@@ -95,9 +95,13 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_fuel[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None  # suppress UserWarning on all-NaN
+
         ax.errorbar(tsamp + t_offsets[n],
                     t_fuel[f_mean].values,
-                    yerr=t_fuel[f_std].values,
+                    yerr=yerr,
                     color=line_colors[n],
                     **ebar_props)
         
@@ -158,9 +162,13 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_fuel[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None  # suppress UserWarning on all-NaN
+
         ax.errorbar(tsamp + t_offsets[n],
                     t_fuel[f_mean].values,
-                    yerr=t_fuel[f_std].values,
+                    yerr=yerr,
                     color=line_colors[n],
                     **ebar_props)
         

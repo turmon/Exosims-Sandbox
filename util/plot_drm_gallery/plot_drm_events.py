@@ -134,9 +134,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_events[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(tsamp_1 + t_offsets_1[n],
                    t_events[f_mean].values,
-                   yerr=t_events[f_std].values,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -166,9 +170,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_events[f_std].values / sf
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(sf * (tsamp_2 + t_offsets_2[n]),
                    t_events[f_mean].values / sf,
-                   yerr=t_events[f_std].values / sf,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -194,9 +202,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_events[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(tsamp_1 + t_offsets_1[n],
                    t_events[f_mean].values,
-                   yerr=t_events[f_std].values,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -224,9 +236,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_events[f_std].values / sf
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(sf * (tsamp_2 + t_offsets_2[n]),
                    t_events[f_mean].values / sf,
-                   yerr=t_events[f_std].values / sf,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -255,10 +271,14 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
     for n, name in enumerate(names):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
+
+        yerr = sf * t_events[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
         
         ax.errorbar(1 * (tsamp_0 + t_offsets_0[n]),
                    sf * t_events[f_mean].values,
-                   yerr=sf * t_events[f_std].values,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -284,9 +304,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = sf * t_events[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(tsamp_1 + t_offsets_1[n],
                    t_events[f_mean].values,
-                   yerr=t_events[f_std].values,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -317,9 +341,13 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = sf * t_events[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None # suppress warnings
+        
         ax.errorbar(tsamp_0 + t_offsets_0[n],
                    sf * t_events[f_mean].values,
-                   yerr=sf * t_events[f_std].values,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     

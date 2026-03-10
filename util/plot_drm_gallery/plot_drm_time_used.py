@@ -127,9 +127,13 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_det_time[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None  # suppress UserWarning on all-NaN
+
         ax.errorbar(tsamp + t_offsets[n],
                     t_det_time[f_mean].values,
-                    yerr=t_det_time[f_std].values,
+                    yerr=yerr,
                     color=line_colors[n],
                     **ebar_props)
     
@@ -165,6 +169,10 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         f_mean = f'{name}_mean'
         f_std = f'{name}_std'
         
+        yerr = t_det_time[f_std].values
+        if np.all(np.isnan(yerr)):
+            yerr = None  # suppress UserWarning on all-NaN
+
         # Note: thinner linewidth for incremental plots
         ebar_props_incr = dict(ebar_props,
                                errorevery=2,
@@ -172,7 +180,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         
         ax.errorbar(tsamp + t_offsets[n],
                     t_det_time[f_mean].values,
-                    yerr=t_det_time[f_std].values,
+                    yerr=yerr,
                     color=line_colors[n],
                     **ebar_props_incr)
     

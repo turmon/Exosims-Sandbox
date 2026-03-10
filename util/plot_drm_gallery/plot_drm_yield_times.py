@@ -218,9 +218,13 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
                 f_mean = f'{name}_mean'
                 f_std = f'{name}_std'
                 
+                # suppress warning on all-NaN
+                yerr = t_yield_time[f_std].values
+                if np.all(np.isnan(yerr)): yerr = None
+            
                 ax.errorbar(tsamp + t_offsets[n], 
                             t_yield_time[f_mean].values,
-                            yerr=t_yield_time[f_std].values,
+                            yerr=yerr,
                             color=line_colors[n],
                             **ebar_props_monthly)
             
@@ -246,6 +250,9 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
             # i.e., sqrt-sum-of-squares)
             cume_mean = np.cumsum(t_yield_time[f_mean].values)
             cume_std = np.sqrt(np.cumsum(t_yield_time[f_std].values ** 2))
+
+            # suppress warning on all-NaN
+            if np.all(np.isnan(cume_std)): cume_std = None
             
             ax.errorbar(tsamp + t_offsets[n],
                         cume_mean,
