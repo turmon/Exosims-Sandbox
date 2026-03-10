@@ -1108,9 +1108,12 @@ class SimSummary(object):
     def put_file_counts(self):
         # make an object
         info = dict()
-        info['index_path_count'] = sum([len(g) for _,g in self.graphics.items()])
-        info['index_path_gfx'] = len(self.path_graphics)
-        info['index_gfx_count'] = sum([len(g) for _,g in self.path_graphics.items()])
+        # gfx_count: number of ensemble graphics
+        # path_count: number of summarized paths
+        # path_gfx: number of path-graphics over all paths
+        info['index_gfx_count'] = sum([len(g) for _,g in self.graphics.items()])
+        info['index_path_count'] = len(self.path_graphics)
+        info['index_path_gfx'] = sum([len(g) for _,g in self.path_graphics.items()])
         #info['experiment'] = "s_c1_0.01_c3_0.99"
         info['readme_info'] = self.readme_info
         info['readme_file'] = self.readme_file
