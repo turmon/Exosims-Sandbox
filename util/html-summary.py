@@ -86,6 +86,9 @@ from collections import defaultdict, OrderedDict
 from io import StringIO
 from pathlib import Path
 
+# root directory (including external path)
+ROOT_DIR = Path(os.getcwd())
+
 # path to resources
 WWW_RES = Path('/Local/www-resources')
 # doc directory within this
@@ -860,14 +863,17 @@ class SimSummary(object):
             hh.nav_here()
             # title - h1 tag
             hh.header(os.path.basename(self.name), level=1)
-            # navigation link
-            hh.link('../../', 'Up to %s' % uplink)
+            # provide situational awareness
+            hh.paragraph(f'Instance rooted at: <code>{ROOT_DIR}</code>', br=True)
+            # navigation link -- from ENSEMBLE/html/ to ../../
+            if uplink:
+                hh.paragraph('Up to ' + hh.link('../../', uplink, inner=True))
             # fixed link to documentation
             hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
             # summary
             hh.header('Ensemble Summary')
-            hh.paragraph(f'Ensemble: {self.name}')
-            hh.paragraph(f'Size: {self.Ndrm} sims')
+            hh.paragraph(f'Ensemble: <code>{self.name}</code>')
+            hh.paragraph(f'Size: {self.Ndrm} simulations')
             hh.paragraph('Source JSON ' + hh.link('../reduce-script.json', 'script', inner=True))
             # table of contents
             hh.toc_here('Contents')
@@ -938,7 +944,7 @@ class SimSummary(object):
                 plots = self.graphics[tag]
                 if not plots:
                     if target:
-                        hh.paragraph(f'No such plots.  Generate with: make S=... {target}')
+                        hh.paragraph(f'No such plots.  Generate with: <code>make S=... {target}</code>')
                 else:
                     # make a table of plots
                     hh.table_top(('Filename', 'Plot Preview'), elem_class='gfx')
@@ -969,7 +975,7 @@ class SimSummary(object):
             path_movie_seeds = sorted(self.path_graphics.keys())
             if not path_movie_seeds:
                 hh.paragraph('No path movies or observation timelines yet.')
-                hh.paragraph('Generate with: make S=... path-movie-N or make S=... obs-timeline-N\n')
+                hh.paragraph('Generate with: <code>make S=... path-movie-N</code> or <code>make S=... obs-timeline-N</code>\n')
             else:
                 # (plot-count incorrect if there are coronagraph/starshade keepout plots.
                 # they are dicts-of-dict underneath path_graphics[seed] - not worth it to fix)
@@ -1003,7 +1009,7 @@ class SimSummary(object):
             hh.link('index.html', 'Return to Ensemble Root')
             # summary
             hh.header('Overview')
-            hh.paragraph('Ensemble: %s\n' % self.name)
+            hh.paragraph('Ensemble: <code>%s<code>\n' % self.name)
             hh.paragraph('Seed: %s\n' % seed)
             hh.toc_here('Contents')
             # path timeline
@@ -1018,7 +1024,7 @@ class SimSummary(object):
                     img_target = info['obs-timeline-part2']
                     hh.image(img_target, width=70)
             else:
-                hh.paragraph('Timeline not available.  Generate with: make ... obs-timeline-N')
+                hh.paragraph('Timeline not available.  Generate with: <code>make ... obs-timeline-N</code>')
             # star-obs-trace
             hh.header('Star-Observation Trace')
             if 'star-obs-trace' in info:
@@ -1028,7 +1034,7 @@ class SimSummary(object):
                 img_target = info['star-obs-trace']
                 hh.image(img_target, width=70)
             else:
-                hh.paragraph('Star-Observation trace not available.  Generate with: make ... obs-timeline-N')
+                hh.paragraph('Star-Observation trace not available.  Generate with: <code>make ... obs-timeline-N</code>')
             # path keepout
             #   lists below are guaranteed non-empty if they exist; first element is always the first
             #   part, but later ones may be unsorted
@@ -1043,7 +1049,7 @@ class SimSummary(object):
                 for img_target in info['obs-keepout-char'][:1] + sorted(info['obs-keepout-char'][1:]):
                     hh.image(img_target, width=70)
             if not keepout_present:
-                hh.paragraph('Keepout timeline not available.  Generate with: make ... keepout-N')
+                hh.paragraph('Keepout timeline not available.  Generate with: <code>make ... keepout-N</code>')
             # path summary
             hh.header('Path Overview')
             img_target = info['final'] if 'final' in info else None
@@ -1061,7 +1067,7 @@ class SimSummary(object):
                               literal=True)
                 hh.script(WWW_RES/'ens-path-plots.js')
             else:
-                hh.paragraph('Data for widget not available.  Generate with: make ... path-movie-N')
+                hh.paragraph('Data for widget not available.  Generate with: <code>make ... path-movie-N</code>')
             # path movie
             hh.header('Path Movie of This Tour')
             if 'movie' in info:
@@ -1070,14 +1076,14 @@ class SimSummary(object):
                     br=True)
                 hh.video(info['movie'])
             else:
-                hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')
+                hh.paragraph('No path movie available.  Generate with: <code>make ... path-movie-N</code>')
             if 'coro-movie' in info:
                 hh.paragraph('Coronagraph-only path movie ' +
                     hh.link(WWW_DOC/'path-movie.html', 'format description', inner=True),
                     br=True)
                 hh.video(info['coro-movie'])
             else:
-                hh.paragraph('No path movie available.  Generate with: make ... path-movie-N')
+                hh.paragraph('No path movie available.  Generate with: <code>make ... path-movie-N</code>')
             # cumulative images
             if 'corona' in info:
                 hh.header('Cumulative Coronagraph Keepout for This Tour')
@@ -1438,14 +1444,18 @@ def index_group(args, startpath, title, uplink):
     with HTML_helper(filename, title) as hh:
         # title as H1
         hh.header(title, level=1)
-        # navigation link
+        # provide situational awareness
+        hh.paragraph(f'Instance rooted at: <code>{ROOT_DIR}</code>', br=True)
+        # navigation link (except for sims)
+        #if uplink:
+        #    hh.link('../', 'Up to %s' % uplink)
         if uplink:
-            hh.link('../', 'Up to %s' % uplink)
+            hh.paragraph('Up to ' + hh.link('../', uplink, inner=True))
         hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
         # overall section
         hh.header('Ensembles')
         # summary
-        hh.paragraph(f'Ensemble set: {startpath}')
+        hh.paragraph(f'Ensemble set: <code>{startpath}</code>')
         # link to the README.md/README.html, if present
         # (typically placed by reduce_drm_sets)
         for fn_stem in ('README.md', 'README.html'):
@@ -1585,7 +1595,7 @@ def index_one_sim(args, sim):
         uplink = 'Sandbox Root'
     else:
         uplink = 'Unknown'
-    uplink_label = '{} ({})'.format(uplink, sim_up_path)
+    uplink_label = '{}: <code>{}</code>'.format(uplink, sim_up_path)
     # switch the index type depending on sim name
     if sim == 'sims':
         index_group(args, sim, 'Simulation Ensemble Root', '')
