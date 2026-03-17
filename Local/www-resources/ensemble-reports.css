@@ -237,3 +237,9 @@ input[type=number] {
   border-color: transparent black transparent transparent;
 }
 
+/* Emulation thumbnails -- see util/emulator_html_summary.py
+ * Only <a class="plot-thumb"> images get a max-width.
+ * Ensure linked images from other pages are unaffected. */
+a.plot-thumb > img {
+    max-width: 90%;
+}
