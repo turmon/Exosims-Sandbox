@@ -540,7 +540,7 @@ class SimSummary(object):
     # do not index content of dirs having these names
     # ('drm' not skipped b/c we use it to count ensemble size)
     sim_dir_no_index = set(('export', 'log', 'spc', 'sys', 'log_sim', 'run', 'html',
-                            'Batch', 'Cache', 'Caches'))
+                            'Batch', 'Cache', 'Caches', 'Analysis'))
     # NOTE: The following two lists are the main hook for adding new plot families to the
     # generated HTML:
     #  -- "graphics_map" associates a file pattern (e.g., /det-radlum*) to
@@ -1530,7 +1530,17 @@ def index_group(args, startpath, title, uplink):
         hh.text('&nbsp;Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted.', br=True)
         hh.text('&nbsp;Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted.', br=True)
         
-    # make a summary of graphical files
+        # If possible, link to emulator analysis (sim/.../Analysis/index.html)
+        # New section
+        hh.header('Designs and Emulators')
+        fn_stem = os.path.join('Analysis', 'index.html')
+        if os.path.isfile(os.path.join(startpath, fn_stem)):
+            hh.paragraph('Emulator workflow ' + hh.link(fn_stem, 'summary', inner=True))
+        else:
+            hh.paragraph('Use <code>make S=... exp-analysis-html</code>')
+        hh.paragraph('&nbsp;')
+
+    # compute and save a summary of graphical files
     if not vanilla_tables:
         prop_all = []
         # TODO: sub os.scandir() for efficiency

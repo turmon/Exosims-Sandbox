@@ -52,7 +52,7 @@
 ## turmon oct 2017, mar 2018, feb 2022
 
 # set the default shell
-SHELL:=/bin/sh
+SHELL:=/bin/bash
 
 # clear builtin suffix rules (for .c, etc.)
 .SUFFIXES:
@@ -135,9 +135,13 @@ PATH_PROG=util/drm-to-movie.sh -c -l 0
 PATH_PROG_FINAL=util/drm-to-movie.sh -F
 # path-ensemble-plot driver script
 PATH_ENS_PROG=util/ens-path-summary.sh -a
-# program used for html summary
+# html summary of ensembles/experiments
 #   -i: to regenerate the global index.html as well as that for $(S)
 HTML_PROG=util/html-summary.py -i
+# html summary of emulator Analysis/ results
+EMU_HTML_PROG=util/emulator_html_summary.py -R Local/www-resources -S ensemble-reports.css -J sorttable.js
+# analysis/plots of experiment results
+EMU_PLOT_PROG=util/run_emulator_workflows.py
 # program to select a given number of ensembles within an experiment
 #  also needs a sort key (-k) argument before use
 SELECT_PROG=util/select_ensembles.py -q -o experiment
@@ -158,7 +162,12 @@ experiment-exists:
 	@ [ -d Scripts/$(S) ] || \
 		(echo "Require an experiment/family directory \`Scripts/$(S)'" && exit 1)
 
-.PHONY: script-exists experiment-exists default
+analysis-exists:
+	@ [ -d sims/$(S)/Analysis ] || \
+		(echo "Require an experiment/family Analysis directory \`sims/$(S)/Analysis'" && exit 1)
+
+
+.PHONY: default script-exists experiment-exists analysis-exists
 
 # do not try to remake Makefile
 Makefile:;
@@ -531,6 +540,33 @@ $(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,html-only,mix,$N)))
 exp-html-only: experiment-exists
 	@ echo "Make: HTML index (full experiment) $@ ..."
 	$(HTML_PROG) -r $(S)
+
+## emulation -- in development
+# make the HTML
+.PHONY: exp-analysis-html
+exp-analysis-html: analysis-exists exp-analysis-graphics
+	@ echo "Make: Emulator analysis html (experiment) $@ ..."
+	$(EMU_HTML_PROG) sims/$(S)
+	$(HTML_PROG) $(S)
+
+.PHONY: exp-analysis-graphics exp-analysis-graphics-all
+
+# distinguished sentinel file for post-experiment analysis
+# base workflow = analysis, graphics, tables
+EXP_ANALYSIS_SENTINEL:=sims/$(S)/Analysis/base.wfl/graphics-info.txt
+
+# delegate to the exp-analysis sentinel file
+exp-analysis-graphics: analysis-exists $(EXP_ANALYSIS_SENTINEL);
+
+$(EXP_ANALYSIS_SENTINEL): sims/$(S)/reduce-yield-plus.csv
+	@ echo "Make: Emulator analysis graphics (experiment) $@ ..."
+	$(EMU_PLOT_PROG) -C "" sims/$(S)/Analysis/workflow-base.json
+
+# analysis, graphics, tables -- all available workflows
+# this runs without checking dependencies
+exp-analysis-graphics-all: analysis-exists
+	@ echo "Make: Emulator analysis graphics (all) (experiment) $@ ..."
+	shopt -s nullglob && $(EMU_PLOT_PROG) -C "" sims/$(S)/Analysis/workflow-*.json
 
 ########################################
 ## http server start, stop, status
