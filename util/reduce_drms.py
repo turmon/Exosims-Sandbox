@@ -120,6 +120,9 @@ VERBOSITY = 0
 # global debug-output mode
 DEBUG = ''
 
+# data reduction, local config filename
+REDUCTION_CONFIG = 'config-reduce.json'
+
 # number of CPUs
 N_CPU = mproc.cpu_count()
 
@@ -374,11 +377,14 @@ class YieldAccumulator(dict):
         self[key] = new_value
         return new_value
 
-    
-class RpLBins(object):
+class RpLBins():
     r'''Class to hold Rp - Luminosity bin properties.
 
     This is as much a container object for bin properties as it is a functional class.'''
+    # guard variable: set to true when customize_parameters() was called
+    # ensures that class instances have received customization (which
+    # can be {}), even if multiprocessing is in effect
+    _customized = False
     # Bin the detected planets into types
     # 1: planet-radius bin-edges  [units = Earth radii]
     # Old (early 2018, 3 bins):
@@ -443,30 +449,36 @@ class RpLBins(object):
     Rp_L_to_RpL_bin[(5,2)] = 14
     Rp_L_to_RpL_bin[(5,3)] = 15
 
-    def quantize_orig(self, specs, plan_id, star_ind):
-        r'''Compute the radius, luminosity, and combined bins for a given planet and star.
+    def __init__(self):
+        # parametric w/r/t Earth_Rp_lo_1AU
+        # convenenience variables useful for plots
+        if not self._customized:
+            print(f'RpLBins: Error: Class was not customized.', file=sys.stderr)
+            raise RuntimeError("RpLBins class used before customization")
+        self.Earth_Rp_lo1 = self.Earth_Rp_lo/np.sqrt(self.Earth_SMA_lo) # left bin boundary
+        self.Earth_Rp_lo2 = self.Earth_Rp_lo/np.sqrt(self.Earth_SMA_hi) # right boundary
+    
+    @classmethod
+    def customize_parameters(cls, mapping):
+        '''Set up the class parameters using a custom mapping passed in.
 
-        This is Rhonda's original code. It is here to allow cross-checks but is not used now.
-        Returns None if the planet/star lies outside the bin boundaries.'''
-
-        # return value indicating error
-        error_rval = (None, None, None)
-        # extract planet values
-        Rp_single = strip_units(specs['Rp'][plan_id])
-        a_single = strip_units(specs['a'][plan_id])
-        L_star = specs['L'][star_ind]
-        L_plan = L_star/a_single**2
-        # bin them
-        tmpbinplace_Rp = np.digitize(Rp_single, self.Rp_bins)
-        if tmpbinplace_Rp >= len(self.Rp_bins):
-            return error_rval # out of range
-        tmpbinplace_L = np.digitize(L_plan, self.L_bins[tmpbinplace_Rp-1])
-        if tmpbinplace_L >= len(self.L_bins[tmpbinplace_Rp-1]):
-            return error_rval # out of range
-        Rp_bin = tmpbinplace_Rp.item()
-        L_bin = tmpbinplace_L.item()
-        RpL_bin = tmpbinplace_L.item() + 10*tmpbinplace_Rp.item()
-        return Rp_bin, L_bin, RpL_bin
+        Return the list of unmatched keys. We assume the mapping is a dict.
+        '''
+        cls._customized = True
+        fails = []
+        # (1) Definition of "earthlike"
+        if 'earthlike' in mapping:
+            for k, v in mapping['earthlike'].items():
+                if k not in cls._earthlike_keys:
+                    fails.append(k)
+                else:
+                    #print(f"binner: Set {k} to {v}")
+                    setattr(cls, k, v)
+        # (2) Definition of (Rp, L) bins
+        if 'bins' in mapping:
+            # for now, emit a warning - unimplemented
+            fails.append('bins')
+        return fails
 
     def quantize(self, spc, plan_id, star_ind):
         r'''Compute the final radius/luminosity bin, an integer, for a given planet and star.
@@ -502,6 +514,13 @@ class RpLBins(object):
             a_scaled >=  .95*u.AU,
             a_scaled <= 1.67*u.AU)
 
+    # extracted from the original definition
+    _earthlike_keys = ['Earth_SMA_lo', 'Earth_SMA_hi', 'Earth_Rp_hi', 'Earth_Rp_lo']
+    Earth_SMA_lo = 0.95
+    Earth_SMA_hi = 1.67
+    Earth_Rp_hi = 1.40 # 1.499999 # 1.40
+    Earth_Rp_lo = 0.80
+
     def is_earthlike(self, spc, plan_id, star_ind):
         r'''Is the planet earthlike?
 
@@ -510,6 +529,8 @@ class RpLBins(object):
             if len(plan_id) == 0: return False
         except:
             pass # bare integer does not have len()
+
+        # Note: this is an assumption, typically true for JPL scripts
         scaleOrbits = True
         # extract planet and star properties
         Rp_plan = strip_units(spc['Rp'][plan_id])
@@ -520,39 +541,40 @@ class RpLBins(object):
             a_plan = strip_units(spc['a'][plan_id])
         # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
         # between the given bounds.
-        Rp_plan_lo = 0.80/np.sqrt(a_plan)
+        # We scale the lower Rp boundary (only)
+        Rp_plan_lo_s = self.Earth_Rp_lo/np.sqrt(a_plan)
         # We use the numpy versions so that plan_ind can be a numpy vector.
         return np.logical_and(
-           np.logical_and(Rp_plan >= Rp_plan_lo, Rp_plan <= 1.4),
-           np.logical_and(a_plan  >= 0.95,       a_plan  <= 1.67))
+           np.logical_and(Rp_plan >= Rp_plan_lo_s, Rp_plan <= self.Earth_Rp_hi),
+           np.logical_and(a_plan  >= self.Earth_SMA_lo, a_plan  <= self.Earth_SMA_hi))
 
-    def is_earthlike_old(self, spc, plan_id, star_ind):
-        r'''Is the planet earthlike? -- Old version without orbit scaling.'''
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        a_plan = strip_units(spc['a'][plan_id])
-        L_star = spc['L'][star_ind]
-        L_plan = L_star / (a_plan**2) # adjust star luminosity by distance^2 in AU
-        # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
-        # between the given bounds.
-        # The magic numbers on L_plan are from:
-        #    0.95 <= a/sqrt(L) <= 1.67 iff (1/1.67)^2 <= L/a^2 <= (1/0.95)^2
-        # See also the condition in is_hab_zone, above.
-        ## OLD:
-        ## The lower Rp bound is not axis-parallel, but
-        ## the best axis-parallel bound is 0.90, so that's what we use.
-        ## Rp_plan_lo = 0.90
-        # New: 0.8/sqrt(a)
-        # NB: if scaleOrbits, the "a" here should instead be scaled by sqrt(L)!
-        Rp_plan_lo = 0.80/np.sqrt(a_plan)
-        # We use the numpy versions so that plan_ind can be a numpy vector.
-        return np.logical_and(
-            np.logical_and(Rp_plan >= Rp_plan_lo, Rp_plan <= 1.4),
-            np.logical_and(L_plan  >= 0.3586,     L_plan  <= 1.1080))
+def load_reduce_config(dirname):
+    '''Load reduction config file from dirname as tool for RpLBins.
+
+    Returns:
+     - None if not present (not an error)
+     - The dictionary, if it is present
+     '''
+    fn = os.path.join(dirname, REDUCTION_CONFIG)
+    # OK for it not to exist
+    if not os.access(fn, os.R_OK):
+        return None
+    # If it exists, it's an error for it to not load as a mapping
+    try:
+        with open(fn, 'r') as fp:
+            d = json.load(fp)
+    except FileNotFoundError:
+        print(f'{args.progname}: Error: Reduction configuration ({fn}) exists but unreadable.')
+        raise
+    except json.JSONDecodeError:
+        print(f'{args.progname}: Error: Could not read JSON in {fn}')
+        raise
+    if not isinstance(d, dict):
+        print(f'{args.progname}: Error: Reduction configuration ({fn}) is not a mapping.')
+        raise ValueError("Reduction configuration was not a mapping.")
+    return d
+                
+#-------
 
 class SimulationRun(object):
     r'''Load and summarize a simulation: one DRM and its corresponding SPC.'''
@@ -2595,6 +2617,11 @@ def outer_load_and_reduce(f, args=None):
     by a separate process that is created by the multiprocessing module.'''
     if args is not None and args.verbose > 0:
         print('Processing <%s> in pid #%d' % (f, os.getpid()))
+    # apply customization to this module-wide class, in case of multiprocessing
+    fails = RpLBins.customize_parameters(args.reduce_config)
+    if fails:
+        # be terse -- one line per job (also, calling process should have warned)
+        print(f'{args.progname}: Reduction configuration failed: {len(fails)} keys', file=sys.stderr)
     sim = SimulationRun(f, sim_info=args.sim_info if args else {})
     return sim.summarize()
 
@@ -2894,7 +2921,6 @@ class EnsembleSummary(object):
                 summary[attr + '_q75'] = q[2]
         
         # unique detections and characterizations are handled separately
-        # TODO: may want per-band chars
         if len(reductions) > 0:
             summary['dets_unique_mean'] = (1.0 *
                             sum([len(r['dets_unique' ]) for r in reductions])) / len(reductions)
@@ -2910,6 +2936,34 @@ class EnsembleSummary(object):
         # record these summaries in the object
         self.summary = summary
         self.char_bands_seen = char_bands_seen
+
+
+    def extract_extras(self, reduce_config):
+        '''Extract extra keys, as needed, from summary; package into dict.'''
+        def extract_one(d, locator):
+            '''Helper: Extract a single key given by locator-list, from d'''
+            if not locator:
+                return True, d
+            key = locator[0]
+            try:
+                k = int(key) # list index?
+            except (ValueError, TypeError):
+                k = key # dict index
+            try:
+                return extract_one(d[k], locator[1:])
+            except (KeyError, IndexError, TypeError):
+                return False, None
+        # main body
+        desired = reduce_config.get('reduce_info_extras', {})
+        extras = {}
+        for k, locator in desired.items():
+            ok, value = extract_one(self.summary, locator.split('.'))
+            if ok:
+                extras[k] = value
+            else:
+                print(f'\tFailed to extract {locator}', file=sys.stderr)
+        return extras
+
 
     def dump(self, args):
         r'''Dump reduced data to files.'''
@@ -2936,6 +2990,8 @@ class EnsembleSummary(object):
         # 0: metadata and scalars
         fn = args.outfile % ('info', 'csv')
         print('\tDumping to %s' % fn)
+        # fetch extra keys, if requested
+        info_extras = self.extract_extras(args.reduce_config)
         # time of newest simulation (modtime of drm directory)
         simtime = '2000-01-02_03:04'
         if len(args.infile) > 0:
@@ -2963,11 +3019,15 @@ class EnsembleSummary(object):
                         'tdep_slope_ym1_char_full_allplan_uniq_union_mean', 0.0),
                     targ_dep_t80_all=self.summary.get(
                         'tdep_t80_char_full_allplan_uniq_union_mean', 0.0),
-                        )
+                    # fields from config-reduce, possibly empty
+                    )
+        # ensure extras go into last columns
+        info_fields = sorted(info.keys())
+        info_x_fields = list(info_extras.keys())
         with open(fn, 'w') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=sorted(info.keys()))
+            w = csv.DictWriter(csvfile, fieldnames=info_fields+info_x_fields)
             w.writeheader()
-            w.writerow(info)
+            w.writerow({**info, **info_extras})
         ensure_permissions(fn)
 
         # 0b: exo-Earth (scalars)
@@ -3593,6 +3653,21 @@ if __name__ == '__main__':
     if os.path.isfile(skip_fn):
         print('%s: Skipping reduction in %s.' % (args.progname, os.path.dirname(args.outfile)))
         sys.exit(0)
+
+    # load local reduction parameters
+    # (note: configuration w/r/t job specs is in UPDATE_GLOBALS())
+    args.reduce_config = load_reduce_config(directory)
+    if args.reduce_config is None:
+        print(f'{args.progname}: No local reduction config file ({REDUCTION_CONFIG})')
+        # so we can always assume it's a dict
+        args.reduce_config = {}
+    # customize the overall binner class
+    fails = RpLBins.customize_parameters(args.reduce_config)
+    if fails:
+        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {REDUCTION_CONFIG}')
+        print(f'{args.progname}: Warning: Unused: {", ".join(fails)}')
+    else:
+        print(f'{args.progname}: Loaded local reduction from {REDUCTION_CONFIG}')
 
     infile_print = (args.infile[0] if len(args.infile) > 0 else '(none)') + (' ...' if len(args.infile) > 1 else '')
     print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))
