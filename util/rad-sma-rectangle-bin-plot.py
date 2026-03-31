@@ -61,7 +61,6 @@
 # author:
 #  Michael Turmon, JPL, 2019
 
-from __future__ import print_function
 import os
 import sys
 import csv
@@ -69,7 +68,11 @@ import copy
 import math
 import argparse
 from collections import defaultdict
+from pathlib import Path
 import numpy as np
+# this import must work: fail fast if it doesn't
+from reduce_drm_tools.PlanetBins import RpLBins
+from reduce_drm_tools import utils
 
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
@@ -139,200 +142,6 @@ SAG13Data = [
     ["Cold Jovians", 		1.01, 	1.48, 	0.85, 	0.45],
     ["Eta Earth", 			0.24, 	0.71, 	0.24, 	0.09],
     ]
-
-########################################
-###
-###  Classes
-###
-########################################
-
-class RpLBins(object):
-    r'''Class to hold Rp - Luminosity bin properties.
-
-    This is as much a container object for bin properties as it is a functional class.'''
-    # Bin the detected planets into types
-    # 1: planet-radius bin-edges  [units = Earth radii]
-    # Old (early 2018, 3 bins):
-    #   Rp_bins = np.array([0.5, 1.4, 4.0, 14.3])
-    # New (May 2018, 5 bins x 3 bins, see Kopparapu et al, arxiv:1802.09602v1,
-    # Table 1 and in particular Table 3 column 1, column 2 and Fig. 2):
-    Rp_bins = np.array([0.5, 1.0, 1.75, 3.5, 6.0, 14.3])
-    # 1b: bin lo/hi edges, same size as the resulting histograms
-    # TODO: Luminosity should perhaps be in increasing order.  Plot how you want, but
-    #       compute, store, and exchange in increasing order.
-    Rp_lo = np.outer(Rp_bins[:-1], np.ones((3,1))).ravel()
-    Rp_hi = np.outer(Rp_bins[1:],  np.ones((3,1))).ravel()
-    # 2: stellar luminosity bins, in hot -> cold order
-    #    NB: decreasing ordering.
-    # Old (as above):
-    # L_bins = np.array([
-    #    [185, 1.5,  0.38, 0.0065],
-    #    [185, 1.6,  0.42, 0.0065],
-    #    [185, 1.55, 0.40, 0.0055]])
-    # New (as above):
-    L_bins = np.array([
-        [182, 1.0,  0.28, 0.0035],
-        [187, 1.12, 0.30, 0.0030],
-        [188, 1.15, 0.32, 0.0030],
-        [220, 1.65, 0.45, 0.0030],
-        [220, 1.65, 0.40, 0.0025],
-        ])
-    # the below : selectors are correct for increasing ordering
-    L_lo = L_bins[:,:-1]
-    L_hi = L_bins[:,1:]
-    # a bins: Unused
-    #a_bins = [1./sqrt([185, 1.5, .38, .0065]),1./sqrt([185, 1.6, 0.42, .0065]),1./sqrt([185, 1.55, .4, .0055])]
-    # total number of bins (e.g., 9 = 3*4-3, for a 3x3 histogram)
-    RpL_bin_count = L_bins.size - (Rp_bins.size - 1)
-    # radius/luminosity bin boundaries
-    #   if there are 9 bins, there are 10 bin-edges, at 0.5, 1.5, ..., 9.5.
-    #   this histogram drops the "0", or out-of-range, RpL region
-    RpL_bin_edge_list = np.arange(0, RpL_bin_count+1) + 0.5
-
-    # set up the bin-number map from (Rp_bin, L_bin) -> RpL_bin
-    # this is a map from (int,int) -> int:
-    #   yields 0 for input pairs outside the allowed range
-    #        [namely, 1..len(Rp_bins) and 1..len(L_bins[i])]
-    #   yields 1...9 otherwise, with 1, 2, 3 for the small planets (Rp bin number = 1).
-    Rp_L_to_RpL_bin = defaultdict(int)
-    # there are many ways to set this up: here is one.
-    # (the below lines are enough for the old 3x3 setup, and they work for the new 5x3 setup too)
-    Rp_L_to_RpL_bin[(1,1)] = 1 # smallest radius, highest luminosity => L bin number 1
-    Rp_L_to_RpL_bin[(1,2)] = 2
-    Rp_L_to_RpL_bin[(1,3)] = 3
-    Rp_L_to_RpL_bin[(2,1)] = 4
-    Rp_L_to_RpL_bin[(2,2)] = 5
-    Rp_L_to_RpL_bin[(2,3)] = 6
-    Rp_L_to_RpL_bin[(3,1)] = 7
-    Rp_L_to_RpL_bin[(3,2)] = 8
-    Rp_L_to_RpL_bin[(3,3)] = 9
-    # New setup has 15 bins due to two new radius bins, so just add them here
-    Rp_L_to_RpL_bin[(4,1)] = 10
-    Rp_L_to_RpL_bin[(4,2)] = 11
-    Rp_L_to_RpL_bin[(4,3)] = 12
-    Rp_L_to_RpL_bin[(5,1)] = 13
-    Rp_L_to_RpL_bin[(5,2)] = 14
-    Rp_L_to_RpL_bin[(5,3)] = 15
-
-    def quantize_orig(self, specs, plan_id, star_ind):
-        r'''Compute the radius, luminosity, and combined bins for a given planet and star.
-
-        This is Rhonda's original code. It is here to allow cross-checks but is not used now.
-        Returns None if the planet/star lies outside the bin boundaries.'''
-
-        # return value indicating error
-        error_rval = (None, None, None)
-        # extract planet values
-        Rp_single = strip_units(specs['Rp'][plan_id])
-        a_single = strip_units(specs['a'][plan_id])
-        L_star = specs['L'][star_ind]
-        L_plan = L_star/a_single**2
-        # bin them
-        tmpbinplace_Rp = np.digitize(Rp_single, self.Rp_bins)
-        if tmpbinplace_Rp >= len(self.Rp_bins):
-            return error_rval # out of range
-        tmpbinplace_L = np.digitize(L_plan, self.L_bins[tmpbinplace_Rp-1])
-        if tmpbinplace_L >= len(self.L_bins[tmpbinplace_Rp-1]):
-            return error_rval # out of range
-        Rp_bin = tmpbinplace_Rp.item()
-        L_bin = tmpbinplace_L.item()
-        RpL_bin = tmpbinplace_L.item() + 10*tmpbinplace_Rp.item()
-        return Rp_bin, L_bin, RpL_bin
-
-    def quantize(self, spc, plan_id, star_ind):
-        r'''Compute the final radius/luminosity bin, an integer, for a given planet and star.
-
-        Returns 0 if the planet/star lies outside the bin boundaries.  Returns 1..15 otherwise.
-        Note: Not vectorized; scalar plan_id only.'''
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        a_plan = strip_units(spc['a'][plan_id])
-        L_star = spc['L'][star_ind]
-        L_plan = L_star / (a_plan**2) # adjust star luminosity by distance^2 in AU
-        # Bin by Rp.  "too low" maps to 0, and "too high" maps to len(Rp_bins).
-        Rp_bin = np.digitize(Rp_plan, self.Rp_bins)
-        # index into L_bins array: if Rp is out-of-range, index is irrelevant
-        Rp_bin_index = Rp_bin-1 if (Rp_bin > 0) and (Rp_bin < len(self.Rp_bins)) else 0
-        # bin by L
-        L_bin = np.digitize(L_plan, self.L_bins[Rp_bin_index])
-        # map the pair (Rp,L) -> RpL
-        # Rp_bin and L_bin are np arrays, so need to cast to integers
-        return self.Rp_L_to_RpL_bin[(int(Rp_bin), int(L_bin))]
-
-    def is_hab_zone(self, spc, plan_id, star_ind):
-        r'''Is the planet in the habitable zone?'''
-        # Note: must work for bare integer plan_id, and for [] plan_id.
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-        # rescale SMA by luminosity
-        L_star = spc['L'][star_ind]
-        a_scaled = spc['a'][plan_id] / np.sqrt(L_star)
-        return np.logical_and(
-            a_scaled >=  .95*u.AU,
-            a_scaled <= 1.67*u.AU)
-
-    # extracted from the below
-    Earth_SMA_lo = 0.95
-    Earth_SMA_hi = 1.67
-    Earth_Rp_hi = 1.4
-    Earth_Rp_lo1 = 0.8/np.sqrt(Earth_SMA_lo) # left bin boundary
-    Earth_Rp_lo2 = 0.8/np.sqrt(Earth_SMA_hi) # right boundary
-    
-    def is_earthlike(self, spc, plan_id, star_ind):
-        r'''Is the planet earthlike?
-
-        This version parallels the one in the EXOSIMS SurveySimulation prototype.'''
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-
-        scaleOrbits = True
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        L_star = spc['L'][star_ind]
-        if scaleOrbits:
-            a_plan = strip_units(spc['a'][plan_id]) / np.sqrt(L_star)
-        else:
-            a_plan = strip_units(spc['a'][plan_id])
-        # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
-        # between the given bounds.
-        Rp_plan_lo = 0.80/np.sqrt(a_plan)
-        # We use the numpy versions so that plan_ind can be a numpy vector.
-        return np.logical_and(
-           np.logical_and(Rp_plan >= Rp_plan_lo, Rp_plan <= 1.4),
-           np.logical_and(a_plan  >= 0.95,       a_plan  <= 1.67))
-
-
-    def is_earthlike_old(self, spc, plan_id, star_ind):
-        r'''Is the planet earthlike? -- Old version without orbit scaling.'''
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        a_plan = strip_units(spc['a'][plan_id])
-        L_star = spc['L'][star_ind]
-        L_plan = L_star / (a_plan**2) # adjust star luminosity by distance^2 in AU
-        # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
-        # between the given bounds.
-        # The magic numbers on L_plan are from:
-        #    0.95 <= a/sqrt(L) <= 1.67 iff (1/1.67)^2 <= L/a^2 <= (1/0.95)^2
-        # See also the condition in is_hab_zone, above.
-        ## OLD:
-        ## The lower Rp bound is not axis-parallel, but
-        ## the best axis-parallel bound is 0.90, so that's what we use.
-        ## Rp_plan_lo = 0.90
-        # New: 0.8/sqrt(a)
-        # NB: if scaleOrbits, the "a" here should instead be scaled by sqrt(L)!
-        Rp_plan_lo = 0.80/np.sqrt(a_plan)
-        # We use the numpy versions so that plan_ind can be a numpy vector.
-        return np.logical_and(
-            np.logical_and(Rp_plan >= Rp_plan_lo, Rp_plan <= 1.4),
-            np.logical_and(L_plan  >= 0.3586,     L_plan  <= 1.1080))
 
 
 ############################################################
@@ -448,8 +257,11 @@ def make_koppa_boxes(args, ax, hist):
     Text_style_base = dict(fontsize=15, 
                             horizontalalignment='center',
                             verticalalignment='center')
+    # eta: used within the plot area for all rates
     Text_style_eta = copy.copy(Text_style_base);
     Text_bubble = dict(bbox=dict(boxstyle='round', facecolor='white', linewidth=0, alpha=0.4))
+
+    # instantiate a binner to get planet categories
     binner = RpLBins()
     Rp_bins = binner.Rp_bins
 
@@ -479,17 +291,22 @@ def make_koppa_boxes(args, ax, hist):
             # geometric mean for log-scale
             a_mid = math.sqrt(a1 * a0) * x_axis_bump[L_inx]
             r_mid = math.sqrt(r1 * r0)
+            # ad hoc label bumps to make room for earth
             if r_inx == 1 and L_inx == 1:
-                r_mid = r_mid * 1.15 # ad hoc label bump
+                r_mid = r_mid * 1.12 # upward
             elif r_inx == 0 and L_inx == 1:
-                r_mid = r_mid * 0.8 # ad hoc label bump
+                r_mid = r_mid * 0.85 # downward
             info = hist[L_inx + r_inx*Lbin_num]
             txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, eta=args.eta)
             tbox = ax.text(a_mid, r_mid, txt, **Text_style_eta)
     # Nevada-shaped polygon for Earths
+    #   (zorder tweak needed for visibility)
+    #   TBD: in is_earthlike(), Rp_hi (upper) is handled differently from Rp_lo (lower)
+    #   If this plot is to reflect the is_earthlike() boundary, it must duplicate the
+    #   is_earthlike() logic
     earth_x = np.array([binner.Earth_SMA_lo, binner.Earth_SMA_hi, binner.Earth_SMA_hi, binner.Earth_SMA_lo])
     earth_y = np.array([binner.Earth_Rp_hi,  binner.Earth_Rp_hi,  binner.Earth_Rp_lo2, binner.Earth_Rp_lo1])
-    earth_gon = Polygon(np.vstack((earth_x, earth_y)).T, **Earth_style)
+    earth_gon = Polygon(np.vstack((earth_x, earth_y)).T, zorder=2, **Earth_style)
     ax.add_artist(earth_gon)
     # put in the Earth eta label
     if len(hist) > 15:
@@ -497,7 +314,7 @@ def make_koppa_boxes(args, ax, hist):
         txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, earth=True, eta=args.eta)
         a_mid = np.exp(np.mean(np.log(earth_x)))
         r_mid = np.exp(np.mean(np.log(earth_y)))*0.95
-        tbox = ax.text(a_mid, r_mid, txt, **Text_style_eta)
+        tbox = ax.text(a_mid, r_mid, txt, color='darkgreen', **Text_style_eta)
     else:
         print('No Earth info found.')
 
@@ -511,7 +328,7 @@ def make_koppa_boxes(args, ax, hist):
         ax.add_collection(pc)
 
     if args.albedo:
-        # plot albedo box
+        # plot albedo box (Gray A_G = ... near left axis)
         albedo_Rp = 1.4 # earth radii: below, is 0.2, above, is 0.5
         albedo_box = Rectangle((0, 0), 100, albedo_Rp, color='gray', zorder=-1)
         ax.add_artist(albedo_box)
@@ -670,6 +487,23 @@ if __name__ == '__main__':
 
     # set umask in hopes that files will be group-writable
     os.umask(0o002)
+
+    # load local reduction parameters
+    # find enclosing directory
+    # directory = Path(os.path.dirname(args.outfile % ('dummy', 'txt'))).parent
+    directory = Path(os.path.dirname(args.csv))
+    args.reduce_config = utils.load_reduce_config(directory, log_origin=args.progname)
+    if args.reduce_config is None:
+        print(f'{args.progname}: No local reduction config file ({utils.REDUCTION_CONFIG})')
+        # so we can always assume it's a dict
+        args.reduce_config = {}
+    # customize the overall binner class
+    fails = RpLBins.customize_parameters(args.reduce_config)
+    if fails:
+        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {utils.REDUCTION_CONFIG}')
+        print(f'{args.progname}: Warning: Unused: {", ".join(fails)}')
+    else:
+        print(f'{args.progname}: Loaded local reduction from {utils.REDUCTION_CONFIG}')
 
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'

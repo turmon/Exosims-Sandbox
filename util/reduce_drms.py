@@ -91,6 +91,7 @@ import time
 import json
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '4' # before "import numpy"
+from pathlib import Path
 import gc
 import csv
 import re
@@ -108,6 +109,11 @@ from scipy.interpolate import interp1d
 import astropy.units as u
 import astropy.constants as const
 from functools import reduce
+# this import must work: fail fast if it doesn't
+from reduce_drm_tools.PlanetBins import RpLBins
+from reduce_drm_tools import utils
+strip_units = utils.strip_units
+
 
 ########################################
 ##
@@ -121,7 +127,7 @@ VERBOSITY = 0
 DEBUG = ''
 
 # data reduction, local config filename
-REDUCTION_CONFIG = 'config-reduce.json'
+#REDUCTION_CONFIG = 'config-reduce.json'
 
 # number of CPUs
 N_CPU = mproc.cpu_count()
@@ -184,14 +190,6 @@ def UPDATE_GLOBALS(sim_info):
 ###  Utility Functions
 ###
 ########################################
-
-def strip_units(x):
-    r'''Strip astropy units from x.'''
-    # TODO: allow coercing units to a supplied value
-    if hasattr(x, 'value'):
-        return x.value
-    else:
-        return x
 
 def np_force_string(x):
     r'''Convert np bytes_ array to a string array, if possible.
@@ -377,204 +375,7 @@ class YieldAccumulator(dict):
         self[key] = new_value
         return new_value
 
-class RpLBins():
-    r'''Class to hold Rp - Luminosity bin properties.
 
-    This is as much a container object for bin properties as it is a functional class.'''
-    # guard variable: set to true when customize_parameters() was called
-    # ensures that class instances have received customization (which
-    # can be {}), even if multiprocessing is in effect
-    _customized = False
-    # Bin the detected planets into types
-    # 1: planet-radius bin-edges  [units = Earth radii]
-    # Old (early 2018, 3 bins):
-    #   Rp_bins = np.array([0.5, 1.4, 4.0, 14.3])
-    # New (May 2018, 5 bins x 3 bins, see Kopparapu et al, arxiv:1802.09602v1,
-    # Table 1 and in particular Table 3 column 1, column 2 and Fig. 2):
-    Rp_bins = np.array([0.5, 1.0, 1.75, 3.5, 6.0, 14.3])
-    # 1b: bin lo/hi edges, same size as the resulting histograms
-    # TODO: Luminosity should perhaps be in increasing order.  Plot how you want, but
-    #       compute, store, and exchange in increasing order.
-    Rp_lo = np.outer(Rp_bins[:-1], np.ones((3,1))).ravel()
-    Rp_hi = np.outer(Rp_bins[1:],  np.ones((3,1))).ravel()
-    # 2: stellar luminosity bins, in hot -> cold order
-    #    NB: decreasing ordering.
-    # Old (as above):
-    # L_bins = np.array([
-    #    [185, 1.5,  0.38, 0.0065],
-    #    [185, 1.6,  0.42, 0.0065],
-    #    [185, 1.55, 0.40, 0.0055]])
-    # New (as above):
-    L_bins = np.array([
-        [182, 1.0,  0.28, 0.0035],
-        [187, 1.12, 0.30, 0.0030],
-        [188, 1.15, 0.32, 0.0030],
-        [220, 1.65, 0.45, 0.0030],
-        [220, 1.65, 0.40, 0.0025],
-        ])
-    # the below : selectors are correct for increasing ordering
-    L_lo = L_bins[:,:-1]
-    L_hi = L_bins[:,1:]
-    # a bins: Unused
-    #a_bins = [1./sqrt([185, 1.5, .38, .0065]),1./sqrt([185, 1.6, 0.42, .0065]),1./sqrt([185, 1.55, .4, .0055])]
-    # total number of bins (e.g., 9 = 3*4-3, for a 3x3 histogram)
-    RpL_bin_count = L_bins.size - (Rp_bins.size - 1)
-    # radius/luminosity bin boundaries
-    #   if there are 9 bins, there are 10 bin-edges, at 0.5, 1.5, ..., 9.5.
-    #   this histogram drops the "0", or out-of-range, RpL region
-    RpL_bin_edge_list = np.arange(0, RpL_bin_count+1) + 0.5
-
-    # set up the bin-number map from (Rp_bin, L_bin) -> RpL_bin
-    # this is a map from (int,int) -> int:
-    #   yields 0 for input pairs outside the allowed range
-    #        [namely, 1..len(Rp_bins) and 1..len(L_bins[i])]
-    #   yields 1...9 otherwise, with 1, 2, 3 for the small planets (Rp bin number = 1).
-    Rp_L_to_RpL_bin = defaultdict(int)
-    # there are many ways to set this up: here is one.
-    # (the below lines are enough for the old 3x3 setup, and they work for the new 5x3 setup too)
-    Rp_L_to_RpL_bin[(1,1)] = 1 # smallest radius, highest luminosity => L bin number 1
-    Rp_L_to_RpL_bin[(1,2)] = 2
-    Rp_L_to_RpL_bin[(1,3)] = 3
-    Rp_L_to_RpL_bin[(2,1)] = 4
-    Rp_L_to_RpL_bin[(2,2)] = 5
-    Rp_L_to_RpL_bin[(2,3)] = 6
-    Rp_L_to_RpL_bin[(3,1)] = 7
-    Rp_L_to_RpL_bin[(3,2)] = 8
-    Rp_L_to_RpL_bin[(3,3)] = 9
-    # New setup has 15 bins due to two new radius bins, so just add them here
-    Rp_L_to_RpL_bin[(4,1)] = 10
-    Rp_L_to_RpL_bin[(4,2)] = 11
-    Rp_L_to_RpL_bin[(4,3)] = 12
-    Rp_L_to_RpL_bin[(5,1)] = 13
-    Rp_L_to_RpL_bin[(5,2)] = 14
-    Rp_L_to_RpL_bin[(5,3)] = 15
-
-    def __init__(self):
-        # parametric w/r/t Earth_Rp_lo_1AU
-        # convenenience variables useful for plots
-        if not self._customized:
-            print(f'RpLBins: Error: Class was not customized.', file=sys.stderr)
-            raise RuntimeError("RpLBins class used before customization")
-        self.Earth_Rp_lo1 = self.Earth_Rp_lo/np.sqrt(self.Earth_SMA_lo) # left bin boundary
-        self.Earth_Rp_lo2 = self.Earth_Rp_lo/np.sqrt(self.Earth_SMA_hi) # right boundary
-    
-    @classmethod
-    def customize_parameters(cls, mapping):
-        '''Set up the class parameters using a custom mapping passed in.
-
-        Return the list of unmatched keys. We assume the mapping is a dict.
-        '''
-        cls._customized = True
-        fails = []
-        # (1) Definition of "earthlike"
-        if 'earthlike' in mapping:
-            for k, v in mapping['earthlike'].items():
-                if k not in cls._earthlike_keys:
-                    fails.append(k)
-                else:
-                    #print(f"binner: Set {k} to {v}")
-                    setattr(cls, k, v)
-        # (2) Definition of (Rp, L) bins
-        if 'bins' in mapping:
-            # for now, emit a warning - unimplemented
-            fails.append('bins')
-        return fails
-
-    def quantize(self, spc, plan_id, star_ind):
-        r'''Compute the final radius/luminosity bin, an integer, for a given planet and star.
-
-        Returns 0 if the planet/star lies outside the bin boundaries.  Returns 1..15 otherwise.
-        Note: Not vectorized; scalar plan_id only.'''
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        a_plan = strip_units(spc['a'][plan_id])
-        L_star = spc['L'][star_ind]
-        L_plan = L_star / (a_plan**2) # adjust star luminosity by distance^2 in AU
-        # Bin by Rp.  "too low" maps to 0, and "too high" maps to len(Rp_bins).
-        Rp_bin = np.digitize(Rp_plan, self.Rp_bins)
-        # index into L_bins array: if Rp is out-of-range, index is irrelevant
-        Rp_bin_index = Rp_bin-1 if (Rp_bin > 0) and (Rp_bin < len(self.Rp_bins)) else 0
-        # bin by L
-        L_bin = np.digitize(L_plan, self.L_bins[Rp_bin_index])
-        # map the pair (Rp,L) -> RpL
-        # Rp_bin and L_bin are np arrays, so need to cast to integers
-        return self.Rp_L_to_RpL_bin[(int(Rp_bin), int(L_bin))]
-
-    def is_hab_zone(self, spc, plan_id, star_ind):
-        r'''Is the planet in the habitable zone?'''
-        # Note: must work for bare integer plan_id, and for [] plan_id.
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-        # rescale SMA by luminosity
-        L_star = spc['L'][star_ind]
-        a_scaled = spc['a'][plan_id] / np.sqrt(L_star)
-        return np.logical_and(
-            a_scaled >=  .95*u.AU,
-            a_scaled <= 1.67*u.AU)
-
-    # extracted from the original definition
-    _earthlike_keys = ['Earth_SMA_lo', 'Earth_SMA_hi', 'Earth_Rp_hi', 'Earth_Rp_lo']
-    Earth_SMA_lo = 0.95
-    Earth_SMA_hi = 1.67
-    Earth_Rp_hi = 1.40 # 1.499999 # 1.40
-    Earth_Rp_lo = 0.80
-
-    def is_earthlike(self, spc, plan_id, star_ind):
-        r'''Is the planet earthlike?
-
-        This version parallels the one in the EXOSIMS SurveySimulation prototype.'''
-        try:
-            if len(plan_id) == 0: return False
-        except:
-            pass # bare integer does not have len()
-
-        # Note: this is an assumption, typically true for JPL scripts
-        scaleOrbits = True
-        # extract planet and star properties
-        Rp_plan = strip_units(spc['Rp'][plan_id])
-        L_star = spc['L'][star_ind]
-        if scaleOrbits:
-            a_plan = strip_units(spc['a'][plan_id]) / np.sqrt(L_star)
-        else:
-            a_plan = strip_units(spc['a'][plan_id])
-        # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
-        # between the given bounds.
-        # We scale the lower Rp boundary (only)
-        Rp_plan_lo_s = self.Earth_Rp_lo/np.sqrt(a_plan)
-        # We use the numpy versions so that plan_ind can be a numpy vector.
-        return np.logical_and(
-           np.logical_and(Rp_plan >= Rp_plan_lo_s, Rp_plan <= self.Earth_Rp_hi),
-           np.logical_and(a_plan  >= self.Earth_SMA_lo, a_plan  <= self.Earth_SMA_hi))
-
-def load_reduce_config(dirname):
-    '''Load reduction config file from dirname as tool for RpLBins.
-
-    Returns:
-     - None if not present (not an error)
-     - The dictionary, if it is present
-     '''
-    fn = os.path.join(dirname, REDUCTION_CONFIG)
-    # OK for it not to exist
-    if not os.access(fn, os.R_OK):
-        return None
-    # If it exists, it's an error for it to not load as a mapping
-    try:
-        with open(fn, 'r') as fp:
-            d = json.load(fp)
-    except FileNotFoundError:
-        print(f'{args.progname}: Error: Reduction configuration ({fn}) exists but unreadable.')
-        raise
-    except json.JSONDecodeError:
-        print(f'{args.progname}: Error: Could not read JSON in {fn}')
-        raise
-    if not isinstance(d, dict):
-        print(f'{args.progname}: Error: Reduction configuration ({fn}) is not a mapping.')
-        raise ValueError("Reduction configuration was not a mapping.")
-    return d
-                
-#-------
 
 class SimulationRun(object):
     r'''Load and summarize a simulation: one DRM and its corresponding SPC.'''
@@ -2738,6 +2539,8 @@ class EnsembleSummary(object):
 
         The distinction from the other values is that these values are not means, 
         quantiles, et., across the DRM ensemble.'''
+        # to extract values
+        binner = RpLBins()
         # start empty
         summary = {}
         # A1: detection time bins, lo + hi
@@ -2762,10 +2565,10 @@ class EnsembleSummary(object):
         # B: Rp/L histogram low/hi bin boundaries
         #     note, this parameterization is the same size as the data,
         #     so it works well with CSV
-        summary['h_Rp_lo'] = RpLBins.Rp_lo.ravel()
-        summary['h_Rp_hi'] = RpLBins.Rp_hi.ravel()
-        summary['h_L_lo']  = RpLBins.L_lo.ravel()
-        summary['h_L_hi']  = RpLBins.L_hi.ravel()
+        summary['h_Rp_lo'] = binner.Rp_lo.ravel()
+        summary['h_Rp_hi'] = binner.Rp_hi.ravel()
+        summary['h_L_lo']  = binner.L_lo.ravel()
+        summary['h_L_hi']  = binner.L_hi.ravel()
         # B2: earth char count bins
         summary['h_earth_char_count_lo'] = EARTH_CHAR_COUNT_BINS[:-1]
         summary['h_earth_char_count_hi'] = EARTH_CHAR_COUNT_BINS[1:]
@@ -3644,7 +3447,7 @@ if __name__ == '__main__':
         print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)
     # ensure enclosing dir exists
-    directory = os.path.dirname(args.outfile % ('dummy', 'txt'))
+    directory = Path(os.path.dirname(args.outfile % ('dummy', 'txt')))
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -3656,18 +3459,18 @@ if __name__ == '__main__':
 
     # load local reduction parameters
     # (note: configuration w/r/t job specs is in UPDATE_GLOBALS())
-    args.reduce_config = load_reduce_config(directory)
+    args.reduce_config = utils.load_reduce_config(directory, log_origin=args.progname)
     if args.reduce_config is None:
-        print(f'{args.progname}: No local reduction config file ({REDUCTION_CONFIG})')
+        print(f'{args.progname}: No local reduction config file ({utils.REDUCTION_CONFIG})')
         # so we can always assume it's a dict
         args.reduce_config = {}
     # customize the overall binner class
     fails = RpLBins.customize_parameters(args.reduce_config)
     if fails:
-        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {REDUCTION_CONFIG}')
+        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {utils.REDUCTION_CONFIG}')
         print(f'{args.progname}: Warning: Unused: {", ".join(fails)}')
     else:
-        print(f'{args.progname}: Loaded local reduction from {REDUCTION_CONFIG}')
+        print(f'{args.progname}: Loaded local reduction from {utils.REDUCTION_CONFIG}')
 
     infile_print = (args.infile[0] if len(args.infile) > 0 else '(none)') + (' ...' if len(args.infile) > 1 else '')
     print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))
