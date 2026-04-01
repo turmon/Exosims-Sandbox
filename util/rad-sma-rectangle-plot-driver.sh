@@ -38,8 +38,11 @@ self_fields=kopparapu,sag13,sdet
 prog_arg=
 output_opt=
 fields_opt=
-while getopts "qhf:o:" o; do
+while getopts "sqhf:o:" o; do
     case "$o" in
+	s)
+            # should be mutually exclusive with -q
+	    prog_arg="${prog_arg} --sigma";;
 	q)
 	    prog_arg="${prog_arg} --quantile";;
 	f)
@@ -99,7 +102,7 @@ mkdir -p "$(dirname $output_opt)"
 chmod g+sw "$(dirname $output_opt)" 2> /dev/null || true
 
 # Run the command -- something like:
-# util/radlum-rectangle-bin-plot.py --quantile -o /tmp/mjt/det-%s.%s ...
+# util/radlum-rectangle-bin-plot.py --sigma -o /tmp/mjt/det-%s.%s ...
 #    -f population,char_full,char_strict,char_tput_full,char_tput_strict ...
 #    sims/HabEx_4m_TSDD_DulznoDD_TF14_20190707/reduce-%s.csv
 

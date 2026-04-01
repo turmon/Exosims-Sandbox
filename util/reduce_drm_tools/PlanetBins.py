@@ -77,7 +77,14 @@ class RpLBins:
     # Table 1 and in particular Table 3 column 1, column 2 and Fig. 2:
     Rp_bins = np.array([0.5, 1.0, 1.75, 3.5, 6.0, 14.3])
     # 2: stellar luminosity bins, in hot -> cold order
-    #    NB: *decreasing ordering*.
+    #    Luminosity and SMA are inter-convertible: SMA = 1/sqrt(L).
+    #    NB: *decreasing ordering* in L <=> increasing in SMA
+    #    So for example, for the outer bin boundary:
+    #         L = .0030  [unit: Lsun]
+    #      => SMA = 18.26  [unit: AU]
+    #    Referencing the radius/SMA plot (rad-sma-rectangle-bin-plot):
+    #       Rp_bins controls y-axis
+    #       1/sqrt(L_bins) controls x-axis for each Rp_bins stripe
     # v1:
     # L_bins = np.array([
     #    [185, 1.5,  0.38, 0.0065],
@@ -141,7 +148,7 @@ class RpLBins:
             #   -- generalize rad-sma-rectangle-bin-plot.py so that the
             #      correct boundary is drawn
             #   -- insert any other needed data here (that the plotter, etc., may want)
-            raise RuntimeError("Unimplemented scaling flag.")
+            #raise RuntimeError("Unimplemented scaling flag.")
             self.Earth_Rp_lo1 = self.Earth_Rp_lo # left boundary
             self.Earth_Rp_lo2 = self.Earth_Rp_lo # right boundary
 
@@ -165,7 +172,9 @@ class RpLBins:
     def customize_parameters(cls, mapping):
         '''Set up the class parameters using a custom mapping passed in.
 
-        Return the list of unmatched keys. We assume the mapping is a dict.
+        Return the list of unmatched attribute names (but only those within
+        attribute groups we care about, like "earthlike".
+        We assume the mapping is a dict.
         '''
         cls._customized = True
         fails = []
@@ -257,8 +266,16 @@ class RpLBins:
             a_plan = strip_units(spc['a'][plan_id])
         # Definition: planet radius (in earth radii) and solar-equivalent luminosity must be
         # between the given bounds.
-        # We scale the lower Rp boundary (only)
-        Rp_plan_lo_s = self.Earth_Rp_lo/np.sqrt(a_plan)
+        if self.Earth_Rp_scaled:
+            # Default case: we scale the lower Rp boundary (only)
+            #  -- this is the definition used by the SAG13 notion of "earthlike"
+            #  -- this is the same logic in EXOSIMS SurveySimulation Prototype
+            Rp_plan_lo_s = self.Earth_Rp_lo/np.sqrt(a_plan)
+        else:
+            # Special case: this special scaling is turned off
+            #  -- this makes is_earthlike() have axis-parallel Rp/SMA boundaries
+            #  -- thus allowing is_earthlike() to be turned to other purposes
+            Rp_plan_lo_s = self.Earth_Rp_lo
         # We use the numpy versions so that plan_ind can be a numpy vector.
         return np.logical_and(
            np.logical_and(Rp_plan >= Rp_plan_lo_s, Rp_plan <= self.Earth_Rp_hi),

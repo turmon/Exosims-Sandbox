@@ -126,9 +126,6 @@ VERBOSITY = 0
 # global debug-output mode
 DEBUG = ''
 
-# data reduction, local config filename
-#REDUCTION_CONFIG = 'config-reduce.json'
-
 # number of CPUs
 N_CPU = mproc.cpu_count()
 
@@ -3464,13 +3461,16 @@ if __name__ == '__main__':
         print(f'{args.progname}: No local reduction config file ({utils.REDUCTION_CONFIG})')
         # so we can always assume it's a dict
         args.reduce_config = {}
+    else:
+        print(f'{args.progname}: Loaded reduction config: {args.reduce_config["_config_filename"]}')
+
     # customize the overall binner class
     fails = RpLBins.customize_parameters(args.reduce_config)
     if fails:
-        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {utils.REDUCTION_CONFIG}')
-        print(f'{args.progname}: Warning: Unused: {", ".join(fails)}')
+        print(f'{args.progname}: Warning: {len(fails)} unused attribute(s) in {args.reduce_config["_config_filename"]}')
+        print(f'{args.progname}: Warning: Unused attributes: {", ".join(fails)}')
     else:
-        print(f'{args.progname}: Loaded local reduction from {utils.REDUCTION_CONFIG}')
+        print(f'{args.progname}: Note: Reduction is locally customized.')
 
     infile_print = (args.infile[0] if len(args.infile) > 0 else '(none)') + (' ...' if len(args.infile) > 1 else '')
     print('%s: Reducing %s to %s' % (args.progname, infile_print, args.outfile))

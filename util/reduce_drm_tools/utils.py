@@ -36,8 +36,10 @@ def strip_units(x):
 
 # 
 def load_reduce_config(dirname, log_origin=None):
-    '''Load reduction config file from dirname as tool for RpLBins.
+    '''Load reduction config file from dirname or its parent as tool for RpLBins.
 
+    dirname is a Path.
+    
     Returns:
      - None if not present (not an error)
      - The dictionary, if it is present
@@ -49,9 +51,20 @@ def load_reduce_config(dirname, log_origin=None):
 
     fn = dirname / REDUCTION_CONFIG
     # OK for it not to exist
-    if not os.access(fn, os.R_OK):
-        return None
-    # If it exists, it's an error for it to not load as a mapping
+    if not (fn.is_file() and os.access(fn, os.R_OK)):
+        dirname_alt = dirname.parent
+        if dirname_alt.suffix in ('.fam', '.exp') and dirname_alt.is_dir():
+            # look one level up
+            fn = dirname_alt / REDUCTION_CONFIG
+            if not (fn.is_file() and os.access(fn, os.R_OK)):
+                return None
+            else:
+                pass # fn is readable -- continue
+        else:
+            return None
+    # Below here: fn is a readable file, either in dirname or dirname.parent
+            
+    # If fn exists, it's an error for it to not load as a mapping
     try:
         with open(fn, 'r') as fp:
             d = json.load(fp)
@@ -64,6 +77,9 @@ def load_reduce_config(dirname, log_origin=None):
     if not isinstance(d, dict):
         print(f'{log_origin}: Error: Reduction configuration ({fn}) is not a mapping.')
         raise ValueError("Reduction configuration was not a mapping.")
+    # record where it came from
+    #    str() is the relative path starting from sims/
+    d['_config_filename'] = str(fn)
     return d
                 
 

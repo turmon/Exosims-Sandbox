@@ -239,7 +239,7 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
         symbol = r'\eta%s = ' % (r'_\oplus' if earth else '')
     else:
         symbol = ''
-    txt = '%s%.2g' % (symbol, x)
+    txt = '%s%#.3g' % (symbol, x)
     if ranges:
         # we are allowed to show a range
         if x_lo != None and x_hi != None:
@@ -247,17 +247,18 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
             txt += '^{%+.2g}_{%+.2g}' % (x_hi - x, x_lo - x)
         elif x_lo != None and x_hi == None:
             # standard deviation (r'' because \p would look like \n)
-            txt += r'\pm%.2g' % (x_lo, )
+            # superscript \pm to make the range in smaller font
+            txt += r'^{\pm%#.2g}' % (x_lo, )
     return '$' + txt + '$'
 
 def make_koppa_boxes(args, ax, hist):
     r'''Render the table.'''
     ## Set up a bunch of data
     SHOW_RANGES = True
-    Text_style_base = dict(fontsize=15, 
-                            horizontalalignment='center',
-                            verticalalignment='center')
-    # eta: used within the plot area for all rates
+    Text_style_base = dict(fontsize=14, 
+                           horizontalalignment='center',
+                           verticalalignment='center')
+    # eta: used within the plot area for all rates or counts
     Text_style_eta = copy.copy(Text_style_base);
     Text_bubble = dict(bbox=dict(boxstyle='round', facecolor='white', linewidth=0, alpha=0.4))
 
@@ -266,10 +267,16 @@ def make_koppa_boxes(args, ax, hist):
     Rp_bins = binner.Rp_bins
 
     #Earth_style = dict(facecolor=None, edgecolor='lightgreen', linewidth=2.0, hatch='/')
-    Earth_style = dict(fill=False, facecolor=None, edgecolor='lightgreen', linewidth=2.0, hatch='/')
+    Earth_style = dict(fill=False,
+                       facecolor=None,
+                       edgecolor='lightgreen',
+                       linewidth=2.0,
+                       alpha=0.7, # tiny bit of transparency
+                       hatch='/')
 
     # L bins are in high...low order; a-bins are in low-high order
-    style_for_L = [dict(facecolor=fc) for fc in ('tomato', 'dodgerblue', 'lightskyblue')]
+    #   colors below tweaked repeatedly, formerly "tomato"
+    style_for_L = [dict(facecolor=fc) for fc in ('xkcd:pastel red', 'dodgerblue', 'lightskyblue')]
     style_for_all = dict(edgecolor='white')
     x_axis_bump = [0.8, 1.0, 1.3] # visual tweak of text label locations
     
@@ -497,14 +504,16 @@ if __name__ == '__main__':
         print(f'{args.progname}: No local reduction config file ({utils.REDUCTION_CONFIG})')
         # so we can always assume it's a dict
         args.reduce_config = {}
+    else:
+        print(f'{args.progname}: Loaded reduction config: {args.reduce_config["_config_filename"]}')
     # customize the overall binner class
     fails = RpLBins.customize_parameters(args.reduce_config)
     if fails:
-        print(f'{args.progname}: Warning: {len(fails)} unused key(s) in {utils.REDUCTION_CONFIG}')
-        print(f'{args.progname}: Warning: Unused: {", ".join(fails)}')
+        print(f'{args.progname}: Warning: {len(fails)} unused attribute(s) in {args.reduce_config["_config_filename"]}')
+        print(f'{args.progname}: Warning: Unused attributes: {", ".join(fails)}')
     else:
-        print(f'{args.progname}: Loaded local reduction from {utils.REDUCTION_CONFIG}')
-
+        print(f'{args.progname}: Note: Reduction is locally customized.')
+        
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'
 
