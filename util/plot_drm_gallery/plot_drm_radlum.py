@@ -373,7 +373,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Explanatory legend
     block_text = ('Counting Over All Planets in Target List\n'
                  'Normalization: Planets of that Type, per Star\n'
-                 'Earth Column is Observed $\eta$ Earth\n'
+                 'Leftmost Column is Observed $\eta$ Earth\n'
                  'Error Bar: $\pm$ 1 sigma')
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
