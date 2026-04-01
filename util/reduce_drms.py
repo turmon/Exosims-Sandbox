@@ -2757,6 +2757,8 @@ class EnsembleSummary(object):
         desired = reduce_config.get('reduce_info_extras', {})
         extras = {}
         for k, locator in desired.items():
+            if k.startswith('_'):
+                continue # comment
             ok, value = extract_one(self.summary, locator.split('.'))
             if ok:
                 extras[k] = value
