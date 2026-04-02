@@ -511,8 +511,8 @@ if __name__ == '__main__':
     if fails:
         print(f'{args.progname}: Warning: {len(fails)} unused attribute(s) in {args.reduce_config["_config_filename"]}')
         print(f'{args.progname}: Warning: Unused attributes: {", ".join(fails)}')
-    else:
-        print(f'{args.progname}: Note: Reduction is locally customized.')
+    elif args.reduce_config:
+        print(f'{args.progname}: Note: Local customization successful.')
         
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'
