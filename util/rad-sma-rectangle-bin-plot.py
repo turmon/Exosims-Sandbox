@@ -248,7 +248,7 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
         elif x_lo != None and x_hi == None:
             # standard deviation (r'' because \p would look like \n)
             # superscript \pm to make the range in smaller font
-            txt += r'^{\pm%#.2g}' % (x_lo, )
+            txt += r'^{{\pm}%#.2g}' % (x_lo, )
     return '$' + txt + '$'
 
 def make_koppa_boxes(args, ax, hist):
