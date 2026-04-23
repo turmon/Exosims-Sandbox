@@ -1147,9 +1147,13 @@ def exp_summary(d):
     # the rolled-up count can only sometimes be known at HTML-generation time. 
     # Further, it mostly provides value at the ensemble-summary level, and this 
     # is where the count is tractable to glob for. Let. It. Go.
-    # TODO: (2025) The tabulator.js version has obsoleted this warning.
-    # We now generate summarizer files (index-files.json, index-files-byname.json).
-    # The dataflow needs to be documented
+    # TODO: (2025) 
+    # ** The tabulator.js version has obsoleted this routine, and the warning above.
+    # ** The summarizer files (index-files.json, index-files-byname.json) are now
+    # ** not maintained here, but by "reduce_drm_sets.py".
+    # ** In the standard data flow, this routine is not even called because
+    # ** the information is maintained in "reduce_drm_sets.py".
+    # ** The dataflow needs to be documented.
 
     # Load the reduction summary file, reduce-info.csv
     rv = reduce_info_summary(d)
@@ -1490,6 +1494,7 @@ def index_group(args, startpath, title, uplink):
                             extra_span = hh.span(html.escape(extra), **{'class': 'tooltiptext'})
                             alink += hh.link(extra_fn, f'&nbsp;{dingbat}{extra_span}',
                                              inner=True, **{'class': 'tooltip'})
+                        # NB: exp_summary() is typically not called (see vanilla_tables above)
                         properties = exp_summary(os.path.join(root, d))
                         hh.table_row([alink] + list(properties.values()))
                         item_num += 1
@@ -1504,6 +1509,7 @@ def index_group(args, startpath, title, uplink):
                 # finished all dirs below startpath -- do not descend further with os.walk()
                 break
             # summary over the whole set of ensembles in the table (root/reduce-info.csv)
+            # NB: exp_summary() is typically not called (see vanilla_tables above)
             properties = exp_summary(startpath)
             #properties = sim_summary(None)
             hh.table_foot()
