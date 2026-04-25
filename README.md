@@ -79,14 +79,4 @@ The contents here include:
 
     Infrastructure for running coupled sets of Exosims runs for parameter tuning.
 
-  + `ipyparallel`
 
-    iPython-parallel per-user, per-machine configuration and lock files
-
-## Extras
-
-Optionally, use `make ipp-create` to create an iPython-parallel profile, 
-and use `make ipp-start` to start an iPython-parallel cluster. 
-Our own usage does not typically use this facility, so this is generally
-not necessary.
- 
