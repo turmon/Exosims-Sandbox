@@ -638,6 +638,7 @@ class SimSummary(object):
         self.readme_info = '' # one-line summary
         self.readme_file = '' # filename
         self.graphics_origin = self.load_graphics_origin()
+        self.config_reduce = self.find_config_reduce()
 
     def load_graphics_origin(self):
         r'''If possible, load metadata of graphical file origins.'''
@@ -655,7 +656,18 @@ class SimSummary(object):
             # For debugging: raise here
             pass
         return maps
-                     
+
+    def find_config_reduce(self):
+        r'''Find the config-reduce.json file, or empty string.'''
+        # we are not triggering off the presence of this file
+        # like "add_html_doc(config-reduce.json) because
+        # too much about this is nonstandard -- allowing ..,
+        # not rendered within a graphics section
+        fns = ['config-reduce.json', '../config-reduce.json']
+        for fn in fns:
+            if os.path.isfile(fn):
+                return fn
+        return ''
 
     def add(self, filename):
         r'''Dispatcher: adds filename to the correct category of item.'''
@@ -875,6 +887,10 @@ class SimSummary(object):
             hh.paragraph(f'Ensemble: <code>{self.name}</code>')
             hh.paragraph(f'Size: {self.Ndrm} simulations')
             hh.paragraph('Source JSON ' + hh.link('../reduce-script.json', 'script', inner=True))
+            # reference config-reduce.json, if present
+            if self.config_reduce:
+                hh.paragraph('<strong>Note:</strong> Reduction customized with ' +
+                             hh.link(f'../{self.config_reduce}', 'config-reduce.json', inner=True))
             # table of contents
             hh.toc_here('Contents')
             # overall images
