@@ -3233,14 +3233,21 @@ class EnsembleSummary(object):
         # copy script to JSON file
         fn = args.outfile % ('script', 'json')
         print('\tCopying script to %s' % fn)
-        shutil.copyfile(args.script_name, fn)
-        ensure_permissions(fn)
+        try:
+            shutil.copyfile(args.script_name, fn)
+            ensure_permissions(fn)
+        except:
+            # typically happens when Scripts/... does not exist
+            print(f'    [!] Could not copy script {args.script_name} to {fn}')
                 
         # copy an outspec to specific JSON file
         fn = args.outfile % ('outspec', 'json')
         print('\tCopying outspec to %s' % fn)
-        shutil.copyfile(args.specs_name, fn)
-        ensure_permissions(fn)
+        try:
+            shutil.copyfile(args.specs_name, fn)
+            ensure_permissions(fn)
+        except:
+            print(f'    [!] Could not copy outspec {args.specs_name} to {fn}')
 
         # dump more info to JSON file
         fn = args.outfile % ('pool', 'json')
@@ -3259,16 +3266,10 @@ def obtain_outspec(args, announce=True):
     This function tries to find the outspec within the logfiles, in
     preference to the script, so that the defaults will be explicit.'''
     # try to get some outspec nearby the .pkl, else, the script itself
-
-    # parent of parent:
-    # sims/Yokohama_Extended.fam/Trials.fam/s_dbug_YX_NIR_D8.0/drm/397016230.pkl
-    #   -> 
-    # sims/Yokohama_Extended.fam/Trials.fam/s_dbug_YX_NIR_D8.0
-    sim_root = os.path.dirname(os.path.dirname(args.infile[0]))
-    if os.path.isdir(spec_dir := os.path.join(sim_root, 'run')):
+    if os.path.isdir(spec_dir := os.path.join(args.sim_dir, 'run')):
         # 2022'ish logfiles: .../run/outspec_SEED.json
         path_pat = os.path.join(spec_dir, 'outspec_*.json')
-    elif os.path.isdir(spec_dir := os.path.join(sim_root, 'log', 'outspec')):
+    elif os.path.isdir(spec_dir := os.path.join(args.sim_dir, 'log', 'outspec')):
         # 2023+ logfiles: .../log/outspec/SEED.json
         path_pat = os.path.join(spec_dir, '*.json')
     else:
@@ -3351,8 +3352,19 @@ def load_exosims_sim(args):
 
     # 3: obtain mission lifetime
     rv['missionLife'] = specs.get('missionLife', 5.0) # [years]
-
     return rv
+
+def expand_infiles(drm):
+    infiles, errfiles = [], []
+    for p in drm:
+        if os.path.isdir(p):
+            infiles += glob.glob(os.path.join(p, '*.pkl'))
+        elif os.path.isfile(p):
+            infiles += [p]
+        else:
+            errfiles += [p]
+    return infiles, errfiles
+
 
 def main(args):
     print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
@@ -3372,14 +3384,14 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Summarize DRMs.",
+    parser = argparse.ArgumentParser(description="Summarize DRMs into files of metrics.",
                                      epilog='')
-    parser.add_argument('drm', metavar='DRM', nargs='*', default=[],
-                            help='drm file(s)')
+    parser.add_argument('drm', metavar='DRM', nargs='+', default=[],
+                            help='DRM file(s) or directory(ies).')
     parser.add_argument('-s', '--script', type=str, default='',
-                            help='Exosims JSON script used for these DRMs.')
+                            help='EXOSIMS JSON script used for these DRMs')
     parser.add_argument('-O', '--outfile', type=str, default='',
-                            help='Output file template.')
+                            help='Output file template with two %%s tags (default: Sandbox convention)')
     parser.add_argument('-v', help='verbosity, repeat to escalate', action='count', dest='verbose',
                             default=0)
     parser.add_argument('-D', help='debugging output type (string)', type=str, default='', dest='debug')
@@ -3399,56 +3411,67 @@ if __name__ == '__main__':
     # program name, for convenience
     args.progname = os.path.basename(sys.argv[0])
     
-    # preserve input args separately
-    args.infile = args.drm[:]
+    # transform input argument(s) into list of input DRM files
+    args.infile, errfiles = expand_infiles(args.drm)
+    if errfiles:
+        print(f'{args.progname}: Fatal. Unrecognized path(s):')
+        print('\n'.join(f'\t{p}' for p in errfiles))
+        sys.exit(1)
 
-    # check edge cases
+    # report status if no DRMs
+    if len(args.infile) == 0:
+        print('%s: No DRMs or empty directory supplied.' % args.progname)
+    # edge case: * wildcard, no DRMs, was unexpanded => better message
     if len(args.infile) == 1 and '*' in os.path.basename(args.infile[0]):
         # the wildcard appears here when invoked with arg .../drm/*.pkl, and there are no .pkl's
         # this fix is a bit hacky (there "could" be a drm with a star in its name),
         # but it helps do the right thing with automatic invocation by make
         print('%s: Wildcard appears in input drm, assuming empty.' % args.progname)
-        print('%s: Subsequent reduction error is likely.' % args.progname)
+        # print('%s: Subsequent reduction error is likely.' % args.progname)
         args.infile = []
     if len(args.infile) == 0:
         print('%s: No input DRMs. Exiting.' % args.progname)
         sys.exit(0)
+    # NB: we can now assume at least one input DRM
 
-    # get the experiment name from the directory
-    #   this is brittle, but have to do something
+    # Get sim_dir once and for all with parent of parent:
+    # sims/Yokohama.fam/Trials.fam/s_dbug_YX_NIR_D8.0/drm/397016230.pkl
+    #   -> 
+    # sims/Yokohama.fam/Trials.fam/s_dbug_YX_NIR_D8.0
+    args.sim_dir = os.path.dirname(os.path.dirname(args.infile[0]))
+    # Get scenario name (called expt_name here)
     try:
         # ' ' + == hack to distinguish auto-generated from manual expt_name
-        args.expt_name = ' ' + os.path.dirname(args.drm[0]).split('/')[-2]
+        args.expt_name = ' ' + os.path.basename(args.sim_dir)
     except IndexError:
         args.expt_name = ' EXOSIMS Run'
     # allow to over-ride with a single name in a special file
     try:
-        ens_fn = re.sub(r'/drm/.*', '/EnsembleName.txt', args.drm[0])
+        ens_fn = re.sub(r'/drm/.*', '/EnsembleName.txt', args.infile[0])
         if os.path.exists(ens_fn):
             args.expt_name = open(ens_fn).readline().strip()
             print('%s: New ensemble name is "%s".' % (args.progname, args.expt_name))
     except:
         pass
 
-    # get the script name from the directory - this relies heavily on Sandbox convention
-    # TODO: allow to specify manually?
+    # get the script name from the directory - this relies on Sandbox convention
     if not args.script:
-        args.script_name = os.path.dirname(args.drm[0]).replace('sims/', 'Scripts/').replace('/drm', '.json')
+        args.script_name = args.sim_dir.replace('sims/', 'Scripts/') + '.json'
         print('%s: Inferring script file: %s' % (args.progname, args.script_name))
     else:
         args.script_name = args.script
         print('%s: Explicitly given script file: %s' % (args.progname, args.script_name))
 
-    # best practice is to explicitly give outfile
+    # default outfile follows Sandbox conventions
     if not args.outfile:
-        args.outfile = ('sims/%s/reduce' % args.expt_name) + '-%s.%s'
+        args.outfile = os.path.join(args.sim_dir, 'reduce-%s.%s')
     if args.outfile.count('%s') != 2:
         print('%s: Need two instances of %%s in output file template' % args.progname)
         sys.exit(1)
     # ensure enclosing dir exists
-    directory = Path(os.path.dirname(args.outfile % ('dummy', 'txt')))
+    directory = os.path.dirname(args.outfile % ('dummy', 'txt'))
     if not os.path.exists(directory):
-        os.makedirs(directory)
+        os.makedirs(directory, exist_ok=True)
 
     # if this file is present, do not continue
     skip_fn = args.outfile % ('skip', 'txt')
@@ -3458,10 +3481,10 @@ if __name__ == '__main__':
 
     # load local reduction parameters
     # (note: configuration w/r/t job specs is in UPDATE_GLOBALS())
-    args.reduce_config = utils.load_reduce_config(directory, log_origin=args.progname)
+    args.reduce_config = utils.load_reduce_config(Path(args.sim_dir), log_origin=args.progname)
     if args.reduce_config is None:
         print(f'{args.progname}: No local reduction config file ({utils.REDUCTION_CONFIG})')
-        # so we can always assume it's a dict
+        # set up so that we can always assume it's a dict
         args.reduce_config = {}
     else:
         print(f'{args.progname}: Loaded reduction config: {args.reduce_config["_config_filename"]}')

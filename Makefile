@@ -227,9 +227,10 @@ reduce: script-exists sims/reduce-info.csv
 reduce-only: script-exists sims/$(S)/reduce-info.csv
 
 # dependence for a bottom-level reduction in sims/$S
+#   writes sims/$(S)/reduce-info.csv, and many others
 sims/$(S)/reduce-info.csv: sims/$(S)/drm
 	@ echo "Make: Reducing $< ..."
-	$(REDUCE_PROG) -O sims/$(S)/reduce-%s.%s sims/$(S)/drm/*.pkl
+	$(REDUCE_PROG) sims/$(S)/drm
 
 # Below: a variable, a macro, and a foreach link the top-level reduce
 # target (sims/reduce-info.csv) to the base-level one (sims/$S/reduce-info.csv)
