@@ -6,3 +6,6 @@
 # generated files (from .md)
 *.md_html.meta
 
+# generated index file
+index-plot-descriptions.md
+

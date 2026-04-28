@@ -1,5 +1,7 @@
 #
 # Makefile for documentation for plots
+#
+# Note: requires "uv" for the python markdown package.
 # 
 # [1] To update documentation, edit the one corresponding *.md
 # file here, and "make install".
@@ -11,14 +13,22 @@
 # If your documentation needs supplemental images, place
 # them in "Media" below.
 #
+# The install can also be run from the main Makefile in the
+# Sandbox root.
+#
 # turmon 11/2023
 
 # accept bash-only to get proper failure reporting 
 # for the python | sed line below
 SHELL=/bin/bash -o pipefail
 
+INDEX_HEAD=index-plot-descriptions-head.md
+INDEX=index-plot-descriptions.md
+
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md
+SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md $(INDEX)
+
+# grep '^Title: ' *.md | sed 's/Title: //' | awk -F : '{print "[" $2 "]" $1}'
 
 # destination directory for above pages
 DEST_DIR=../www-resources/doc
@@ -32,7 +42,14 @@ PAGES=$(SOURCES:.md=.html)
 MARKED_DOWN=$(SOURCES:.md=.md_html)
 MARKED_META=$(SOURCES:.md=.md_html.meta)
 
-all:$(PAGES)
+all: $(PAGES)
+
+index: $(INDEX)
+
+$(INDEX): $(INDEX_HEAD)
+	@ echo "Remaking index file: $@"
+	cp $(INDEX_HEAD) $(INDEX)
+	util/compile-plot-index.sh >> $(INDEX)
 
 # httpd has FollowSymlinks off, so we can't symlink the CSS
 # simply rsync's the HTML and Media/* files to $DEST_DIR
@@ -49,7 +66,7 @@ install: all
 # (and any other) field from the header of the plot.md file,
 # for later use in generating the HTML title
 %.md_html: %.md
-	python -m markdown -x extra -x meta $< | sed 's/^/    /' > $@
+	uv run --with markdown python -m markdown -x extra -x meta $< | sed 's/^/    /' > $@
 	util/meta-extract.sh < $< > $@.meta
 
 # For m4:
@@ -65,6 +82,7 @@ install: all
 clean:
 	rm -f $(MARKED_DOWN)
 	rm -f $(MARKED_META)
+	rm -f $(INDEX)
 
-.PHONY: all install clean
+.PHONY: all install clean index
 
