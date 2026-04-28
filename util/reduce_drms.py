@@ -3440,12 +3440,10 @@ if __name__ == '__main__':
     # sims/Yokohama.fam/Trials.fam/s_dbug_YX_NIR_D8.0
     args.sim_dir = os.path.dirname(os.path.dirname(args.infile[0]))
     # Get scenario name (called expt_name here)
-    try:
-        # ' ' + == hack to distinguish auto-generated from manual expt_name
-        args.expt_name = ' ' + os.path.basename(args.sim_dir)
-    except IndexError:
-        args.expt_name = ' EXOSIMS Run'
+    # ' ' + == hack to distinguish auto-generated from manual expt_name
+    args.expt_name = ' ' + os.path.basename(args.sim_dir)
     # allow to over-ride with a single name in a special file
+    # TODO: put in config-reduce.json instead?
     try:
         ens_fn = re.sub(r'/drm/.*', '/EnsembleName.txt', args.infile[0])
         if os.path.exists(ens_fn):

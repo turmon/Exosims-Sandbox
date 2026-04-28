@@ -1543,15 +1543,20 @@ def index_group(args, startpath, title, uplink):
             ##          literal=True)
             hh.script(WWW_RES/'ensemble-tabulator.js')
 
+        #
+        hh.paragraph(f'Regenerating the table data from existing reduction information:', br=True)
+        hh.text(f'&nbsp; Only the table here: <code>make S={startpath} html-only</code>', br=True)
+        hh.text(f'&nbsp; This and all scenarios below: <code>make S={startpath} exp-html-only</code>', br=True)
+        #
         hh.paragraph('In the summary, ensemble size is cumulative.', br=True)
         hh.text('Simulation date reflects the most recent simulation run below this level.', br=True)
         hh.text('Reduction date and user reflect the most recent reduction below this level.', br=True)
         hh.text('Yields reflect the maximum over all ensembles below this level.', br=True)
         hh.text('Yield definitions:', br=True)
-        hh.text('&nbsp;Earths (All) = Number of successful Earth detections, counting repeat visits (detections_earth_all).', br=True)
-        hh.text('&nbsp;Earths (Det.) = Number of successful Earth detections, repeat visits not counted (detections_earth_unique).', br=True)
-        hh.text('&nbsp;Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted (chars_earth_unique).', br=True)
-        hh.text('&nbsp;Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted (chars_earth_strict).', br=True)
+        hh.text('&nbsp; Earths (All) = Number of successful Earth detections, counting repeat visits (detections_earth_all).', br=True)
+        hh.text('&nbsp; Earths (Det.) = Number of successful Earth detections, repeat visits not counted (detections_earth_unique).', br=True)
+        hh.text('&nbsp; Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted (chars_earth_unique).', br=True)
+        hh.text('&nbsp; Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted (chars_earth_strict).', br=True)
         
         # If possible, link to emulator analysis (sim/.../Analysis/index.html)
         # New section
