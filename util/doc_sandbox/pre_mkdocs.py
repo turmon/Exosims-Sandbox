@@ -2,9 +2,19 @@
 r''' 
 pre_mkdocs.py: generate files _before_ mkdocs run
 
+###
+### THIS FILE IS OBSOLETE -- WE PLACE FILES IN
+### docs/implementation/FOO.md manually
+###
+
 At present, this generates simple template-based
 placeholder .md files for python utilities that 
-are present in the util_detail/ directory
+are present in the util_detail/ directory.
+
+(util_detail/*.py -> doc/implementation/FOO.md)
+
+The objective is to allow more complete documentation
+for some selected utilities.
 
 This is NOT an mkdocs plugin!
 
@@ -35,7 +45,7 @@ def gen_markup(script):
 
     md_lines = []
     md_lines.append(f'# {script.stem}')
-    md_lines.append(f'Implementation details of {script}.')
+    md_lines.append(f'Implementation details of `{script}`.')
     md_lines.append(f'::: {MODULE}.{script.stem}')
     return '\n'.join(md_lines)
 
@@ -64,7 +74,8 @@ def main():
 
     # look through "featured scripts" directory only
     for script in sorted(ROOT_DIR.glob('*.py')):
-        # a stop-list
+        # a stop-list 
+        #   -- no doc for __init__ of course
         if script.stem in ['__init__']:
             continue
         out = str(Path(f'docs/{INDEX_DIR}') / script.stem) + '.md'

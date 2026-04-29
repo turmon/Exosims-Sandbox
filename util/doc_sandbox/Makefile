@@ -16,12 +16,14 @@ PREFLIGHT_SENTINEL=docs/implementation/drm_tabulate.py
 
 default: doc
 
-preflight: $(PREFLIGHT_SENTINEL)
+# (remove this as a dependency)
+preflight:
+# preflight: $(PREFLIGHT_SENTINEL)
 
 # this preflight routine makes the sentinel
 # as well as some other files
-$(PREFLIGHT_SENTINEL): ../drm_tabulate.py
-	pre_mkdocs.py
+# $(PREFLIGHT_SENTINEL): ../drm_tabulate.py
+# 	pre_mkdocs.py
 
 # typical entry point
 doc: preflight
@@ -32,6 +34,6 @@ rebuild:
 	touch mkdocs.yml
 
 export:
-	rsync -av --delete --exclude=README ./site/ ../../Local/www-resources/doc_sandbox/
+	rsync -av --delete --exclude=README.txt ./site/ ../../Local/www-resources/doc_sandbox/
 
 

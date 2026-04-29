@@ -32,11 +32,14 @@ This program rolls up the summary information already recorded (for each ENS)
 in ENS/reduce_info.csv, and places the cumulative summary in a CSV file following
 the given filename template. It also tabulates some yield metrics and places in
 related CSV files. Overall:
-  - reduce-info.csv: one-line file with overall yield and size information
-  - reduce-yield.csv: same as below but with no ensemble name information
-  - reduce-yield-plus.csv: one line per ENS, with summary yield information,
-    ENS name, and parameter information (if s_index.json exists). Like so:
 
+- reduce-info.csv: one-line file with overall yield and size information
+- reduce-yield.csv: same as below but with no ensemble name information
+- reduce-yield-all.json: one JSON object per ENS, with summary information as
+    in `reduce-yield-plus.csv` (below), as well as some other information such as runtime.
+- reduce-yield-plus.csv: one line per ENS, with summary yield information,
+    ENS name, and parameter information (if s_index.json exists). Like so:
+```
   experiment,diam,contrast,tput,iwa,chars_earth_unique,detections_earth_all,detections_earth_unique,ensemble_size
   s_YX_D7.8_iwa44_C6.36e-11_tput0.22,7.8,6.36e-11,0.22,44,7.42,20.41,10.89,100
   s_YX_D7.4_iwa64_C4.27e-10_tput0.47,7.4,4.27e-10,0.47,64,6.85,21.02,11.51,100
@@ -44,10 +47,9 @@ related CSV files. Overall:
   s_YX_D9.0_iwa56_C5.86e-11_tput0.54,9.0,5.86e-11,0.54,56,11.61,33.51,18.11,100
   s_YX_D7.8_iwa50_C4.88e-10_tput0.45,7.8,4.88e-10,0.45,50,16.29,45.74,25.51,100
   s_YX_D8.0_iwa38_C5.68e-10_tput0.57,8.0,5.68e-10,0.57,38,19.88,51.44,28.32,100
+```
 (Note: the "experiment" column should have been labeled "scenario", according to
 our current naming conventions.)
-  - reduce-yield-all.json: one JSON object per ENS, with summary information as
-    in reduce-yield-plus.csv, as well as some other information such as runtime.
 
 This program supports nested Experiments. That is, if -E is given, and if the
 parent ENS contains only Experiments (.exp suffixes -- no .fam), an omnibus 

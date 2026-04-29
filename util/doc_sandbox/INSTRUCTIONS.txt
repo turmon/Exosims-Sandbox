@@ -1,14 +1,37 @@
-Documentation Notes & Commands of Interest
------------------------------------------------
+Documentation Notes 
+-------------------
 
 Sandbox utility doc generation using mkdocs
 
-mkdocs can export docs to github (it's not set up that way at present,
-but it has been). That's one of its appeals.
+(Note: This code documentation is separate from the webpage plot
+documentation in Local/www-doc.)
 
-In this dir, we're using mkdocs to make documentation for Sandbox basic 
-operating principles, and for command-lines for utilities.
-See mkdocs.yml for the file contents.
+Rationale: mkdocs uses markdown, is Python-focused, supports extra
+(non-code) documentation, and can export docs to github.
+
+In this dir, we're using mkdocs to make narrative documentation for
+Sandbox basic operating principles, and for command-line utility
+scripts.  (See mkdocs.yml for the file contents.)
+
+The setting and goals here were different than the main use-case
+of mkdocs ("document this package, its four classes, and their
+methods"). Also, my patience was low so I may have missed some
+affordances mkdocs has for my use case. Here's the approach we took:
+
+* mkdocs wants to document a python package; the Sandbox is mostly
+utility scripts and *there is no base package*. So this directory
+(below util/) is the pseudo-package for "exosims_sandbox", for 
+documentation purposes. (TODO: bring the Sandbox itself more in 
+line with a conventional package.)
+
+* To document command-line utilities, we use `gen-pages.py` to
+extract the documentation block telling usage.
+
+* In a small number of cases (e.g., drm_tabulate.py), the code
+itself seemed worth documenting. For those scripts: (1) their
+source code in ../util is symlinked here, allowing conventional
+code documentation; (2) a `pre-mkdocs` script generates templates
+for those utilities only.
 
 We are using "uv" to manage the dependencies. We have pinned the
 mkdocs (and related) versions a stable version - there has been
@@ -30,9 +53,18 @@ Selected utilities
     for a few scripts (the ones symlinked in util_details).
     Perhaps this should one day be all or almost all such scripts?
 
-(jan 2024, orig ~2019)
+To add a new .py soure file to the detail list:
+  - Place a link to it in util_detail/.
+  - Ensure it can be imported (e.g., PlanetBins imports utils, so
+    a link to utils.py had to be inserted, and then utils put in
+    the stop-list for pre_mkdocs because we don't want it to be
+    documented).
+  - At present, util_detail is flat, and it probably should not be.
+    But see the big TODO on bringing the sandbox into conformance 
+    with python package conventions.
 
-See the Makefile for some usage lines. Also:
+
+See the Makefile here for some usage lines. Also:
 
 # build the docs
 uv run mkdocs build
@@ -40,15 +72,18 @@ uv run mkdocs build
 # serve on localhost:8000
 uv run mkdocs serve
 
-More on methods::
+More on methods (dated):
 https://realpython.com/python-project-documentation-with-mkdocs/#step-1-set-up-your-environment-for-building-documentation
 
 TODO:
-- is my gen_pages really doing the best job, given current best practice?
+- Bring the sandbox as a whole closer to a normal python package, allowing
+  to move this directory to the top-level package.
+- Is my gen_pages really doing the best job, given current best practice for
+  docstrings/documentation blocks?
 - edit the ../util/*.sh,*.py files so the usage block at the top renders in Markdown
 - edit the .py usage blocks so they are surrounded by ''' ... ''' and not by #
-- add other existing PDF/Markdown Sandbox documentation to this pile of documentation
-- increase documentation "usefulness density" by:
+- Add other existing PDF/Markdown Sandbox documentation to this pile of documentation
+- Increase documentation "usefulness density" by:
   + find a better way to feature some commands as being *USER-CALLABLE*, 
     as opposed to *INFRASTRUCTURE*, so they are rendered in a special list, 
     or with a special pip next to their name
