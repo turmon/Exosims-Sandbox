@@ -17,6 +17,8 @@ plugins:
           paths: ["..", "../reduce_drm_tools"]
           # Python-specific options (e.g., show source code)
           options:
+            docstring_options:
+              warn_missing_types: false
             show_source: true
         shell:
           # Shell-specific options -- placeholder

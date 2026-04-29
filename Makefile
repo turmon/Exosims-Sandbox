@@ -595,6 +595,22 @@ html-status:
 ##
 .PHONY: doc
 doc:
+	@echo "******************************"
+	@echo "***"
+	@echo "*** Making plot documentation"
+	@echo "***"
+	@echo "******************************"
 	cd Local/www-doc && make install
-	cd util/doc_sandbox && make doc && make export
+	@echo "******************************"
+	@echo "***"
+	@echo "*** Making code documentation"
+	@echo "***"
+	@echo "******************************"
+	cd util/doc_sandbox && make doc
+	@echo "******************************"
+	@echo "***"
+	@echo "*** Moving code documentation into place"
+	@echo "***"
+	@echo "******************************"
+	cd util/doc_sandbox && make export
 

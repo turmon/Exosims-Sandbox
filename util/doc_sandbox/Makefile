@@ -34,6 +34,6 @@ rebuild:
 	touch mkdocs.yml
 
 export:
-	rsync -av --delete --exclude=README.txt ./site/ ../../Local/www-resources/doc_sandbox/
+	rsync -q -av --delete --exclude=README.txt ./site/ ../../Local/www-resources/doc_sandbox/
 
 

@@ -156,6 +156,9 @@ def main():
     index.append('')
 
     for script in sorted(ROOT_DIR.glob('*.py')):
+        # stop-list
+        if script.name in ['__init__.py']:
+            continue
         # if the implementation dir has an entry, find it
         # and generate a link in the index
         details_file = IMPL_DIR / script.name
