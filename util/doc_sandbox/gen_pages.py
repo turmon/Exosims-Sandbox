@@ -17,6 +17,7 @@ import glob
 import ast
 from pathlib import Path
 import docstring_to_markdown
+import docstring_to_markdown.google
 import mkdocs_gen_files
 
 # Informationally: the most basic usage of mkdocs_gen_files
@@ -93,10 +94,13 @@ def get_doc_block_sh(script, title):
             elif l.startswith('#'):
                 chunk.append(l[1:])
     block = ''.join(chunk)
-    # utility to convert google-style doc-blocks to markdown
-    # (is mostly a no-op, but can recognize headings like Args:
-    # and Note:)
-    block_md = docstring_to_markdown.google_to_markdown(block)
+    # original pre-2026, fixed namespace issue 04/2026:
+    #  utility to convert google-style doc-blocks to markdown
+    #  (is mostly a no-op, but can recognize headings like Args:
+    #  and Note:)
+    block_md = docstring_to_markdown.google.google_to_markdown(block)
+    # turmon 04/2026: above may be obsolete? Consider:
+    # block_md = docstring_to_markdown.convert(block)
     return block_md, line1
 
 def get_doc_block_py(fn, stem):

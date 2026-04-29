@@ -596,4 +596,5 @@ html-status:
 .PHONY: doc
 doc:
 	cd Local/www-doc && make install
+	cd util/doc_sandbox && make doc && make export
 

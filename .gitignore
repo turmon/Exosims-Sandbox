@@ -45,9 +45,9 @@ Local/www-resources/doc/*
 # documentation - generated files
 util/doc_sandbox/site
 util/doc_sandbox/docs/impl_index.md
-# (the below are no longer auto-generated)
-#util/doc_sandbox/docs/implementation/*
-#!util/doc_sandbox/docs/implementation/README
+# (files in the below dir are auto-generated except for README.txt)
+util/doc_sandbox/docs/implementation/*
+!util/doc_sandbox/docs/implementation/README.txt
 
 # generated files above are placed here for www service
 # (but leave the README placeholder)

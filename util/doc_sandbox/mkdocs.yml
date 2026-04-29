@@ -11,12 +11,27 @@ nav:
 
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          # Python-specific options (e.g., show source code)
+          options:
+            show_source: true
+        shell:
+          # Shell-specific options -- placeholder
+          options:
+            setup_commands:
+              - source mkdocs_sh_setup.sh
+
   - gen-files:
       scripts:
         - gen_pages.py  # or any other name or path
             
 
-# theme: readthedocs
+#theme: 
+#  name: "readthedocs"
+
 theme: 
   name: "material"
+  features:
+    - navigation.tabs

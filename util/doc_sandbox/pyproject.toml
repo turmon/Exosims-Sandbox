@@ -1,0 +1,31 @@
+[project]
+name = "sandbox_docs"
+version = "0.1.0"
+description = "Documentation building for EXOSIMS Sandbox"
+readme = "README.txt"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "you@example.com"}
+]
+
+# External dependencies to be installed 
+# turmon, 2026/04:
+#  -- schism within mkdocs world means pinning to 1.6.1 advisable
+#     (it's the last pre-schism version, 2024/08)
+#  -- restrict mkdocs-material < 9.7.2 (around 2026/02) because
+#     an annoying transition warking is printed starting with 9.7.2
+#  -- mkdocs-gen-files: restricted <= 0.6.0 because later versions
+#     pull in the post-schism ProperDocs package (!)
+# Thr eventual path forward is to adopt whatever the community 
+# migrates to -- perhaps ProperDocs, perhaps Zensical
+dependencies = [
+    "mkdocs<=1.6.1",
+    "mkdocs-material<9.7.2",
+    "docstring-to-markdown",
+    "mkdocstrings",
+    "mkdocstrings-python",
+    "mkdocstrings-shell",
+    "mkdocs-gen-files<=0.6.0",
+]
+
