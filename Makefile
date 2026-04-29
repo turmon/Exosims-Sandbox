@@ -590,3 +590,10 @@ html-stop:
 html-status:
 	util/html-serve.sh status
 
+########################################
+## documentation (per-installation)
+##
+.PHONY: doc
+doc:
+	cd Local/www-doc && make install
+
