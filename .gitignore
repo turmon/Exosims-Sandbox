@@ -16,6 +16,9 @@ EXOSIMS
 # this can be remade with "make ipp-create"
 ipyparallel/*
 
+# uv lock files
+uv.lock
+
 # python byte-compiled files
 __pycache__
 *.pyc
@@ -33,22 +36,23 @@ __pycache__
 
 # exclude web server log files, except the README placeholder
 Local/www-service/var/*
-!Local/www-service/var/README
+!Local/www-service/var/README.txt
 
-# generated files, except for README placeholder
+# generated files, except for README.txt placeholder
 Local/www-resources/doc/*
-!Local/www-resources/doc/README
+!Local/www-resources/doc/README.txt
 
 # documentation - generated files
 util/doc_sandbox/site
 util/doc_sandbox/docs/impl_index.md
-util/doc_sandbox/docs/implementation/*
-!util/doc_sandbox/docs/implementation/README
+# (the below are no longer auto-generated)
+#util/doc_sandbox/docs/implementation/*
+#!util/doc_sandbox/docs/implementation/README
 
 # generated files above are placed here for www service
 # (but leave the README placeholder)
 Local/www-resources/doc_sandbox/*
-!Local/www-resources/doc_sandbox/README
+!Local/www-resources/doc_sandbox/README.txt
 
 # remove the scripts from source control
 # (except one file, to allow recursive Make to work)

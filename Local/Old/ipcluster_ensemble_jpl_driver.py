@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 
+###
+### 11/2023: This driver is obsolete and not being maintained.
+### We do not use ipython parallel, so the name and some of its
+### capabilities are confusing maintenance issues.
+###
+### Please see standalone_jpl_driver.py
+###
+
 r"""
 Top-level script for EXOSIMS runs in the Sandbox environment.
+
+NOTE: This driver is obsolete and un-maintained, see standalone-jpl-driver.py
 
 Simple Usage:
   ipcluster_ensemble_jpl_driver.py [--outpath PATH] SCRIPT N_RUNS
@@ -9,6 +19,7 @@ Simple Usage:
 
 Detailed Usage:
   ipcluster_ensemble_jpl_driver.py  [--outpath PATH] [--outopts OPTS]
+                               [--standalone] [--interactive]
                                [--controller CONTROLLER] [--email EMAIL]
                                [--toemail TOEMAIL]
                                SCRIPT N_RUNS
@@ -19,18 +30,23 @@ where:
 
   optional arguments:
     -h, --help            show this help message and exit
+    --standalone          Standalone mode: no ipyparallel
+    --interactive         Interactive mode: post-init stdout not redirected to logfile
     --outpath PATH        Path to output directory.  Created if not present.
                           Default: basename of scriptfile.
     --outopts OPTS        Output result-file mode. Default: 'drm'.  See below.
-    --controller CONTROLLER
-                          Controller name (as used in ipcluster) for ipython
-                          engines.
     --xspecs SCRIPT       an extra scenario-specific script loaded on top of the argument SCRIPT
+
+  archaic arguments:
+    --controller CONTROLLER
+                          Controller name (as used in ipyparallel) engines.
     --email EMAIL         Email address to notify when run is complete.a
     --toemail TOEMAIL     Additional email to notify when run is complete.
 
 Notes:  
-  * An ipcluster instance must be running and accessible in order
+  * At present (2020), this script is typically used without ipyparallel,
+    that is, --standalone is given.
+  * If not standalone, an ipcluster instance must be running and accessible 
     to use this script.  If everything is already set up properly,
     this is usually a matter of executing, from the shell, a command like:
        $ ipcluster start
@@ -57,6 +73,7 @@ Notes:
 from __future__ import print_function
 import numpy as np
 import numpy
+import astropy
 import argparse
 import sys
 import time
@@ -71,7 +88,7 @@ import EXOSIMS
 import EXOSIMS.MissionSim
 import os
 import os.path
-import cPickle # 'import as' is not allowed by ipyparallel
+import six.moves.cPickle # 'import as' is not allowed by ipyparallel
 import gzip
 import traceback
 
@@ -156,15 +173,17 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
     # turmon 2019/01: added MsTrue, stellar mass (!= MsEst)
     # turmon 2019/01: added SS.promoted_stars
     # turmon 2019/07: added TL.comp0; SU.e, SU.I; SS.t_char_earths
+    # turmon 2020/09: added SS.known_{stars,rocky,earths} -- all in SS proto
+    # turmon 2023/07: added TL.int_comp for EXOSIMS v3+, replacing comp0
     param_retain = [
         (SS.SimulatedUniverse,
              ('a', 'e', 'I', 'Rp', 'Mp', 'nPlans', 'p', 'plan2star', 's', 'sInds')),
         (SS.PlanetPopulation,
              ('SAG13coeffs', )),
         (SS.TargetList,
-            ('L', 'dist', 'Name', 'coords', 'Spec', 'MsTrue', 'comp0')),
+            ('L', 'dist', 'Name', 'coords', 'Spec', 'MsTrue', 'comp0', 'int_comp')),
         (SS,
-             ('promoted_stars', 't_char_earths'))]
+             ('promoted_stars', 't_char_earths', 'known_stars', 'known_rocky', 'known_earths'))]
     spc_params = {}
     for (module, fieldlist) in param_retain:
         for field in fieldlist:
@@ -186,7 +205,7 @@ def run_one(genNewPlanets=True, rewindPlanets=True, outpath='.', outopts='', res
         if not path: continue # no output of that type
         #raise ValueError(' '.join((outname,outpath,outopts,path)))
         with writer(path, 'wb') as f:
-            cPickle.dump(possible_outputs[outname], f)
+            six.moves.cPickle.dump(possible_outputs[outname], f)
 
     # reset simulation object AFTER the above files are written
     # note, reset_sim() will pop the seed from SS.specs, which causes 
@@ -275,6 +294,9 @@ def main(args, xpsecs):
         ensemble_mode.append('standalone')
         # [11/2018] delay to avoid parallel race conditions (does help)
         time.sleep((os.getpid() % 40)/40.0)
+    # ensemble_mode is picked up by the IPClusterEnsembleJPL __init__
+    if args.interactive:
+        ensemble_mode.append('interactive')
     if args.verbose is not None:
         if args.verbose == 0:
             xspecs['verbose'] = False
@@ -297,6 +319,9 @@ def main(args, xpsecs):
     with RedirectStdStreams(stdout=fp_log):
         sim = EXOSIMS.MissionSim.MissionSim(args.scriptfile, **xspecs)
     seed = sim.SurveySimulation.seed
+    if args.seed is not None and args.seed == 0:
+        print('Seed given as 0. Cache warming only. Instantiation complete and caches in place.')
+        return 'Cache-warming complete. No run performed.'
     res = sim.genOutSpec(tofile = os.path.join(outpath_run, 'outspec_%d.json' % seed))
     # place the output in a properly-named file
     if fp_log:
@@ -316,8 +341,19 @@ def main(args, xpsecs):
 
     # result is a list of seeds
     with open(os.path.join(outpath_run, 'outseed_%d.txt' % seed), 'w') as f:
-        f.write('# EXOSIMS run list\n# user: %s \n# host: %s\n# time: %s\n# command: %s\n' %
-                    (os.getenv('USER'), socket.gethostname(), subtime, args.command))
+        file_params = [
+            ('file_type', 'EXOSIMS run seed list'),
+            ('user', os.getenv('USER')), 
+            ('host', socket.gethostname()),
+            ('time', subtime),
+            ('shell_command', args.command),
+            ('python_interpreter', ' '.join(sys.version.split())),
+            ('numpy_version', np.__version__),
+            ('astropy_version', astropy.__version__),
+            ('EXOSIMS_version', EXOSIMS.__version__),
+            ('EXOSIMS_path', EXOSIMS.__path__[0])]
+        for name, value in file_params:
+            f.write('# %s: %s\n' % (name, value))
         for r in res:
             f.write('%s\n' % str(r))
 
@@ -335,9 +371,10 @@ if __name__ == "__main__":
     parser.add_argument('numruns', type=int, metavar='N_RUNS', help='Number of ensemble runs.')
     # options
     parser.add_argument('--verbose', type=int, default=None, help='Verbosity (0/1).')
-    parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int).')
+    parser.add_argument('--seed',    type=int, default=None, help='Random number seed (int); 0 for cache-warming only.')
     parser.add_argument('-q', '--quiet', default=False, action='store_true', help='Send object creation messages to a log file.')
     parser.add_argument('--standalone', default=False, action='store_true', help='Stand-alone mode (no ipyparallel).')
+    parser.add_argument('--interactive', default=False, action='store_true', help='Interactive mode (stdout not redirected to logfile).')
     parser.add_argument('--outpath', type=str, metavar='PATH',
             help='Path to output directory, created if not present. Default: basename of SCRIPT.')
     parser.add_argument('--outopts', type=str, metavar='OPTS', default='drm,spc',
