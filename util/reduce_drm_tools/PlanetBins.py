@@ -6,13 +6,17 @@ Centralized so binning can stay consistent across modules here.
     
 Can run as an executable, to verify customization, like so:
 
+```
 $ PlanetBins.py [DIR]
+```
 
-where DIR is an optional directory to look for a config-reduce.json
+where `DIR` is an optional directory to look for a `config-reduce.json`
 customization file. It will print a summary of the bin parameters
 after applying customization. A useful idiom is:
 
+```
 $ diff <(util/reduce_drm_tools/PlanetBins.py sims/SCENARIO) <(util/reduce_drm_tools/PlanetBins.py)
+```
 
 which will output any differences from the customization.
 '''
