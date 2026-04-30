@@ -3,7 +3,9 @@
 # json-xform: Transform an EXOSIMS JSON script into a set of such scripts.
 #
 # Usage:
+# ```
 #   json-xform [-v] [-o FILE] SCRIPT XSCRIPT ...
+# ```
 #
 # where:
 #   SCRIPT is the JSON script used by EXOSIMS

@@ -3,7 +3,9 @@ r'''
 csv-diff.py: difference between two CSV files
 
 usage:
+```
   csv-diff.py [-1 | -2] [-d KEY ...] CSVFILE CSVFILE
+```
 
 where:
   CSVFILE is a CSV file probably containing DRM summaries
@@ -13,7 +15,6 @@ and:
   -1: only display the differences in file1
   -2: only display the differences in file2
 
-turmon jan 2019
 '''
 
 import pandas as pd

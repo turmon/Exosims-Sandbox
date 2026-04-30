@@ -16,7 +16,9 @@
 # and visit the above URL on your own system (e.g., laptop).
 #
 # Usage:
+#```
 #   html-serve.sh [-h] [-p PORT] [-r ROOT] [-s apache|simple] MODE
+#```
 #
 # where MODE is one of:
 #   ensure: if no server is running, start one

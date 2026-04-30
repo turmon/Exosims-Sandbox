@@ -3,7 +3,9 @@ r'''
 reduce_drm_sets.py: reduce a list of simulation-ensembles to summary CSV files
 
 usage:
+```
   reduce_drm_sets.py [ -E ] [ -O outfile ] [ -j N ] [ -i indexfile] ENS [...]
+```
 
 where:
   ENS ... is a list of simulation *directories* ("ensembles"),
@@ -444,8 +446,8 @@ class EnsembleSummary(object):
 
         Arguments:
           otype: string, contains "csv", "json", or both; defines output file type
-          complain: boolean; do we issue warnings for out-of-date s_index.json?
-          extras: boolean; set True to write all gathered scenario information
+          complain: bool; do we issue warnings for out-of-date s_index.json?
+          extras: bool; set True to write all gathered scenario information
         '''
 
         # FIXME: JSON was added later and it shows. We should generate what-to-write,

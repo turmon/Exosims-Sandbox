@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Pickles containing DRM results are summarized to the terminal in a format
-# similar to "ls".
+# drm-ls.py: Summarize DRMs to the terminal similar to "ls".
 #
 # Usage:
-#   drm-ls.py [-lqrc] [-d N] [FILE_OR_DIRECTORY ...]
+#   `drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]`
+#
 # Simplest usage:
 #   drm-ls.py 
 #
@@ -28,7 +28,7 @@
 #
 
 # author:
-#  Michael Turmon, JPL, 2017
+#  Michael Turmon, JPL
 #
 # robustness note: the signature for a pickle in MAGIC_NUMBERS may be
 # sensitive to the pickle encoding used, e.g. pickle version, or

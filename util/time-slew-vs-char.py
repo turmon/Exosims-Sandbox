@@ -3,7 +3,9 @@ r'''
 time-slew-vs-char.py: reduce a pile of DRMs to slew-time vs. char-time
 
 usage:
+```
   time-slew-vs-char.py [ -O outfile ] [ -j N ] DRM [ ...]
+```
 
 where:
   DRM ... is a list of DRM pickles,
@@ -22,7 +24,6 @@ Note: This started as a one-off.  I adapted the DRM data reduction script becaus
 I wanted to see if a functional "shell", suitable for one-offs, could be extracted 
 from the rather complex full-reduction setup.
 
-turmon jan 2018, oct 2018
 '''
 
 from __future__ import division

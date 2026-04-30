@@ -9,7 +9,9 @@
 # Note that this operates on sets of DRMs, not just one DRM.
 #
 # Usage:
+# ```
 #   ens-path-graphics [-a] [--outfile FILE] SCRIPT DRMs
+# ```
 #
 # where:
 #   SCRIPT is the JSON script used to generate the DRMs

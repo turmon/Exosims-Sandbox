@@ -7,7 +7,9 @@
 # supply the DRM file name.
 #
 # Usage:
+#```
 #   drm-to-movie.sh [-F] [-l N] [-d D] DRM
+#```
 #
 # to make a movie from the given DRM file.  Note, the star-planet config
 # file (SPC) corresponding to the DRM is also needed, as is the JSON script.

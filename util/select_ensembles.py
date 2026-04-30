@@ -3,7 +3,9 @@ r'''
 select_ensembles.py: select from a list of simulation-ensembles
 
 usage:
+```
   select_ensembles.py [-q] [-0] [-S] [-n N] [-k key] [-o key] MODE CSVFILE
+```
 
 where:
   MODE is "top", "bottom", or "mix"

@@ -3,7 +3,9 @@ r'''
 locus-wa-dmag.py: provide locus of WA, dMag pairs of simulated universe
 
 usage:
+```
   locus-wa-dmag.py [ -q ] [ -p ] SCRIPT CSVFILE
+```
 
 where:
   SCRIPT is a json script to initialize Exosims
@@ -18,7 +20,6 @@ Output goes to stdout, which was a mistake.
 Typical usage:
   PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv
 
-turmon mar 2019
 '''
 
 from __future__ import division

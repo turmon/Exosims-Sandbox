@@ -3,7 +3,9 @@
 # rad-sma-rectangle-plot-driver.sh: sh driver for radius/luminosity box-format plots
 #
 # usage:
+#```
 #   rad-sma-rectangle-plot-driver.sh [-d] [-o OP] in_tmpl
+#```
 # where:
 #
 # +  in_tmpl: filename template for data input

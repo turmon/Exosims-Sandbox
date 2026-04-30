@@ -3,7 +3,9 @@ r'''
 select_runs.py: select runs from a list
 
 usage:
+```
   select_runs.py [ -q ] [ -n N ] [ -m MODE ] SCENARIO
+```
 
 where:
   SCENARIO is a location (for now, directory) containing run information

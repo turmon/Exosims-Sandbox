@@ -3,7 +3,9 @@
 # plot-obs-timelines.sh: Wrapper script, makes plots of observations from a DRM
 #
 # Usage:
+#```
 #   plot-obs-timelines.sh [-o TEMPLATE] [-j JSON] DRM
+#```
 #
 # where:
 #  -o TEMPLATE  gives the explicit output file template

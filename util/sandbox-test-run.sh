@@ -3,7 +3,9 @@
 # sandbox-test-run.sh: perform a test run to exercise sandbox functions
 #
 # Usage:
+#```
 #   sandbox-test-run.sh [ -L ] [ -R ] SCRIPT
+#```
 #
 # where SCRIPT is a script name (e.g., Scripts/HabEx-foobar.json).
 #

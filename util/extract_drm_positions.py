@@ -18,7 +18,8 @@
 # DRM file, and the sim object is instantiated by giving it that seed.
 #
 # Usage:
-#   extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl
+#   `extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl`
+#
 #
 # where the TWO required arguments are the script, and the DRM, and optionally:
 #  -p FILE -- a filename template (containing a %s) for the output .csv file; the
