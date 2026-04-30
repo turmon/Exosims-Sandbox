@@ -13,10 +13,8 @@ In this dir, we're using mkdocs to make narrative documentation for
 Sandbox basic operating principles, and for command-line utility
 scripts.  (See mkdocs.yml for the file contents.)
 
-The setting and goals here were different than the main use-case
-of mkdocs ("document this package, its four classes, and their
-methods"). Also, my patience was low so I may have missed some
-affordances mkdocs has for my use case. Here's the approach we took:
+My patience was low so I have missed some affordances mkdocs has
+for my use case. Here's the approach we took:
 
 * mkdocs wants to document a python package; the Sandbox is mostly
 utility scripts and *there is no base package*. So this directory
@@ -28,10 +26,11 @@ line with a conventional package.)
 extract the documentation block telling usage.
 
 * In a small number of cases (e.g., drm_tabulate.py), the code
-itself seemed worth documenting. For those scripts: (1) their
-source code in ../util is symlinked here, allowing conventional
-code documentation; (2) a `pre-mkdocs` script generates templates
-for those utilities only.
+itself seemed worth documenting. For those scripts: we add ../
+to the Python path (see mkdocs.yml) so we can find the 
+source code in ../util, allowing conventional
+code documentation; (2) we added a manual entry to doc/implementation
+pointing to that file.
 
 We are using "uv" to manage the dependencies. We have pinned the
 mkdocs (and related) versions a stable version - there has been
@@ -48,21 +47,11 @@ Command-lines:
     the usage information for all util/ commands, at runtime, 
     whenever mkdocs build is run
 
-Selected utilities
-  - pre_mkdocs, an ordinary python script, generates .md templates
-    for a few scripts (the ones symlinked in util_details).
-    Perhaps this should one day be all or almost all such scripts?
-
-To add a new .py soure file to the detail list:
-  - Place a link to it in util_detail/.
-  - Ensure it can be imported (e.g., PlanetBins imports utils, so
-    a link to utils.py had to be inserted, and then utils put in
-    the stop-list for pre_mkdocs because we don't want it to be
-    documented).
-  - At present, util_detail is flat, and it probably should not be.
-    But see the big TODO on bringing the sandbox into conformance 
-    with python package conventions.
-
+To add a new source file (new.py) to the detail list:
+  - Place a markdown in docs/implementation/new.md, with a :::
+    pointer showing how to import it.
+  - Ensure it can be imported when "mkdocs build" is run.
+  - This has nothing to do with util_detail, which is obsolete!
 
 See the Makefile here for some usage lines. Also:
 
@@ -91,5 +80,10 @@ TODO:
     (e.g., a stoplist in gen-pages.py, or a keyword like "obsolete" within 
     the file, or (reverse-wise) a keyword like "maintained" within the 
     complement of these files?)
+
+Formerly: pre_mkdocs, an ordinary python script, auto-generated 
+.md templates for a few scripts (the ones symlinked in util_details).
+This was scrapped; we just put the markdown template into
+docs/implementation and link to the corresponding python file.
 
 
