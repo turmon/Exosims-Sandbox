@@ -1,121 +1,121 @@
 #!/usr/bin/env python
-#
-# json-xform: Transform an EXOSIMS JSON script into a set of such scripts.
-#
-# Usage:
-# ```
-#   json-xform [-v] [-o FILE] SCRIPT XSCRIPT ...
-# ```
-#
-# where:
-#   SCRIPT is the JSON script used by EXOSIMS
-#   XSCRIPT is a JSON script giving the transform
-# and, optionally:
-#   -o FILE to specify where files should go; FILE must
-#      have one %s to receive a file index or name.
-#   -v for some verbose output
-# The input SCRIPT (first required argument) is transformed according
-# to the given XSCRIPT(s), and written to the given file template.
-# Also, an index file summarizing the output files and the changing
-# variables is written to an index file.
-#
-# The XSCRIPT is in JSON, and encodes one of 3 types of transforms.
-#   update =>
-#     Replace values in selected fields in SCRIPT with whichever
-#     ones were given in XSCRIPT.  Example:
-#       XSCRIPT = {"dMagLim": 23}
-#     means to replace dMagLim within SCRIPT with the above value.
-#   sequence =>
-#     Fields in XSCRIPT are given by lists, and for each list
-#     entry, a separate version of SCRIPT is generated using that
-#     particular entry.  Example:
-#       XSCRIPT = {"dMagLim": [23, 24, 25]}
-#     means to generate 3 versions of SCRIPT, one for each value above.
-#   cross =>
-#     Similar to sequence, but the Cartesian product of the lists
-#     for each field is used.  Example:
-#       XSCRIPT = {"dMagLim": [23, 24, 25], "minComp": [0, 0.1]}
-#     means to generate 6 versions of SCRIPT, one for each combination
-#     of values.
-# By default, a transform is taken to be "update".  To specify
-# otherwise, insert the property "xform_type" into the top-level of
-# the XSCRIPT, e.g. XSCRIPT = {"xform_type": "sequence", ...}.  (This
-# property should have been in the sequence and cross examples above.)
-#
-# These transform generalize in the following ways:
-#   For all:
-#     By default, the specified values just take the place of the old value in
-#     the controlling SCRIPT.
-#     - You can make the specified values be interpreted as giving proportions,
-#     not absolute quantities, by including the directive:
-#       XSCRIPT = {"xform_action": {"ppFact": "relative"} ...}
-#     within XSCRIPT.  This is particularly helpful for sequence and cross.  In
-#     this case, a subsequent {..."ppFact": 2, ...} is taken to be "use 2x
-#     the base script's ppFact." 
-#     - For vector values, you can "mask" some substitutions by including:
-#       XSCRIPT = {"xform_action": {"coeffs": "masked"} ...}
-#     and in this case a NaN in the given substitution will pass the original
-#     value through, with no substitution in that entry.  So if
-#       coeffs = [[1, NaN], [2, NaN]],
-#     then 1 and 2 will be (in turn) substituted into the first entry of
-#     the vector "coeffs", but the second entry will be left as it was.
-#   update:
-#     If multiple fields are given in XSCRIPT, of course all given
-#     values are replaced.
-#     If the fieldname in XSCRIPT begins with "+", the corresponding
-#     value is added in to the field's value.  Example:
-#       XSCRIPT = {"+modules": {"SurveyEnsemble": "IPClusterEnsemble"}}
-#     replaces just the SurveyEnsemble module entry, leaving the other
-#     modules intact. Similarly:
-#       XSCRIPT = {"+scienceInstruments": [{"Name": "new-imager", "QE": 0.6}]}
-#     adds a new science instrument to the existing list of instruments.
-#   sequence:
-#     - If multiple fields are specified, the sequence is drawn from each, wrapping
-#     around if lengths are unequal.  Example:
-#       XSCRIPT = {"dMagLim": [23, 24, 25], "minComp": [0, 0.1]}
-#     generates three SCRIPTs, with (23, 0), (24, 0.1), (25, 0).  In particular,
-#     a length-1 list will act like a scalar constant of that value.
-#     - If a fieldname like starlightSuppressionSystems.0.IWA is given, the
-#     corresponding nested entry within the script will be altered.
-#
-# Transforms can be chained.  For instance, the first transform ("update") adds a
-# field, and a subsequent transform ("sequence") then generates a sequence of scripts,
-# where each starts from the updated script given by applying the first transform.
-# As another example, a sequence on one variable followed by a sequence on another
-# variable is equivalent to a cross product of the two variables.
-# An XSCRIPT file be just one bare transform, or it can contain a list of transforms,
-# which are applied in the sequence given, and of course multiple XSCRIPT files can
-# be supplied as arguments.
-#
-# Many output files can be created, so file naming is important.  The template
-# in the -o option gives the general naming pattern (e.g., -o script%s.json).
-# For each output script, its particular script-name is plugged in to the %s 
-# slot in the template supplied by -o.
-# By default, the script-name is just the index number of the generated script.
-# For a single sequence transform of length 6, the script-names would then be
-# 0, 1, ..., 5, and the output filenames would be script0.json, etc.
-# The (optional) xform_name parameter in the XSCRIPT gives great control over
-# naming.  It is a string given to the Python format() method, with a reference
-# dictionary composed of the field->value mapping in the script.  So for example,
-#   "xform_name": "_ppLarge"
-# would give a script-name of _ppLarge, and a filename of script_ppLarge.json.
-# Alternatively, using the "magic" {} specifier of the format mini-language,
-#   "xform_name": "_pp{ppFact:4.2f}"
-# would pick up the ppFact value of the script, and format it as a real number with
-# two digits to the right of the decimal point, resulting in files named like
-# "script_pp0.10.json", "script_pp0.80.json", etc.  If the XSCRIPT is:
-#  { "xform_type": "cross",
-#    "xform_name": "life{missionLife:.0f}Xmag{dMagLim:.1f}",
-#    "missionLife": [1, 2, 3, 5.0, 6],
-#    "dMagLim": [22, 23] }
-# then the file names are:
-#   script_life1Xmag22.0.json, script_life1Xmag23.0.json, script_life2Xmag22.0.json, ...
-#   script_life5Xmag23.0.json, script_life6Xmag22.0.json, script_life6Xmag23.0.json
-#
-# When transforms are chained, names are also chained, with an intervening _
-# character.  This allows a series of several sequence transforms to emerge
-# with correct names.  If, in the end, more than one file is written with
-# the same name (a name collision), a warning is issued.
+"""json-xform: Transform an EXOSIMS JSON script into a set of such scripts.
+
+Usage:
+```
+  json-xform [-v] [-o FILE] SCRIPT XSCRIPT ...
+```
+
+where:
+  SCRIPT is the JSON script used by EXOSIMS
+  XSCRIPT is a JSON script giving the transform
+and, optionally:
+  -o FILE to specify where files should go; FILE must
+     have one %s to receive a file index or name.
+  -v for some verbose output
+The input SCRIPT (first required argument) is transformed according
+to the given XSCRIPT(s), and written to the given file template.
+Also, an index file summarizing the output files and the changing
+variables is written to an index file.
+
+The XSCRIPT is in JSON, and encodes one of 3 types of transforms.
+  update =>
+    Replace values in selected fields in SCRIPT with whichever
+    ones were given in XSCRIPT.  Example:
+      XSCRIPT = {"dMagLim": 23}
+    means to replace dMagLim within SCRIPT with the above value.
+  sequence =>
+    Fields in XSCRIPT are given by lists, and for each list
+    entry, a separate version of SCRIPT is generated using that
+    particular entry.  Example:
+      XSCRIPT = {"dMagLim": [23, 24, 25]}
+    means to generate 3 versions of SCRIPT, one for each value above.
+  cross =>
+    Similar to sequence, but the Cartesian product of the lists
+    for each field is used.  Example:
+      XSCRIPT = {"dMagLim": [23, 24, 25], "minComp": [0, 0.1]}
+    means to generate 6 versions of SCRIPT, one for each combination
+    of values.
+By default, a transform is taken to be "update".  To specify
+otherwise, insert the property "xform_type" into the top-level of
+the XSCRIPT, e.g. XSCRIPT = {"xform_type": "sequence", ...}.  (This
+property should have been in the sequence and cross examples above.)
+
+These transform generalize in the following ways:
+  For all:
+    By default, the specified values just take the place of the old value in
+    the controlling SCRIPT.
+    - You can make the specified values be interpreted as giving proportions,
+    not absolute quantities, by including the directive:
+      XSCRIPT = {"xform_action": {"ppFact": "relative"} ...}
+    within XSCRIPT.  This is particularly helpful for sequence and cross.  In
+    this case, a subsequent {..."ppFact": 2, ...} is taken to be "use 2x
+    the base script's ppFact."
+    - For vector values, you can "mask" some substitutions by including:
+      XSCRIPT = {"xform_action": {"coeffs": "masked"} ...}
+    and in this case a NaN in the given substitution will pass the original
+    value through, with no substitution in that entry.  So if
+      coeffs = [[1, NaN], [2, NaN]],
+    then 1 and 2 will be (in turn) substituted into the first entry of
+    the vector "coeffs", but the second entry will be left as it was.
+  update:
+    If multiple fields are given in XSCRIPT, of course all given
+    values are replaced.
+    If the fieldname in XSCRIPT begins with "+", the corresponding
+    value is added in to the field's value.  Example:
+      XSCRIPT = {"+modules": {"SurveyEnsemble": "IPClusterEnsemble"}}
+    replaces just the SurveyEnsemble module entry, leaving the other
+    modules intact. Similarly:
+      XSCRIPT = {"+scienceInstruments": [{"Name": "new-imager", "QE": 0.6}]}
+    adds a new science instrument to the existing list of instruments.
+  sequence:
+    - If multiple fields are specified, the sequence is drawn from each, wrapping
+    around if lengths are unequal.  Example:
+      XSCRIPT = {"dMagLim": [23, 24, 25], "minComp": [0, 0.1]}
+    generates three SCRIPTs, with (23, 0), (24, 0.1), (25, 0).  In particular,
+    a length-1 list will act like a scalar constant of that value.
+    - If a fieldname like starlightSuppressionSystems.0.IWA is given, the
+    corresponding nested entry within the script will be altered.
+
+Transforms can be chained.  For instance, the first transform ("update") adds a
+field, and a subsequent transform ("sequence") then generates a sequence of scripts,
+where each starts from the updated script given by applying the first transform.
+As another example, a sequence on one variable followed by a sequence on another
+variable is equivalent to a cross product of the two variables.
+An XSCRIPT file be just one bare transform, or it can contain a list of transforms,
+which are applied in the sequence given, and of course multiple XSCRIPT files can
+be supplied as arguments.
+
+Many output files can be created, so file naming is important.  The template
+in the -o option gives the general naming pattern (e.g., -o script%s.json).
+For each output script, its particular script-name is plugged in to the %s
+slot in the template supplied by -o.
+By default, the script-name is just the index number of the generated script.
+For a single sequence transform of length 6, the script-names would then be
+0, 1, ..., 5, and the output filenames would be script0.json, etc.
+The (optional) xform_name parameter in the XSCRIPT gives great control over
+naming.  It is a string given to the Python format() method, with a reference
+dictionary composed of the field->value mapping in the script.  So for example,
+  "xform_name": "_ppLarge"
+would give a script-name of _ppLarge, and a filename of script_ppLarge.json.
+Alternatively, using the "magic" {} specifier of the format mini-language,
+  "xform_name": "_pp{ppFact:4.2f}"
+would pick up the ppFact value of the script, and format it as a real number with
+two digits to the right of the decimal point, resulting in files named like
+"script_pp0.10.json", "script_pp0.80.json", etc.  If the XSCRIPT is:
+ { "xform_type": "cross",
+   "xform_name": "life{missionLife:.0f}Xmag{dMagLim:.1f}",
+   "missionLife": [1, 2, 3, 5.0, 6],
+   "dMagLim": [22, 23] }
+then the file names are:
+  script_life1Xmag22.0.json, script_life1Xmag23.0.json, script_life2Xmag22.0.json, ...
+  script_life5Xmag23.0.json, script_life6Xmag22.0.json, script_life6Xmag23.0.json
+
+When transforms are chained, names are also chained, with an intervening _
+character.  This allows a series of several sequence transforms to emerge
+with correct names.  If, in the end, more than one file is written with
+the same name (a name collision), a warning is issued.
+"""
 
 # turmon
 #   oct 2018, created

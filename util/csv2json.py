@@ -1,48 +1,47 @@
 #!/usr/bin/env python
-#
-# csv2json.py: Convert table in CSV format to a list of JSON objects
-#
-# Usage:
-#     csv2json-v1.py test.csv test.json
-#   (or)
-#     csv2json-v1.py test.csv > anything.json
-#
-#
-# Given a CSV file, with a single header line, like this:
-# _____________________
-# Letter,Frequency,Percentage
-# A,24373121,8.1
-# B,4762938,1.6
-# C,8982417,3.0
-# _____________________
-# converts it to a JSON file, which is a list of objects, one per
-# row, like this:
-# _____________________
-#   [
-#       {
-#           "RowNum": 1,
-#           "Letter": "A",
-#           "Frequency": 24373121,
-#           "Percentage": 8.1
-#       },
-#       {
-#           "RowNum": 2,
-#           "Letter": "B",
-#           "Frequency": 4762938,
-#           "Percentage": 1.6
-#       },
-#       {
-#           "RowNum": 3,
-#           "Letter": "C",
-#           "Frequency": 8982417,
-#           "Percentage": 3
-#       }
-#   ]
-# _____________________
-# * Note that the RowNum field will be added for convenience.
-# * Not tested with complex/quoted strings within the input CSV
-#
-# turmon 2022-july
+"""csv2json.py: Convert table in CSV format to a list of JSON objects
+
+Usage:
+    csv2json-v1.py test.csv test.json
+  (or)
+    csv2json-v1.py test.csv > anything.json
+
+Given a CSV file, with a single header line, like this:
+_____________________
+Letter,Frequency,Percentage
+A,24373121,8.1
+B,4762938,1.6
+C,8982417,3.0
+_____________________
+converts it to a JSON file, which is a list of objects, one per
+row, like this:
+_____________________
+  [
+      {
+          "RowNum": 1,
+          "Letter": "A",
+          "Frequency": 24373121,
+          "Percentage": 8.1
+      },
+      {
+          "RowNum": 2,
+          "Letter": "B",
+          "Frequency": 4762938,
+          "Percentage": 1.6
+      },
+      {
+          "RowNum": 3,
+          "Letter": "C",
+          "Frequency": 8982417,
+          "Percentage": 3
+      }
+  ]
+_____________________
+* Note that the RowNum field will be added for convenience.
+* Not tested with complex/quoted strings within the input CSV
+
+turmon 2022-july
+"""
 
 
 import os

@@ -1,49 +1,49 @@
 #!/usr/bin/env python
-#
-# keepout_path_graphics: Plot targets, planets, and keepout regions, with optional DRM overlay
-#
-# For usage, use the -h option.  Some options may be described there but not here.
-#
-# Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout regions,
-# and, if a DRM is provided (see below), detections, characterizations, and slews.
-# Output is to a movie (.mp4), or individual frames (.png).  Also, some cumulative keepout
-# summary statistics, and plots, can optionally be generated.
-#
-# DRM or observing-tour display:  If pickles summarizing a DRM are supplied (--drm), then the
-# observing tour is loaded and the observations are shown. It is assumed that --drm and --spc
-# are used together. 
-#
-# Typical usage:
-#
-#   `keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json`
-# 
-# where:
-# 
-# + -s is the start-time of the movie
-#        if zero, the start-time from the script is used.
-#        if a float in [0,1], the movie is started that proportion of the way through the mission.
-#        if a number <= 10000 is given, this is the offset from mission start in days
-#        if a number > 10000 is given, this is the MJD start time.
-# + -l is the length in years
-#        if zero is given (-l 0), the duration from the script is used.
-# + -d is the delta-t between frames in days
-# + -m is the name of the movie
-#
-# optionally:
-#
-# + -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
-# + -C     -- make a coronagraph-only movie, even if a starshade is present.
-#             (only affects movie and final frame, not cumulative keepout)
-# + -f DIR -- the directory name for .png frame-by-frame output
-# + -c DIR -- the directory name for cumulative keepout output
-# + --drm FILE -- the file containing the DRM as a pickle
-# + --spc FILE -- the file containing the SPC as a pickle
-#
-# Option for experts only:
-# 
-# +  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
-#               if the given SCRIPT name begins with !, it is treated as a
-#               json literal rather than a filename
+"""keepout_path_graphics: Plot targets, planets, and keepout regions, with optional DRM overlay
+
+For usage, use the -h option.  Some options may be described there but not here.
+
+Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout regions,
+and, if a DRM is provided (see below), detections, characterizations, and slews.
+Output is to a movie (.mp4), or individual frames (.png).  Also, some cumulative keepout
+summary statistics, and plots, can optionally be generated.
+
+DRM or observing-tour display:  If pickles summarizing a DRM are supplied (--drm), then the
+observing tour is loaded and the observations are shown. It is assumed that --drm and --spc
+are used together.
+
+Typical usage:
+
+  `keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json`
+
+where:
+
++ -s is the start-time of the movie
+       if zero, the start-time from the script is used.
+       if a float in [0,1], the movie is started that proportion of the way through the mission.
+       if a number <= 10000 is given, this is the offset from mission start in days
+       if a number > 10000 is given, this is the MJD start time.
++ -l is the length in years
+       if zero is given (-l 0), the duration from the script is used.
++ -d is the delta-t between frames in days
++ -m is the name of the movie
+
+optionally:
+
++ -e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended
++ -C     -- make a coronagraph-only movie, even if a starshade is present.
+            (only affects movie and final frame, not cumulative keepout)
++ -f DIR -- the directory name for .png frame-by-frame output
++ -c DIR -- the directory name for cumulative keepout output
++ --drm FILE -- the file containing the DRM as a pickle
++ --spc FILE -- the file containing the SPC as a pickle
+
+Option for experts only:
+
++  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
+              if the given SCRIPT name begins with !, it is treated as a
+              json literal rather than a filename
+"""
 
 
 # history:

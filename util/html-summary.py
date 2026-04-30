@@ -1,63 +1,63 @@
 #!/usr/bin/env python
-#
-# html-summary.py: Generate HTML-format summary of graphics and tables
-# 
-# The given directory (or directories) within `sims/`, containing an ensemble of DRMs 
-# and corresponding graphical outputs, is summarized to HTML.
-# Note that arguments should not contain the `sims/` prefix.
-#
-# Usage:
-#   `html-summary.py [-r] [-i] [SIM ...]`
-#
-# Optionally (using `-i`), a top-level index.html is updated as a table of contents
-# for all the simulations. You typically want this.
-# Also for `-i`, any intermediate index.html's between `sims/index.html` and
-# `sims/SIM/index.html` will also be made; this is needed when SIM is nested ("families").
-#
-# Options are:
-# 
-# +  -i => generate intermediate index.html's after generating any named SIM indexes.
-# +  -r => performs recursive descent (otherwise, only named SIMS are indexed)
-# +  -h => help
-#
-# Simplest usage:
-# ```
-#  $ html-summary.py -i SIM
-# ```
-#   where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD.
-#   Re-generates the HTML for this ensemble and the top-level index.
-# Other usage:
-# ```
-#  $ html-summary.py -i SIM.exp
-#  $ html-summary.py -r -i SIM.exp
-# ```
-#   where SIM.exp is a multi-ensemble experiment.  The usage with "-r" summarizes
-#   all ensembles under SIM.exp; without "-r", it generates only the top-level summary
-#   file, which lists a one-line overview of each ensemble.
-# ```
-#  $ html-summary.py -r
-# ```
-#   regenerates *all* indexes for everything in sims/*.
-#
-# Notes and Specifics
-# 
-# * The output is written to the file:
-#     sims/SIM/index.html
-#   This file can be viewed by starting an HTTP server on an unused port, see below.
-# * The generated HTML file links directly to whatever graphical outputs are present
-#   below the sims/SIM/... directory.  Use "make S=SIM html" to make the graphics files
-#   and then call this script to make the graphics viewable through the webpage.
-#
-# HTTP Server: To see the HTML files and the images they point to, an HTTP server
-# must be started to send them to a browser.  We start a server listening on a
-# non-standard port, and the browser is directed to that port with a special URL qualifier.
-# The server invocation wrapper is html-serve.sh, and it can be invoked by:
-#   make html-status   -- to see if there is one already running
-#   make html-start    -- to start one if not
-# See the Makefile, or util/html-serve.sh, for more.
-# 
-# For more on usage, use the -h option.
-# Some options may be described there but not documented here.
+"""html-summary.py: Generate HTML-format summary of graphics and tables
+
+The given directory (or directories) within `sims/`, containing an ensemble of DRMs
+and corresponding graphical outputs, is summarized to HTML.
+Note that arguments should not contain the `sims/` prefix.
+
+Usage:
+  `html-summary.py [-r] [-i] [SIM ...]`
+
+Optionally (using `-i`), a top-level index.html is updated as a table of contents
+for all the simulations. You typically want this.
+Also for `-i`, any intermediate index.html's between `sims/index.html` and
+`sims/SIM/index.html` will also be made; this is needed when SIM is nested ("families").
+
+Options are:
+
++  -i => generate intermediate index.html's after generating any named SIM indexes.
++  -r => performs recursive descent (otherwise, only named SIMS are indexed)
++  -h => help
+
+Simplest usage:
+```
+ $ html-summary.py -i SIM
+```
+  where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD.
+  Re-generates the HTML for this ensemble and the top-level index.
+Other usage:
+```
+ $ html-summary.py -i SIM.exp
+ $ html-summary.py -r -i SIM.exp
+```
+  where SIM.exp is a multi-ensemble experiment.  The usage with "-r" summarizes
+  all ensembles under SIM.exp; without "-r", it generates only the top-level summary
+  file, which lists a one-line overview of each ensemble.
+```
+ $ html-summary.py -r
+```
+  regenerates *all* indexes for everything in sims/*.
+
+Notes and Specifics
+
+* The output is written to the file:
+    sims/SIM/index.html
+  This file can be viewed by starting an HTTP server on an unused port, see below.
+* The generated HTML file links directly to whatever graphical outputs are present
+  below the sims/SIM/... directory.  Use "make S=SIM html" to make the graphics files
+  and then call this script to make the graphics viewable through the webpage.
+
+HTTP Server: To see the HTML files and the images they point to, an HTTP server
+must be started to send them to a browser.  We start a server listening on a
+non-standard port, and the browser is directed to that port with a special URL qualifier.
+The server invocation wrapper is html-serve.sh, and it can be invoked by:
+  make html-status   -- to see if there is one already running
+  make html-start    -- to start one if not
+See the Makefile, or util/html-serve.sh, for more.
+
+For more on usage, use the -h option.
+Some options may be described there but not documented here.
+"""
 
 # author:
 #  Michael Turmon, JPL, 2018, 2020, 2022

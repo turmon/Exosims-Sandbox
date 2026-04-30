@@ -1,23 +1,23 @@
 #!/usr/bin/env python
-# 
-# json-attr-edit.py: edit attributes of a JSON script
-#
-# Usage:
-#    `json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...`
-#
-# where
-# 
-# +   -h gives more complete documentation
-# +   -b BASE gives a basket of pre-defined transforms (see -h for all)
-# +   -a REPL replaces of every instance of the attribute named in REPL
-# +   -s REPL replaces a specific (drilled-down) attribute named in REPL
-# +   -c DIR gives a new cache directory
-# +   -o OUTPUT gives an output filename pattern
-#             (the script name is plugged into the single %s in OUTPUT)
-# +   -f forces the write of generated files, possibly over-writing existing files
-# +   -v increases verbosity
-#
-# See -h for more.
+"""json-attr-edit.py: edit attributes of a JSON script
+
+Usage:
+   `json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...`
+
+where
+
++   -h gives more complete documentation
++   -b BASE gives a basket of pre-defined transforms (see -h for all)
++   -a REPL replaces of every instance of the attribute named in REPL
++   -s REPL replaces a specific (drilled-down) attribute named in REPL
++   -c DIR gives a new cache directory
++   -o OUTPUT gives an output filename pattern
+            (the script name is plugged into the single %s in OUTPUT)
++   -f forces the write of generated files, possibly over-writing existing files
++   -v increases verbosity
+
+See -h for more.
+"""
 
 # turmon 2023-jul-30
 

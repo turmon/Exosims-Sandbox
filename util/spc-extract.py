@@ -1,29 +1,27 @@
 #!/usr/bin/env python
-#
-# spc-extract: Extract info from SPC files into CSV
-#
-# For usage, use the -h option.  Some options may be described there but not here.
-#
-# Typical usage:
-#   `spc-extract.py sims/script/spc/*.spc`
-# or:
-#   `spc-extract.py -k .len sims/script/spc/*.spc`
-#
-# where `-k` can be used more than once to name particular keys to output,
-# or can take a handful of special values:
-#
-# + .len  => give key names and the corresponding vector lengths
-# + .name => give just key names
-# + .all  => output as many keys as possible in one CSV
-#            (outputs the keys that correspond to the most-commonly-seen
-#             vector length, e.g., stars)
-# + .next => output the keys corresponding to the second-most-seen vector length
-#            (e.g., planets).  Not implemented.
-# + .default-star, .default-planet => output typically-present keys for stars
-#            and planets, respectively
-# + -o FILE ==> output file
-# 
-##
+"""spc-extract: Extract info from SPC files into CSV
+
+For usage, use the -h option.  Some options may be described there but not here.
+
+Typical usage:
+  `spc-extract.py sims/script/spc/*.spc`
+or:
+  `spc-extract.py -k .len sims/script/spc/*.spc`
+
+where `-k` can be used more than once to name particular keys to output,
+or can take a handful of special values:
+
++ .len  => give key names and the corresponding vector lengths
++ .name => give just key names
++ .all  => output as many keys as possible in one CSV
+           (outputs the keys that correspond to the most-commonly-seen
+            vector length, e.g., stars)
++ .next => output the keys corresponding to the second-most-seen vector length
+           (e.g., planets).  Not implemented.
++ .default-star, .default-planet => output typically-present keys for stars
+           and planets, respectively
++ -o FILE ==> output file
+"""
 
 
 # history:

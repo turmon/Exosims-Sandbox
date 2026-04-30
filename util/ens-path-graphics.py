@@ -1,25 +1,27 @@
 #!/usr/bin/env python
-#
-# ens-path-graphics: Produce diagnostic summaries of sets of DRMs, including:
-#   - lon/lat maps of number-of-detections
-#   - lon/lat maps of number-of-slews
-#   - adjacency-matrix-style heatmap plots of number of slews
-#   - 3D plots (rather than lon/lat plots) of number-of-slews, illustrated with movies
-#   - csv-file summaries of stars visited
-# Note that this operates on sets of DRMs, not just one DRM.
-#
-# Usage:
-# ```
-#   ens-path-graphics [-a] [--outfile FILE] SCRIPT DRMs
-# ```
-#
-# where:
-#   SCRIPT is the JSON script used to generate the DRMs
-#   DRMs is a list of DRM pickle files
-# and, optionally:
-#   -a -> skip the animation of the ensemble path 3D plot
-#   --outfile FILE -> outputs filenames generated from a template,
-#         which should contain 2 appearances of %s (e.g., dir/ens-path-%s.%s)
+"""ens-path-graphics: Produce diagnostic summaries of sets of DRMs, including:
+
+  - lon/lat maps of number-of-detections
+  - lon/lat maps of number-of-slews
+  - adjacency-matrix-style heatmap plots of number of slews
+  - 3D plots (rather than lon/lat plots) of number-of-slews, illustrated with movies
+  - csv-file summaries of stars visited
+
+Note that this operates on sets of DRMs, not just one DRM.
+
+Usage:
+```
+  ens-path-graphics [-a] [--outfile FILE] SCRIPT DRMs
+```
+
+where:
+  SCRIPT is the JSON script used to generate the DRMs
+  DRMs is a list of DRM pickle files
+and, optionally:
+  -a -> skip the animation of the ensemble path 3D plot
+  --outfile FILE -> outputs filenames generated from a template,
+        which should contain 2 appearances of %s (e.g., dir/ens-path-%s.%s)
+"""
 
 # plots summarizing DRM-sets
 # turmon

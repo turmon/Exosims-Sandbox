@@ -1,14 +1,12 @@
 #!/usr/bin/env python
-#
-# ipcluster-check: Check an ipython parallel controller/engine.
-#
-# Simplest usage:
-#   `ipcluster-check.py`
-#
-#
-# For more on usage, use the -h option.
-# Some options may be described there but not documented here.
-#
+"""ipcluster-check: Check an ipython parallel controller/engine.
+
+Simplest usage:
+  `ipcluster-check.py`
+
+For more on usage, use the -h option.
+Some options may be described there but not documented here.
+"""
 
 # author:
 #  Michael Turmon, JPL, 2017

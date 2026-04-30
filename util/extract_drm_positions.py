@@ -1,44 +1,43 @@
 #!/usr/bin/env python
-#
-# extract_drm_positions: Extract targets, observatory, and planet positions from DRM
-#
-# For usage, use the -h option.  Some options may be described there but not here.
-#
-# This script produces a CSV of target and observatory positions, with one entry for
-# every observation in the give DRM.
-# Note: this 2023 version is updated for micro-thruster analysis (POC: Cameron Haag)
-#
-# Algorithm and notes:
-# - A pickle summarizing a DRM is loaded, and the corresponding MissionSim 
-# object is instantiated from the supplied script.  The observations are 
-# stepped through, the sim is moved to the observation time, and properties 
-# (like keepout and observatory orbit) are queried.  
-# - The DRM file (.pkl extension, name supplied via --drm) is the one produced
-# by the standard simulation setup.  The seed is taken from the name of the
-# DRM file, and the sim object is instantiated by giving it that seed.
-#
-# Usage:
-#   `extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl`
-#
-#
-# where the TWO required arguments are the script, and the DRM, and optionally:
-#  -p FILE -- a filename template (containing a %s) for the output .csv file; the
-#             %s hold the seed.  By default, ./%s-position.csv is used.
-#  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script;
-#               if the given SCRIPT name begins with !, it is treated as a
-#               json literal rather than a filename
-#
-# Actual usage example for reference:
-#   This command adds the Local/ subdirectory here to PYTHONPATH, and then
-#   runs the command.  The Local/ directory must be added because this particular script
-#   inherits from a SurveyEnsemble (IPClusterEnsembleJPL2) which is in Local/ here.
-#   The Exosims instance should come from your current Python venv.
-#     S=HabEx_4m_TSDD_top200DD_52m_5184_20181015_obs
-#     PYTHONPATH=Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl
-#
-# Note: there is a sh driver for this script, and if using the Sandbox, it's easier
-# to just use the driver, which enforces the filename conventions.
-# See: extract_drm_positions_driver.sh
+"""extract_drm_positions: Extract targets, observatory, and planet positions from DRM
+
+For usage, use the -h option.  Some options may be described there but not here.
+
+This script produces a CSV of target and observatory positions, with one entry for
+every observation in the give DRM.
+Note: this 2023 version is updated for micro-thruster analysis (POC: Cameron Haag)
+
+Algorithm and notes:
+- A pickle summarizing a DRM is loaded, and the corresponding MissionSim
+object is instantiated from the supplied script.  The observations are
+stepped through, the sim is moved to the observation time, and properties
+(like keepout and observatory orbit) are queried.
+- The DRM file (.pkl extension, name supplied via --drm) is the one produced
+by the standard simulation setup.  The seed is taken from the name of the
+DRM file, and the sim object is instantiated by giving it that seed.
+
+Usage:
+  `extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl`
+
+where the TWO required arguments are the script, and the DRM, and optionally:
+ -p FILE -- a filename template (containing a %s) for the output .csv file; the
+            %s hold the seed.  By default, ./%s-position.csv is used.
+ -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script;
+              if the given SCRIPT name begins with !, it is treated as a
+              json literal rather than a filename
+
+Actual usage example for reference:
+  This command adds the Local/ subdirectory here to PYTHONPATH, and then
+  runs the command.  The Local/ directory must be added because this particular script
+  inherits from a SurveyEnsemble (IPClusterEnsembleJPL2) which is in Local/ here.
+  The Exosims instance should come from your current Python venv.
+    S=HabEx_4m_TSDD_top200DD_52m_5184_20181015_obs
+    PYTHONPATH=Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl
+
+Note: there is a sh driver for this script, and if using the Sandbox, it's easier
+to just use the driver, which enforces the filename conventions.
+See: extract_drm_positions_driver.sh
+"""
 
 # history:
 #  turmon oct 2018: created, from keepout_path_graphics
