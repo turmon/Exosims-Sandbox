@@ -27,6 +27,8 @@
   turmon sep 2018, revised may 2026
 */
 
+(function () {
+
 
 // list of alternate names for the nearest stars, used only as a display aid
 var starAlternateNames2 = {
@@ -359,3 +361,5 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(function(err) { showError(div, err.message); });
 });
+
+}());

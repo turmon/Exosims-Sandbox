@@ -22,6 +22,8 @@
   turmon sep 2018, revised may 2026
 */
 
+(function () {
+
 var sim_url  = '../reduce-info.csv';
 var data_url = '../reduce-star-target.csv';
 
@@ -376,3 +378,5 @@ document.addEventListener('DOMContentLoaded', function() {
             showError(err.message);
         });
 });
+
+}());
