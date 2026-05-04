@@ -31,8 +31,8 @@
 
 
 // list of alternate names for the nearest stars, used only as a display aid
-var starAlternateNames2 = {
-    'HIP 5336':   ['mu Cas'],
+var starAlternateNames = {
+    "HIP 5336":   ["mu Cas"],
     // automatically found, see "star-alt-names-merged.js"
     "HIP 677":    ["HD 358", "LTT 10039", "alpha And"],
     "HIP 1475":   ["HD 1326", "Gl 15A", "GX Andromedae"],
@@ -106,25 +106,25 @@ var starAlternateNames2 = {
     "HIP 113368": ["HD 216956", "Gl 881A", "Fomalhaut"],
     "HIP 114046": ["HD 217987", "Gl 887", "Lacaille 9352"],
     "HIP 116132": ["GJ 896 A", "EQ Pegasi"],
-    'HIP 439':    ['Gl 1', 'CD-37 15492'],
-    'HIP 1242':   ['GJ 1005 A', 'L 722-22 A'],
-    'HIP 29295':  ['Gl 229 A', 'L 668-21 A'],
-    'HIP 33226':  ['Gl 251', 'Wolf 294'],
-    'HIP 49908':  ['Gl 380', 'Groombridge 1618'],
-    'HIP 54211':  ['Gl 412 A', 'Lalande 21258 A'],
-    'HIP 57544':  ['Gl 445', 'G254-29'],
-    'HIP 73182':  ['Gl 570 B', 'Lalande 27173 B'],
-    'HIP 73184':  ['Gl 570 A', 'Lalande 27173 A'],
-    'HIP 76074':  ['Gl 588', 'CD-40 9712'],
-    'HIP 85523':  ['Gl 674', 'CD-46 11540'],
-    'HIP 86162':  ['Gl 687', 'BD+68 946'],
-    'HIP 86214':  ['Gl 682', 'CD-44 11909'],
-    'HIP 86990':  ['Gl 693', 'L 205-128'],
-    'HIP 91768':  ['Gl 725 A', 'Struve 2398 A'],
-    'HIP 91772':  ['Gl 725 B', 'Struve 2398 B'],
-    'HIP 99461':  ['Gl 783 A', 'HR 7703A'],
-    'HIP 106440': ['Gl 832', 'L 354-89'],
-    'HIP 117473': ['Gl 908', 'Lalande 46650'],
+    "HIP 439":    ["Gl 1", "CD-37 15492"],
+    "HIP 1242":   ["GJ 1005 A", "L 722-22 A"],
+    "HIP 29295":  ["Gl 229 A", "L 668-21 A"],
+    "HIP 33226":  ["Gl 251", "Wolf 294"],
+    "HIP 49908":  ["Gl 380", "Groombridge 1618"],
+    "HIP 54211":  ["Gl 412 A", "Lalande 21258 A"],
+    "HIP 57544":  ["Gl 445", "G254-29"],
+    "HIP 73182":  ["Gl 570 B", "Lalande 27173 B"],
+    "HIP 73184":  ["Gl 570 A", "Lalande 27173 A"],
+    "HIP 76074":  ["Gl 588", "CD-40 9712"],
+    "HIP 85523":  ["Gl 674", "CD-46 11540"],
+    "HIP 86162":  ["Gl 687", "BD+68 946"],
+    "HIP 86214":  ["Gl 682", "CD-44 11909"],
+    "HIP 86990":  ["Gl 693", "L 205-128"],
+    "HIP 91768":  ["Gl 725 A", "Struve 2398 A"],
+    "HIP 91772":  ["Gl 725 B", "Struve 2398 B"],
+    "HIP 99461":  ["Gl 783 A", "HR 7703A"],
+    "HIP 106440": ["Gl 832", "L 354-89"],
+    "HIP 117473": ["Gl 908", "Lalande 46650"],
 };
 
 /*
@@ -143,7 +143,7 @@ function lonlat2xyz(lon, lat) {
     };
 }
 function xyz2lonlat(pt) {
-    var r = Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z);
+    var r = xyz_norm(pt);
     var lon = (toDegrees(Math.atan2(pt.y, pt.x)) + 360) % 360;
     var lat = toDegrees(Math.asin(pt.z / r));
     return {lon, lat};
@@ -281,7 +281,7 @@ function plotFromSlews(target, visitRows, slewRows, pathMode) {
         y.push(lat);
         z.push(visits === 0 ? NaN : visits);
         size.push(visits === 0 ? 3 : 8);
-        text.push(row.name + formatStarAlternates(starAlternateNames2, row.name) + '<br>' +
+        text.push(row.name + formatStarAlternates(starAlternateNames, row.name) + '<br>' +
                   visits.toFixed(3) + ' visits<br>' +
                   lon.toFixed(1) + '&deg;, ' + lat.toFixed(1) + '&deg;');
     });
