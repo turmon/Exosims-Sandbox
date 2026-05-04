@@ -172,17 +172,24 @@ var starAlternateNames = {
 };
 
 
-// Wrap Plotly.d3.csv in a Promise so we can use Promise.all for parallel loading.
+// Load a CSV file and parse it into an array of row objects.
 function loadCSV(url) {
-    return new Promise(function(resolve, reject) {
-        Plotly.d3.csv(url, function(err, rows) {
-            if (err || !rows) {
-                reject(new Error('Could not load ' + url));
-            } else {
-                resolve(rows);
-            }
+    return fetch(url)
+        .then(function(response) {
+            if (!response.ok)
+                throw new Error('Could not load ' + url + ' (HTTP ' + response.status + ')');
+            return response.text();
+        })
+        .then(function(text) {
+            var lines = text.trim().split('\n');
+            var headers = lines[0].split(',');
+            return lines.slice(1).map(function(line) {
+                var values = line.split(',');
+                var row = {};
+                headers.forEach(function(h, i) { row[h] = values[i]; });
+                return row;
+            });
         });
-    });
 }
 
 // Write a visible error message into each plot div.
@@ -279,30 +286,32 @@ function insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle) {
             size: size,
             opacity: 0.7,
             colorbar: {
-                tickfont:  {family: 'Arial',      size: 16, color: 'black'},
-                title:     '<br\>' + qoi_info.name + ' [' + xform_label + qoi_info.unit + ']',
-                titleside: 'right',
-                titlefont: {family: 'Arial Bold', size: 16}
+                tickfont: {family: 'Arial', size: 16, color: 'black'},
+                title: {
+                    text: '<br>' + qoi_info.name + ' [' + xform_label + qoi_info.unit + ']',
+                    side: 'right',
+                    font: {family: 'Arial Bold', size: 16}
+                }
             }
         }
     }];
     var layout = {
-        title: 'Star Luminosity vs. Distance, Shaded by: ' + qoi_info.name + '<br>' + simBigTitle,
-        titlefont: {family: 'Arial Black', size: 18, color: 'black'},
+        title: {
+            text: 'Star Luminosity vs. Distance, Shaded by: ' + qoi_info.name + '<br>' + simBigTitle,
+            font: {family: 'Arial Black', size: 18, color: 'black'}
+        },
         xaxis: {
-            title:     'Distance [pc]',
-            titlefont: {family: 'Arial Bold', size: 18},
-            tickfont:  {family: 'Arial', size: 16, color: 'black'},
+            title:    {text: 'Distance [pc]', font: {family: 'Arial Bold', size: 18}},
+            tickfont: {family: 'Arial', size: 16, color: 'black'},
             linecolor: 'black',
             linewidth: 2,
             mirror:    true,
             range:     [0.0, 30.0]
         },
         yaxis: {
-            title:     'Luminosity [L<sub>sun</sub>]',
-            titlefont: {family: 'Arial Bold', size: 18},
-            type:      'log',
-            tickfont:  {family: 'Arial', size: 14, color: 'black'},
+            title:    {text: 'Luminosity [L<sub>sun</sub>]', font: {family: 'Arial Bold', size: 18}},
+            type:     'log',
+            tickfont: {family: 'Arial', size: 14, color: 'black'},
             linecolor: 'black',
             linewidth: 2,
             mirror:    true

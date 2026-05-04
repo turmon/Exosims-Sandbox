@@ -214,7 +214,7 @@ class HTML_helper(object):
     <link rel="stylesheet" href="/Local/www-resources/ensemble-reports.css">
     <link rel="shortcut icon" type="image/png" sizes="16x16" href="/Local/www-resources/favicon.png">
     <!-- Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.5.1.min.js"></script>
     <script src="/Local/www-resources/sorttable.js"></script>
     <script src="/Local/www-resources/star-target-plots.js"></script>
     <!-- tabulator.js -->
