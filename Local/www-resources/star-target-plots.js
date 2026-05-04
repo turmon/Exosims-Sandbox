@@ -1,82 +1,91 @@
 /*
-  Javascript base for radius/luminosity "shaded by X" plots
-  Uses plot.ly JS class to make the plots
-  Loads two CSV files and allows selection of point shading based on fields within.
-  
-  This version inserts detection-related plots into one HTML <div>,
-  and characterization plots into another one.
+  Interactive per-star scatter plots for an EXOSIMS ensemble summary page.
 
-  turmon sep 2018
+  Produces two Plotly scatter plots: one for detection metrics (detPlotDiv)
+  and one for characterization metrics (charPlotDiv).  Both plots show the
+  same set of target stars with distance on the x-axis (linear, 0-30 pc)
+  and luminosity on the y-axis (log scale).  Point color encodes a
+  user-selected per-star metric; a dropdown selector controls which metric
+  is shown in each plot.
 
+  Data sources (both in the parent directory of the HTML file):
+    reduce-info.csv       -- one row of experiment metadata (title, ensemble size)
+    reduce-star-target.csv -- one row per target star with per-star statistics
+                             (mean, std, sem, nEns) for detection and characterization
+
+  The two CSVs are loaded in parallel via Promise.all.  If either file is
+  missing or empty, a red error message is written into both plot divs.
+
+  The script tag can be placed in <head> because the entry point is wrapped
+  in a DOMContentLoaded listener.
+
+  turmon sep 2018, revised may 2026
 */
 
-
-var sim_url = '../reduce-info.csv';
+var sim_url  = '../reduce-info.csv';
 var data_url = '../reduce-star-target.csv';
-//var sim_url = '//localhost:8080/reduce/reduce-info.csv';
-//var data_url = '//localhost:8080/reduce-ex/reduce-star-target.csv';
 
-function passthru(x) {return x};
+function passthru(x) { return x; }
 
 // metadata about a selected list of QOIs
 //   if we add a new one to the CSV, it might not appear here right away,
 //   so not all plot-able QOIs are required to have an entry below
-//   screen: fieldname that will treat a given row in the present field as if it's NaN, if the corresponding row in "screen" is NaN
+//   screen: fieldname that will treat a given row in the present field as if it's NaN,
+//           if the corresponding row in "screen" is NaN
 var known_qoi_info = [
     // detection non-yield
-    {fieldname: 'h_star_det_visit_mean',        name: 'Detection Visits',                  screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_comp_mean',         name: 'Completeness (Det.)',               screen: '',                           unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_tInt_mean',         name: 'Cume Integ. Time (Det.)',           screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_det_tIntAvg_mean',      name: 'One-visit Integ. Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_det_tobs1_mean',        name: 'First Observation Time (Det.)',     screen: 'h_star_det_plan_value_mean', unit: 'day',   xform: passthru},
-    // detection yields			        
-    {fieldname: 'h_star_det_plan_cume_mean',    name: 'Total Detections',                  screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_plan_uniq_mean',    name: 'Unique Detections',                 screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Total Detections: Earths',          screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Unique Detections: Earths',         screen: 'h_star_det_plan_value_mean', unit: 'count', xform: passthru},
-    // detection ratios			        
+    {fieldname: 'h_star_det_visit_mean',        name: 'Detection Visits',                  screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_comp_mean',         name: 'Completeness (Det.)',               screen: '',                           unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_tInt_mean',         name: 'Cume Integ. Time (Det.)',           screen: 'h_star_det_plan_value_mean', unit: 'day',         xform: Math.log10},
+    {fieldname: 'h_star_det_tIntAvg_mean',      name: 'One-visit Integ. Time (Det.)',      screen: 'h_star_det_plan_value_mean', unit: 'day',         xform: Math.log10},
+    {fieldname: 'h_star_det_tobs1_mean',        name: 'First Observation Time (Det.)',     screen: 'h_star_det_plan_value_mean', unit: 'day',         xform: passthru},
+    // detection yields
+    {fieldname: 'h_star_det_plan_cume_mean',    name: 'Total Detections',                  screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_plan_uniq_mean',    name: 'Unique Detections',                 screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Total Detections: Earths',          screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Unique Detections: Earths',         screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    // detection ratios
     {fieldname: 'h_star_det_plan_value_mean',   name: 'Detection Rank',                    screen: '',                           unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_det_plan_frac_mean',    name: 'Planets Detected/Planets Present',  screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
     {fieldname: 'h_star_det_earth_value_mean',  name: 'Earth Detection Rank',              screen: '',                           unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_det_earth_frac_mean',   name: 'Earths Detected/Earths Present',    screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
-    // char non-yield			        
-    {fieldname: 'h_star_char_visit_mean',       name: 'Characterization Visits',           screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_comp_mean',        name: 'Completeness (Char.)',              screen: '',                            unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_tInt_mean',        name: 'Cume Integ. Time (Char.)',          screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_char_tIntAvg_mean',     name: 'One-visit Integ. Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: Math.log10},
-    {fieldname: 'h_star_char_tobs1_mean',       name: 'First Observation Time (Char.)',    screen: 'h_star_char_plan_value_mean', unit: 'day',   xform: passthru},
+    // char non-yield
+    {fieldname: 'h_star_char_visit_mean',       name: 'Characterization Visits',           screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_comp_mean',        name: 'Completeness (Char.)',              screen: '',                            unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_tInt_mean',        name: 'Cume Integ. Time (Char.)',          screen: 'h_star_char_plan_value_mean', unit: 'day',        xform: Math.log10},
+    {fieldname: 'h_star_char_tIntAvg_mean',     name: 'One-visit Integ. Time (Char.)',     screen: 'h_star_char_plan_value_mean', unit: 'day',        xform: Math.log10},
+    {fieldname: 'h_star_char_tobs1_mean',       name: 'First Observation Time (Char.)',    screen: 'h_star_char_plan_value_mean', unit: 'day',        xform: passthru},
     // char yields
-    {fieldname: 'h_star_char_plan_cume_mean',   name: 'Total Characterizations',           screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_plan_uniq_mean',   name: 'Unique Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Total Characterizations: Earths',   screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Unique Characterizations: Earths',  screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_char_plan_cume_mean',   name: 'Total Characterizations',           screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_plan_uniq_mean',   name: 'Unique Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Total Characterizations: Earths',   screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Unique Characterizations: Earths',  screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
     // char ratios
     {fieldname: 'h_star_char_plan_value_mean',  name: 'Characterization Rank',                 screen: '',                            unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_char_plan_frac_mean',   name: 'Planets Characterized/Planets Present', screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
     {fieldname: 'h_star_char_earth_value_mean', name: 'Earth Characterization Rank',           screen: '',                            unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_char_earth_frac_mean',  name: 'Earths Characterized/Earths Present',   screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
     // others
-    {fieldname: 'h_star_plan_per_star_mean',    name: 'Planets per Star',                      screen: '',                            unit: 'count', xform: passthru},
-    {fieldname: 'h_star_earth_per_star_mean',   name: 'Earths per Star',                       screen: '',                            unit: 'count', xform: passthru},
+    {fieldname: 'h_star_plan_per_star_mean',    name: 'Planets per Star',                      screen: '', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_earth_per_star_mean',   name: 'Earths per Star',                       screen: '', unit: 'count', xform: passthru},
     // promotions
     {fieldname: 'h_star_promo_allplan_mean',    name: 'Promotion Rate',                        screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
     {fieldname: 'h_star_promo_hzone_mean',      name: 'Promotion Rate: Stars with HZ Planets', screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
     {fieldname: 'h_star_promo_earth_mean',      name: 'Promotion Rate: Stars with Earths',     screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
 ];
 
-// list of alternate names for the nearest stars
-// used only as a display aid
+// list of alternate names for the nearest stars, used only as a display aid
 var starAlternateNames = {
     'HIP 5336':   ['mu Cas'],
     // automatically found, see "star-alt-names-merged.js"
-    "HIP 677":  ["HD 358", "LTT 10039", "alpha And"],
-    "HIP 1475":  ["HD 1326", "Gl 15A", "GX Andromedae"],
-    "HIP 2021":  ["HD 2151", "Gl 19", "beta Hyi"],
-    "HIP 3821":  ["HD 4614", "Gl 34A", "eta Cassiopei A"],
-    "HIP 3829":  ["GJ 35", "van Maanen's Star"],
-    "HIP 5643":  ["GJ 54.1", "YZ Ceti"],
-    "HIP 8102":  ["HD 10700", "Gl 71", "tau Ceti"],
-    "HIP 9884":  ["HD 12929", "Gl 84.3", "alf Arietis "],
+    "HIP 677":    ["HD 358", "LTT 10039", "alpha And"],
+    "HIP 1475":   ["HD 1326", "Gl 15A", "GX Andromedae"],
+    "HIP 2021":   ["HD 2151", "Gl 19", "beta Hyi"],
+    "HIP 3821":   ["HD 4614", "Gl 34A", "eta Cassiopei A"],
+    "HIP 3829":   ["GJ 35", "van Maanen's Star"],
+    "HIP 5643":   ["GJ 54.1", "YZ Ceti"],
+    "HIP 8102":   ["HD 10700", "Gl 71", "tau Ceti"],
+    "HIP 9884":   ["HD 12929", "Gl 84.3", "alf Arietis "],
     "HIP 15510":  ["HD 20794", "Gl 139", "82 Eridani"],
     "HIP 16537":  ["HD 22049", "Gl 144", "epsilon Eridani"],
     "HIP 19849":  ["HD 26965", "Gl 166A", "omicron 2 Eridani"],
@@ -163,212 +172,198 @@ var starAlternateNames = {
 };
 
 
-Plotly.d3.csv(sim_url, function(err1, simRow) {
-    if (err1) { console.error('Error loading sim CSV: ' + err1); }
-    Plotly.d3.csv(data_url, function(err2, allRows) { 
-	if (err2) { console.error('Error loading CSV: ' + err2); }
+// Wrap Plotly.d3.csv in a Promise so we can use Promise.all for parallel loading.
+function loadCSV(url) {
+    return new Promise(function(resolve, reject) {
+        Plotly.d3.csv(url, function(err, rows) {
+            if (err || !rows) {
+                reject(new Error('Could not load ' + url));
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
 
-	// match fieldname list to known metadata (units, plot name), where possible,
-	// using metadata table at top of file
-	function matchFieldnamesToInfo(qoi_fieldnames) {
-	    var qoi_info = [];
-	    for (var i = 0; i < qoi_fieldnames.length; i++) {
-		var qoi_fieldname = qoi_fieldnames[i];
-		var qoi_matches = known_qoi_info.filter(function(info) {return info.fieldname === qoi_fieldname})
-		if (qoi_matches.length === 1) {
-		    qoi_info.push(qoi_matches[0])
-		} else {
-		    // push a generic info block - units are unknown
-		    qoi_info.push({
-			fieldname: qoi_fieldname,
-			name: qoi_fieldname.replace(/_mean$/, '').replace(/^h_star_/, ''),
-			screen: '',
-			unit: '[unknown]',
-			xform: passthru})
-		}
-	    }
-	    return qoi_info
-	}
-	    
-	// set up the selector determining which QOI we will plot
-	function assignPlotVariableOptions(qoi_info, selector) {
-	    for (var i = 0; i < qoi_info.length;  i++) {
-		var currentOption = document.createElement('option');
-		currentOption.text = qoi_info[i].name + ' [' + qoi_info[i].fieldname + ']';
-		selector.appendChild(currentOption);
-	    }
-	}
-	
-	// overall title of the experiment, obtained from outer CSV
-	var simBigTitle = 'Experiment ' + simRow[0].experiment + ', Ensemble Size ' + simRow[0].ensemble_size;
+// Write a visible error message into each plot div.
+function showError(message) {
+    ['detPlotDiv', 'charPlotDiv'].forEach(function(id) {
+        var div = document.getElementById(id);
+        if (div) {
+            div.innerHTML =
+                '<p style="color:red; padding:20px; font-size:1.1em;">' +
+                '<strong>Could not load plot data:</strong> ' + message + '</p>';
+        }
+    });
+}
 
-	// the fieldnames are unique and define what CSV columns we can plot
-	// gen: generic = pertaining to either det or char
-	var qoi_gen_fieldnames = Object.getOwnPropertyNames(allRows[0])
-	    .filter(function (name) {return name.match(/h_star_.*_per_star_mean/)}).sort();
-	// det = (det + promo + gen), and sorting these to give a deterministic order
-	var qoi_det_fieldnames = Object.getOwnPropertyNames(allRows[0])
-	    .filter(function (name) {return name.match(/h_star_(?:det|promo).*_mean/)})
-	    .sort().concat(qoi_gen_fieldnames);
-	// char = (char + gen), and sorting these to give a deterministic order
-	var qoi_char_fieldnames = Object.getOwnPropertyNames(allRows[0])
-	    .filter(function (name) {return name.match(/h_star_char.*_mean/)})
-	    .sort().concat(qoi_gen_fieldnames);
+// Map CSV fieldnames to known QOI metadata; generate generic metadata for unrecognized fields.
+function matchFieldnamesToInfo(qoi_fieldnames) {
+    return qoi_fieldnames.map(function(fieldname) {
+        var match = known_qoi_info.filter(function(info) { return info.fieldname === fieldname; });
+        if (match.length === 1) return match[0];
+        return {
+            fieldname: fieldname,
+            name: fieldname.replace(/_mean$/, '').replace(/^h_star_/, ''),
+            screen: '',
+            unit: '[unknown]',
+            xform: passthru
+        };
+    });
+}
 
-	// the best metadata we have
-	var qoi_det_info  = matchFieldnamesToInfo(qoi_det_fieldnames);
-	var qoi_char_info = matchFieldnamesToInfo(qoi_char_fieldnames);
+// Populate a <select> element with one option per QOI.
+function assignPlotVariableOptions(qoi_info, selector) {
+    qoi_info.forEach(function(info) {
+        var opt = document.createElement('option');
+        opt.text = info.name + ' [' + info.fieldname + ']';
+        selector.appendChild(opt);
+    });
+}
 
-	// initial plot of some QOI
-	plotFromRows('detPlotDiv',  qoi_det_info[0],  allRows);
-	plotFromRows('charPlotDiv', qoi_char_info[0], allRows);
+// Return a parenthesized string of alternate star names, or '' if none known.
+// Strips trailing A/B/C from the HIP name before lookup.
+function formatStarAlternates(altNames, star) {
+    var star_alone = star.replace(/ [A-C]$/, '');
+    if (altNames.hasOwnProperty(star_alone)) {
+        return ' (' + altNames[star_alone].join(', ') + ')';
+    }
+    return '';
+}
 
-	// set up the plotted-variable button, and its callback
-	var qoiDetSelector = document.querySelector('.det_qoi_select');
-	assignPlotVariableOptions(qoi_det_info, qoiDetSelector);
-	qoiDetSelector.addEventListener(
-	    'change',
-	    function () {
-		plotFromRows('detPlotDiv', qoi_det_info[qoiDetSelector.selectedIndex], allRows)
-	    },
-	    false);
-	
-	var qoiCharSelector = document.querySelector('.char_qoi_select');
-	assignPlotVariableOptions(qoi_char_info, qoiCharSelector);
-	qoiCharSelector.addEventListener(
-	    'change',
-	    function () {
-		plotFromRows('charPlotDiv', qoi_char_info[qoiCharSelector.selectedIndex], allRows)
-	    },
-	    false);
-	
+// Build the x/y/color/size/text arrays for one plot and hand them to insertPlotly.
+function plotFromRows(target, qoi_info, lines, simBigTitle) {
+    var qoi_fieldname_mean = qoi_info.fieldname;
+    var qoi_fieldname_std  = qoi_fieldname_mean.replace(/_mean$/, '_std');
+    var qoi_fieldname_sem  = qoi_fieldname_mean.replace(/_mean$/, '_sem');
+    var qoi_fieldname_nens = qoi_fieldname_mean.replace(/_mean$/, '_nEns');
+    var qoi_screen_name    = qoi_info.screen;
 
-	function formatStarAlternates(altNames, star) {
-	    // strip trailing A/B/C from the HIP NNNN input name: match on just the HIP ID#
-	    var star_alone = star.replace(/ [A-C]$/, '')
-	    if (altNames.hasOwnProperty(star_alone)) {
-		return ' (' + altNames[star_alone].join(', ') + ')'
-	    } else {
-		return ''
-	    }
-	}
-	/* filter the CSV lines into the information needed for the plot specified in qoi_info,
-	 * then make a plot with this information
-	 */
-	function plotFromRows(target, qoi_info, lines) {
-	    // field names
-	    var qoi_fieldname_mean = qoi_info.fieldname
-	    var qoi_fieldname_std  = qoi_fieldname_mean.replace(/_mean$/, '_std')
-	    var qoi_fieldname_sem  = qoi_fieldname_mean.replace(/_mean$/, '_sem')
-	    var qoi_fieldname_nens = qoi_fieldname_mean.replace(/_mean$/, '_nEns')
-	    var qoi_screen_name = qoi_info.screen
-	    // cons up lists of points, colors, sizes, text annotations
-	    var x = [], y = [], qoi = [], size = [], text = [];
-	    for (var i = 0; i < lines.length; i++) {
-		var row = lines[i];
-		var qoi_value = parseFloat(row[qoi_fieldname_mean])
-		var qoi_nens  = parseInt(  row[qoi_fieldname_nens])
-		var qoi_sem   = parseFloat(row[qoi_fieldname_sem])
-		var qoi_std   = parseFloat(row[qoi_fieldname_std])
-		var qoi_screen = qoi_screen_name ? parseFloat(row[qoi_screen_name]) : 0.0 // anything non-nan is fine
-		x.push(row['star_dist'])
-		y.push(row['star_L'])
-		qoi.push(qoi_info.xform(qoi_value))
-		size.push((isNaN(qoi_value) || isNaN(qoi_screen)) ? 5 : 8)
-		text.push(`${row['star_Name']} ${formatStarAlternates(starAlternateNames, row['star_Name'])} [${row['star_Spec']}]<br>` +
-			  `${qoi_info.name} = ${qoi_value.toPrecision(4)} ${qoi_info.unit} &plusmn; ${qoi_sem.toPrecision(3)} [N = ${qoi_nens}]<br>` +
-			  `Std. Deviation = ${qoi_std.toPrecision(4)} ${qoi_info.unit}`)
-	    }
-	    // console.log(qoi_info)
-	    insertPlotly(target, qoi_info, x, y, qoi, size, text);
-	}
+    var x = [], y = [], qoi = [], size = [], text = [];
+    lines.forEach(function(row) {
+        var qoi_value  = parseFloat(row[qoi_fieldname_mean]);
+        var qoi_nens   = parseInt(  row[qoi_fieldname_nens]);
+        var qoi_sem    = parseFloat(row[qoi_fieldname_sem]);
+        var qoi_std    = parseFloat(row[qoi_fieldname_std]);
+        // screen: 0.0 (non-NaN) when no screening field is defined
+        var qoi_screen = qoi_screen_name ? parseFloat(row[qoi_screen_name]) : 0.0;
 
-	/* Make and insert a plot.ly object into the container in the HTML.
-	 * Package the data into JS objects that are passed to plot.ly.
-	 */
-	function insertPlotly(target, qoi_info, x, y, qoi, size, text) {
-	    // var plotDiv = document.getElementById('plotDiv');
-	    // if xform(1.0) = 1.0, the QOI was not transformed, else it was log10
-	    var xform_label = (qoi_info.xform(1.0) === 1.0) ? '' : 'log<sub>10</sub> '
-	    // holds the plotted points
-	    var traces = [{
-		x: x,
-		y: y,
-		text: text,
-		mode: 'markers',
-		type: 'scatter',
-		hoverinfo: 'text',
-		marker: {
-		    comment_ : 'leave cmin/cmax unspecified to auto-range',
-		    colorscale: 'Portland',
-		    color: qoi,
-		    size: size,
-		    opacity: 0.7,
-		    colorbar: {
-			tickfont: {
-			    family: 'Arial',
-			    size: 16,
-			    color: 'black'
-			},
-			title: '<br\>' + qoi_info.name + ' [' + xform_label + qoi_info.unit + ']',
-			titleside: 'right',
-			titlefont: {
-			    size: 16,
-			    family: 'Arial Bold'
-			}
-		    }
-		},
-	    }];
-	    // holds the overall plot layout
-	    var layout = {
-		title: ['Star Luminosity vs. Distance, ' +
-			'Shaded by: ' + qoi_info.name,
-			simBigTitle].join('<br>'),
-		titlefont: {
-		    family: "Arial Black",
-		    size: 18,
-		    color: 'black'
-		},
-		xaxis: {
-		    title: 'Distance [pc]',
-		    titlefont: {
-			family: "Arial Bold",
-			size: 18,
-		    },
-		    size: 20,
-		    tickfont: {
-			family: 'Arial',
-			size: 16,
-			color: 'black'
-		    },
-		    linecolor: 'black',
-		    linewidth: 2,
-		    mirror: true,
-		    range: [0.0, 30.0],
-		    // rangemode: 'tozero', // go to zero [pc]
-		},
-		yaxis: {
-		    title: 'Luminosity [L<sub>sun</sub>]',
-		    titlefont: {
-			family: "Arial Bold",
-			size: 18,
-		    },
-		    type: 'log',
-		    size: 20,
-		    tickfont: {
-			family: 'Arial',
-			size: 14,
-			color: 'black'
-		    },
-		    linecolor: 'black',
-		    linewidth: 2,
-		    mirror: true
-		},
-		hovermode: 'closest',
-		autosize: true,
-	    }
-	    // make the plot from the above objects
-	    Plotly.newPlot(target, traces, layout)
-	}
-    }) // end inner CSV-load
+        x.push(row['star_dist']);
+        y.push(row['star_L']);
+        qoi.push(qoi_info.xform(qoi_value));
+        size.push((isNaN(qoi_value) || isNaN(qoi_screen)) ? 5 : 8);
+        text.push(
+            row['star_Name'] + formatStarAlternates(starAlternateNames, row['star_Name']) +
+            ' [' + row['star_Spec'] + ']<br>' +
+            qoi_info.name + ' = ' + qoi_value.toPrecision(4) + ' ' + qoi_info.unit +
+            ' &plusmn; ' + qoi_sem.toPrecision(3) + ' [N = ' + qoi_nens + ']<br>' +
+            'Std. Deviation = ' + qoi_std.toPrecision(4) + ' ' + qoi_info.unit
+        );
+    });
+    insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle);
+}
+
+// Package data into Plotly trace and layout objects and render into the target div.
+function insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle) {
+    var xform_label = (qoi_info.xform(1.0) === 1.0) ? '' : 'log<sub>10</sub> ';
+    var traces = [{
+        x: x,
+        y: y,
+        text: text,
+        mode: 'markers',
+        type: 'scatter',
+        hoverinfo: 'text',
+        marker: {
+            colorscale: 'Portland',
+            color: qoi,
+            size: size,
+            opacity: 0.7,
+            colorbar: {
+                tickfont:  {family: 'Arial',      size: 16, color: 'black'},
+                title:     '<br\>' + qoi_info.name + ' [' + xform_label + qoi_info.unit + ']',
+                titleside: 'right',
+                titlefont: {family: 'Arial Bold', size: 16}
+            }
+        }
+    }];
+    var layout = {
+        title: 'Star Luminosity vs. Distance, Shaded by: ' + qoi_info.name + '<br>' + simBigTitle,
+        titlefont: {family: 'Arial Black', size: 18, color: 'black'},
+        xaxis: {
+            title:     'Distance [pc]',
+            titlefont: {family: 'Arial Bold', size: 18},
+            tickfont:  {family: 'Arial', size: 16, color: 'black'},
+            linecolor: 'black',
+            linewidth: 2,
+            mirror:    true,
+            range:     [0.0, 30.0]
+        },
+        yaxis: {
+            title:     'Luminosity [L<sub>sun</sub>]',
+            titlefont: {family: 'Arial Bold', size: 18},
+            type:      'log',
+            tickfont:  {family: 'Arial', size: 14, color: 'black'},
+            linecolor: 'black',
+            linewidth: 2,
+            mirror:    true
+        },
+        hovermode: 'closest',
+        autosize:  true
+    };
+    Plotly.newPlot(target, traces, layout);
+}
+
+
+// Entry point: load both CSVs in parallel, then set up plots and dropdowns.
+// DOMContentLoaded ensures the divs exist whether this script is in <head> or <body>.
+document.addEventListener('DOMContentLoaded', function() {
+    Promise.all([loadCSV(sim_url), loadCSV(data_url)])
+        .then(function(results) {
+            var simRow  = results[0];
+            var allRows = results[1];
+
+            if (!simRow.length || !allRows.length) {
+                showError('One or more CSV files are empty.');
+                return;
+            }
+
+            var simBigTitle = 'Experiment ' + simRow[0].experiment +
+                              ', Ensemble Size ' + simRow[0].ensemble_size;
+
+            // Extract fieldname lists by category from the CSV columns.
+            // gen: per-star metrics common to both detection and characterization
+            var all_fieldnames    = Object.keys(allRows[0]);
+            var qoi_gen_fieldnames  = all_fieldnames
+                .filter(function(n) { return n.match(/h_star_.*_per_star_mean/); }).sort();
+            var qoi_det_fieldnames  = all_fieldnames
+                .filter(function(n) { return n.match(/h_star_(?:det|promo).*_mean/); })
+                .sort().concat(qoi_gen_fieldnames);
+            var qoi_char_fieldnames = all_fieldnames
+                .filter(function(n) { return n.match(/h_star_char.*_mean/); })
+                .sort().concat(qoi_gen_fieldnames);
+
+            var qoi_det_info  = matchFieldnamesToInfo(qoi_det_fieldnames);
+            var qoi_char_info = matchFieldnamesToInfo(qoi_char_fieldnames);
+
+            // Render initial plots.
+            plotFromRows('detPlotDiv',  qoi_det_info[0],  allRows, simBigTitle);
+            plotFromRows('charPlotDiv', qoi_char_info[0], allRows, simBigTitle);
+
+            // Wire up the detection dropdown.
+            var qoiDetSelector = document.querySelector('.det_qoi_select');
+            assignPlotVariableOptions(qoi_det_info, qoiDetSelector);
+            qoiDetSelector.addEventListener('change', function() {
+                plotFromRows('detPlotDiv', qoi_det_info[qoiDetSelector.selectedIndex], allRows, simBigTitle);
+            });
+
+            // Wire up the characterization dropdown.
+            var qoiCharSelector = document.querySelector('.char_qoi_select');
+            assignPlotVariableOptions(qoi_char_info, qoiCharSelector);
+            qoiCharSelector.addEventListener('change', function() {
+                plotFromRows('charPlotDiv', qoi_char_info[qoiCharSelector.selectedIndex], allRows, simBigTitle);
+            });
+        })
+        .catch(function(err) {
+            showError(err.message);
+        });
 });

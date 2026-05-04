@@ -216,6 +216,7 @@ class HTML_helper(object):
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="/Local/www-resources/sorttable.js"></script>
+    <script src="/Local/www-resources/star-target-plots.js"></script>
     <!-- tabulator.js -->
     <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
@@ -944,8 +945,6 @@ class SimSummary(object):
                     hh.div('Characterization QOI for Plot Shading: <select class="char_qoi_select"> </select>')
                     if g_desc.filename:
                         hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
-                    # assume dets always accompany chars, and insert the script at this point
-                    hh.script(WWW_RES/'star-target-plots.js')
                 elif tag == 'path' and self.graphics[tag]:
                     hh.header('Interactive Ensemble Path Widget', level=3)
                     hh.div('<!-- ensemble path plot goes here -->',
