@@ -1,42 +1,45 @@
 /*
-  Javascript base for ensemble path plots
-  Uses plot.ly JS class to make the plots
-  Loads CSV and allows selection of point shading based on its contents.
-  
-  turmon sep 2018
+  Interactive ensemble slew-path and star-visit plot for an EXOSIMS summary page.
 
-  TODO:
-  (lots)
+  Produces one Plotly geographic scatter plot (equirectangular projection) in
+  slewPlotDiv, showing:
+    - A dashed equator reference line
+    - One line trace per slew pair (line width proportional to relative slew count)
+    - Diamond waypoint markers near the destination of the most prominent slews,
+      with hover text (Plotly cannot attach hover text to line traces on maps,
+      so a nearby marker is used as a workaround)
+    - Circle markers at each star (color = mean visit count across ensemble,
+      size = 3 if unvisited, 8 otherwise)
 
+  Data sources (in the directory named by ens_path_root):
+    path-visits.csv  -- one row per star: name, lon, lat, visit_mean, visit_std
+    path-slews.csv   -- one row per slew pair: source (index), dest (index),
+                        slews (count), label
+
+  The two CSVs are loaded in parallel via Promise.all. If either file is
+  missing or empty, a red error message is written into slewPlotDiv.
+
+  Configuration is read from data-* attributes on the slewPlotDiv element:
+    data-path-root  path to the directory containing path-visits.csv and path-slews.csv
+    data-path-mode  'ensemble' (default) or 'single', controls plot title and colorbar label
+  No global variables or inline <script> blocks are needed.
+
+  turmon sep 2018, revised may 2026
 */
 
-// this is expected to be defined by a <script> tag in the HTML
-if (typeof ens_path_root === "undefined" ) {
-   var ens_path_root = '../path-ens';
-}
-// mode is 'ensemble' or 'single', affects title/legends
-if (typeof ens_path_mode === "undefined" ) {
-   var ens_path_mode = 'ensemble';
-}
-//console.log(ens_path_root);
 
-//var sim_url = '//localhost:8080/reduce-ex/reduce-info.csv';
-var slews_url = ens_path_root + '/path-slews.csv'
-var visits_url = ens_path_root + '/path-visits.csv'
-
-// list of alternate names for the nearest stars
-// used only as a display aid
+// list of alternate names for the nearest stars, used only as a display aid
 var starAlternateNames2 = {
     'HIP 5336':   ['mu Cas'],
     // automatically found, see "star-alt-names-merged.js"
-    "HIP 677":  ["HD 358", "LTT 10039", "alpha And"],
-    "HIP 1475":  ["HD 1326", "Gl 15A", "GX Andromedae"],
-    "HIP 2021":  ["HD 2151", "Gl 19", "beta Hyi"],
-    "HIP 3821":  ["HD 4614", "Gl 34A", "eta Cassiopei A"],
-    "HIP 3829":  ["GJ 35", "van Maanen's Star"],
-    "HIP 5643":  ["GJ 54.1", "YZ Ceti"],
-    "HIP 8102":  ["HD 10700", "Gl 71", "tau Ceti"],
-    "HIP 9884":  ["HD 12929", "Gl 84.3", "alf Arietis "],
+    "HIP 677":    ["HD 358", "LTT 10039", "alpha And"],
+    "HIP 1475":   ["HD 1326", "Gl 15A", "GX Andromedae"],
+    "HIP 2021":   ["HD 2151", "Gl 19", "beta Hyi"],
+    "HIP 3821":   ["HD 4614", "Gl 34A", "eta Cassiopei A"],
+    "HIP 3829":   ["GJ 35", "van Maanen's Star"],
+    "HIP 5643":   ["GJ 54.1", "YZ Ceti"],
+    "HIP 8102":   ["HD 10700", "Gl 71", "tau Ceti"],
+    "HIP 9884":   ["HD 12929", "Gl 84.3", "alf Arietis "],
     "HIP 15510":  ["HD 20794", "Gl 139", "82 Eridani"],
     "HIP 16537":  ["HD 22049", "Gl 144", "epsilon Eridani"],
     "HIP 19849":  ["HD 26965", "Gl 166A", "omicron 2 Eridani"],
@@ -123,297 +126,235 @@ var starAlternateNames2 = {
 };
 
 /*
- * A few basic map-based utilities, to enable plotting points midway 
- * along a great circle.  This allows hover-text to be put onto the
- * slews.  Plot.ly does not allow hover-text on lines in maps, so 
- * putting hover-text onto a marker partway along the great circle
- * path is a work-around.
+ * Map-geometry utilities for placing hover markers partway along great-circle
+ * slew arcs. Plotly cannot attach hover text to line traces on geo plots, so
+ * a nearby marker is used as a workaround.
  */
-function toDegrees (angle) {
-  return angle * (180.0 / Math.PI);
-}
-function toRadians (angle) {
-  return angle * (Math.PI / 180.0);
-}
+function toDegrees(angle) { return angle * (180.0 / Math.PI); }
+function toRadians(angle) { return angle * (Math.PI / 180.0); }
+
 function lonlat2xyz(lon, lat) {
     return {
-	x: Math.cos(toRadians(lat)) * Math.cos(toRadians(lon)),
-	y: Math.cos(toRadians(lat)) * Math.sin(toRadians(lon)),
-	z: Math.sin(toRadians(lat))
+        x: Math.cos(toRadians(lat)) * Math.cos(toRadians(lon)),
+        y: Math.cos(toRadians(lat)) * Math.sin(toRadians(lon)),
+        z: Math.sin(toRadians(lat))
     };
 }
 function xyz2lonlat(pt) {
     var r = Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z);
-    var lon = (toDegrees(Math.atan2(pt.y, pt.x)) + 360) % 360
+    var lon = (toDegrees(Math.atan2(pt.y, pt.x)) + 360) % 360;
     var lat = toDegrees(Math.asin(pt.z / r));
-    return {lon, lat}
+    return {lon, lat};
 }
 function xyz_norm(pt) {
-    return Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z)
+    return Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z);
 }
+
+// Return one point near the destination end of the great-circle arc from
+// (lon1,lat1) to (lon2,lat2), plus r (arc chord length, 0–2).
+// The constant 0.15 is empirical: sqrt(r) scaling makes it work for both
+// short and long arcs.
 function gcp1(lon1, lat1, lon2, lat2) {
-    // GCP1 = one great circle point in the line from (lon1,lat1) -> (lon2,lat2).
     var p1 = lonlat2xyz(lon1, lat1);
     var p2 = lonlat2xyz(lon2, lat2);
     var delta = {x: p2.x-p1.x, y: p2.y-p1.y, z: p2.z-p1.z};
-    // length of the line: between 0 and 2, generally < 1
     var r = xyz_norm(delta);
-    // the constant here determines how close the marker appears to the slew endpoint,
-    // relative to the total great-circle path length - it is empirical, and the
-    // sqrt(r) makes it work for long and short arcs.
     var d = 0.15 / Math.sqrt(r);
-    // place one point along the line connecting p1 and p2
-    var p_mid = {x:p2.x-d*delta.x, y:p2.y-d*delta.y, z:p2.z-d*delta.z};
-    // convert this point to lon,lat
+    var p_mid = {x: p2.x-d*delta.x, y: p2.y-d*delta.y, z: p2.z-d*delta.z};
     var {lon, lat} = xyz2lonlat(p_mid);
-    // returns an indicator of the length of the great circle, and the
-    // lon and lat of a point partway along.
     return {r, lon, lat};
 }
 
-// We need two CSV's, but this is not the most elegant way to do it.
-Plotly.d3.csv(visits_url, function(err1, visitRows) {
-    if (err1) { console.error('Error loading visits CSV: ' + err1); }
-    Plotly.d3.csv(slews_url, function(err2, slewRows) { 
-	if (err2) { console.error('Error loading slews CSV: ' + err2); }
 
-	// match fieldname list to known metadata (units, plot name), where possible,
-	// using metadata table at top of file
-	function matchFieldnamesToInfo(qoi_fieldnames) {
-	    var qoi_info = [];
-	    for (var i = 0; i < qoi_fieldnames.length; i++) {
-		var qoi_fieldname = qoi_fieldnames[i];
-		var qoi_matches = known_qoi_info.filter(function(info) {return info.fieldname === qoi_fieldname})
-		if (qoi_matches.length === 1) {
-		    qoi_info.push(qoi_matches[0])
-		} else {
-		    // push a generic info block - units are unknown
-		    qoi_info.push({
-			fieldname: qoi_fieldname,
-			name: qoi_fieldname.replace(/_mean$/, '').replace(/^h_star_/, ''),
-			unit: '[unknown]',
-			xform: passthru})
-		}
-	    }
-	    return qoi_info
-	}
-	    
-	// plot the slews and visits
-	plotFromSlews('slewPlotDiv', visitRows, slewRows);
+// Load a CSV file and parse it into an array of row objects.
+function loadCSV(url) {
+    return fetch(url)
+        .then(function(response) {
+            if (!response.ok)
+                throw new Error('Could not load ' + url + ' (HTTP ' + response.status + ')');
+            return response.text();
+        })
+        .then(function(text) {
+            var lines = text.trim().split('\n');
+            var headers = lines[0].split(',');
+            return lines.slice(1).map(function(line) {
+                var values = line.split(',');
+                var row = {};
+                headers.forEach(function(h, i) { row[h] = values[i]; });
+                return row;
+            });
+        });
+}
 
-	function formatStarAlternates(altNames, star) {
-	    // strip trailing A/B/C from the HIP NNNN input name: match on just the HIP ID#
-	    var star_alone = star.replace(/ [A-C]$/, '')
-	    if (altNames.hasOwnProperty(star_alone)) {
-		return ' (' + altNames[star_alone].join(', ') + ')'
-	    } else {
-		return ''
-	    }
-	}
+// Write a visible error message into the plot div.
+function showError(div, message) {
+    if (div) {
+        div.innerHTML =
+            '<p style="color:red; padding:20px; font-size:1.1em;">' +
+            '<strong>Could not load plot data:</strong> ' + message + '</p>';
+    }
+}
 
-	/* filter the CSV lines into the information needed for the plot specified in qoi_info,
-	 * then make a plot with this information
-	 */
-	function plotFromSlews(target, visitRows, slewRows) {
-	    // Make a list of all slews
-	    var slew_max = slewRows.reduce(function(a,b) {return Math.max(a,parseFloat(b.slews))}, 0.0);
-	    var thick_max = 16.0; // maximum thickness of displayed lines
-	    var waypoints = [];
-	    var slew_traces = []
-	    // primitive equator - no real ticks/tick legends on map objects
-	    slew_traces.push({
-		lon: [0, 90, 180, 270, 360],
-		lat: [0,  0,   0,   0,   0],
-		type: 'scattergeo',
-		hoverinfo: 'none',
-		mode: 'lines',
-		line: { color: 'rgba(0, 0, 0, 1)', dash: 'dashdot', width: 0.5 }
-	    });
-	    // Accumulate the slews (line segments) and waypoints (points)
-	    for (var i = 0; i < slewRows.length; i++) {
-		var row = slewRows[i];
-		var slews = parseFloat(row.slews)
-		var label = row.label || ('Slews: ' + slews)
-		if (slews < 1.0) {
-		    continue; // alter threshold to simplify the plot (disabled)
-		}
-		//console.log(row.source, row.dest)
-		var res = gcp1(visitRows[row.source].lon, visitRows[row.source].lat,
-			       visitRows[row.dest].lon,   visitRows[row.dest].lat);
-		// we can only show relatively long slews, with labels
-		if (res.r > 0.15 && slews/slew_max > 0.08 && label) {
-		    res.text = [label,
-				'From: ' + visitRows[row.source].name,
-				'To: ' + visitRows[row.dest].name].join('<br>');
-		    waypoints.push(res)
-		}
-		slew_traces.push({
-		    lon: [visitRows[row.source].lon, visitRows[row.dest].lon],
-		    lat: [visitRows[row.source].lat, visitRows[row.dest].lat],
-		    type: 'scattergeo',
-		    // Note: plotly displays the tooltip at the endpoint, not on the
-		    // line itself.  The endpoint text will conflict with any text
-		    // on the star itself, so we do not attempt to display it here.
-		    hoverinfo: 'none', // suppress the tooltip
-		    // text: slews + ' slews from ' + visitRows[row.source].name,
-		    mode: 'lines',
-		    opacity: 0.4, // there are lines atop lines
-		    line: {
-			// NB: line color cannot be controlled via a colormap in plotly.
-			// You can set it directly - we have not done this because the
-			// alternating colors are easier to distinguish.
-			//color: 'rgba(55, 128, 191, 0.7)',
-			width: (slews/slew_max)*thick_max,
-		    },
-		})
-	    }
-	    // Make (x, y, label) for each waypoint
-	    var x_way = [], y_way = [], text_way = [];
-	    for (var i = 0; i < waypoints.length; i++) {
-		x_way.push(waypoints[i].lon);
-		y_way.push(waypoints[i].lat);
-		text_way.push(waypoints[i].text);
-	    }
-	    // Make (x, y, visits) for each star
-	    var x = [], y = [], z = [], size = [], text = [];
-	    for (var i = 0; i < visitRows.length; i++) {
-		var row = visitRows[i]
-		var visits = parseFloat(row.visit_mean)
-		var v_std  = parseFloat(row.visit_std)
-		var lon = parseFloat(row.lon)
-		var lat = parseFloat(row.lat)
-		x.push(lon)
-		y.push(lat)
-		z.push(visits === 0 ? NaN : visits)
-		size.push((visits === 0) ? 3 : 8)
-		text.push(row.name + formatStarAlternates(starAlternateNames2, row.name) + '<br>' +
-			  visits.toFixed(3) + ' visits' + '<br>' +
-			  lon.toFixed(1) + '&deg;, ' + lat.toFixed(1) + '&deg;' )
-		//text.push(row['star_Name'] + formatStarAlternates(starAlternateNames, row['star_Name']) + '<br>' +
-		//	  qoi_info.name + ' = ' + qoi_value.toPrecision(4) + ' ' + qoi_info.unit + '<br>')
-	    }
-	    insertPlotly(target, slew_traces,
-			 x, y, z, size, text,
-			 x_way, y_way, text_way);
-	}
+// Return a parenthesized string of alternate star names, or '' if none known.
+// Strips trailing A/B/C from the HIP name before lookup.
+function formatStarAlternates(altNames, star) {
+    var star_alone = star.replace(/ [A-C]$/, '');
+    if (altNames.hasOwnProperty(star_alone)) {
+        return ' (' + altNames[star_alone].join(', ') + ')';
+    }
+    return '';
+}
 
-	/* Make and insert a plot.ly object into the container in the HTML.
-	 * Package the data into JS objects that are passed to plot.ly.
-	 * Inputs:
-	 *   target -- target HTML container
-	 *   slew_traces -- line segments, already as a plot.ly object
-	 *   x,y,z,size,text -- star plot attributes, placed into a plot.ly object here
-	 *   x_way, y_way, text_way -- waypoint attributes, placed into a plot.ly object here
-	 * TODO: Abstract this better.  One way would be to pass in a few objects,
-	 * each representing a plot type, rather than separate x,y,z, etc., variables.
-	 */
-	function insertPlotly(target, slew_traces, x, y, z, size, text, x_way, y_way, text_way) {
-	    // var plotDiv = document.getElementById('plotDiv');
+// Build all Plotly traces from the CSV rows and render the plot.
+function plotFromSlews(target, visitRows, slewRows, pathMode) {
+    var slew_max  = slewRows.reduce(function(a, b) { return Math.max(a, parseFloat(b.slews)); }, 0.0);
+    var thick_max = 16.0; // maximum line width in pixels
 
-	    // default title labels
-	    var legend_cbar = 'Mean Cumulative Characterizations';
-	    var plot_title = [
-		'Mean Cumulative Characterizations and Slew Paths Over Ensemble',
-		'Point Shading: Mean Visits across Ensemble; Slew Path Shading: Arbitrary',
-		'Diamond Indicators Show Slew Information near Slew Destination'
-	    ].join('<br>');
-	    if (ens_path_mode === 'single') {
-		legend_cbar = 'Number of Characterizations';
-		plot_title = [
-		    'All Attempted Characterizations and Slew Paths',
-		    'Point Shading: Number of Visits; Slew Path Shading: Arbitrary',
-		    'Diamond Indicators Show Slew Information near Slew Destination'
-		].join('<br>');
-	    } 
+    var waypoints   = [];
+    var slew_traces = [];
 
-	    // holds the waypoints
-	    var waypoints = {
-		type: 'scattergeo',
-		lon: x_way,
-		lat: y_way,
-		text: text_way,
-		mode: 'markers',
-		hoverinfo: 'text',
-		marker: {
-		    color: 'rgba(30,30,30,0.4)',
-		    size: 7,
-		    // not all advertised symbols are available in scattergeo
-		    symbol: 'diamond-open',
-		    //opacity: 0.7, // opacity is set in "color" above
-		},
-	    };
-	    if (x_way.length > 0) {
-		slew_traces.push(waypoints);
-	    }
-	    // holds the plotted points (stars)
-	    var traces = {
-		type: 'scattergeo',
-		// type: 'scatter',
-		lon: x,
-		lat: y,
-		text: text,
-		mode: 'markers',
-		hoverinfo: 'text',
-		marker: {
-		    comment_ : 'leave cmin/cmax unspecified to auto-range',
-		    colorscale: 'Portland',
-		    color: z,
-		    size: size,
-		    opacity: 0.7,
-		    colorbar: {
-			tickfont: {
-			    family: 'Arial',
-			    size: 16,
-			    color: 'black'
-			},
-			title: '<br\>' + legend_cbar,
-			titleside: 'right',
-			titlefont: {
-			    size: 16,
-			    family: 'Arial Bold'
-			}
-		    }
-		},
-	    };
-	    slew_traces.push(traces)
-	    // geographic projection
-	    var geo = {
-		//resolution: 50,
-		showland: false,
-		showcountries: false,
-		showlakes: false,
-		showocean: false,
-		projection: {
-		    type: 'equirectangular'
-		},
-		coastlinewidth: 0,
-		lataxis: {
-		    range: [-80, 80 ],
-		    showgrid: true,
-		    // axis titles do not work, alas
-		    title: 'Longitude [deg]',
-		},
-		lonaxis:{
-		    range: [0, 360],
-		    showgrid: true,
-		    title: 'Longitude [deg]',
-		}
-	    };
+    // primitive equator (map objects have no real tick legends)
+    slew_traces.push({
+        lon: [0, 90, 180, 270, 360],
+        lat: [0,  0,   0,   0,   0],
+        type: 'scattergeo',
+        hoverinfo: 'none',
+        mode: 'lines',
+        line: {color: 'rgba(0, 0, 0, 1)', dash: 'dashdot', width: 0.5}
+    });
 
-	    // holds the overall plot layout
-	    var layout = {
-		title: plot_title, 
-		titlefont: {
-		    family: "Arial Black",
-		    size: 18,
-		    color: 'black'
-		},
-		showlegend: false, // slew legend at right
-		geo: geo,
-		hovermode: 'closest',
-	    }
-	    // make the plot from the above objects
-	    Plotly.newPlot(target, slew_traces, layout)
-	}
-    }) // end inner CSV-load
+    // Accumulate slew line traces and waypoint markers
+    slewRows.forEach(function(row) {
+        var slews = parseFloat(row.slews);
+        var label = row.label || ('Slews: ' + slews);
+        if (slews < 1.0) return;
+
+        var res = gcp1(visitRows[row.source].lon, visitRows[row.source].lat,
+                       visitRows[row.dest].lon,   visitRows[row.dest].lat);
+        // show a waypoint marker only for longer, prominent slews
+        if (res.r > 0.15 && slews/slew_max > 0.08 && label) {
+            res.text = [label,
+                        'From: ' + visitRows[row.source].name,
+                        'To: '   + visitRows[row.dest].name].join('<br>');
+            waypoints.push(res);
+        }
+        slew_traces.push({
+            lon: [visitRows[row.source].lon, visitRows[row.dest].lon],
+            lat: [visitRows[row.source].lat, visitRows[row.dest].lat],
+            type: 'scattergeo',
+            // Plotly shows line tooltips only at endpoints, which conflicts with
+            // the star markers, so hover is suppressed here.
+            hoverinfo: 'none',
+            mode: 'lines',
+            opacity: 0.4,
+            line: {width: (slews/slew_max) * thick_max}
+        });
+    });
+
+    // Waypoint markers (diamonds near slew destinations)
+    var x_way = [], y_way = [], text_way = [];
+    waypoints.forEach(function(wp) {
+        x_way.push(wp.lon);
+        y_way.push(wp.lat);
+        text_way.push(wp.text);
+    });
+    if (x_way.length > 0) {
+        slew_traces.push({
+            type: 'scattergeo',
+            lon: x_way, lat: y_way,
+            text: text_way,
+            mode: 'markers',
+            hoverinfo: 'text',
+            marker: {color: 'rgba(30,30,30,0.4)', size: 7, symbol: 'diamond-open'}
+        });
+    }
+
+    // Star markers (color = visit count)
+    var x = [], y = [], z = [], size = [], text = [];
+    visitRows.forEach(function(row) {
+        var visits = parseFloat(row.visit_mean);
+        var lon    = parseFloat(row.lon);
+        var lat    = parseFloat(row.lat);
+        x.push(lon);
+        y.push(lat);
+        z.push(visits === 0 ? NaN : visits);
+        size.push(visits === 0 ? 3 : 8);
+        text.push(row.name + formatStarAlternates(starAlternateNames2, row.name) + '<br>' +
+                  visits.toFixed(3) + ' visits<br>' +
+                  lon.toFixed(1) + '&deg;, ' + lat.toFixed(1) + '&deg;');
+    });
+    slew_traces.push({
+        type: 'scattergeo',
+        lon: x, lat: y,
+        text: text,
+        mode: 'markers',
+        hoverinfo: 'text',
+        marker: {
+            colorscale: 'Portland',
+            color: z,
+            size: size,
+            opacity: 0.7,
+            colorbar: {
+                tickfont: {family: 'Arial', size: 16, color: 'black'},
+                title: '<br>' + (pathMode === 'single' ? 'Number of Characterizations'
+                                                       : 'Mean Cumulative Characterizations'),
+                titleside: 'right',
+                titlefont: {size: 16, family: 'Arial Bold'}
+            }
+        }
+    });
+
+    insertPlotly(target, slew_traces, pathMode);
+}
+
+// Package traces and layout and render into the target div.
+function insertPlotly(target, slew_traces, pathMode) {
+    var plot_title = (pathMode === 'single')
+        ? ['All Attempted Characterizations and Slew Paths',
+           'Point Shading: Number of Visits; Slew Path Shading: Arbitrary',
+           'Diamond Indicators Show Slew Information near Slew Destination'].join('<br>')
+        : ['Mean Cumulative Characterizations and Slew Paths Over Ensemble',
+           'Point Shading: Mean Visits across Ensemble; Slew Path Shading: Arbitrary',
+           'Diamond Indicators Show Slew Information near Slew Destination'].join('<br>');
+
+    var layout = {
+        title: plot_title,
+        titlefont: {family: 'Arial Black', size: 18, color: 'black'},
+        showlegend: false,
+        geo: {
+            showland: false, showcountries: false, showlakes: false, showocean: false,
+            projection: {type: 'equirectangular'},
+            coastlinewidth: 0,
+            // axis titles do not work on geo objects in Plotly
+            lataxis: {range: [-80,  80], showgrid: true},
+            lonaxis: {range: [  0, 360], showgrid: true}
+        },
+        hovermode: 'closest'
+    };
+    Plotly.newPlot(target, slew_traces, layout);
+}
+
+
+// Entry point: read configuration from data-* attributes on the div, then load CSVs in parallel.
+// DOMContentLoaded ensures the div exists whether this file is in <head> or <body>.
+document.addEventListener('DOMContentLoaded', function() {
+    var div = document.getElementById('slewPlotDiv');
+    if (!div) return; // page has no path widget
+
+    var pathRoot = div.dataset.pathRoot || '../path-ens';
+    var pathMode = div.dataset.pathMode || 'ensemble';
+    var visits_url = pathRoot + '/path-visits.csv';
+    var slews_url  = pathRoot + '/path-slews.csv';
+
+    Promise.all([loadCSV(visits_url), loadCSV(slews_url)])
+        .then(function(results) {
+            var visitRows = results[0];
+            var slewRows  = results[1];
+            if (!visitRows.length || !slewRows.length) {
+                showError(div, 'One or more CSV files are empty.');
+                return;
+            }
+            plotFromSlews('slewPlotDiv', visitRows, slewRows, pathMode);
+        })
+        .catch(function(err) { showError(div, err.message); });
 });

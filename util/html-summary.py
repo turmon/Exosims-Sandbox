@@ -217,6 +217,7 @@ class HTML_helper(object):
     <script src="https://cdn.plot.ly/plotly-3.5.1.min.js"></script>
     <script src="/Local/www-resources/sorttable.js"></script>
     <script src="/Local/www-resources/star-target-plots.js"></script>
+    <script src="/Local/www-resources/ens-path-plots.js"></script>
     <!-- tabulator.js -->
     <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
@@ -435,7 +436,7 @@ class HTML_helper(object):
     def div(self, txt, **attr):
         attr_txt = ''
         if attr:
-            attr_txt = ' ' + ' '.join(['%s="%s"' % (key, val) for key, val in attr.items()])
+            attr_txt = ' ' + ' '.join(['%s="%s"' % (key.replace('_', '-'), val) for key, val in attr.items()])
         self.f.write(self.indent(  ) + '<div%s>\n' % attr_txt)
         self.f.write(self.indent( 1) + '%s\n' % txt)
         self.f.write(self.indent(-1) + '</div>\n')
@@ -947,15 +948,9 @@ class SimSummary(object):
                         hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                 elif tag == 'path' and self.graphics[tag]:
                     hh.header('Interactive Ensemble Path Widget', level=3)
-                    hh.div('<!-- ensemble path plot goes here -->',
-                               id='slewPlotDiv', style='width: 1000px; height: 600px;')
-                    # set up path to the data CSVs, and label mode, for the JS viewer
-                    hh.script('var ens_path_root = "../path-ens";', literal=True)
-                    hh.script([
-                        'var ens_path_root = "../path-ens";',
-                        'var ens_path_mode = "ensemble";'],
-                              literal=True)
-                    hh.script(WWW_RES/'ens-path-plots.js')
+                    hh.div('<!-- ensemble path plot goes here; rendered by ens-path-plots.js -->',
+                               id='slewPlotDiv', style='width: 1000px; height: 600px;',
+                               data_path_root='../path-ens', data_path_mode='ensemble')
                 plots = self.graphics[tag]
                 if not plots:
                     if target:
@@ -1073,14 +1068,9 @@ class SimSummary(object):
             hh.header('Interactive Observational Tour Widget', level=3)
             if 'movie' in info:
                 # (movie is a proxy for the path CSV data)
-                hh.div('<!-- tour path plot goes here -->',
-                           id='slewPlotDiv', style='width: 1000px; height: 600px;')
-                # point the path viewer, below, to the right directory
-                hh.script([
-                    'var ens_path_root = "../path/%s-cume";' % seed,
-                    'var ens_path_mode = "single";'],
-                              literal=True)
-                hh.script(WWW_RES/'ens-path-plots.js')
+                hh.div('<!-- tour path plot goes here; rendered by ens-path-plots.js -->',
+                           id='slewPlotDiv', style='width: 1000px; height: 600px;',
+                           data_path_root='../path/%s-cume' % seed, data_path_mode='single')
             else:
                 hh.paragraph('Data for widget not available.  Generate with: <code>make ... path-movie-N</code>')
             # path movie
