@@ -296,10 +296,12 @@ function plotFromSlews(target, visitRows, slewRows, pathMode) {
             opacity: 0.7,
             colorbar: {
                 tickfont: {family: 'Arial', size: 16, color: 'black'},
-                title: '<br>' + (pathMode === 'single' ? 'Number of Characterizations'
-                                                       : 'Mean Cumulative Characterizations'),
-                titleside: 'right',
-                titlefont: {size: 16, family: 'Arial Bold'}
+                title: {
+                    text: '<br>' + (pathMode === 'single' ? 'Number of Characterizations'
+                                                          : 'Mean Cumulative Characterizations'),
+                    side: 'right',
+                    font: {size: 16, family: 'Arial Bold'}
+                }
             }
         }
     });
@@ -318,8 +320,7 @@ function insertPlotly(target, slew_traces, pathMode) {
            'Diamond Indicators Show Slew Information near Slew Destination'].join('<br>');
 
     var layout = {
-        title: plot_title,
-        titlefont: {family: 'Arial Black', size: 18, color: 'black'},
+        title: {text: plot_title, font: {family: 'Arial Black', size: 18, color: 'black'}},
         showlegend: false,
         geo: {
             showland: false, showcountries: false, showlakes: false, showocean: false,
