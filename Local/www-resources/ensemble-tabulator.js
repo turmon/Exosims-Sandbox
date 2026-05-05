@@ -43,12 +43,12 @@ function loadJSON(url) {
 }
 
 // Bottom-row summary formatters for the table footer.
-const summaryNameCalc = function(values) {
+function summaryNameCalc(values) {
     return `SUMMARY (${values.length} items)`;
-};
-const summaryDateCalc = function(values) {
+}
+function summaryDateCalc(values) {
     return values.sort().pop();
-};
+}
 
 // Custom min/max range header filter: builds a {start, end} value object.
 function minMaxFilterEditor(cell, onRendered, success, cancel) {
@@ -87,7 +87,7 @@ function minMaxFilterEditor(cell, onRendered, success, cancel) {
 
 // Companion filter function: true iff rowValue falls in [start, end].
 function minMaxFilterFunction(headerValue, rowValue) {
-    if (rowValue) {
+    if (rowValue != null) {
         if (headerValue.start !== '') {
             if (headerValue.end !== '')
                 return rowValue >= headerValue.start && rowValue <= headerValue.end;
@@ -97,6 +97,16 @@ function minMaxFilterFunction(headerValue, rowValue) {
         }
     }
     return true;
+}
+
+
+// Ctrl/Cmd-click on a column header hides that column.
+function handleHeaderClick(e, column) {
+    if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        column.hide();
+        return false;
+    }
 }
 
 
@@ -129,15 +139,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const params_num = params.filter(p => typeof dataIndex0[p] === 'number');
             const params_str = params.filter(p => typeof dataIndex0[p] !== 'number');
 
-            // Ctrl/Cmd-click on a column header hides that column.
-            function handleHeaderClick(e, column) {
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    column.hide();
-                    return false;
-                }
-            }
-
             const param_col_num = params_num.map(p => ({
                 title: `&theta;: ${p}`, field: p,
                 headerClick: handleHeaderClick,
@@ -164,13 +165,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const hasSomeReadmeInfo = dataFiles.some(
                 item => item.hasOwnProperty('readme_info') && item.readme_info !== '');
 
-            const dataPlus = dataReduce.map(
-                item => ({ ...item, ...fileMap.get(item.experiment) })
-            );
+            const dataPlus = dataReduce.map(function(item) {
+                const paired = fileMap.get(item.experiment);
+                if (!paired) console.warn('ensemble-tabulator: no file data for experiment:', item.experiment);
+                return { ...item, ...paired };
+            });
 
             const yieldFmtParams = {
                 decimal: '.', thousand: false, negativeSign: true, precision: 3,
             };
+
+            function yieldCol(title, field) {
+                return {title, field, hozAlign: 'left', headerWordWrap: true,
+                        headerClick: handleHeaderClick,
+                        headerFilter: minMaxFilterEditor,
+                        headerFilterFunc: minMaxFilterFunction,
+                        headerFilterLiveFilter: false,
+                        formatter: 'money', formatterParams: yieldFmtParams,
+                        bottomCalcFormatter: 'money', bottomCalcFormatterParams: yieldFmtParams,
+                        bottomCalc: 'max'};
+            }
 
             // Allocate at most 750px; less if the table is short (~25px per row).
             const height_alloc = Math.min(750, (dataPlus.length + 5) * 25);
@@ -215,42 +229,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     {title: 'User', field: 'user',
                      headerClick: handleHeaderClick,
                      headerFilter: 'input'},
-                    {title: 'Earths (All)', field: 'detections_earth_all', hozAlign: 'left',
-                     headerWordWrap: true,
-                     headerClick: handleHeaderClick,
-                     headerFilter: minMaxFilterEditor,
-                     headerFilterFunc: minMaxFilterFunction,
-                     headerFilterLiveFilter: false,
-                     formatter: 'money', formatterParams: yieldFmtParams,
-                     bottomCalcFormatter: 'money', bottomCalcFormatterParams: yieldFmtParams,
-                     bottomCalc: 'max'},
-                    {title: 'Earths (Det.)', field: 'detections_earth_unique', hozAlign: 'left',
-                     headerWordWrap: true,
-                     headerClick: handleHeaderClick,
-                     headerFilter: minMaxFilterEditor,
-                     headerFilterFunc: minMaxFilterFunction,
-                     headerFilterLiveFilter: false,
-                     formatter: 'money', formatterParams: yieldFmtParams,
-                     bottomCalcFormatter: 'money', bottomCalcFormatterParams: yieldFmtParams,
-                     bottomCalc: 'max'},
-                    {title: 'Earths (Char.)', field: 'chars_earth_unique', hozAlign: 'left',
-                     headerWordWrap: true,
-                     headerClick: handleHeaderClick,
-                     headerFilter: minMaxFilterEditor,
-                     headerFilterFunc: minMaxFilterFunction,
-                     headerFilterLiveFilter: false,
-                     formatter: 'money', formatterParams: yieldFmtParams,
-                     bottomCalcFormatter: 'money', bottomCalcFormatterParams: yieldFmtParams,
-                     bottomCalc: 'max'},
-                    {title: 'Earths (Strict)', field: 'chars_earth_strict', hozAlign: 'left',
-                     headerWordWrap: true,
-                     headerClick: handleHeaderClick,
-                     headerFilter: minMaxFilterEditor,
-                     headerFilterFunc: minMaxFilterFunction,
-                     headerFilterLiveFilter: false,
-                     formatter: 'money', formatterParams: yieldFmtParams,
-                     bottomCalcFormatter: 'money', bottomCalcFormatterParams: yieldFmtParams,
-                     bottomCalc: 'max'},
+                    yieldCol('Earths (All)',    'detections_earth_all'),
+                    yieldCol('Earths (Det.)',   'detections_earth_unique'),
+                    yieldCol('Earths (Char.)',  'chars_earth_unique'),
+                    yieldCol('Earths (Strict)', 'chars_earth_strict'),
                     {title: 'Ens. Graphs', field: 'index_gfx_count',
                      headerClick: handleHeaderClick,
                      headerWordWrap: true,
