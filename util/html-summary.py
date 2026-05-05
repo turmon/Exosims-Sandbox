@@ -221,6 +221,7 @@ class HTML_helper(object):
     <!-- tabulator.js -->
     <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="/Local/www-resources/ensemble-tabulator.js"></script>
 </head>
 <body>
 '''
@@ -1522,15 +1523,7 @@ def index_group(args, startpath, title, uplink):
             hh.table_end()
         else:
             hh.paragraph('Tabulated summary is below. Click to sort, ctrl/cmd-click to hide.', br=True)
-            hh.div('<!-- tabulation goes here -->', id="scenario-table")
-            # (presently, filenames are hard-coded, which is OK)
-            ## # set up path to the data CSVs, and label mode, for the JS viewer
-            ## hh.script('var ens_path_root = "../path-ens";', literal=True)
-            ## hh.script([
-            ##    'var ens_tab_root = "../path-ens";',
-            ##    'var ens_tab_mode = "ensemble";'],
-            ##          literal=True)
-            hh.script(WWW_RES/'ensemble-tabulator.js')
+            hh.div('<!-- tabulation goes here; rendered by ensemble-tabulator.js -->', id="scenario-table")
 
         #
         hh.paragraph(f'Regenerating the table data from existing reduction information:', br=True)
