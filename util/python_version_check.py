@@ -1,12 +1,14 @@
 #!/usr/bin/env python
-"""python-version-check: Check python and EXOSIMS readiness to run.
+"""python_version_check: Check python and EXOSIMS readiness to run.
 
 Finds python and python-package version information,
 and optionally attempt a test instantiation and run_sim()
 of an EXOSIMS object.
 
 Usage:
-  `python_version_check.py [-x] [-i] [-r] [-s SCRIPT] [-c CACHEDIR] [-R [sdet|conda|FILE|URL]]`
+```
+  python_version_check.py [-x] [-i] [-r] [-s SCRIPT] [-c CACHEDIR] [-R [sdet|conda|FILE|URL]]
+```
 
 Simplest usage:
   `python_version_check.py`
