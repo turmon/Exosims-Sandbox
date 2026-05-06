@@ -29,6 +29,10 @@ Note: Tested, and works, after removing the previous shim
 many utilities here need numpy, astropy, and even EXOSIMS, in order
 to import.
 
+Note: On the other hand, this is not working correctly with mkdocs
+in the doc_sandbox directory. Possibly the mkdocs import mechanism
+is not compatible with the shim here.
+
 """
 
 import importlib.util, pathlib, sys
