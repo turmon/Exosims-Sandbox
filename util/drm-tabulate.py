@@ -236,9 +236,17 @@ from functools import partial
 from dataclasses import dataclass
 #import multiprocessing.dummy
 import multiprocessing as mproc
-import pandas as pd
 import numpy as np
-import astropy.units as u
+# be robust: (unsure if we always need astropy.units?)
+try:
+    import astropy.units as u
+except:
+    u = None
+# be robust: pandas is rarely needed
+try:
+    import pandas as pd
+except:
+    pd = None
 
 ##
 ## Globals
@@ -284,7 +292,7 @@ class NumpyEncoder(json.JSONEncoder):
             return int(obj)
         elif isinstance(obj, np.floating):
             return float(obj)
-        elif isinstance(obj, u.quantity.Quantity):
+        elif u is not None and isinstance(obj, u.quantity.Quantity):
             # note: it is possible to have a numpy ndarray wrapped in a Quantity,
             # and obj will be both a Quantity and an ndarray
             # for the moment, placing this ahead of ndarray works, although
@@ -1060,6 +1068,9 @@ def parse_arglist(arglist):
     # Enforce that -P => --plan_num (only for CLI)
     if args.planet and 'plan_num' not in args.pseudo:
         args.pseudo.append('plan_num')
+    if args.pd_pkl and pd is None:
+        print(f'{args.progname}: Fatal. pandas import failed and --pandas requested.', file=sys.stderr)
+        sys.exit(1)
     # process all attr args into a unified list, args.all_attrs
     args.all_attrs = process_attr_program_inputs(args)
     return args
