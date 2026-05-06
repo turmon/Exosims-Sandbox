@@ -65,8 +65,9 @@ install: all
 # the meta-extract.sh script simply extracts the Title:
 # (and any other) field from the header of the plot.md file,
 # for later use in generating the HTML title
+# local UV cachedir because ./ is much more efficient than ~/
 %.md_html: %.md
-	uv run --with markdown python -m markdown -x extra -x meta $< | sed 's/^/    /' > $@
+	UV_CACHE_DIR=./.uv_cache uv run --with markdown python -m markdown -x extra -x meta $< | sed 's/^/    /' > $@
 	util/meta-extract.sh < $< > $@.meta
 
 # For m4:
