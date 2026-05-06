@@ -27,11 +27,13 @@ get lazy + cached behavior for free.
 Note: Tested, and works, after removing the previous shim
 (drm_tabulate.py, formerly symlinked to drm-tabulate.py). Note that
 many utilities here need numpy, astropy, and even EXOSIMS, in order
-to import.
+to import. In general though, python scripts with - should be
+deprecated.
 
 Note: On the other hand, this is not working correctly with mkdocs
 in the doc_sandbox directory. Possibly the mkdocs import mechanism
 is not compatible with the shim here.
+
 
 """
 
