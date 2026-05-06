@@ -9,15 +9,17 @@ sims
 # skip focused analysis/experiments/results
 Analyses
 
-# skip EXOSIMS source code
+# skip EXOSIMS source code, if any
 EXOSIMS
 
-# skip ipyparallel per-user config
-# this can be remade with "make ipp-create"
+# skip ipyparallel per-user config (obsolete, but existing in some places)
 ipyparallel/*
 
 # uv lock files
 uv.lock
+
+# uv cache directories
+.uv_cache
 
 # python byte-compiled files
 __pycache__

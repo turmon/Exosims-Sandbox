@@ -29,3 +29,7 @@ dependencies = [
     "mkdocs-gen-files<=0.6.0",
 ]
 
+[tool.uv]
+# for efficiency, ensure `uv` cache is local to this parition (~/ often will not be!)
+cache-dir = "./.uv-cache"
+
