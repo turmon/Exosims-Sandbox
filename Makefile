@@ -101,8 +101,16 @@ endif
 # needed to escape equal signs in some Experiments, alas
 EQUAL:= =
 
-# hostname
-HOST_NAME=$(shell hostname -s)
+# OS name (Darwin/Linux, typically)
+# (alternatively: is $(cwd) on same partition as $(uv cache dir)?)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    # on HPC, mustang, etc. -- local cache, not ~/, for efficiency
+    UV_PREFIX=UV_CACHEDIR=./.uv-cache/
+else
+    # on single-user laptop -- leave cache as-is
+    UV_PREFIX=
+endif
 
 # program used for data reduction
 REDUCE_PROG=util/reduce_drms.py
@@ -141,9 +149,9 @@ PATH_ENS_PROG=util/ens-path-summary.sh -a
 #   -i: to regenerate the global index.html as well as that for $(S)
 HTML_PROG=util/html-summary.py -i
 # html summary of emulator Analysis/ results
-EMU_HTML_PROG=util/emulator_html_summary.py -R Local/www-resources -S ensemble-reports.css -J sorttable.js
+EMU_HTML_PROG=$(UV_PREFIX) util/emulator_html_summary.py -R Local/www-resources -S ensemble-reports.css -J sorttable.js
 # analysis/plots of experiment results
-EMU_PLOT_PROG=util/run_emulator_workflows.py
+EMU_PLOT_PROG=$(UV_PREFIX) util/run_emulator_workflows.py
 # program to select a given number of ensembles within an experiment
 #  also needs a sort key (-k) argument before use
 SELECT_PROG=util/select_ensembles.py -q -o experiment
