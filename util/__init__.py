@@ -31,8 +31,13 @@ to import. In general though, python scripts with - should be
 deprecated.
 
 Note: On the other hand, this is not working correctly with mkdocs
-in the doc_sandbox directory. Possibly the mkdocs import mechanism
-is not compatible with the shim here.
+in the doc_sandbox directory. The mkdocs import mechanism
+uses `griffe`, which uses a static analysis of the packages rather
+than an outright "import". The static analysis will not run this
+code, so the workaround below fails. Confusingly, griffe will fallback
+to a straight "import", which will execute the code below, but then
+itself fail because of uninstalled packages like numpy, astropy, 
+or EXOSIMS.
 
 
 """
