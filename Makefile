@@ -569,9 +569,14 @@ EXP_ANALYSIS_SENTINEL:=sims/$(S)/Analysis/base.wfl/graphics-info.txt
 # delegate to the exp-analysis sentinel file
 exp-analysis-graphics: analysis-exists $(EXP_ANALYSIS_SENTINEL);
 
-$(EXP_ANALYSIS_SENTINEL): sims/$(S)/reduce-yield-plus.csv
-	@ echo "Make: Emulator analysis graphics (experiment) $@ ..."
+# (Also will depend on one or more reduce-yield-plus.csv files,
+# but the particular files are given in the workflow script)
+$(EXP_ANALYSIS_SENTINEL): sims/$(S)/Analysis/workflow-base.json
+	@ echo "Make: Emulator analysis (experiment) $^ ..."
 	$(EMU_PLOT_PROG) -C "" sims/$(S)/Analysis/workflow-base.json
+
+# don't remake this
+sims/$(S)/Analysis/workflow-base.json: ;
 
 # analysis, graphics, tables -- all available workflows
 # this runs without checking dependencies
