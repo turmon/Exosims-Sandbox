@@ -60,6 +60,23 @@ def strip_units(x):
     else:
         return x
 
+def get_scenario(spc_path):
+    r'''Get scenario name from SPC file path, honoring sandbox conventions.
+
+    E.g., sims/coroSched_20231122/spc/161215293.spc -> coroSched_20231122
+          sims/exp.fam/scenarioX/spc/42.spc         -> exp.fam/scenarioX'''
+    if not spc_path.startswith('sims/'):
+        reasonable = os.path.dirname(spc_path)
+        if reasonable.endswith('/spc'):
+            return reasonable[:-4]
+        return reasonable
+    f_tail = spc_path[5:]
+    d = os.path.dirname(f_tail)
+    if d.endswith('/spc'):
+        return d[:-4]
+    return f_tail
+
+
 # Container class for loading canned star-planet configurations
 class StarPlanetInfo(object):
     r"""Star-planet configuration, as loaded from an external pickle."""
@@ -103,7 +120,9 @@ class StarPlanetInfo(object):
         self.seed = os.path.splitext(os.path.basename(spc))[0]
         # filename
         self.filename = spc
-        self.basename = os.path.basename(spc)
+        # scenario name and basename from path
+        self.scenario = get_scenario(spc)
+        self.basename = os.path.basename(self.scenario)
 
     def __init__(self, spc):
         # load DRM and Star-Planet info
@@ -222,11 +241,11 @@ def dump_names(args, n, info):
     may in principle vary across lines.'''
     # make the ordering invariant, esp. over calls
     keys = sorted(info.spc.keys())
-    args.out_fp.write('%s' % info.seed)
+    for ef in args.extra_fields:
+        args.out_fp.write(f'{ef}={getattr(info, ef)}\n')
     for f in keys:
         xtra = f'[{str(info.spc[f].shape)}]' if isinstance(info.spc[f],np.ndarray) else ''
-        args.out_fp.write(f'\n{f}{xtra}')
-    args.out_fp.write('\n')
+        args.out_fp.write(f'{f}{xtra}\n')
     
 
 def dump_lengths(args, n, info):
@@ -239,14 +258,10 @@ def dump_lengths(args, n, info):
     # note, appending to output file
     # header
     if n == 0:
-        args.out_fp.write('seed')
-        for f in keys:
-            args.out_fp.write(',%s' % f)
-        args.out_fp.write('\n')
-    args.out_fp.write('%s' % info.seed)
-    for f in keys:
-        args.out_fp.write(',%s' % get_length(info.spc[f]))
-    args.out_fp.write('\n')
+        args.out_fp.write(','.join(args.extra_fields + list(keys)) + '\n')
+    row = [str(getattr(info, ef)) for ef in args.extra_fields]
+    row += [str(get_length(info.spc[f])) for f in keys]
+    args.out_fp.write(','.join(row) + '\n')
     
 
 def dump(args, n, info):
@@ -258,8 +273,8 @@ def dump(args, n, info):
     else:
         # fields, fields_scalar = args.key, []
         fields, fields_scalar = majority_key(info.spc, args.key)
-    # extra field(s) to dump
-    extra_fields = ['seed']
+    # extra identifier field(s) to dump
+    extra_fields = args.extra_fields
     # (note, appending to output file)
     # OK to have extra fields in dict-for-row
     w = csv.DictWriter(args.out_fp, fieldnames=(extra_fields+fields+fields_scalar), extrasaction='ignore')
@@ -269,7 +284,9 @@ def dump(args, n, info):
     for i in range(num_entries):
         d  = {key:strip_units(info.spc[key][i]) for key in fields}
         d.update({key:strip_units(info.spc[key]) for key in fields_scalar})
-        d['seed'] = info.seed
+        d['seed']     = info.seed
+        d['scenario'] = info.scenario
+        d['basename'] = info.basename
         w.writerow(d)
 
 
@@ -302,6 +319,12 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outfile', help='name of output file, default stdout',
                       dest='outfile', metavar='FILE', default='-')
     parser.add_argument('-k', '--key', action='append', default=[], help='repeat to get multiple keys', type=str)
+    parser.add_argument('-s', '--seed',     action='store_true', default=False,
+                        help='include seed in output')
+    parser.add_argument('-N', '--name',     action='store_true', default=False,
+                        help='include scenario name in output')
+    parser.add_argument('-B', '--basename', action='store_true', default=False,
+                        help='include scenario basename in output')
     
     args = parser.parse_args()
     
@@ -318,6 +341,11 @@ if __name__ == '__main__':
         args.key = [k for k in args.key if k != '.default-planet']
         args.key += default_fields_planet
 
+    args.extra_fields = (
+        (['scenario'] if args.name     else []) +
+        (['basename'] if args.basename else []) +
+        (['seed']     if args.seed     else [])
+    )
     args.spcs = expand_spc(args.spcs)
     main(args)
 
