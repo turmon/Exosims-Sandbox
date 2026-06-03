@@ -35,6 +35,7 @@ import glob
 import argparse
 import os
 import csv
+import json
 from collections import defaultdict
 import six.moves.cPickle as pickle
 import numpy as np
@@ -51,6 +52,20 @@ PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 # Utility Functions
 #
 ############################################################
+
+class NumpyEncoder(json.JSONEncoder):
+    r"""Custom JSON encoder for numpy types."""
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, u.quantity.Quantity):
+            return obj.value
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
 
 def strip_units(x):
     r'''Strip astropy units from x.'''
@@ -275,10 +290,11 @@ def dump(args, n, info):
         fields, fields_scalar = majority_key(info.spc, args.key)
     # extra identifier field(s) to dump
     extra_fields = args.extra_fields
-    # (note, appending to output file)
-    # OK to have extra fields in dict-for-row
-    w = csv.DictWriter(args.out_fp, fieldnames=(extra_fields+fields+fields_scalar), extrasaction='ignore')
-    if n == 0: w.writeheader()
+    all_fields = extra_fields + fields + fields_scalar
+    # set up CSV writer (JSON path defers output to main())
+    if not args.json:
+        w = csv.DictWriter(args.out_fp, fieldnames=all_fields, extrasaction='ignore')
+        if n == 0: w.writeheader()
     # make a dictionary mapping field -> value
     num_entries = len(info.spc[fields[0]]) if fields else 1
     for i in range(num_entries):
@@ -287,7 +303,10 @@ def dump(args, n, info):
         d['seed']     = info.seed
         d['scenario'] = info.scenario
         d['basename'] = info.basename
-        w.writerow(d)
+        if args.json:
+            args.rows.append({f: d[f] for f in all_fields})
+        else:
+            w.writerow(d)
 
 
 ############################################################
@@ -304,11 +323,14 @@ def main(args):
     else:
         dumper = dump
 
+    args.rows = []
     open_output(args)
     for n, fn in enumerate(args.spcs):
         info = StarPlanetInfo(fn)
         process(args, info)
         dumper(args, n, info)
+    if args.json and args.out_fp:
+        json.dump(args.rows, args.out_fp, indent=2, cls=NumpyEncoder)
 
     
 if __name__ == '__main__':
@@ -325,6 +347,8 @@ if __name__ == '__main__':
                         help='include scenario name in output')
     parser.add_argument('-B', '--basename', action='store_true', default=False,
                         help='include scenario basename in output')
+    parser.add_argument('--json', help='JSON output format', action='store_true',
+                        dest='json', default=False)
     
     args = parser.parse_args()
     
