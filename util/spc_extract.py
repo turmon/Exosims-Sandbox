@@ -126,6 +126,38 @@ def process(args, info):
     info.spc['earth'] = info.is_earthlike_all().astype(int)
     
 
+def expand_spc(spcs):
+    r'''Expand spc input args so that directories are descended into.'''
+    def expand_dir(d):
+        dx = []
+        for root, dirs, files in os.walk(d):
+            if root.endswith('/spc'):
+                dx.extend(glob.glob(f'{root}/*.spc'))
+                dirs[:] = []
+                continue
+            if 'spc' in dirs:
+                dx.extend(glob.glob(f'{root}/spc/*.spc'))
+                dirs[:] = []
+                continue
+            downs = [d for d in dirs if (
+                d.endswith('.exp') or d.endswith('.fam') or
+                os.path.isdir(f'{root}/{d}/spc'))]
+            dirs[:] = downs
+        return dx
+
+    d_all = []
+    progname = os.path.basename(sys.argv[0])
+    for x in spcs:
+        if os.path.isfile(x):
+            d_all.append(x)
+        elif os.path.isdir(x):
+            d_all.extend(expand_dir(x))
+        else:
+            print(f'{progname}: Fatal. Could not access {x}.', file=sys.stderr)
+            sys.exit(1)
+    return d_all
+
+
 def open_output(args):
     r'''Prepare the output file.'''
     if not args.outfile:
@@ -286,6 +318,7 @@ if __name__ == '__main__':
         args.key = [k for k in args.key if k != '.default-planet']
         args.key += default_fields_planet
 
+    args.spcs = expand_spc(args.spcs)
     main(args)
 
 
