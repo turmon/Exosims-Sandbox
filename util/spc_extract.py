@@ -8,17 +8,32 @@ Typical usage:
 or:
   `spc-extract.py -k .len sims/script/spc/*.spc`
 
-where `-k` can be used more than once to name particular keys to output,
-or can take a handful of special values:
+SPC files, directories of `.spc` files, or scenario/experiment directories
+may be given; directories are expanded recursively to all `.spc` files within.
 
-+ .len  => give key names and the corresponding vector lengths
-+ .name => give just key names
-+ .all  => output as many keys as possible in one CSV
-           (outputs the keys that correspond to the most-commonly-seen
-            vector length, e.g., stars)
-+ .default-star, .default-planet => output typically-present keys for stars
-           and planets, respectively
-+ -o FILE ==> output file
+The `-k` option can be repeated to name particular SPC keys to output.
+If no `-k` is given, `.default-star` is used.  Special KEY values:
+
++ `.len`            => give field names and their vector lengths (diagnostic)
++ `.name`           => give field names only (diagnostic)
++ `.all`            => output fields of the most-common non-scalar length,
+                       plus all scalar fields.  Use `--like KEY` to target
+                       a specific length (e.g., `--like Mp` for planet-length
+                       fields, `--like L` for star-length fields).
++ `.default-star`   => output a standard set of star keys (default when no -k given)
++ `.default-planet` => output a standard set of planet keys
+
+Identifier columns, prepended before data columns in order scenario, basename, seed:
+
++ `-N` => scenario name (e.g., `sims/coroSched_20231122` becomes `coroSched_20231122`)
++ `-B` => scenario basename (last path component of the scenario name)
++ `-s` => seed (numeric stem of the `.spc` filename)
+
+Other options:
+
++ `--json`     => emit JSON array of objects instead of CSV
++ `--like KEY` => with `-k .all`, select fields of the same length as KEY
++ `-o FILE`    => output file (default: stdout)
 """
 
 
@@ -338,7 +353,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Extract star-planet configuration (SPC) info and output as CSV.",
-        epilog="Use KEY of .all for as many fields as possible, .name for fieldnames only, .len for field lengths")
+        epilog="Special -k KEY values: .all (most-common-length fields), .default-star (star keys, default when no -k given), .default-planet (planet keys), .name (field names only), .len (field name/length table)")
     parser.add_argument('spcs', metavar='SPC', nargs='*', help='SPC file(s)')
     parser.add_argument('-o', '--outfile', help='name of output file, default stdout',
                       dest='outfile', metavar='FILE', default='-')
