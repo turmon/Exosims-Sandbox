@@ -160,7 +160,7 @@ def process(args, info):
     info.spc['earth'] = info.is_earthlike_all().astype(int)
     
 
-def expand_spc(spcs):
+def expand_spc(spcs, progname):
     r'''Expand spc input args so that directories are descended into.'''
     def expand_dir(d):
         dx = []
@@ -180,7 +180,6 @@ def expand_spc(spcs):
         return dx
 
     d_all = []
-    progname = os.path.basename(sys.argv[0])
     for x in spcs:
         if os.path.isfile(x):
             d_all.append(x)
@@ -217,7 +216,7 @@ def get_length(qty):
     return l
     
 
-def select_fields(spc, keys, target_len=None, warn_mismatch=False):
+def select_fields(spc, keys, target_len=None, warn_mismatch=False, progname=''):
     r'''Classify keys into vector fields and scalar fields for output.
 
     Returns (fields, fields_scalar).
@@ -226,7 +225,7 @@ def select_fields(spc, keys, target_len=None, warn_mismatch=False):
     key_by_len = defaultdict(list)
     for k in keys:
         if k not in spc:
-            sys.stderr.write(f"Could not find key='{k}', skipping.\n")
+            sys.stderr.write(f"{progname}: Could not find key='{k}', skipping.\n")
             continue
         key_by_len[get_length(spc[k])].append(k)
 
@@ -247,7 +246,7 @@ def select_fields(spc, keys, target_len=None, warn_mismatch=False):
     if warn_mismatch and len(non_scalar) > 1:
         dropped = [k for l, ks in non_scalar.items() if l != best_len for k in ks]
         sys.stderr.write(
-            f"Warning: mixed vector lengths in requested keys; "
+            f"{progname}: Warning: mixed vector lengths in requested keys; "
             f"dropping {dropped} (not length {best_len}).\n")
 
     return non_scalar[best_len], scalars
@@ -290,16 +289,19 @@ def dump(args, n, info):
     if '.all' in args.key:
         if args.like:
             if args.like not in info.spc:
-                sys.stderr.write(f"Warning: --like key '{args.like}' not in SPC, ignoring.\n")
+                sys.stderr.write(f"{args.progname}: Warning: --like key '{args.like}' not in SPC, ignoring.\n")
                 target_len = None
             else:
                 target_len = get_length(info.spc[args.like])
             fields, fields_scalar = select_fields(info.spc, info.spc.keys(),
-                                                  target_len=target_len)
+                                                  target_len=target_len,
+                                                  progname=args.progname)
         else:
-            fields, fields_scalar = select_fields(info.spc, info.spc.keys())
+            fields, fields_scalar = select_fields(info.spc, info.spc.keys(),
+                                                  progname=args.progname)
     else:
-        fields, fields_scalar = select_fields(info.spc, args.key, warn_mismatch=True)
+        fields, fields_scalar = select_fields(info.spc, args.key, warn_mismatch=True,
+                                              progname=args.progname)
     # extra identifier field(s) to dump
     extra_fields = args.extra_fields
     all_fields = extra_fields + fields + fields_scalar
@@ -365,7 +367,8 @@ if __name__ == '__main__':
                         help='with -k .all, select attributes of the same length as KEY')
     
     args = parser.parse_args()
-    
+    args.progname = os.path.basename(sys.argv[0])
+
     # set umask in hopes that files/dirs will be group-writable
     os.umask(0o002)
 
@@ -384,7 +387,7 @@ if __name__ == '__main__':
         (['basename'] if args.basename else []) +
         (['seed']     if args.seed     else [])
     )
-    args.spcs = expand_spc(args.spcs)
+    args.spcs = expand_spc(args.spcs, args.progname)
     main(args)
 
 
