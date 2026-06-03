@@ -16,20 +16,12 @@ or can take a handful of special values:
 + .all  => output as many keys as possible in one CSV
            (outputs the keys that correspond to the most-commonly-seen
             vector length, e.g., stars)
-+ .next => output the keys corresponding to the second-most-seen vector length
-           (e.g., planets).  Not implemented.
 + .default-star, .default-planet => output typically-present keys for stars
            and planets, respectively
 + -o FILE ==> output file
 """
 
 
-# history:
-#  turmon jun 2019 - created
-#  turmon sep 2020 - refined
-
-
-from __future__ import print_function
 import sys
 import glob
 import argparse
@@ -37,14 +29,10 @@ import os
 import csv
 import json
 from collections import defaultdict
-import six.moves.cPickle as pickle
+import pickle
 import numpy as np
 import astropy.units as u
 import astropy.constants as const
-from six.moves import range
-
-# unpickling python2/numpy pickles within python3 requires this
-PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
 
 
 ############################################################
@@ -130,7 +118,7 @@ class StarPlanetInfo(object):
         if False:
             print('Loading SPC from', spc)
         # spc file contains a dict with many fields - save them all
-        self.spc = pickle.load(open(spc, 'rb'), **PICKLE_ARGS)
+        self.spc = pickle.load(open(spc, 'rb'), encoding='latin1')
         # seed extracted from filename
         self.seed = os.path.splitext(os.path.basename(spc))[0]
         # filename
@@ -373,8 +361,8 @@ if __name__ == '__main__':
     os.umask(0o002)
 
     # special keys
-    default_fields_star = ['Name', 'Spec', 'L', 'MsTrue', 'comp0', 'dist', 's']
-    default_fields_planet = ['Rp', 'T', 'Mp', 'a', 'I', 'Lp', 'earth', 'plan2star']
+    default_fields_star = ['Name', 'Spec', 'L', 'MsTrue', 'int_comp', 'dist']
+    default_fields_planet = ['Rp', 'T', 'Mp', 'a', 'I', 'Lp', 'earth', 's', 'plan2star']
     if '.default-star' in args.key or len(args.key) == 0:
         args.key = [k for k in args.key if k != '.default-star']
         args.key += default_fields_star
