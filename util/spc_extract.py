@@ -217,36 +217,40 @@ def get_length(qty):
     return l
     
 
-def majority_key(spc, keys):
-    r'''Get the keys sharing the most common field length.
+def select_fields(spc, keys, target_len=None, warn_mismatch=False):
+    r'''Classify keys into vector fields and scalar fields for output.
 
-    E.g., if T, Mp, and Rp have a common length, and two other fields
-    have length 1, return these keys.'''
-    # 
+    Returns (fields, fields_scalar).
+    target_len: if given, vector fields are those whose length equals target_len.
+    warn_mismatch: if True, warn when non-scalar keys have mixed lengths.'''
     key_by_len = defaultdict(list)
     for k in keys:
         if k not in spc:
-            sys.stderr.write("Could not find key=`%s', skipping.\n" % k)
+            sys.stderr.write(f"Could not find key='{k}', skipping.\n")
             continue
         key_by_len[get_length(spc[k])].append(k)
-    # find most common length
-    l_max = 0
-    for l, klist in key_by_len.items():
-        if len(klist) > l_max:
-            l_max = l
-        # in general, longer vector wins ties
-        #    and in particular, vector keys win ties with scalars
-        if len(klist) == l_max and l > l_max:
-            l_max = l
-    # get the keys...determine the fields for scalars, too
-    if l_max == 1:
-        fields = []
-        fields_scalar = key_by_len[l_max]
-    else:
-        fields = key_by_len[l_max]
-        fields_scalar = key_by_len[1]
-    # return both
-    return fields, fields_scalar
+
+    scalars = key_by_len.get(1, [])
+    non_scalar = {l: ks for l, ks in key_by_len.items() if l != 1}
+
+    if target_len is not None:
+        if target_len == 1:
+            return [], scalars
+        return non_scalar.get(target_len, []), scalars
+
+    if not non_scalar:
+        return [], scalars
+
+    # find the length with the most keys; break ties by preferring larger length
+    best_len = max(non_scalar, key=lambda l: (len(non_scalar[l]), l))
+
+    if warn_mismatch and len(non_scalar) > 1:
+        dropped = [k for l, ks in non_scalar.items() if l != best_len for k in ks]
+        sys.stderr.write(
+            f"Warning: mixed vector lengths in requested keys; "
+            f"dropping {dropped} (not length {best_len}).\n")
+
+    return non_scalar[best_len], scalars
 
 
 def dump_names(args, n, info):
@@ -284,10 +288,18 @@ def dump(args, n, info):
     if not args.out_fp: return
     # support all keys
     if '.all' in args.key:
-        fields, fields_scalar = majority_key(info.spc, info.spc.keys())
+        if args.like:
+            if args.like not in info.spc:
+                sys.stderr.write(f"Warning: --like key '{args.like}' not in SPC, ignoring.\n")
+                target_len = None
+            else:
+                target_len = get_length(info.spc[args.like])
+            fields, fields_scalar = select_fields(info.spc, info.spc.keys(),
+                                                  target_len=target_len)
+        else:
+            fields, fields_scalar = select_fields(info.spc, info.spc.keys())
     else:
-        # fields, fields_scalar = args.key, []
-        fields, fields_scalar = majority_key(info.spc, args.key)
+        fields, fields_scalar = select_fields(info.spc, args.key, warn_mismatch=True)
     # extra identifier field(s) to dump
     extra_fields = args.extra_fields
     all_fields = extra_fields + fields + fields_scalar
@@ -349,6 +361,8 @@ if __name__ == '__main__':
                         help='include scenario basename in output')
     parser.add_argument('--json', help='JSON output format', action='store_true',
                         dest='json', default=False)
+    parser.add_argument('--like', metavar='KEY', default=None,
+                        help='with -k .all, select attributes of the same length as KEY')
     
     args = parser.parse_args()
     
