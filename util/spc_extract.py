@@ -23,10 +23,11 @@ If no `-k` is given, `.default-star` is used.  Special KEY values:
 + `.default-star`   => output a standard set of star keys (default when no -k given)
 + `.default-planet` => output a standard set of planet keys
 
-Identifier columns, prepended before data columns in order scenario, basename, seed:
+You may include identifier columns, prepended before data columns in the 
+order scenario, basename, seed, by giving these options:
 
-+ `-N` => scenario name (e.g., `sims/coroSched_20231122` becomes `coroSched_20231122`)
-+ `-B` => scenario basename (last path component of the scenario name)
++ `-N` => scenario name (`sims/A.fam/B.exp/C` becomes `A.fam/B.exp/C`)
++ `-B` => scenario basename (last path component of the scenario; `C` above)
 + `-s` => seed (numeric stem of the `.spc` filename)
 
 Other options:
@@ -34,6 +35,10 @@ Other options:
 + `--json`     => emit JSON array of objects instead of CSV
 + `--like KEY` => with `-k .all`, select fields of the same length as KEY
 + `-o FILE`    => output file (default: stdout)
+
+Caveat: The customization of `is_earthlike` in `config-reduce.json`
+is not yet honored by this program.
+
 """
 
 
