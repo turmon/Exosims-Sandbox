@@ -3,11 +3,12 @@
 
 Usage:
 
-  plot-str-obs-trace.py [-o OUTPATH] DRM
+  plot-str-obs-trace.py [-o OUTPATH] [--aspect R] DRM
 
 where:
 
   -o OUTPATH gives an output path for results, containing two %s slots  
+  --aspect gives the (vertical) aspect ratio, >1 helps for large target lists
 
 Most helpful Sandbox usage:
 
@@ -21,11 +22,10 @@ correct star names. If not, a warning is given, but it's not a failure.
 
 Note: does not need to import EXOSIMS
 
-Michael Turmon, JPL, 07/2023
+Michael Turmon, JPL
 
 """
 
-from __future__ import print_function
 import os
 import sys
 import csv
@@ -37,11 +37,6 @@ import random
 import time
 import numpy as np
 
-# currently this pylab import is needed to allow the script
-# to terminate cleanly
-#from pylab import *
-#import matplotlib
-#matplotlib.use('Agg')
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
 
@@ -55,7 +50,7 @@ import matplotlib.pyplot as plt
 ###
 ########################################
 
-SAVEFIG_OPTS = dict(dpi=300)
+SAVEFIG_OPTS = dict(dpi=400)
 
 # unpickling python2/numpy pickles within python3 requires this
 PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
@@ -278,7 +273,8 @@ class plotStarObsContainer(object):
         r'''Plot the star/obs trace.'''
         # one figure for whole plot
         # can try layout='constrained' for other placement rules
-        fig = plt.figure(figsize=(18,20))
+        # figsize is (width, height)
+        fig = plt.figure(figsize=(18,20*self.args.aspect))
         gs = fig.add_gridspec(1, 3, wspace=0, width_ratios=(1,0.02,0.08))
         (ax, ax2, ax3) = gs.subplots(sharey=True)
         #ax = fig.add_subplot(111)
@@ -435,6 +431,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Plot trace of target stars and observations.", epilog='')
     parser.add_argument('drm', metavar='DRM', default='', help='drm file')
     parser.add_argument('-o', default='./plot-%s.%s', type=str, dest='outpath', help='Output file pattern.')
+    parser.add_argument('--aspect', type=float, default=1.0, help='Plot aspect ratio (default: 1.0), >1 adds height')
     #parser.add_argument('-v', default=False, action='store_true', 
     #                        dest='verbose', help='Verbosity.')
     args = parser.parse_args()
