@@ -373,8 +373,8 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Explanatory legend
     block_text = ('Counting Over All Planets in Target List\n'
                  'Normalization: Planets of that Type, per Star\n'
-                 'Leftmost Column is Observed $\eta$ Earth\n'
-                 'Error Bar: $\pm$ 1 sigma')
+                 'Leftmost Column is Observed $\\eta$ Earth\n'
+                 'Error Bar: $\\pm$ 1 sigma')
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet overlay
@@ -457,7 +457,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Explanatory legend
     block_text = ('Lower Segment: Blue Detection Mode\n'
                  'Upper Segment: Combo Detection Mode\n'
-                 'Error Bar: $\pm$ 1 sigma')
+                 'Error Bar: $\\pm$ 1 sigma')
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet + rectangle underlays
@@ -530,7 +530,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Explanatory legend
     block_text = ('Lower Segment: Blue Detection Mode\n'
                  'Upper Segment: Combo Detection Mode\n'
-                 'Error Bar: $\pm$ 1 sigma')
+                 'Error Bar: $\\pm$ 1 sigma')
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
     # Planet + rectangle underlays
@@ -668,7 +668,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         
         # Explanatory legend
         block_top = f'{qualifier} Characterizations{plot_title}'
-        block_eb = '  Error Bar: $\pm$ 1 sigma'
+        block_eb = '  Error Bar: $\\pm$ 1 sigma'
         if h_counts_alt is not None:
             block_text = (f'{block_top}\n'
                          '  Lower Segment: Full Characterization\n'

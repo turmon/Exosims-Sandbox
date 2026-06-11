@@ -197,7 +197,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         
         style_wa_dmag_plot(ax,
             f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Log Phi',
-            '\nlog$_{10}(\Phi)$ : truncated at -2')
+            '\nlog$_{10}(\\Phi)$ : truncated at -2')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
                   f'Failed {full_name} Chars ({np.sum(~ok & c_inx)})'],
                   loc='upper right')
@@ -266,7 +266,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
 
             style_wa_dmag_plot(ax,
                 f'{full_name}: Earth Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
-                'Lambertian $\Phi$')
+                'Lambertian $\\Phi$')
             ax.legend(['Successful Chars', f'Failed {full_name} Chars'],
                      loc='upper right')
 
@@ -409,7 +409,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     ax.set_axisbelow(True) # grid below bars
     title1 = 'Failed Earth Characterizations vs. Magnitude Difference (Whole Ensemble)'
     ax.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Lambertian Reflectance Phi, as Magnitude (2.5 log$_{10} \Phi$)', **tprops)
+    ax.set_xlabel('Lambertian Reflectance Phi, as Magnitude (2.5 log$_{10} \\Phi$)', **tprops)
     ax.set_ylabel('Number of Failed Characterizations [count]', **tprops)
     ax.legend()
     ax.tick_params(labelsize=13)
