@@ -32,6 +32,7 @@
 #  -p PORT   => gives the HTTP port number.  Default is:
 #                 8090: mustang, gattaca2 /projects
 #                 8091: gattaca2 /scratch
+#                 8092: gattaca2 /scratch-edge
 #                 8100: macOS
 #  -s apache => use apache2/httpd server (default, but has fussy 
 #               internal config which can fail after OS upgrades)
@@ -79,10 +80,18 @@ if [ -d /proj/exep ]; then
 elif [ -d /projects/exo_yield ]; then
     # JPL supercomputer (gattaca)
     CONTEXT=jplsc
-    if [[ $(pwd) == /scratch/* ]]; then
-      SUBTEXT=scratch
-    elif [[ $(pwd) == /projects/* ]]; then
+    # canonical working directory
+    dfline=$(df -P . | tail -n 1 | awk '{print $6}')
+    # gives "scratch-jpl" when run on an edge node -- don't do that
+    if [[ $dfline == /scratch-edge ]]; then
+      SUBTEXT=scratch-edge
+    elif [[ $dfline == /projects/* ]]; then
       SUBTEXT=projects
+    elif [[ $dfline == /gpfs ]]; then
+      SUBTEXT=scratch-jpl
+    else
+      echo "${PROGNAME}: Fatal: Could not determine runtime context (subtext)." >&2
+      exit 1
     fi
 elif [ -d /Users ]; then
     CONTEXT=macos
@@ -127,9 +136,12 @@ elif [ $CONTEXT = jplsc ]; then
     STAT_FORMAT=("-c" "Started by %U on %y")
     # change /scratch default port to not interfere with /projects server
     # note: /projects/exo_yield but /scratch/exo-yield (!)
-    if [ "$SUBTEXT" = scratch ]; then
+    if [ "$SUBTEXT" = scratch-jpl ]; then
       DEFAULT_PORT=8091
-      DOC_ROOT=/scratch/exo-yield/Sandbox/hwo
+      DOC_ROOT=/scratch-jpl/exo-yield/Sandbox/hwo
+    elif [ "$SUBTEXT" = scratch-edge ]; then
+      DEFAULT_PORT=8092
+      DOC_ROOT=/scratch-edge/exo-yield/Sandbox/hwo
     fi
 elif [ $CONTEXT = macos ]; then
     SERVER_HTTPD=/usr/sbin/httpd # dir may not be in PATH
