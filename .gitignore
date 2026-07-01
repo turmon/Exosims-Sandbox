@@ -44,6 +44,9 @@ Local/www-service/var/*
 Local/www-resources/doc/*
 !Local/www-resources/doc/README.txt
 
+# localized sandbox name file
+Local/config-sandbox.json
+
 # documentation - generated files
 util/doc_sandbox/site
 util/doc_sandbox/docs/impl_index.md

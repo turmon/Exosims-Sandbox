@@ -88,10 +88,14 @@ from pathlib import Path
 
 # root directory (including external path)
 ROOT_DIR = Path(os.getcwd())
+# nickname for this Sandbox (empty is OK)
+ROOT_NICKNAME = ''
 
-# path to resources
-WWW_RES = Path('/Local/www-resources')
-# doc directory within this
+# Files local to this installation (un-rooted)
+LOCAL_CONFIG = Path('Local')
+# path to HTML resources (rooted for use in documents)
+WWW_RES = Path('/Local') / 'www-resources'
+# documentation directory within
 WWW_DOC = WWW_RES / 'doc'
 
 # image to use in case something we expect is not found
@@ -879,7 +883,7 @@ class SimSummary(object):
             # title - h1 tag
             hh.header(os.path.basename(self.name), level=1)
             # provide situational awareness
-            hh.paragraph(f'Instance rooted at: <code>{ROOT_DIR}</code>', br=True)
+            hh.paragraph(f'Instance <b>{ROOT_NICKNAME}</b> rooted at: <code>{ROOT_DIR}</code>', br=True)
             # navigation link -- from ENSEMBLE/html/ to ../../
             if uplink:
                 hh.paragraph('Up to ' + hh.link('../../', uplink, inner=True))
@@ -1458,7 +1462,7 @@ def index_group(args, startpath, title, uplink):
         # title as H1
         hh.header(title, level=1)
         # provide situational awareness
-        hh.paragraph(f'Instance rooted at: <code>{ROOT_DIR}</code>', br=True)
+        hh.paragraph(f'Instance <b>{ROOT_NICKNAME}</b> rooted at: <code>{ROOT_DIR}</code>', br=True)
         # navigation link (except for sims)
         #if uplink:
         #    hh.link('../', 'Up to %s' % uplink)
@@ -1711,6 +1715,24 @@ def main(args):
         # generate the desired index
         index_one_sim(args, os.path.join('sims', sim))
 
+
+def load_config_file(args, fn):
+    r'''Load config file -- currently minimal'''
+    global ROOT_NICKNAME 
+    try:
+        with open(fn, 'r') as fp:
+            config = json.load(fp)
+        # update the property safely
+        ROOT_NICKNAME = config.get('sandbox_name', ROOT_NICKNAME)
+    except FileNotFoundError:
+        # (not a problem)
+        pass
+    except json.JSONDecodeError:
+        sys.stderr.write(f"{args.progname}: Fatal. Config '{fn}' contains malformed JSON syntax.\n")
+        sys.exit(1)
+    return
+
+    
     
 # not all options are currently used
 if __name__ == '__main__':
@@ -1738,6 +1760,9 @@ if __name__ == '__main__':
     
     # Announce updated version
     print(f'{args.progname}: tabulator.js summarizer version.')
+
+    # Load Sandbox config file, updating args if needed (in principle)
+    load_config_file(args, LOCAL_CONFIG / 'config-sandbox.json')
 
     main(args)
 
