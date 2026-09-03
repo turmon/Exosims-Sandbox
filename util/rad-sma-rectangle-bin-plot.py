@@ -283,6 +283,61 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True, names=Non
             txt += r'^{{\pm}%#.2g}' % (x_lo, )
     return '$' + txt + '$'
 
+## Style and shape of the polygon outlining the earthlike region.  Used both
+## on the plot proper and for its legend swatch, so they cannot drift apart.
+EARTH_STYLE = dict(fill=False,
+                   facecolor=None,
+                   edgecolor='lightgreen',
+                   linewidth=2.0,
+                   alpha=0.7, # tiny bit of transparency
+                   hatch='/')
+
+def earthlike_polygon_xy(binner):
+    r'''Return the vertices of the "Nevada-shaped" earthlike region, as (x, y).'''
+    x = np.array([binner.Earth_SMA_lo, binner.Earth_SMA_hi,
+                  binner.Earth_SMA_hi, binner.Earth_SMA_lo])
+    y = np.array([binner.Earth_Rp_hi,  binner.Earth_Rp_hi,
+                  binner.Earth_Rp_lo2, binner.Earth_Rp_lo1])
+    return x, y
+
+
+## Legend swatch for the earthlike region: a fixed-size rectangle in the lower
+## left of the figure, outside the axes.  In figure fractions: (x0, y0, w, h).
+## Chosen to clear the x tick labels (which start at y = 0.08) and the centered
+## xlabel (which starts at x = 0.38).
+LEGEND_BOX = (0.02, 0.015, 0.26, 0.055)
+LEGEND_FONTSIZE = 11
+
+
+def add_earthlike_legend(fig, label, box=LEGEND_BOX, fontsize=LEGEND_FONTSIZE):
+    r'''Draw a labeled swatch for the earthlike region in the figure's lower left.
+
+    The polygon on the plot proper cannot be labeled where it sits: its cells
+    are already full of eta values, and the boxes reach nearly to the axes
+    edge.  So put a swatch, in the same style, outside the axes.
+
+    The box is a fixed size, so a long configured class name is fitted by
+    reducing the font rather than by growing the box.
+
+    Call after tight_layout(), which moves everything it might collide with.'''
+    x0, y0, w, h = box
+    fig.add_artist(Rectangle((x0, y0), w, h, transform=fig.transFigure,
+                             zorder=3, **EARTH_STYLE))
+    txt = fig.text(x0 + w/2, y0 + h/2, label, fontsize=fontsize, color='darkgreen',
+                   zorder=4, horizontalalignment='center', verticalalignment='center')
+    # shrink the label if the configured name overruns the fixed box
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    inv = fig.transFigure.inverted()
+    while fontsize > 6:
+        bb = txt.get_window_extent(renderer)
+        (bx0, _), (bx1, _) = inv.transform([(bb.x0, bb.y0), (bb.x1, bb.y1)])
+        if bx1 - bx0 <= 0.90 * w:
+            break
+        fontsize -= 1
+        txt.set_fontsize(fontsize)
+
+
 def make_koppa_boxes(args, ax, hist):
     r'''Render the table.'''
     ## Set up a bunch of data
@@ -297,14 +352,6 @@ def make_koppa_boxes(args, ax, hist):
     # instantiate a binner to get planet categories
     binner = RpLBins()
     Rp_bins = binner.Rp_bins
-
-    #Earth_style = dict(facecolor=None, edgecolor='lightgreen', linewidth=2.0, hatch='/')
-    Earth_style = dict(fill=False,
-                       facecolor=None,
-                       edgecolor='lightgreen',
-                       linewidth=2.0,
-                       alpha=0.7, # tiny bit of transparency
-                       hatch='/')
 
     # L bins are in high...low order; a-bins are in low-high order
     #   colors below tweaked repeatedly, formerly "tomato"
@@ -343,9 +390,8 @@ def make_koppa_boxes(args, ax, hist):
     #   TBD: in is_earthlike(), Rp_hi (upper) is handled differently from Rp_lo (lower)
     #   If this plot is to reflect the is_earthlike() boundary, it must duplicate the
     #   is_earthlike() logic
-    earth_x = np.array([binner.Earth_SMA_lo, binner.Earth_SMA_hi, binner.Earth_SMA_hi, binner.Earth_SMA_lo])
-    earth_y = np.array([binner.Earth_Rp_hi,  binner.Earth_Rp_hi,  binner.Earth_Rp_lo2, binner.Earth_Rp_lo1])
-    earth_gon = Polygon(np.vstack((earth_x, earth_y)).T, zorder=2, **Earth_style)
+    earth_x, earth_y = earthlike_polygon_xy(binner)
+    earth_gon = Polygon(np.vstack((earth_x, earth_y)).T, zorder=2, **EARTH_STYLE)
     ax.add_artist(earth_gon)
     # put in the Earth eta label
     if len(hist) > 15:
@@ -483,6 +529,8 @@ def plot_rects(args, field):
 
     # dump the plot
     plt.tight_layout()
+    # legend swatch for the earthlike polygon, lower left of the figure
+    add_earthlike_legend(fig, args.planet_names.plural)
     # ensemble size, lower right -- after tight_layout(), which moves the axes
     cs.plot_add_ensemble_note(fig, args.reduce_info)
     if False:
