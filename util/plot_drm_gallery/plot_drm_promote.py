@@ -64,11 +64,11 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
 
     # Skip plots if the input was empty
     if t_promote.empty or t_phist.empty:
-        print(f'{PROGNAME}: Promotion plots: No data. Skipping.')
+        print(f'\t{PROGNAME}: Promotion plots: No data. Skipping.')
         return []
 
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_promote_plot(ax, title1, ytext, legtext):
@@ -123,7 +123,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
@@ -134,7 +134,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_promote['h_promo_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Must skip: Missing required column in promote file: {e}", 
+        print(f"\t{PROGNAME}: Must skip: Missing required column in promote file: {e}", 
               file=sys.stderr)
         return []
     
@@ -176,7 +176,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         
         if f_mean not in t_promote.columns:
             # Stop at any error here
-            print(f'{PROGNAME}: No {f_mean} in promotion table, skipping')
+            print(f'\t{PROGNAME}: No {f_mean} in promotion table, skipping')
             skipping = True
             break
         

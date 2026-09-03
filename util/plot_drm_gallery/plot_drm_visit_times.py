@@ -60,7 +60,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     t_visit_time, = plot_data
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_visit_plot(ax, title1, ytext, legtext):
@@ -87,7 +87,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Offsets on various error-bars in the plot
     # (units of days with one complete sample per ~30 days)
@@ -97,7 +97,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_visit_time['h_det_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Must skip: Missing required column in visit_time file: {e}", 
+        print(f"\t{PROGNAME}: Must skip: Missing required column in visit_time file: {e}", 
               file=sys.stderr)
         return []
     
@@ -149,7 +149,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
                 break
         
         if skipping:
-            print(f'{PROGNAME}: \tSkipping {fname} plot (missing field)')
+            print(f'\t{PROGNAME}: Skipping {fname} plot (missing field)')
             continue
         
         # Legend names

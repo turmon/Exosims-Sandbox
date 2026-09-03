@@ -45,12 +45,12 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     t_fuel, = plot_data
 
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     ####################################################################
     # Setup
@@ -74,7 +74,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     
     # Check if fuel data exists
     if 'h_time_fuel_slew_mean' not in t_fuel.columns:
-        print('No fuel use in the given table, skipping.')
+        print(f'\t{PROGNAME}: No fuel use in the given table, skipping.')
         return []
     
     # Create figure
@@ -139,7 +139,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     
     # Check if delta-v data exists
     if 'h_time_delta_v_slew_cume_mean' not in t_fuel.columns:
-        print('No delta-v in the given table, skipping. Redo reduce to fix.')
+        print(f'\t{PROGNAME}: No delta-v in the given table, skipping. Redo reduce to fix.')
         return tracker.get_files()
     
     # Create figure

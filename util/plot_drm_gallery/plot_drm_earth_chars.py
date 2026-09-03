@@ -19,6 +19,9 @@ try:
 except ImportError:
     import common_style as cs
 
+# Program name for error messages
+PROGNAME = os.path.basename(sys.argv[0])
+
 
 def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     """
@@ -62,11 +65,11 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # For missions without chars, the table will be basically empty.
     # Skip such tables, there is nothing to do.
     if 'is_success' not in t_earth_chars.columns:
-        print(f'\tNo char info, skipping {pn.short} chars plots')
+        print(f'\t{PROGNAME}: No char info, skipping {pn.short} chars plots')
         return []
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_wa_dmag_plot(ax, title1, bartext):
@@ -104,7 +107,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'], dpi=250)
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1), dpi=250)
 
     # Booleans
     ok = t_earth_chars['is_success'].values > 0
@@ -299,7 +302,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Histogram of Phi
     ################################################################
     
-    fig = plt.figure(figsize=(8.5, 5))
+    fig, ax1 = plt.subplots(figsize=(8.5, 5))
     
     # bar-plot properties
     bar_props = dict(
@@ -322,7 +325,6 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     have_deep = sum(h_deep) > 0
 
     # Create dual-axis plot
-    ax1 = fig.add_subplot(111)
     ax2 = ax1.twinx()
     
     # Left axis: stacked bar chart
@@ -360,7 +362,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     ax1.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax1.set_xlabel('Lambertian Reflectance Phi', **tprops)
     ax1.set_ylabel('Number of Failed Characterizations (bars) [count]', **tprops)
-    ax2.set_ylabel('Failure Probability (Lines)', fontsize=13, **tprops)
+    ax2.set_ylabel('Failure Probability (Lines)', **tprops)
     ax1.tick_params(labelsize=13)
     ax2.tick_params(labelsize=13)
     # (decided against -- the elevated 0 is OK)

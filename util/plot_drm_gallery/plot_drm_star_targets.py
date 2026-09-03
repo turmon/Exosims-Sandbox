@@ -67,7 +67,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
 
     # Allow skipping these plots so we don't fail on old reductions
     if t_star_targ.empty:
-        print('Star target plots: skipping (re-run reduction?).')
+        print(f'\t{PROGNAME}: Star target plots: skipping (re-run reduction?).')
         return []
 
     ##
@@ -90,7 +90,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     dist_axis_limit = [0.0, 30.0]
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Color for un-observed stars
     unseen_color = np.array([1, 1, 1]) * 0.7
@@ -123,7 +123,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, file_tag):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, file_tag, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, file_tag, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Graphics setup
     
@@ -137,7 +137,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
         seen = (t_star_targ['h_star_det_visit_mean'].values > 0)
         earth = (t_star_targ['h_star_det_earth_cume_mean'].values > 0)
     except KeyError as e:
-        print(f"{PROGNAME}: Must skip: Missing required column in star_targ file: {e}", 
+        print(f"\t{PROGNAME}: Must skip: Missing required column in star_targ file: {e}", 
               file=sys.stderr)
         return []
     

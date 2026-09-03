@@ -52,7 +52,7 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
     t_events, = plot_data
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_event_plot(ax, title1, xtext, ytext, legtext):
@@ -81,7 +81,7 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Sample times - three resolutions
     try:
@@ -89,7 +89,7 @@ def plot_drm_events(reduce_info, plot_data, dest_tmpl, mode):
         tsamp_1 = t_events['h_event_b1_duration_lo'].values
         tsamp_2 = t_events['h_event_b2_duration_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Must skip: Missing required column in events file: {e}", 
+        print(f"\t{PROGNAME}: Must skip: Missing required column in events file: {e}", 
               file=sys.stderr)
         return []
     

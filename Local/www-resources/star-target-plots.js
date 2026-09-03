@@ -363,7 +363,9 @@ function formatStarAlternates(altNames, star) {
 }
 
 // Build the x/y/color/size/text arrays for one plot and hand them to insertPlotly.
-function plotFromRows(target, qoi_info, lines, simBigTitle) {
+// simInfo is {title, note}: the experiment line for the title, and the
+// ensemble-size footnote for the lower right.
+function plotFromRows(target, qoi_info, lines, simInfo) {
     var qoi_fieldname_mean = qoi_info.fieldname;
     var qoi_fieldname_std  = qoi_fieldname_mean.replace(/_mean$/, '_std');
     var qoi_fieldname_sem  = qoi_fieldname_mean.replace(/_mean$/, '_sem');
@@ -391,11 +393,11 @@ function plotFromRows(target, qoi_info, lines, simBigTitle) {
             'Std. Deviation = ' + qoi_std.toPrecision(4) + ' ' + qoi_info.unit
         );
     });
-    insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle);
+    insertPlotly(target, qoi_info, x, y, qoi, size, text, simInfo);
 }
 
 // Package data into Plotly trace and layout objects and render into the target div.
-function insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle) {
+function insertPlotly(target, qoi_info, x, y, qoi, size, text, simInfo) {
     var xform_label = (qoi_info.xform(1.0) === 1.0) ? '' : 'log<sub>10</sub> ';
     var traces = [{
         x: x,
@@ -421,9 +423,34 @@ function insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle) {
     }];
     var layout = {
         title: {
-            text: 'Star Luminosity vs. Distance, Shaded by: ' + qoi_info.name + '<br>' + simBigTitle,
-            font: {family: 'Arial Black', size: 18, color: 'black'}
+            // experiment / what is plotted / what the color means
+            text: simInfo.title +
+                  '<br>Target Star Luminosity vs. Distance' +
+                  '<br>Shading: ' + qoi_info.name,
+            font: {family: 'Arial Black', size: 18, color: 'black'},
+            // Hang the block from the top of the plot area (yref paper, y = 1)
+            // rather than from the top of the container: three lines of an
+            // auto-margined title otherwise land one line-height too high.  pad.b is
+            // the gap down to the plot; margin.t is the headroom above.
+            // raise pad.b => raises title
+            // raise margin.t => add more title headroom
+            // raise margin.b => add more space at entire plot bottom
+            yref: 'paper', y: 1, yanchor: 'bottom',
+            pad: {b: 55}
         },
+        // t: room for the three title lines (~24px each) plus title pad
+        margin: {t: 90, b: 80},
+        // ensemble size sits in the lower right, on the x-axis title's line,
+        // matching the static plots from plot_drm_gallery
+        annotations: [{
+            text: simInfo.note,
+            xref: 'paper', yref: 'paper',
+            x: 1, y: 0,
+            xanchor: 'right', yanchor: 'top',
+            yshift: -45,
+            showarrow: false,
+            font: {family: 'Arial', size: 16, color: 'black'}
+        }],
         xaxis: {
             title:    {text: 'Distance [pc]', font: {family: 'Arial Bold', size: 18}},
             tickfont: {family: 'Arial', size: 16, color: 'black'},
@@ -468,25 +495,27 @@ document.addEventListener('DOMContentLoaded', function() {
             var qoi_det_info  = qoi.det;
             var qoi_char_info = qoi.char;
 
-            var simBigTitle = 'Experiment ' + simRow[0].experiment +
-                              ', Ensemble Size ' + simRow[0].ensemble_size;
+            var simInfo = {
+                title: 'Experiment ' + simRow[0].experiment,
+                note:  '(N = ' + simRow[0].ensemble_size + ' runs)'
+            };
 
             // Render initial plots.
-            plotFromRows('detPlotDiv',  qoi_det_info[0],  allRows, simBigTitle);
-            plotFromRows('charPlotDiv', qoi_char_info[0], allRows, simBigTitle);
+            plotFromRows('detPlotDiv',  qoi_det_info[0],  allRows, simInfo);
+            plotFromRows('charPlotDiv', qoi_char_info[0], allRows, simInfo);
 
             // Wire up the detection dropdown.
             var qoiDetSelector = document.querySelector('.det_qoi_select');
             assignPlotVariableOptions(qoi_det_info, qoiDetSelector);
             qoiDetSelector.addEventListener('change', function() {
-                plotFromRows('detPlotDiv', qoi_det_info[qoiDetSelector.selectedIndex], allRows, simBigTitle);
+                plotFromRows('detPlotDiv', qoi_det_info[qoiDetSelector.selectedIndex], allRows, simInfo);
             });
 
             // Wire up the characterization dropdown.
             var qoiCharSelector = document.querySelector('.char_qoi_select');
             assignPlotVariableOptions(qoi_char_info, qoiCharSelector);
             qoiCharSelector.addEventListener('change', function() {
-                plotFromRows('charPlotDiv', qoi_char_info[qoiCharSelector.selectedIndex], allRows, simBigTitle);
+                plotFromRows('charPlotDiv', qoi_char_info[qoiCharSelector.selectedIndex], allRows, simInfo);
             });
         })
         .catch(function(err) {

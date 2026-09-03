@@ -119,14 +119,14 @@ def plot_drm_planet_overlay(ax_dest, mode=None):
         pfile = 'Local/Matlab/mfile' / Path(pfile_)
         # Check if file exists
         if not os.path.exists(pfile):
-            print(f"Warning: Planet image file '{pfile}' not found, skipping")
+            print(f"{PROGNAME}: Warning: Planet image file '{pfile}' not found, skipping")
             continue
         
         # Load underlay image -- RGBA
         try:
             im_orig = mpimg.imread(pfile)
         except Exception as e:
-            print(f"Warning: Could not load planet image '{pfile}': {e}")
+            print(f"{PROGNAME}: Warning: Could not load planet image '{pfile}': {e}")
             continue
             
         # Crop image
@@ -249,7 +249,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     collapse = np.tile(np.eye(n_lum), (n_rad, 1))
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: rectangle underlay
     def place_rect_underlay(ax, n_rad, n_lum, x_bin, x_bin_xtra):
@@ -275,7 +275,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
                 x1 = x_bin[k2] - 0.5 * (x_bin_xtra + 1)
                 x2 = x1 + n_lum + x_bin_xtra
                 if x2 > xlim[1]:
-                    print(f'\tvanishing rect {k1}') # FIXME/REMOVE
+                    print(f'\t{PROGNAME}: vanishing rect {k1}') # FIXME/REMOVE
                 x2 = min(x2, xlim[1])  # cap rightmost edge at plot end
             
             # Plot the rectangle itself
@@ -296,7 +296,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
         # FIXME: facecolor disabled because of overlay confusion
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_bar_plot(ax, obs_type):
@@ -582,7 +582,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
         
         canary = f'h_RpL_{plot_prop_x}char{plot_prop_root}{plot_prop}mean'
         if canary not in t_radlum.columns:
-            print(f'{PROGNAME}: Property {canary} not in CSV, skipping the {plot_file} plot.')
+            print(f'\t{PROGNAME}: Property {canary} not in CSV, skipping the {plot_file} plot.')
             continue
         
         # Data, for convenience

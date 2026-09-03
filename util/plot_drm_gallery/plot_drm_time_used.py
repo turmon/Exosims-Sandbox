@@ -59,7 +59,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     t_det_time, = plot_data
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_det_plot(ax, title1, ytext, legtext):
@@ -86,7 +86,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
@@ -96,7 +96,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     try:
         tsamp = t_det_time['h_det_time_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Skipping due to missing required column in det_time file: {e}", 
+        print(f"\t{PROGNAME}: Skipping due to missing required column in det_time file: {e}", 
               file=sys.stderr)
         return tracker.get_files()
     

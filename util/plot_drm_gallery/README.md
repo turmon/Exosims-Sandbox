@@ -100,6 +100,11 @@ Keys we use include `experiment` (scenario name) and `ensemble_size`
 (number of runs/DRMs). Passed to every plot function for use in
 titles via `cs.plot_make_title(reduce_info)`.
 
+`ensemble_size` is not part of the title: it is annotated along the bottom of
+the figure ("(N = 100 runs)") by `PlotTracker`, which needs `reduce_info` at
+construction to do so -- hence
+`cs.PlotTracker(ext_list=..., reduce_info=reduce_info)`.
+
 It also carries the display names of the earthlike planet class, under the keys
 `planet_name`, `planet_name_plural`, `planet_name_adj`, `planet_name_short`,
 and `planet_symbol`.  These do **not** come from `reduce-info.csv`: they are
@@ -239,8 +244,14 @@ def plot_drm_NEWNAME(reduce_info, plot_data, dest_tmpl, mode):
 All plot modules should follow these conventions for visual consistency:
 
 - **Figure size**: `(8.5, 5)`
-- **Title**: two lines -- `cs.plot_make_title(reduce_info)` on top (scenario
-  metadata), descriptive title below. Bold, ~12pt (`fontsize=11*1.1`).
+- **Title**: two lines -- `cs.plot_make_title(reduce_info)` on top (the
+  scenario name), descriptive title below. Bold, ~12pt (`fontsize=11*1.1`).
+- **Ensemble size**: annotated by `PlotTracker` -- on the xlabel's line,
+  aligned with the plot box edge, in the axis-label size but not bold. Which
+  end it goes to is `cs.ENSEMBLE_NOTE_SIDE` (`'right'`). Aligned to the
+  spine rather than dropped in the figure corner so the
+  `bbox_inches='tight'` crop does not grow to reach it. Nothing for a plot
+  module to do.
 - **Axis labels**: bold (`fontweight='bold'`)
 - **Tick labels**: size 13
 - **Grid**: on (`ax.grid(True)`)

@@ -61,7 +61,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     pn = cs.planet_names(reduce_info)
     
     # Track output files
-    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
+    tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)
 
     # Inner function: Set up plot/axis styles, title, axis labels
     def style_count_plot(ax, title1, xtext, ytext, legtext):
@@ -95,7 +95,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     # Inner function: write the current figure to files
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
-        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode['verbose'])
+        tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
 
     # Histogram domain (in counts)
     try:
@@ -267,7 +267,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     try:
         ct_samp_1 = t_earth_counts['h_earth_char_count_lo'].values
     except KeyError as e:
-        print(f"{PROGNAME}: Missing required column in earth_counts file: {e}", 
+        print(f"\t{PROGNAME}: Missing required column in earth_counts file: {e}", 
               file=sys.stderr)
         return []
     
@@ -287,7 +287,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix.')
+            print(f'\t{PROGNAME}: Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix.')
             continue
         
         ax.plot(ct_samp_1 + ct_offsets_1[n],
@@ -339,7 +339,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
 
             # Guard against out-of-date csv files for strict mode
             if f_mean not in t_earth_counts.columns:
-                print(f'Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix')
+                print(f'\t{PROGNAME}: Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix')
                 continue
 
             ax.bar(ct_samp_1 + ct_offsets_1[n],
@@ -375,7 +375,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping {pn.short} chars ({f_mean}): redo make reduce to fix')
+            print(f'\t{PROGNAME}: Skipping {pn.short} chars ({f_mean}): redo make reduce to fix')
             continue
         
         ax.bar(ct_samp_1 + ct_offsets_1[n],
