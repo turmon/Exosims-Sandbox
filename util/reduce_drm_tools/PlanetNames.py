@@ -93,7 +93,7 @@ class PlanetNames:
             # a class name was given: derive any un-given forms from it
             self.name   = name
             self.plural = name_plural or (name + 's')
-            self.adj    = name_adj    or (name + '-like')
+            self.adj    = name_adj    or (name if ' ' in name else name + '-like')
             self.short  = name_short  or name
             self.symbol = symbol      or self._derive_symbol(self.short)
         else:

@@ -77,7 +77,7 @@ function planetNamesFrom(config) {
         // a class name was given: derive any un-given forms from it
         return {name:   name,
                 plural: plural || (name + 's'),
-                adj:    adj    || (name + '-like'),
+                adj:    adj    || (name.includes(' ') ? name : name + '-like'),
                 short:  short  || name};
     }
     // no class name: fall back to Earth, form by form
