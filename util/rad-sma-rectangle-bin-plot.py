@@ -78,6 +78,8 @@ from reduce_drm_tools import utils
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
+# for the ensemble-size annotation, so it reads the same as the gallery plots
+from plot_drm_gallery import common_style as cs
 from matplotlib.patches import Rectangle, Polygon
 from matplotlib.ticker import FuncFormatter
 
@@ -230,6 +232,30 @@ def load_hist(args, field):
     # 4: done
     return hist
         
+def load_reduce_info(args):
+    r'''Return the single row of reduce-info.csv as a dict, or {} if unavailable.
+
+    Same one-%s template, and the same csv.DictReader idiom, as load_hist().
+    The file names the scenario ("experiment") and the ensemble size, which go
+    into the plot title and the corner annotation.  It is not an error for it
+    to be missing: we just do without those labels.'''
+    if args.csv == 'self':
+        return {} # built-in table: there is no scenario
+    fn_info = args.csv % 'info'
+    try:
+        with open(fn_info, 'r') as f:
+            info = list(csv.DictReader(f))
+    except IOError:
+        print('%s: Note.  No summary CSV file (%s); omitting scenario labels'
+                  % (args.progname, fn_info))
+        return {}
+    if not info:
+        print('%s: Note.  Summary CSV file (%s) is empty; omitting scenario labels'
+                  % (args.progname, fn_info))
+        return {}
+    return info[0]
+
+
 def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True, names=None):
     r'''Generate the "slug" of text that is placed into the cells of the 
     tabular plot.'''
@@ -445,7 +471,8 @@ def plot_rects(args, field):
     if args.title:
         title = args.title
     elif args.name:
-        title = '\n'.join((title, args.name))
+        # scenario name on top, as in the plot_drm_gallery titles
+        title = '\n'.join((args.name, title))
     if title:
         ax.set_title(title, fontsize=16)
     ax.set_facecolor('lightgray')
@@ -456,6 +483,8 @@ def plot_rects(args, field):
 
     # dump the plot
     plt.tight_layout()
+    # ensemble size, lower right -- after tight_layout(), which moves the axes
+    cs.plot_add_ensemble_note(fig, args.reduce_info)
     if False:
         plt.show() # OK for interactive, not for scripted
     short_name = get_short_name(field)
@@ -523,6 +552,11 @@ if __name__ == '__main__':
 
     # display names of the earthlike class, from the same config
     args.planet_names = PlanetNames.from_config(args.reduce_config)
+
+    # scenario name and ensemble size, for the title and the corner annotation
+    args.reduce_info = load_reduce_info(args)
+    if not args.name:
+        args.name = args.reduce_info.get('experiment', '').strip()
 
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'
