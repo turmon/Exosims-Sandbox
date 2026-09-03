@@ -67,6 +67,10 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
     
     # Unpack CSV data
     t_yield_time, = plot_data
+
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
     
     # Track output files
     tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
@@ -148,7 +152,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
         {
             'names': ['h_time_det_earth_cume', 'h_time_det_earth_uniq', 
                      'h_time_det_earth_revi'],
-            'title': 'Detections [Earths]',
+            'title': f'Detections [{pn.plural}]',
             'fname': 'time-det-earth'
         },
         {
@@ -169,7 +173,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
             'names': ['h_time_char_part_earth_cume_union',
                      'h_time_char_part_earth_uniq_union', 
                      'h_time_char_part_earth_revi_union'],
-            'title': 'Characterizations [Earths]',
+            'title': f'Characterizations [{pn.plural}]',
             'fname': 'time-char-earth-part'
         }
     ]
@@ -307,9 +311,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['yield-time'])

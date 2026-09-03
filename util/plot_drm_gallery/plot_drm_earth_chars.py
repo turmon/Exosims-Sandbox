@@ -54,11 +54,15 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
 
     # Unpack CSV data
     t_earth_chars, = plot_data
+
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
     
     # For missions without chars, the table will be basically empty.
     # Skip such tables, there is nothing to do.
     if 'is_success' not in t_earth_chars.columns:
-        print('\tNo char info, skipping earth chars plots')
+        print(f'\tNo char info, skipping {pn.short} chars plots')
         return []
     
     # Track output files
@@ -165,11 +169,11 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
                         c=ec_snr[ok2 & c_inx], marker='x', lw=2)
         
         style_wa_dmag_plot(ax,
-            f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Char. SNR',
+            f'{full_name}: {pn.name} Characterizations vs. WA and dMag, shaded by Char. SNR',
             'Char SNR')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
                    f'Failed {full_name} Chars ({np.sum(fail & c_inx)})',
-                   f'Split Multi-Earth {full_name} Chars ({np.sum(ok2 & c_inx)})'],
+                   f'Split Multi-{pn.short} {full_name} Chars ({np.sum(ok2 & c_inx)})'],
                   loc='upper right')
         
         # Easy chars sub-legend
@@ -196,7 +200,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
                        c=np.log10(ec_phi[~ok & c_inx]), marker='.', **gprops)
         
         style_wa_dmag_plot(ax,
-            f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Log Phi',
+            f'{full_name}: {pn.name} Characterizations vs. WA and dMag, shaded by Log Phi',
             '\nlog$_{10}(\\Phi)$ : truncated at -2')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
                   f'Failed {full_name} Chars ({np.sum(~ok & c_inx)})'],
@@ -232,7 +236,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
         ax_lim = ax.axis()
         
         style_wa_dmag_plot(ax,
-            f'{full_name}: Earth Characterizations vs. WA and dMag, shaded by Planet Magnitude',
+            f'{full_name}: {pn.name} Characterizations vs. WA and dMag, shaded by Planet Magnitude',
             'Planet Apparent Visual Magnitude')
         ax.legend([f'Successful Chars ({np.sum(ok)})',
                   f'Failed {full_name} Chars ({np.sum(~ok & c_inx)})'],
@@ -265,7 +269,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
                            c=ec_phi[~ok & c_inx], marker='.', **gprops)
 
             style_wa_dmag_plot(ax,
-                f'{full_name}: Earth Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
+                f'{full_name}: {pn.name} Characterizations vs. WA and ADJUSTED dMag, shaded by Phi',
                 'Lambertian $\\Phi$')
             ax.legend(['Successful Chars', f'Failed {full_name} Chars'],
                      loc='upper right')
@@ -352,7 +356,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Style the plot
     ax1.grid(True)
     ax1.set_axisbelow(True) # grid below bars
-    title1 = 'Failed Earth Characterizations vs. Lambertian Phi (Whole Ensemble)'
+    title1 = f'Failed {pn.name} Characterizations vs. Lambertian Phi (Whole Ensemble)'
     ax1.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax1.set_xlabel('Lambertian Reflectance Phi', **tprops)
     ax1.set_ylabel('Number of Failed Characterizations (bars) [count]', **tprops)
@@ -407,7 +411,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     # Style the plot
     ax.grid(True)
     ax.set_axisbelow(True) # grid below bars
-    title1 = 'Failed Earth Characterizations vs. Magnitude Difference (Whole Ensemble)'
+    title1 = f'Failed {pn.name} Characterizations vs. Magnitude Difference (Whole Ensemble)'
     ax.set_title(f'{title_x}\n{title1}', fontsize=11*1.1, fontweight='bold')
     ax.set_xlabel('Lambertian Reflectance Phi, as Magnitude (2.5 log$_{10} \\Phi$)', **tprops)
     ax.set_ylabel('Number of Failed Characterizations [count]', **tprops)
@@ -455,9 +459,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['earth-char-list'])

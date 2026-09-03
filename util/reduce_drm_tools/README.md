@@ -9,8 +9,11 @@ These notes are incomplete -- adapted from another project.
 ### Directory Layout
 
 ```
-util/reduce_drm_tools//
+util/reduce_drm_tools/
   __init__.py               Package init
+  utils.py                  Config-file loading, unit stripping
+  PlanetBins.py             RpLBins: numeric planet binning, is_earthlike()
+  PlanetNames.py            PlanetNames: display names for the earthlike class
 ```
 
 The driver lives one level up:
@@ -65,13 +68,69 @@ Current registry entries:
 | radlum         | radlum, earth                   |
 
 
-### The `config-reduce` Dict
+### The `config-reduce.json` File
 
-Metadata from the top-level summary file `reduce-info.csv`, converted to a dict. 
+Per-scenario reduction customization, an optional file living in the scenario
+directory (`sims/SCENARIO/config-reduce.json`).  It is loaded by
+`utils.load_reduce_config(dirname)`, which looks in `dirname` and -- if
+`dirname`'s parent is a `.fam` or `.exp` directory -- one level up, so a whole
+family or experiment can share one file.  Absence is normal, not an error.
 
-Keys we use include `experiment` (scenario name) and `ensemble_size`
-(number of runs/DRMs). Passed to every plot function for use in
-titles via `cs.plot_make_title(reduce_info)`.
+Top-level keys:
+
+| Key                  | Consumed by            | Meaning                                     |
+|----------------------|------------------------|---------------------------------------------|
+| `earthlike`          | `PlanetBins.py`, `PlanetNames.py` | Definition and naming of the earthlike planet class |
+| `RpL_bins`           | `PlanetBins.py`        | `Rp_bins` / `L_bins` radius-luminosity grid  |
+| `reduce_info_extras` | `reduce_drms.py`       | Extra columns to append to `reduce-info.csv` |
+
+Any key starting with `_` is a comment and is ignored.
+
+#### The `earthlike` group
+
+Two kinds of entry.  The **numeric** ones (`Earth_Rp_scaled`, `Earth_Rp_lo`,
+`Earth_Rp_hi`, `Earth_SMA_lo`, `Earth_SMA_hi`) re-define which planets
+`RpLBins.is_earthlike()` counts, and thus the numbers in the `reduce-*.csv`
+files.  The **display-name** ones (`name`, `name_plural`, `name_adj`,
+`name_short`, `symbol`) say what to call that class in plot titles, axis
+labels, table headers, and HTML captions -- see `PlanetNames.py`.  They affect
+no numbers, so changing a name needs only `make graphics`/`make html`, not a
+re-reduction.
+
+```json
+{
+  "earthlike": {
+    "_comment": "a Sub-Neptune population: axis-parallel Rp/SMA box",
+    "Earth_Rp_scaled": false,
+    "Earth_Rp_lo": 1.00, "Earth_Rp_hi": 3.50,
+    "Earth_SMA_lo": 1.796, "Earth_SMA_hi": 18.257,
+
+    "name":        "Sub-Neptune",
+    "name_plural": "Sub-Neptunes",
+    "name_adj":    "Sub-Neptune-like",
+    "name_short":  "SubNep",
+    "symbol":      "\\mathrm{SN}"
+    }
+}
+```
+
+All five names are optional.  Given only `name`, the rest are derived
+(`name + "s"`, `name + "-like"`, `name`, and an upright `\mathrm{...}` of the
+short name).  Given none, the historical `Earth` / `Earths` / `Earthlike` /
+`Earth` / `\oplus` are used, so un-customized scenarios are unaffected.
+
+To check what a scenario resolves to:
+
+```
+$ util/reduce_drm_tools/PlanetBins.py  sims/SCENARIO     # the numbers
+$ util/reduce_drm_tools/PlanetNames.py sims/SCENARIO     # the names
+$ diff <(util/reduce_drm_tools/PlanetNames.py sims/SCENARIO) \
+       <(util/reduce_drm_tools/PlanetNames.py)           # just the differences
+```
+
+Note that the CSV column names, output filenames, and dict keys keep their
+historical `earth`/`exoE` spellings regardless of the configured name: they are
+data plumbing, not labels.
 
 
 ## Usage

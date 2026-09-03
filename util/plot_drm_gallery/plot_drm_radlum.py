@@ -193,6 +193,10 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
 
     # Unpack CSV data
     t_radlum, t_earth = plot_data
+
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
     
     ##################################################################
     # Common data and functions
@@ -224,7 +228,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     
     # For axis labels
     lumens = ['Hot', 'Warm', 'Cold']
-    lumens_plus = ['Earth'] + lumens * n_rad
+    lumens_plus = [pn.short] + lumens * n_rad
     
     # Error-bar color and style
     color_eb = [0.3, 0.3, 0.3]
@@ -373,7 +377,7 @@ def plot_drm_radlum(reduce_info, plot_data, dest_tmpl, mode):
     # Explanatory legend
     block_text = ('Counting Over All Planets in Target List\n'
                  'Normalization: Planets of that Type, per Star\n'
-                 'Leftmost Column is Observed $\\eta$ Earth\n'
+                 f'Leftmost Column is Observed $\\eta$ {pn.name}\n'
                  'Error Bar: $\\pm$ 1 sigma')
     ax.text(*text_pos, block_text, transform=ax.transAxes, **style_block)
     
@@ -817,9 +821,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['radlum', 'earth'])

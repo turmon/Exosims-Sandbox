@@ -129,6 +129,10 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     
     # Zero-visit (unseen) stars are not the same as zero-yield stars
     # This variable keeps track of what stars were visited
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
+
     try:
         seen = (t_star_targ['h_star_det_visit_mean'].values > 0)
         earth = (t_star_targ['h_star_det_earth_cume_mean'].values > 0)
@@ -168,10 +172,10 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
                  'Mean Unique Detections', 'count',
                  'perstar-det-allplan-uniq'],
                 ['h_star_det_earth_cume_mean', passthru, True,
-                 'Mean Total Detections: Earth', 'count',
+                 f'Mean Total Detections: {pn.name}', 'count',
                  'perstar-det-earth-cume'],
                 ['h_star_det_earth_uniq_mean', passthru, True,
-                 'Mean Unique Detections: Earth', 'count',
+                 f'Mean Unique Detections: {pn.name}', 'count',
                  'perstar-det-earth-uniq'],
                 ['h_star_char_plan_cume_mean', passthru, False,
                  'Mean Total Characterizations', 'count',
@@ -180,10 +184,10 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
                  'Mean Unique Characterizations', 'count',
                  'perstar-char-allplan-uniq'],
                 ['h_star_char_earth_cume_mean', passthru, True,
-                 'Mean Total Characterizations: Earth', 'count',
+                 f'Mean Total Characterizations: {pn.name}', 'count',
                  'perstar-char-earth-cume'],
                 ['h_star_char_earth_uniq_mean', passthru, True,
-                 'Mean Unique Characterizations: Earth', 'count',
+                 f'Mean Unique Characterizations: {pn.name}', 'count',
                  'perstar-char-earth-uniq'],
                 ['h_star_det_tInt_mean', passthru, False,
                  'Mean Integration Time (Det.)', 'day',
@@ -204,16 +208,16 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
                  'Planets Characterized/Planets Present', 'count/count',
                  'perstar-char-allplan-frac'],
                 ['h_star_det_earth_value_mean', quiet_log10, True,
-                 'Earth Detection Rank', 'log$_{10}$ count/day',
+                 f'{pn.name} Detection Rank', 'log$_{10}$ count/day',
                  'perstar-det-earth-rank'],
                 ['h_star_det_earth_frac_mean', passthru, True,
-                 'Earths Detected/Earths Present', 'count/count',
+                 f'{pn.plural} Detected/{pn.plural} Present', 'count/count',
                  'perstar-det-earth-frac'],
                 ['h_star_char_earth_value_mean', quiet_log10, True,
-                 'Earth Characterization Rank', 'log$_{10}$ count/day',
+                 f'{pn.name} Characterization Rank', 'log$_{10}$ count/day',
                  'perstar-char-earth-rank'],
                 ['h_star_char_earth_frac_mean', passthru, True,
-                 'Earths Characterized/Earths Present', 'count/count',
+                 f'{pn.plural} Characterized/{pn.plural} Present', 'count/count',
                  'perstar-char-earth-frac'],
             ]
     
@@ -377,9 +381,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['star-target'])

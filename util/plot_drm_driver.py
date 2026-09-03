@@ -27,6 +27,7 @@ import importlib
 from pathlib import Path
 # this import must work: fail fast if it doesn't
 import plot_drm_gallery
+from plot_drm_gallery import common_style as cs
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
@@ -368,10 +369,9 @@ Optional arguments:
                 print(f"{args.progname}: Skipping {plot['name']}")
     
     # get basic information into args.reduce_info
-    fn_info = args.src_tmpl % ('info', 'csv')
-    df_info = pd.read_csv(fn_info)
-    args.reduce_info = df_info.iloc[0].to_dict()
-    del df_info
+    # (this also folds in the planet-class display names from config-reduce.json,
+    # so every plot function can label the earthlike class correctly)
+    args.reduce_info = cs.load_reduce_info(args.src_tmpl)
     
     # ensure the directory
     dir_path = os.path.dirname(args.dest_tmpl % ('dummy', 'txt'))

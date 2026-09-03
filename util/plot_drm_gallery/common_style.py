@@ -8,6 +8,14 @@ import os
 import sys
 import pandas as pd
 
+# reduce_drm_tools lives one level up, in util/.  Make it importable whether we
+# were started by the driver (which puts util/ on sys.path) or standalone from
+# within this directory.
+_UTIL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _UTIL_DIR not in sys.path:
+    sys.path.append(_UTIL_DIR)
+from reduce_drm_tools.PlanetNames import PlanetNames
+
 
 class PlotTracker:
     """Track graphics files written by a plot routine."""
@@ -76,3 +84,30 @@ def load_csv_files(src_tmpl, csv_files):
             sys.exit(1)
     return dataframes
 
+
+
+def planet_names(reduce_info):
+    """Return the PlanetNames (display names of the earthlike planet class).
+
+    The class can be re-defined numerically in config-reduce.json, in which
+    case calling it an "Earth" in a label is wrong.  Falls back to the
+    historical Earth-based names when nothing was customized.
+    """
+    return PlanetNames.from_reduce_info(reduce_info)
+
+
+def load_reduce_info(src_tmpl):
+    """Load reduce-info.csv as a dict, plus the planet-class display names.
+
+    The names come from the config-reduce.json reachable from the scenario
+    directory implied by src_tmpl.  Used both by plot_drm_driver.py and by
+    each module's standalone main(), so the two entry points agree.
+
+    Note: the names ride along as plain strings, so they survive pickling into
+    the driver's multiprocessing workers.
+    """
+    fn_info = src_tmpl % ('info', 'csv')
+    reduce_info = pd.read_csv(fn_info).iloc[0].to_dict()
+    sim_dir = os.path.dirname(fn_info) or '.'
+    reduce_info.update(PlanetNames.from_dir(sim_dir).to_reduce_info())
+    return reduce_info

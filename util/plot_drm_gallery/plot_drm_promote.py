@@ -58,6 +58,10 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # Unpack CSV data
     t_promote, t_phist = plot_data
 
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
+
     # Skip plots if the input was empty
     if t_promote.empty or t_phist.empty:
         print(f'{PROGNAME}: Promotion plots: No data. Skipping.')
@@ -254,7 +258,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                    **ebar_props)
     
     style_promote_plot(ax,
-                      'Earthlike Planets: Cumulative Promotions vs. Detector Time',
+                      f'{pn.adj} Planets: Cumulative Promotions vs. Detector Time',
                       'Targets Passing Criterion [count]',
                       names_legend)
     write_plots(fig, 'promote-earth-cume')
@@ -284,7 +288,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                    **ebar_props)
     
     style_promote_plot(ax,
-                      'Counted By Star: Earthlike Planets: Cumulative Promotions vs. Detector Time',
+                      f'Counted By Star: {pn.adj} Planets: Cumulative Promotions vs. Detector Time',
                       'Targets Passing Criterion [count]',
                       names_legend)
     write_plots(fig, 'promote-star-cume')
@@ -299,7 +303,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         names = ['h_promo_spanPlan_star_cume', 'h_promo_spanHZ0_star_cume', 
                  'h_promo_spanHZ1_star_cume', 'h_promo_spanEarth_star_cume']
         names_legend = ['Span: Any Planet Period', 'Span: Inner HZ Period', 
-                        'Span: Outer HZ Period', 'Span: Earthlike Period']
+                        'Span: Outer HZ Period', f'Span: {pn.adj} Period']
         n_plot = len(names)
         
         for n, name in enumerate(names):
@@ -385,7 +389,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
             ax.plot(x_values, t_phist['h_phist_t1_count_earth_mean'].values + del_offset, ls_ct,
                     x_values, t_phist['h_phist_t1_span_earth_mean'].values, ls_sp,
                     x_values, t_phist['h_phist_t1_promo_earth_mean'].values, ls_pr)
-            style_phist_plot(ax, title_tmpl % ('Earthlike', '2 Years'), names_legend)
+            style_phist_plot(ax, title_tmpl % (pn.adj, '2 Years'), names_legend)
             write_plots(fig, 'phist-earth-2year')
             plt.close(fig)
         
@@ -393,7 +397,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         ax.plot(x_values, t_phist['h_phist_t2_count_earth_mean'].values + del_offset, ls_ct,
                 x_values, t_phist['h_phist_t2_span_earth_mean'].values, ls_sp,
                 x_values, t_phist['h_phist_t2_promo_earth_mean'].values, ls_pr)
-        style_phist_plot(ax, title_tmpl % ('Earthlike', '3 Years'), names_legend)
+        style_phist_plot(ax, title_tmpl % (pn.adj, '3 Years'), names_legend)
         write_plots(fig, 'phist-earth-3year')
         plt.close(fig)
         
@@ -406,7 +410,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
             ax.plot(x_values, t_phist['h_phist_t1_count_star_mean'].values + del_offset, ls_ct,
                     x_values, t_phist['h_phist_t1_span_star_mean'].values, ls_sp,
                     x_values, t_phist['h_phist_t1_promo_star_mean'].values, ls_pr)
-            style_phist_plot(ax, title_tmpl % ('By Star, with Earthlike', '2 Years'), names_legend)
+            style_phist_plot(ax, title_tmpl % (f'By Star, with {pn.adj}', '2 Years'), names_legend)
             write_plots(fig, 'phist-star-2year')
             plt.close(fig)
         
@@ -414,7 +418,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         ax.plot(x_values, t_phist['h_phist_t2_count_star_mean'].values + del_offset, ls_ct,
                 x_values, t_phist['h_phist_t2_span_star_mean'].values, ls_sp,
                 x_values, t_phist['h_phist_t2_promo_star_mean'].values, ls_pr)
-        style_phist_plot(ax, title_tmpl % ('By Star, with Earthlike', '3 Years'), names_legend)
+        style_phist_plot(ax, title_tmpl % (f'By Star, with {pn.adj}', '3 Years'), names_legend)
         write_plots(fig, 'phist-star-3year')
         plt.close(fig)
     
@@ -426,7 +430,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         names_legend_span = ['Obs. Span > T/2 (Any Actual Planet)', 
                             'Obs. Span > T/2 (Inner HZ, Hypothet.)',
                             'Obs. Span > T/2 (Outer HZ, Hypothet.)', 
-                            'Obs. Span > T/2 (Actual Earthlike)']
+                            f'Obs. Span > T/2 (Actual {pn.adj})']
         
         if extra_plots:
             fig, ax = plt.subplots(figsize=(8.5, 5))
@@ -434,7 +438,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                     x_values, t_phist['h_phist_t1_spanHZ0_star_mean'].values, ls_sp,
                     x_values, t_phist['h_phist_t1_spanHZ1_star_mean'].values, ls_pr,
                     x_values, t_phist['h_phist_t1_spanEarth_star_mean'].values, ls_x)
-            style_phist_plot(ax, title_tmpl_span % ('By Star, with Earthlike', '2 Years'), names_legend_span)
+            style_phist_plot(ax, title_tmpl_span % (f'By Star, with {pn.adj}', '2 Years'), names_legend_span)
             write_plots(fig, 'phist-star-span-2year')
             plt.close(fig)
         
@@ -443,7 +447,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                 x_values, t_phist['h_phist_t2_spanHZ0_star_mean'].values, ls_sp,
                 x_values, t_phist['h_phist_t2_spanHZ1_star_mean'].values, ls_pr,
                 x_values, t_phist['h_phist_t2_spanEarth_star_mean'].values, ls_x)
-        style_phist_plot(ax, title_tmpl_span % ('By Star, with Earthlike', '3 Years'), names_legend_span)
+        style_phist_plot(ax, title_tmpl_span % (f'By Star, with {pn.adj}', '3 Years'), names_legend_span)
         write_plots(fig, 'phist-star-span-3year')
         plt.close(fig)
 
@@ -486,9 +490,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['promote', 'promote-hist'])

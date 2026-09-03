@@ -72,6 +72,7 @@ from pathlib import Path
 import numpy as np
 # this import must work: fail fast if it doesn't
 from reduce_drm_tools.PlanetBins import RpLBins
+from reduce_drm_tools.PlanetNames import PlanetNames
 from reduce_drm_tools import utils
 
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
@@ -229,14 +230,19 @@ def load_hist(args, field):
     # 4: done
     return hist
         
-def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True):
+def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True, names=None):
     r'''Generate the "slug" of text that is placed into the cells of the 
     tabular plot.'''
     # box preface: "FOO = x", or just "x".  Not general enough, because
     # eta is not the right FOO for some fields.
     # r'' to shield \e and \o from interpretation
     if eta:
-        symbol = r'\eta%s = ' % (r'_\oplus' if earth else '')
+        # the subscripted eta names the earthlike class, which config-reduce.json
+        # may have re-defined (e.g. to a Sub-Neptune population)
+        if earth:
+            symbol = '%s = ' % (names if names is not None else PlanetNames()).eta
+        else:
+            symbol = r'\eta = '
     else:
         symbol = ''
     txt = '%s%#.3g' % (symbol, x)
@@ -318,12 +324,13 @@ def make_koppa_boxes(args, ax, hist):
     # put in the Earth eta label
     if len(hist) > 15:
         info = hist[-1]
-        txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, earth=True, eta=args.eta)
+        txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, earth=True,
+                             eta=args.eta, names=args.planet_names)
         a_mid = np.exp(np.mean(np.log(earth_x)))
         r_mid = np.exp(np.mean(np.log(earth_y)))*0.95
         tbox = ax.text(a_mid, r_mid, txt, color='darkgreen', **Text_style_eta)
     else:
-        print('No Earth info found.')
+        print(f'No {args.planet_names.name} info found.')
 
     # separated out only for historical reasons
     for box, style in koppa_boxes:
@@ -513,7 +520,10 @@ if __name__ == '__main__':
         print(f'{args.progname}: Warning: Unused attributes: {", ".join(fails)}')
     elif args.reduce_config:
         print(f'{args.progname}: Note: Local customization successful.')
-        
+
+    # display names of the earthlike class, from the same config
+    args.planet_names = PlanetNames.from_config(args.reduce_config)
+
     args.field_list = args.fields.split(',')
     assert len(args.field_list) > 0, 'Need at least one field to be given (-f FIELDS)'
 

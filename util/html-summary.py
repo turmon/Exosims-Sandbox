@@ -85,6 +85,9 @@ import six.moves.cPickle as pickle
 from collections import defaultdict, OrderedDict
 from io import StringIO
 from pathlib import Path
+# this import must work: fail fast if it doesn't
+from reduce_drm_tools import utils
+from reduce_drm_tools.PlanetNames import PlanetNames
 
 # root directory (including external path)
 ROOT_DIR = Path(os.getcwd())
@@ -103,13 +106,17 @@ DUMMY_IMAGE = WWW_RES / 'image-not-found.png'
 
 # section heads, one for each category of graphic
 # (see also: graphics_map)
+# Note: these are str.format() templates.  The {planet}, {planets}, {planet_adj},
+# and {eta_html} fields name the earthlike planet class, which config-reduce.json
+# may have re-defined (see PlanetNames.py).  They are filled in at render time,
+# per ensemble, from that ensemble's own config.
 SECTION_HEADS = {
     'radlum': '',
     'rad-sma': '''"Throughput" is the proportion of planets present, that were characterized
             in the way indicated. Not-a-number entries in this plot correspond to 0/0 conditions
             arising due to planet types not present in the selected population.
             The "Popuation" plot allows verification that planets are being generated at the 
-            correct rate, e.g., verification of eta<sub>Earth</sub>.''',
+            correct rate, e.g., verification of {eta_html}.''',
     'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
             Frequency values between plots when x-axis units are the same are comparable,
@@ -164,7 +171,7 @@ SECTION_HEADS = {
     'earth-char': '''Promotions here are all determined 
          using the promoted_stars variable output at the end of the simulation.''',
     'observing': '''Observing conditions (phi, working angle, delta magnitude)
-         during characterization of earthlike planets.''',
+         during characterization of {planet_adj} planets.''',
     'path': '',
     }
 
@@ -593,7 +600,7 @@ class SimSummary(object):
         'perstar-det': GraphicsDescription('Per-Star Detection',         'graphics', filename=WWW_DOC/'per-star-metrics.html'),
         'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics', filename=WWW_DOC/'per-star-metrics.html'),
         'promote':     GraphicsDescription('Target Promotion',           'graphics', infotype='Information'),
-        'earth-char':  GraphicsDescription('Earth Characterizations',    'graphics'),
+        'earth-char':  GraphicsDescription('{planet} Characterizations', 'graphics'),
         'observing':   GraphicsDescription('Characterization Observing', 'graphics'), # TODO: docs?
         'path':        GraphicsDescription('Full-Ensemble Path',         'path-ensemble')
         }
@@ -645,7 +652,8 @@ class SimSummary(object):
         self.readme_info = '' # one-line summary
         self.readme_file = '' # filename
         self.graphics_origin = self.load_graphics_origin()
-        self.config_reduce = self.find_config_reduce()
+        # config-reduce.json link, and the planet-class display names from it
+        self.config_reduce, self.planet_names = self.find_config_reduce()
 
     def load_graphics_origin(self):
         r'''If possible, load metadata of graphical file origins.'''
@@ -665,16 +673,24 @@ class SimSummary(object):
         return maps
 
     def find_config_reduce(self):
-        r'''Find the config-reduce.json file, or empty string.'''
-        # we are not triggering off the presence of this file
-        # like "add_html_doc(config-reduce.json) because
-        # too much about this is nonstandard -- allowing ..,
-        # not rendered within a graphics section
-        fns = ['config-reduce.json', '../config-reduce.json']
-        for fn in fns:
-            if os.path.isfile(fn):
-                return fn
-        return ''
+        r'''Find the reduction config: return (relative filename, PlanetNames).
+
+        The filename is '' if there is none.  We are not triggering off the
+        presence of this file like "add_html_doc(config-reduce.json)" because
+        too much about this is nonstandard -- allowing .., not rendered within
+        a graphics section.
+
+        We use utils.load_reduce_config(), the same search the reduction code
+        uses (including the one-level .fam/.exp parent lookup), so the file we
+        link to and the planet names we display always agree.
+        Note: cwd is the ensemble directory when this runs.'''
+        here = Path(os.getcwd())
+        config = utils.load_reduce_config(here, log_origin='html-summary.py')
+        if not config:
+            return '', PlanetNames()
+        # relative to the ensemble dir, so the link (../FN) resolves from html/
+        fn_rel = os.path.relpath(config['_config_filename'], here)
+        return fn_rel, PlanetNames.from_config(config)
 
     def add(self, filename):
         r'''Dispatcher: adds filename to the correct category of item.'''
@@ -901,13 +917,15 @@ class SimSummary(object):
             # table of contents
             hh.toc_here('Contents')
             # overall images
+            # names of the earthlike planet class, for the label templates below
+            planet_map = self.planet_names.mapping()
             for tag, g_desc in self.graphics_show.items():
                 target = g_desc.target
                 # overall section header
-                hh.header(f'{g_desc.title} {g_desc.infotype}')
+                hh.header(f'{g_desc.title.format(**planet_map)} {g_desc.infotype}')
                 # optional caption
                 if SECTION_HEADS[tag]:
-                    hh.paragraph(SECTION_HEADS[tag])
+                    hh.paragraph(SECTION_HEADS[tag].format(**planet_map))
                 # html sub-documents, if any, are at section top (ad hoc at the moment)
                 if tag in self.htmls_show and len(self.htmls[tag]) > 0:
                     # print(f'Rendering {self.htmls[tag]}')
@@ -1141,7 +1159,7 @@ class SimSummary(object):
 #
 ############################################################
 
-def exp_summary(d):
+def exp_summary(d, names=None):
     r'''Summarize one Experiment/Family directory as an OrderedDict of strings.
 
     If d is None: instead, return the header corresponding to the summary.
@@ -1166,15 +1184,15 @@ def exp_summary(d):
     # ** The dataflow needs to be documented.
 
     # Load the reduction summary file, reduce-info.csv
-    rv = reduce_info_summary(d)
+    rv = reduce_info_summary(d, names=names)
     return rv
 
-def sim_summary(d):
+def sim_summary(d, names=None):
     r'''Summarize one simulation directory as an OrderedDict of strings.
 
     If d is None: instead, return the header corresponding to the summary.'''
     # Load the reduction summary file, reduce-info.csv
-    rv = reduce_info_summary(d)
+    rv = reduce_info_summary(d, names=names)
     # the quick-out for header info
     if d is None:
         return rv
@@ -1299,10 +1317,18 @@ def sim_filecount(d, prefix=''):
     return rv
 
 
-def reduce_info_summary(d):
+def reduce_info_summary(d, names=None):
     r'''Summarize one simulation directory as an OrderedDict of strings.
 
-    If the argument is None, instead, return the header corresponding to the summary.'''
+    If the argument is None, instead, return the header corresponding to the summary.
+
+    "names" gives the display names of the earthlike planet class, used for the
+    yield column headers.  This table spans many ensembles, which could in
+    principle carry different config-reduce.json settings, so the caller
+    resolves the names from the directory whose index page is being built.
+    Defaults to the historical Earth-based names.'''
+    if names is None:
+        names = PlanetNames()
     # do not display floats to 12 digits of precision
     def fmt_float(x):
         return ('%.3f' % float(x))
@@ -1316,9 +1342,9 @@ def reduce_info_summary(d):
         ('simtime',                'Last Sim. Date',  fmt_str),
         ('runtime',                'Reduction Date',  fmt_str),
         ('user',                   'User',            fmt_str),
-        ('detections_earth_unique','Earths (Det.)',   fmt_float),
-        ('chars_earth_unique',     'Earths (Char.)',  fmt_float),
-        ('chars_earth_strict',     'Earths (Strict)', fmt_float),
+        ('detections_earth_unique',f'{names.plural} (Det.)',   fmt_float),
+        ('chars_earth_unique',     f'{names.plural} (Char.)',  fmt_float),
+        ('chars_earth_strict',     f'{names.plural} (Strict)', fmt_float),
         ('gfx_count',              'Ens. Graphs',     fmt_int),
         ('path_count',             "Path Summ's",     fmt_int),
         ('path_gfx',               'Path Graphs',     fmt_int),
@@ -1480,11 +1506,17 @@ def index_group(args, startpath, title, uplink):
             if os.path.isfile(fn):
                 hh.paragraph('Experiment descriptive ' + hh.link(fn_stem, 'README', inner=True))
                 break
+        # display names of the earthlike planet class for this directory
+        # (this table spans the ensembles below startpath -- we use the config
+        # that applies at startpath itself, falling back to the Earth defaults)
+        planet_names = PlanetNames.from_dir(startpath, log_origin=args.progname)
+
         # table of individual sims
         vanilla_tables = False
         if vanilla_tables:
             # make the table be sortable so that the JS sorter knows about it
-            hh.table_top(['Name'] + list(sim_summary(None).values()), elem_class='sortable')
+            hh.table_top(['Name'] + list(sim_summary(None, names=planet_names).values()),
+                         elem_class='sortable')
             item_num = 0
             # FIXME: os.walk misleads (we only go down one level) - use os.listdir()
             for root, dirs, files in os.walk(startpath):
@@ -1505,12 +1537,12 @@ def index_group(args, startpath, title, uplink):
                             alink += hh.link(extra_fn, f'&nbsp;{dingbat}{extra_span}',
                                              inner=True, **{'class': 'tooltip'})
                         # NB: exp_summary() is typically not called (see vanilla_tables above)
-                        properties = exp_summary(os.path.join(root, d))
+                        properties = exp_summary(os.path.join(root, d), names=planet_names)
                         hh.table_row([alink] + list(properties.values()))
                         item_num += 1
                     elif os.path.isdir(os.path.join(root, d, 'drm')):
                         alink = hh.link(f'{d}/html/index.html', d, inner=True)
-                        properties = sim_summary(os.path.join(root, d))
+                        properties = sim_summary(os.path.join(root, d), names=planet_names)
                         # format the properties as a row
                         hh.table_row([alink] + list(properties.values()))
                         item_num += 1
@@ -1520,7 +1552,7 @@ def index_group(args, startpath, title, uplink):
                 break
             # summary over the whole set of ensembles in the table (root/reduce-info.csv)
             # NB: exp_summary() is typically not called (see vanilla_tables above)
-            properties = exp_summary(startpath)
+            properties = exp_summary(startpath, names=planet_names)
             #properties = sim_summary(None)
             hh.table_foot()
             hh.table_row(['<b>SUMMARY</b> (%d items)' % item_num] + list(properties.values()))
@@ -1539,10 +1571,12 @@ def index_group(args, startpath, title, uplink):
         hh.text('Reduction date and user reflect the most recent reduction below this level.', br=True)
         hh.text('Yields reflect the maximum over all ensembles below this level.', br=True)
         hh.text('Yield definitions:', br=True)
-        hh.text('&nbsp; Earths (All) = Number of successful Earth detections, counting repeat visits (detections_earth_all).', br=True)
-        hh.text('&nbsp; Earths (Det.) = Number of successful Earth detections, repeat visits not counted (detections_earth_unique).', br=True)
-        hh.text('&nbsp; Earths (Char.) = Number of successful Earth characterizations (any spectral band, status = &plusmn;1), repeat visits not counted (chars_earth_unique).', br=True)
-        hh.text('&nbsp; Earths (Strict) = Number of successful Earth characterizations (all spectral bands have status = +1), repeat visits not counted (chars_earth_strict).', br=True)
+        # NB: the parenthesized names are CSV column names, and stay verbatim
+        planets, planet = planet_names.plural, planet_names.name
+        hh.text(f'&nbsp; {planets} (All) = Number of successful {planet} detections, counting repeat visits (detections_earth_all).', br=True)
+        hh.text(f'&nbsp; {planets} (Det.) = Number of successful {planet} detections, repeat visits not counted (detections_earth_unique).', br=True)
+        hh.text(f'&nbsp; {planets} (Char.) = Number of successful {planet} characterizations (any spectral band, status = &plusmn;1), repeat visits not counted (chars_earth_unique).', br=True)
+        hh.text(f'&nbsp; {planets} (Strict) = Number of successful {planet} characterizations (all spectral bands have status = +1), repeat visits not counted (chars_earth_strict).', br=True)
         
         # If possible, link to emulator analysis (sim/.../Analysis/index.html)
         # New section

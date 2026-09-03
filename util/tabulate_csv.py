@@ -43,6 +43,8 @@ import argparse
 import sys
 import os
 import csv
+# this import must work: fail fast if it doesn't
+from reduce_drm_tools.PlanetNames import PlanetNames
 
 # global verbosity mode, also usable for debugging print's
 VERBOSITY = 0
@@ -98,8 +100,11 @@ class BaseTabulator(object):
     # must over-ride
     tag = 'det'
     
-    def __init__(self):
-        pass
+    def __init__(self, names=None):
+        # display names of the earthlike planet class -- the class can be
+        # re-defined numerically in config-reduce.json, in which case the
+        # column heading below should not say "Earth"
+        self.names = names if names is not None else PlanetNames()
     
     def dump_worker(self, fp, plain, table, key, name):
         table_row_spec = self.table_row_spec
@@ -200,9 +205,10 @@ class FunnelTabulator(BaseTabulator):
     tag = 'funnel'
     targets = ('star', 'allplan', 'hzone', 'earth')
     show_error = True
-    def __init__(self):
+    def __init__(self, names=None):
+        super().__init__(names)
         self.table_row_spec = [
-            ['Status', 'Star', 'Planet', 'Hab. Zone', 'Earth'],
+            ['Status', 'Star', 'Planet', 'Hab. Zone', self.names.name],
             ['  ', '[count]', '[count]', '[count]', '[count]'],
             [], # end of table header
             ['Promoted'        ] + ['%%s_%s'            % t for t in self.targets],
@@ -233,9 +239,10 @@ class DetFunnelTabulator(BaseTabulator):
     targets = ('star', 'allplan', 'hzone', 'earth')
     # (do)/(don't) render the +/- (std error of mean) numbers
     show_error = True
-    def __init__(self):
+    def __init__(self, names=None):
+        super().__init__(names)
         self.table_row_spec = [
-            ['Status', 'Star', 'Planet', 'Hab. Zone', 'Earth'],
+            ['Status', 'Star', 'Planet', 'Hab. Zone', self.names.name],
             ['  ', '[count]', '[count]', '[count]', '[count]'],
             [], # end of table header
             # ['Candidates'      ] + ['%%s_cand_%s'       % t for t in self.targets],
@@ -312,7 +319,7 @@ def main(args):
             print('\tTabulation to %s' % outfile) # only if not to stdout, obviously
         args.this_outfile = outfile
         # create the tabulator object
-        tabulator = DUMP_DISPATCH_TABLE[mode]()
+        tabulator = DUMP_DISPATCH_TABLE[mode](args.planet_names)
         # dump the information
         tabulator.dump(out_fp, args, table)
         if output_to_file:
@@ -369,6 +376,11 @@ if __name__ == '__main__':
         sys.stderr.write("%s: Need a template (%s) in the output file if it is given with multiple modes.\n" % (
             args.progname, ))
         sys.exit(1)
+
+    # planet-class display names, from config-reduce.json in the scenario
+    # directory implied by the input file (Earth-based names if not customized)
+    args.planet_names = PlanetNames.from_dir(
+        os.path.dirname(args.infile) or '.', log_origin=args.progname)
 
     # ensure enclosing dir exists
     if len(args.outfile) > 0 and '%s' in args.outfile:

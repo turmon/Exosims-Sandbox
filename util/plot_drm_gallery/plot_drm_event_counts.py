@@ -55,6 +55,10 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
 
     # Unpack CSV data
     t_counts, t_earth_counts = plot_data
+
+    # display names of the earthlike planet class (may be re-defined
+    # in config-reduce.json, e.g. to a Sub-Neptune population)
+    pn = cs.planet_names(reduce_info)
     
     # Track output files
     tracker = cs.PlotTracker(ext_list=mode.get('ext_list'))
@@ -272,8 +276,8 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     
     # Earth char counts appearing in this plot
     names = ['h_earth_char_all', 'h_earth_char_strict']
-    names_legend = ['Earths Characterized (full/partial, any band)',
-                    'Earths Characterized (full, all bands)']
+    names_legend = [f'{pn.plural} Characterized (full/partial, any band)',
+                    f'{pn.plural} Characterized (full, all bands)']
     n_plot = len(names)
     
     # Put the above-selected counts on one plot
@@ -283,7 +287,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix.')
+            print(f'Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix.')
             continue
         
         ax.plot(ct_samp_1 + ct_offsets_1[n],
@@ -296,8 +300,8 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     ax.set_xlim(-0.5, 50)
     ax.set_ylim(bottom=0, top=None)
     style_count_plot(ax,
-                     'Number of Earths Characterized',
-                     'Number of Earths [count]',
+                     f'Number of {pn.plural} Characterized',
+                     f'Number of {pn.plural} [count]',
                      'Frequency [density]', names_legend)
     write_plots(fig, 'earth-char-count')
     plt.close(fig)
@@ -335,7 +339,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
 
             # Guard against out-of-date csv files for strict mode
             if f_mean not in t_earth_counts.columns:
-                print(f'Skipping earth chars ({f_mean}): redo "make reduce" to fix')
+                print(f'Skipping {pn.short} chars ({f_mean}): redo "make reduce" to fix')
                 continue
 
             ax.bar(ct_samp_1 + ct_offsets_1[n],
@@ -346,8 +350,8 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         # Clip the x-range
         ax.set_xlim(-0.5, 50)
         ax.set_ylim(bottom=0, top=None)
-        style_count_plot(ax, 'Number of Earths Characterized',
-                        'Number of Earths [count]',
+        style_count_plot(ax, f'Number of {pn.plural} Characterized',
+                        f'Number of {pn.plural} [count]',
                         'Frequency [density]', names_legend)
         write_plots(fig, 'earth-char-count-strict')
         plt.close(fig)
@@ -371,7 +375,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
         
         # Guard against out-of-date csv files for strict mode
         if f_mean not in t_earth_counts.columns:
-            print(f'Skipping earth chars ({f_mean}): redo make reduce to fix')
+            print(f'Skipping {pn.short} chars ({f_mean}): redo make reduce to fix')
             continue
         
         ax.bar(ct_samp_1 + ct_offsets_1[n],
@@ -382,8 +386,8 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     # Clip the x-range
     ax.set_xlim(-0.5, 50)
     ax.set_ylim(bottom=0, top=None)
-    style_count_plot(ax, 'Number of Earths Characterized',
-                    'Number of Earths [count]',
+    style_count_plot(ax, f'Number of {pn.plural} Characterized',
+                    f'Number of {pn.plural} [count]',
                     'Frequency [density]', names_legend)
     write_plots(fig, 'earth-char-count-all')
     plt.close(fig)
@@ -427,9 +431,8 @@ the plot name and file extension.
     # Create mode dictionary
     mode = {'op': args.mode_op, 'verbose': args.verbose}
 
-    # Read info file and convert to dict
-    info_file = args.src_tmpl % ("info", "csv")
-    reduce_info = pd.read_csv(info_file).iloc[0].to_dict()
+    # Read info file and convert to dict (plus planet-class display names)
+    reduce_info = cs.load_reduce_info(args.src_tmpl)
 
     # Load CSV data and run the plotting function
     plot_data = cs.load_csv_files(args.src_tmpl, ['event-counts', 'earth-char-count'])

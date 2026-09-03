@@ -100,6 +100,32 @@ Keys we use include `experiment` (scenario name) and `ensemble_size`
 (number of runs/DRMs). Passed to every plot function for use in
 titles via `cs.plot_make_title(reduce_info)`.
 
+It also carries the display names of the earthlike planet class, under the keys
+`planet_name`, `planet_name_plural`, `planet_name_adj`, `planet_name_short`,
+and `planet_symbol`.  These do **not** come from `reduce-info.csv`: they are
+merged in by `cs.load_reduce_info()` from the `earthlike` group of
+`config-reduce.json` in the scenario directory (see
+`util/reduce_drm_tools/PlanetNames.py`).  Because they ride along as plain
+strings, they survive pickling into the driver's multiprocessing workers.
+
+A plot function does not read those keys directly.  It asks for them:
+
+```python
+pn = cs.planet_names(reduce_info)
+ax.set_xlabel(f'Number of {pn.plural} [count]')
+ax.set_title(f'{pn.adj} Planets: Cumulative Promotions vs. Detector Time')
+```
+
+`pn` has `name` (singular), `plural`, `adj` (class-membership adjective),
+`short` (for cramped tick labels and glued compounds), `symbol`, and `eta`
+(the LaTeX occurrence rate, e.g. `\eta_{\oplus}`).  With no customization
+these are `Earth` / `Earths` / `Earthlike` / `Earth`, so behavior is unchanged.
+
+Use them for *labels only*.  CSV column names, output filename stems, and
+registry entries keep their historical `earth` spellings -- they are data
+plumbing.  Likewise, `Earth radii` as a unit and the Kopparapu bin names
+("Hot super-Earths" and friends) are not the earthlike class, and stay literal.
+
 
 ## Usage
 
@@ -147,8 +173,9 @@ util/plot_drm_gallery/plot_drm_fuel_used.py \
 
 Options are the same subset: `--mode_op`, `-v`/`--verbose`, `-q`/`--quiet`.
 
-Standalone modules use `cs.load_csv_files()` to load their own CSVs (the
-driver does this centrally when dispatching).
+Standalone modules use `cs.load_csv_files()` to load their own CSVs, and
+`cs.load_reduce_info()` for the metadata (the driver does both centrally when
+dispatching).
 
 
 ## Adding a New Plot Module
@@ -162,8 +189,8 @@ driver does this centrally when dispatching).
    dest_tmpl, mode)` following the contract below.
 
 3. **Add `main()` and `__main__` block** for standalone use. Use
-   `cs.load_csv_files()` to load CSVs and `pd.read_csv()` for
-   `reduce-info.csv`.
+   `cs.load_csv_files()` to load CSVs and `cs.load_reduce_info()` for
+   `reduce-info.csv` (the latter also merges in the planet-class names).
 
 4. **Register in PLOT_REGISTRY** in `plot_drm_driver.py`:
    ```python

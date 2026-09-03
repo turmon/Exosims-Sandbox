@@ -36,8 +36,10 @@ import astropy.units as u
 # idiom for imports from "."
 try:
     from . import utils
+    from .PlanetNames import CONFIG_KEYS as DISPLAY_KEYS
 except ImportError:
     import utils
+    from PlanetNames import CONFIG_KEYS as DISPLAY_KEYS
 strip_units = utils.strip_units
 
 
@@ -49,6 +51,10 @@ class RpLBins:
     # ensures that class instances have received customization (which
     # can be {}), even if multiprocessing is in effect
     _customized = False
+
+    # attributes of a known group that are *display names*, not bin geometry:
+    # they are handled by PlanetNames.py, and are skipped (silently) here
+    _display_attrs = frozenset(DISPLAY_KEYS)
 
     # known group names and their allowed attribute names
     _custom_groups = {
@@ -189,6 +195,8 @@ class RpLBins:
                 for attr_name, value in mapping[group_name].items():
                     if attr_name.startswith('_'):
                         continue # comment
+                    elif attr_name in cls._display_attrs:
+                        continue # display name, not bin geometry -- see PlanetNames.py
                     elif attr_name not in ok_attrs:
                         fails.append(attr_name)
                     else:

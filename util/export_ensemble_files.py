@@ -29,6 +29,8 @@ import shutil
 import subprocess
 from datetime import datetime
 from collections import namedtuple
+# this import must work: fail fast if it doesn't
+from reduce_drm_tools.PlanetNames import PlanetNames
 
 Export = namedtuple('Export', ['family', 'file', 'info'])
 
@@ -40,14 +42,14 @@ Export = namedtuple('Export', ['family', 'file', 'info'])
 
 EXPORTS = [
     # images
-    Export('*',   'gfx/det-earth-char-count-all.png',      'Histogram of earths characterized'),  # single line,Full
+    Export('*',   'gfx/det-earth-char-count-all.png',      'Histogram of {planets} characterized'),  # single line,Full
     Export('*',   'path/{seed}-final.png',             'Final frame'),
     Export('*',   'path/{seed}-obs-timeline.png',      'Observation timeline'),
     Export('*',   'path/{seed}-obs-keepout-char.png',  'Keepout for chars (remove if too big)'),
     Export('*',   'gfx/det-event-count-det.png',  'Event count, dets and chars'),
     Export('*',   'gfx/det-obstime-cume.png',     'Cumulative mission obs'),
-    Export('*',   'gfx/det-time-char-earth-part-cume.png', 'Cumulative Earth chars'),
-    Export('*',   'gfx/det-time-det-earth-cume.png',       'Cumulative det earths'),
+    Export('*',   'gfx/det-time-char-earth-part-cume.png', 'Cumulative {planet} chars'),
+    Export('*',   'gfx/det-time-det-earth-cume.png',       'Cumulative det {planets}'),
     Export('*',   'gfx/det-radlum-char-snr-union.png',     'SNR demographic'),
     #Export('*',   'gfx/det-rad-sma-char-tput-strict.png', 'Kopparapu Throughput'),
     Export('*',   'gfx/det-duration-slew-b0.png', 'Mean slew time histogram (60 days)'),
@@ -147,11 +149,15 @@ def html_open(args):
 def html_end(fp):
     fp.write(HTML_TRAILER)
 
-def manifest_item(fp, e, fn):
-    fp.write('%s: %s\n' % (fn, e.info))
+def export_info(e, args):
+    r'''The human-readable description of an export, with planet-class names filled in.'''
+    return e.info.format(**args.planet_names.mapping())
 
-def html_item(fp, e, fn):
-    fp.write('<h2>%s</h2>\n' % (e.info, ))
+def manifest_item(fp, e, fn, args):
+    fp.write('%s: %s\n' % (fn, export_info(e, args)))
+
+def html_item(fp, e, fn, args):
+    fp.write('<h2>%s</h2>\n' % (export_info(e, args), ))
     fp.write('<p>File: %s</p>\n' % (fn, ))
     if fn.endswith('png'):
         # (link the image)
@@ -180,6 +186,8 @@ def set_sim_info(args):
     # etc.
     args.timestr = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     args.user = os.getenv('USER')
+    # display names of the earthlike planet class (Earth-based if not customized)
+    args.planet_names = PlanetNames.from_dir(args.simdir, log_origin=args.progname)
 
 def main(args):
     # clear old outputs
@@ -209,8 +217,8 @@ def main(args):
             # sys.exit(1) # stop now
         else:
             shutil.copy(infile, outfile)
-            manifest_item(manifest, e, inbase)
-            html_item(html, e, inbase)
+            manifest_item(manifest, e, inbase, args)
+            html_item(html, e, inbase, args)
     # finish summaries
     html_end(html)
     html.close()
