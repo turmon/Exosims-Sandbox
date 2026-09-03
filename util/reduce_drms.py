@@ -1174,6 +1174,13 @@ class SimulationRun(object):
                         char_SNR_1 = obs['char_SNR'][earth_inx]
                     else:
                         char_SNR_1 = char_info[0]['char_SNR'][earth_inx]
+                    # planet properties: earth_inx indexes plan_inds (and the
+                    # char_params above), so the spc index is plan_inds[earth_inx]
+                    pind_spc = plan_inds[earth_inx]
+                    Rp_1  = strip_units(self.spc['Rp'][pind_spc]) # earth radii
+                    sma_1 = strip_units(self.spc['a'] [pind_spc]) # AU
+                    # is_earthlike() bins on the luminosity-scaled SMA, not the raw one
+                    sma_scaled_1 = sma_1 / np.sqrt(self.spc['L'][sind])
                     # spc['Name'][] is a bytes sequence: decode into string for output
                     char_dict = OrderedDict([
                         ('ensemble', ensemble_num),
@@ -1186,6 +1193,9 @@ class SimulationRun(object):
                         ('is_success', int(this_char_yield[earth_inx])),
                         ('is_deep', int(sind_deep)),
                         ('is_promo', int(sind_promo)),
+                        ('Rp',         Rp_1),
+                        ('sma',        sma_1),
+                        ('sma_scaled', sma_scaled_1),
                         ('WA',   parms['WA']    [earth_inx].to('mas').value),
                         ('dMag', parms['dMag']  [earth_inx]),
                         ('phi',  parms['phi']   [earth_inx]),
