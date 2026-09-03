@@ -27,6 +27,12 @@ The intent is to show how accurate the shown average is.
 
 ## Table Contents
 
+**Column naming.** The final column is the *earthlike* planet class.
+Its heading follows the `name` given in the scenario's `config-reduce.json`,
+and is "Earth" when nothing is customized -- so a scenario that re-defines the
+class to, say, a Sub-Neptune population will show "Sub-Neptune" there instead.
+This page uses the default name throughout.
+
 In all cases, consideration is restricted to a population P of
 stars (all observed stars, or promoted stars).
 

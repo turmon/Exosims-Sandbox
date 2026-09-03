@@ -1,11 +1,17 @@
 /*
   Interactive ensemble summary table for an EXOSIMS family-level index page.
 
-  Fetches three JSON files and builds a sortable, filterable Tabulator table
+  Fetches four JSON files and builds a sortable, filterable Tabulator table
   in #scenario-table:
     reduce-yield-all.json    -- per-ensemble yield statistics (required)
     index-files-byname.json  -- per-ensemble file counts and URLs (required)
     s_index.json             -- per-ensemble parameter values (optional)
+    config-reduce.json       -- planet-class display names (optional)
+
+  All four are fetched relative to this page, i.e. from the directory the page
+  represents.  So the yield-column names follow the config-reduce.json sitting
+  beside this index.html, and nowhere else: to rename the class in a family or
+  experiment table, put a config-reduce.json in that family/experiment dir.
 
   If either required file is missing, a red error message is shown inside the
   table div instead of leaving it silently blank.
@@ -22,6 +28,7 @@ const endpoints = [
     'reduce-yield-all.json',    // yield data (required)
     'index-files-byname.json',  // file counts (required)
     's_index.json',             // parameter index (optional)
+    'config-reduce.json',       // planet-class names (optional)
 ];
 
 // Write a visible error message into the table div.
@@ -40,6 +47,44 @@ function loadJSON(url) {
             throw new Error('Could not load ' + url + ' (HTTP ' + response.status + ')');
         return response.json();
     });
+}
+
+// --- planet-class display names --------------------------------------------
+// Mirror of util/reduce_drm_tools/PlanetNames.py -- keep the two in sync, or
+// the same config will label this table differently from the plots beside it.
+// The "earthlike" planet class can be re-defined numerically in
+// config-reduce.json (e.g. to a Sub-Neptune population), in which case calling
+// it an "Earth" here would be wrong.
+const PLANET_DEFAULTS = {name: 'Earth', plural: 'Earths',
+                         adj: 'Earthlike', short: 'Earth'};
+
+// Pull one name out of the "earthlike" group, ignoring anything that is not a
+// non-blank string (so _comment and the numeric bin bounds cannot leak in).
+function planetNameEntry(group, key) {
+    const value = group[key];
+    return (typeof value === 'string' && value.trim()) ? value.trim() : null;
+}
+
+// Resolve display names from a loaded config-reduce.json (may be {} or null).
+function planetNamesFrom(config) {
+    const group = (config && typeof config.earthlike === 'object' && config.earthlike)
+        ? config.earthlike : {};
+    const name   = planetNameEntry(group, 'name');
+    const plural = planetNameEntry(group, 'name_plural');
+    const adj    = planetNameEntry(group, 'name_adj');
+    const short  = planetNameEntry(group, 'name_short');
+    if (name) {
+        // a class name was given: derive any un-given forms from it
+        return {name:   name,
+                plural: plural || (name + 's'),
+                adj:    adj    || (name + '-like'),
+                short:  short  || name};
+    }
+    // no class name: fall back to Earth, form by form
+    return {name:   PLANET_DEFAULTS.name,
+            plural: plural || PLANET_DEFAULTS.plural,
+            adj:    adj    || PLANET_DEFAULTS.adj,
+            short:  short  || PLANET_DEFAULTS.short};
 }
 
 // Bottom-row summary formatters for the table footer.
@@ -117,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     Promise.allSettled(data)
         .then(function(results) {
-            const [resReduce, resFiles, resIndex] = results;
+            const [resReduce, resFiles, resIndex, resConfig] = results;
 
             // Both required files must have loaded successfully.
             if (resReduce.status !== 'fulfilled' || resFiles.status !== 'fulfilled') {
@@ -132,6 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // s_index.json is optional; an empty object stands in when absent.
             const dataIndex  = resIndex.status === 'fulfilled' ? resIndex.value : [{}];
+
+            // config-reduce.json is optional too; absent => the Earth defaults.
+            const pn = planetNamesFrom(
+                resConfig.status === 'fulfilled' ? resConfig.value : {});
 
             // Split parameter columns into numeric vs. string for appropriate filtering.
             const dataIndex0 = dataIndex[0];
@@ -229,10 +278,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     {title: 'User', field: 'user',
                      headerClick: handleHeaderClick,
                      headerFilter: 'input'},
-                    yieldCol('Earths (All)',    'detections_earth_all'),
-                    yieldCol('Earths (Det.)',   'detections_earth_unique'),
-                    yieldCol('Earths (Char.)',  'chars_earth_unique'),
-                    yieldCol('Earths (Strict)', 'chars_earth_strict'),
+                    yieldCol(`${pn.plural} (All)`,    'detections_earth_all'),
+                    yieldCol(`${pn.plural} (Det.)`,   'detections_earth_unique'),
+                    yieldCol(`${pn.plural} (Char.)`,  'chars_earth_unique'),
+                    yieldCol(`${pn.plural} (Strict)`, 'chars_earth_strict'),
                     {title: 'Ens. Graphs', field: 'index_gfx_count',
                      headerClick: handleHeaderClick,
                      headerWordWrap: true,

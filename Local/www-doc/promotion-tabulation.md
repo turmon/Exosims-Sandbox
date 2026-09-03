@@ -38,6 +38,12 @@ In all cases, consideration is restricted to a population P of
 stars (deep-dive or promoted).
 All quantities in the table are averages across the ensemble.
 
+**Column naming.** The final column is the *earthlike* planet class.
+Its heading follows the `name` given in the scenario's `config-reduce.json`,
+and is "Earth" when nothing is customized -- so a scenario that re-defines the
+class to, say, a Sub-Neptune population will show "Sub-Neptune" there instead.
+This page uses the default name throughout.
+
 Below is an example table for an Earths-only scenario
 as a visual reminder.
 
@@ -69,6 +75,7 @@ Hab. Zone
 
 Earth
 : How many Earthlike planets orbit the promoted stars.
+  (Named for the earthlike class -- see the note above.)
 
 Note: The planet counts in this row are counting
 *how many planets are around promoted stars*.

@@ -8,13 +8,21 @@
   user-selected per-star metric; a dropdown selector controls which metric
   is shown in each plot.
 
-  Data sources (both in the parent directory of the HTML file):
+  Data sources (all in the parent directory of the HTML file, i.e. in the
+  ensemble directory):
     reduce-info.csv       -- one row of experiment metadata (title, ensemble size)
     reduce-star-target.csv -- one row per target star with per-star statistics
                              (mean, std, sem, nEns) for detection and characterization
+    config-reduce.json    -- optional; names the earthlike planet class, which
+                             may have been re-defined (see PlanetNames.py).
+                             If absent here, it is looked up one level further
+                             up when that directory is a .fam or .exp -- the
+                             same search utils.load_reduce_config() does.
 
-  The two CSVs are loaded in parallel via Promise.all.  If either file is
-  missing or empty, a red error message is written into both plot divs.
+  These are loaded in parallel via Promise.all.  If either CSV is missing or
+  empty, a red error message is written into both plot divs.  A missing or
+  malformed config-reduce.json is normal, and simply leaves the planet class
+  named "Earth".
 
   The script tag can be placed in <head> because the entry point is wrapped
   in a DOMContentLoaded listener.
@@ -24,17 +32,49 @@
 
 (function () {
 
-var sim_url  = '../reduce-info.csv';
-var data_url = '../reduce-star-target.csv';
+var sim_url    = '../reduce-info.csv';
+var data_url   = '../reduce-star-target.csv';
+// '../' is the ensemble directory
+var config_url = '../config-reduce.json';
+
+// The config may instead live one level up, in the enclosing family or
+// experiment -- the same one-level lookup utils.load_reduce_config() does on
+// the Python side, and guarded the same way, so that these interactive plots
+// and the statically-rendered text and PNGs on this page always agree.
+// Returns the URL to try, or null when the enclosing directory is not a
+// .fam / .exp (in which case, as in Python, nothing is inherited).
+function parentConfigUrl() {
+    try {
+        // this page is ENS/html/index.html, so '../../' is the dir holding ENS
+        var path = new URL('../../', window.location.href).pathname;
+        var parts = path.split('/').filter(function(p) { return p.length > 0; });
+        var parent = parts.length ? parts[parts.length - 1] : '';
+        return /\.(fam|exp)$/.test(parent) ? '../../config-reduce.json' : null;
+    } catch (e) {
+        return null;
+    }
+}
 
 function passthru(x) { return x; }
 
-// metadata about a selected list of QOIs
-//   if we add a new one to the CSV, it might not appear here right away,
-//   so not all plot-able QOIs are required to have an entry below
-//   screen: fieldname that will treat a given row in the present field as if it's NaN,
-//           if the corresponding row in "screen" is NaN
-var known_qoi_info = [
+// Build the QOI metadata for this ensemble's two plots.
+//
+// This is the one place QOI table entries are defined and selected.  It needs
+// both of the things that vary per ensemble:
+//   pn             -- planet-class display names (see planetNamesFrom)
+//   all_fieldnames -- the column names this ensemble's CSV actually has
+// and returns {det: [...], char: [...]}: two lists of QOI metadata, in
+// dropdown order, ready for assignPlotVariableOptions() and plotFromRows().
+function buildQoiInfo(pn, all_fieldnames) {
+  // short locals to keep the table below readable
+  var N = pn.name, P = pn.plural;
+
+  // metadata about a selected list of QOIs
+  //   if we add a new one to the CSV, it might not appear here right away,
+  //   so not all plot-able QOIs are required to have an entry below
+  //   screen: fieldname that will treat a given row in the present field as if it's NaN,
+  //           if the corresponding row in "screen" is NaN
+  var known = [
     // detection non-yield
     {fieldname: 'h_star_det_visit_mean',        name: 'Detection Visits',                  screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
     {fieldname: 'h_star_det_comp_mean',         name: 'Completeness (Det.)',               screen: '',                           unit: 'count',       xform: passthru},
@@ -44,13 +84,13 @@ var known_qoi_info = [
     // detection yields
     {fieldname: 'h_star_det_plan_cume_mean',    name: 'Total Detections',                  screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
     {fieldname: 'h_star_det_plan_uniq_mean',    name: 'Unique Detections',                 screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
-    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Total Detections: Earths',          screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
-    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Unique Detections: Earths',         screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_earth_cume_mean',   name: 'Total Detections: ' + P,            screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
+    {fieldname: 'h_star_det_earth_uniq_mean',   name: 'Unique Detections: ' + P,           screen: 'h_star_det_plan_value_mean', unit: 'count',       xform: passthru},
     // detection ratios
     {fieldname: 'h_star_det_plan_value_mean',   name: 'Detection Rank',                    screen: '',                           unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_det_plan_frac_mean',    name: 'Planets Detected/Planets Present',  screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
-    {fieldname: 'h_star_det_earth_value_mean',  name: 'Earth Detection Rank',              screen: '',                           unit: 'count/day',   xform: Math.log10},
-    {fieldname: 'h_star_det_earth_frac_mean',   name: 'Earths Detected/Earths Present',    screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
+    {fieldname: 'h_star_det_earth_value_mean',  name: N + ' Detection Rank',               screen: '',                           unit: 'count/day',   xform: Math.log10},
+    {fieldname: 'h_star_det_earth_frac_mean',   name: P + ' Detected/' + P + ' Present',   screen: 'h_star_det_plan_value_mean', unit: 'count/count', xform: passthru},
     // char non-yield
     {fieldname: 'h_star_char_visit_mean',       name: 'Characterization Visits',           screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
     {fieldname: 'h_star_char_comp_mean',        name: 'Completeness (Char.)',              screen: '',                            unit: 'count',      xform: passthru},
@@ -60,21 +100,53 @@ var known_qoi_info = [
     // char yields
     {fieldname: 'h_star_char_plan_cume_mean',   name: 'Total Characterizations',           screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
     {fieldname: 'h_star_char_plan_uniq_mean',   name: 'Unique Characterizations',          screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
-    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Total Characterizations: Earths',   screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
-    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Unique Characterizations: Earths',  screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_earth_cume_mean',  name: 'Total Characterizations: ' + P,     screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
+    {fieldname: 'h_star_char_earth_uniq_mean',  name: 'Unique Characterizations: ' + P,    screen: 'h_star_char_plan_value_mean', unit: 'count',      xform: passthru},
     // char ratios
     {fieldname: 'h_star_char_plan_value_mean',  name: 'Characterization Rank',                 screen: '',                            unit: 'count/day',   xform: Math.log10},
     {fieldname: 'h_star_char_plan_frac_mean',   name: 'Planets Characterized/Planets Present', screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
-    {fieldname: 'h_star_char_earth_value_mean', name: 'Earth Characterization Rank',           screen: '',                            unit: 'count/day',   xform: Math.log10},
-    {fieldname: 'h_star_char_earth_frac_mean',  name: 'Earths Characterized/Earths Present',   screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
+    {fieldname: 'h_star_char_earth_value_mean', name: N + ' Characterization Rank',            screen: '',                            unit: 'count/day',   xform: Math.log10},
+    {fieldname: 'h_star_char_earth_frac_mean',  name: P + ' Characterized/' + P + ' Present',  screen: 'h_star_char_plan_value_mean', unit: 'count/count', xform: passthru},
     // others
     {fieldname: 'h_star_plan_per_star_mean',    name: 'Planets per Star',                      screen: '', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_earth_per_star_mean',   name: 'Earths per Star',                       screen: '', unit: 'count', xform: passthru},
+    {fieldname: 'h_star_earth_per_star_mean',   name: P + ' per Star',                         screen: '', unit: 'count', xform: passthru},
     // promotions
     {fieldname: 'h_star_promo_allplan_mean',    name: 'Promotion Rate',                        screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
     {fieldname: 'h_star_promo_hzone_mean',      name: 'Promotion Rate: Stars with HZ Planets', screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-    {fieldname: 'h_star_promo_earth_mean',      name: 'Promotion Rate: Stars with Earths',     screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
-];
+    {fieldname: 'h_star_promo_earth_mean',      name: 'Promotion Rate: Stars with ' + P,       screen: 'h_star_char_plan_value_mean', unit: 'count', xform: passthru},
+  ];
+
+  // Which CSV columns feed which plot.  GEN are per-star metrics common to
+  // both, and are appended to each list.
+  var GEN_RE  = /h_star_.*_per_star_mean/;
+  var DET_RE  = /h_star_(?:det|promo).*_mean/;
+  var CHAR_RE = /h_star_char.*_mean/;
+
+  // Metadata for one CSV column: its entry above, or a generic stand-in so an
+  // unrecognized column is still plottable.
+  function infoFor(fieldname) {
+    var match = known.find(function(info) { return info.fieldname === fieldname; });
+    if (match) return match;
+    return {
+      fieldname: fieldname,
+      name: fieldname.replace(/_mean$/, '').replace(/^h_star_/, ''),
+      screen: '',
+      unit: '[unknown]',
+      xform: passthru
+    };
+  }
+
+  function columnsMatching(re) {
+    return all_fieldnames.filter(function(n) { return n.match(re); }).sort();
+  }
+
+  var gen_fieldnames = columnsMatching(GEN_RE);
+  function qoiListFor(re) {
+    return columnsMatching(re).concat(gen_fieldnames).map(infoFor);
+  }
+
+  return {det: qoiListFor(DET_RE), char: qoiListFor(CHAR_RE)};
+}
 
 // list of alternate names for the nearest stars, used only as a display aid
 var starAlternateNames = {
@@ -194,6 +266,71 @@ function loadCSV(url) {
         });
 }
 
+// --- planet-class display names --------------------------------------------
+// Mirror of util/reduce_drm_tools/PlanetNames.py -- keep the two in sync, or
+// the same config will label these plots differently from the static PNGs
+// beside them.  The "earthlike" planet class can be re-defined numerically in
+// config-reduce.json (e.g. to a Sub-Neptune population), in which case calling
+// it an "Earth" here would be wrong.
+var PLANET_DEFAULTS = {name: 'Earth', plural: 'Earths',
+                       adj: 'Earthlike', short: 'Earth'};
+
+// Pull one name out of the "earthlike" group, ignoring anything that is not a
+// non-blank string (so _comment and the numeric bin bounds cannot leak in).
+function planetNameEntry(group, key) {
+    var value = group[key];
+    return (typeof value === 'string' && value.trim()) ? value.trim() : null;
+}
+
+// Resolve display names from a loaded config-reduce.json (may be {} or null).
+function planetNamesFrom(config) {
+    var group = (config && typeof config.earthlike === 'object' && config.earthlike)
+        ? config.earthlike : {};
+    var name   = planetNameEntry(group, 'name');
+    var plural = planetNameEntry(group, 'name_plural');
+    var adj    = planetNameEntry(group, 'name_adj');
+    var short  = planetNameEntry(group, 'name_short');
+    if (name) {
+        // a class name was given: derive any un-given forms from it
+        return {name:   name,
+                plural: plural || (name + 's'),
+                adj:    adj    || (name + '-like'),
+                short:  short  || name};
+    }
+    // no class name: fall back to Earth, form by form
+    return {name:   PLANET_DEFAULTS.name,
+            plural: plural || PLANET_DEFAULTS.plural,
+            adj:    adj    || PLANET_DEFAULTS.adj,
+            short:  short  || PLANET_DEFAULTS.short};
+}
+
+// Fetch a config file, resolving to null when it is absent or unreadable.
+function fetchConfigOrNull(url) {
+    return fetch(url)
+        .then(function(response) { return response.ok ? response.json() : null; })
+        .catch(function() { return null; });
+}
+
+// Load the planet-class names.  Never rejects: an absent or malformed config
+// is normal, and yields the Earth defaults.  (It joins the Promise.all below,
+// which would otherwise abort the plots when the file is missing.)
+//
+// Search order, mirroring utils.load_reduce_config():
+//   1. the ensemble directory
+//   2. its parent, but only when that parent is a .fam or .exp
+// A config that is found but names nothing ends the search, exactly as in
+// Python -- the first file found wins, whether or not it sets any names.
+function loadPlanetNames() {
+    return fetchConfigOrNull(config_url)
+        .then(function(config) {
+            if (config) return config;
+            var up = parentConfigUrl();
+            return up ? fetchConfigOrNull(up) : null;
+        })
+        .then(function(config) { return planetNamesFrom(config); })
+        .catch(function() { return planetNamesFrom(null); });
+}
+
 // Write a visible error message into each plot div.
 function showError(message) {
     ['detPlotDiv', 'charPlotDiv'].forEach(function(id) {
@@ -203,21 +340,6 @@ function showError(message) {
                 '<p style="color:red; padding:20px; font-size:1.1em;">' +
                 '<strong>Could not load plot data:</strong> ' + message + '</p>';
         }
-    });
-}
-
-// Map CSV fieldnames to known QOI metadata; generate generic metadata for unrecognized fields.
-function matchFieldnamesToInfo(qoi_fieldnames) {
-    return qoi_fieldnames.map(function(fieldname) {
-        var match = known_qoi_info.find(function(info) { return info.fieldname === fieldname; });
-        if (match) return match;
-        return {
-            fieldname: fieldname,
-            name: fieldname.replace(/_mean$/, '').replace(/^h_star_/, ''),
-            screen: '',
-            unit: '[unknown]',
-            xform: passthru
-        };
     });
 }
 
@@ -325,11 +447,12 @@ function insertPlotly(target, qoi_info, x, y, qoi, size, text, simBigTitle) {
 }
 
 
-// Entry point: load both CSVs in parallel, then set up plots and dropdowns.
+// Entry point: load both CSVs and the planet-class names in parallel, then
+// set up plots and dropdowns.
 // DOMContentLoaded ensures the divs exist whether this script is in <head> or <body>.
 document.addEventListener('DOMContentLoaded', function() {
     if (!document.getElementById('detPlotDiv')) return;
-    Promise.all([loadCSV(sim_url), loadCSV(data_url)])
+    Promise.all([loadCSV(sim_url), loadCSV(data_url), loadPlanetNames()])
         .then(function(results) {
             var simRow  = results[0];
             var allRows = results[1];
@@ -339,23 +462,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // QOI metadata: the planet-class names this ensemble uses, crossed
+            // with the columns its CSV actually has.
+            var qoi = buildQoiInfo(results[2], Object.keys(allRows[0]));
+            var qoi_det_info  = qoi.det;
+            var qoi_char_info = qoi.char;
+
             var simBigTitle = 'Experiment ' + simRow[0].experiment +
                               ', Ensemble Size ' + simRow[0].ensemble_size;
-
-            // Extract fieldname lists by category from the CSV columns.
-            // gen: per-star metrics common to both detection and characterization
-            var all_fieldnames    = Object.keys(allRows[0]);
-            var qoi_gen_fieldnames  = all_fieldnames
-                .filter(function(n) { return n.match(/h_star_.*_per_star_mean/); }).sort();
-            var qoi_det_fieldnames  = all_fieldnames
-                .filter(function(n) { return n.match(/h_star_(?:det|promo).*_mean/); })
-                .sort().concat(qoi_gen_fieldnames);
-            var qoi_char_fieldnames = all_fieldnames
-                .filter(function(n) { return n.match(/h_star_char.*_mean/); })
-                .sort().concat(qoi_gen_fieldnames);
-
-            var qoi_det_info  = matchFieldnamesToInfo(qoi_det_fieldnames);
-            var qoi_char_info = matchFieldnamesToInfo(qoi_char_fieldnames);
 
             // Render initial plots.
             plotFromRows('detPlotDiv',  qoi_det_info[0],  allRows, simBigTitle);
