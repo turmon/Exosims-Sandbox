@@ -80,6 +80,9 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 # for the ensemble-size annotation, so it reads the same as the gallery plots
 from plot_drm_gallery import common_style as cs
+# shared with plot_drm_rad_sma_chars.py, which draws the same plane
+from plot_drm_gallery.rad_sma_common import (EARTH_STYLE, L_BIN_COLORS,
+                                                 earthlike_polygon_xy)
 from matplotlib.patches import Rectangle, Polygon
 from matplotlib.ticker import FuncFormatter
 
@@ -283,24 +286,6 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True, names=Non
             txt += r'^{{\pm}%#.2g}' % (x_lo, )
     return '$' + txt + '$'
 
-## Style and shape of the polygon outlining the earthlike region.  Used both
-## on the plot proper and for its legend swatch, so they cannot drift apart.
-EARTH_STYLE = dict(fill=False,
-                   facecolor=None,
-                   edgecolor='lightgreen',
-                   linewidth=2.0,
-                   alpha=0.7, # tiny bit of transparency
-                   hatch='/')
-
-def earthlike_polygon_xy(binner):
-    r'''Return the vertices of the "Nevada-shaped" earthlike region, as (x, y).'''
-    x = np.array([binner.Earth_SMA_lo, binner.Earth_SMA_hi,
-                  binner.Earth_SMA_hi, binner.Earth_SMA_lo])
-    y = np.array([binner.Earth_Rp_hi,  binner.Earth_Rp_hi,
-                  binner.Earth_Rp_lo2, binner.Earth_Rp_lo1])
-    return x, y
-
-
 ## Legend swatch for the earthlike region: a fixed-size rectangle in the lower
 ## left of the figure, outside the axes.  In figure fractions: (x0, y0, w, h).
 ## Chosen to clear the x tick labels (which start at y = 0.08) and the centered
@@ -355,7 +340,7 @@ def make_koppa_boxes(args, ax, hist):
 
     # L bins are in high...low order; a-bins are in low-high order
     #   colors below tweaked repeatedly, formerly "tomato"
-    style_for_L = [dict(facecolor=fc) for fc in ('xkcd:pastel red', 'dodgerblue', 'lightskyblue')]
+    style_for_L = [dict(facecolor=fc) for fc in L_BIN_COLORS]
     style_for_all = dict(edgecolor='white')
     x_axis_bump = [0.8, 1.0, 1.3] # visual tweak of text label locations
     

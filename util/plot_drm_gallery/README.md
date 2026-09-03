@@ -18,12 +18,22 @@ util/plot_drm_gallery/
   plot_drm_fuel_used.py     Fuel use and delta-v vs. time
   plot_drm_promote.py       Promotion funnel plots
   plot_drm_radlum.py        Radius-luminosity scatter/histogram
+  plot_drm_rad_sma_chars.py Successful chars in radius/SMA coordinates
   plot_drm_star_targets.py  Star target observation plots
   plot_drm_time_used.py     Time allocation breakdown
   plot_drm_visit_times.py   Visit time distribution plots
   plot_drm_yield_times.py   Yield vs. time plots
   apply_planet_overlay.py   Planet overlay utility (not a plot module)
+  rad_sma_common.py         Radius/SMA plot furniture (not a plot module)
 ```
+
+`rad_sma_common.py` holds the 5x3 Kopparapu bin rectangles, their colors, and
+the outline of the earthlike region.  It is shared with
+`util/rad-sma-rectangle-bin-plot.py`, which draws the same plane, so the two
+cannot drift apart.  Its `configured_binner()` is the way to get an `RpLBins`:
+that class refuses to instantiate until `customize_parameters()` has been
+called, and class-level customization does not survive into the driver's
+worker processes, so each plot re-applies it.
 
 The driver lives one level up:
 
@@ -75,6 +85,7 @@ Current registry entries:
 | promote        | promote, promote-hist           |
 | star_targets   | star-target                     |
 | earth_chars    | earth-char-list                 |
+| rad_sma_chars  | earth-char-list                 |
 | radlum         | radlum, earth                   |
 
 ### The `mode` Dict
@@ -99,6 +110,10 @@ Metadata from the top-level summary file `reduce-info.csv`, converted to a dict.
 Keys we use include `experiment` (scenario name) and `ensemble_size`
 (number of runs/DRMs). Passed to every plot function for use in
 titles via `cs.plot_make_title(reduce_info)`.
+
+`_sim_dir` is the scenario directory the CSVs came from, merged in by
+`cs.load_reduce_info()`.  Use it when a plot needs more of `config-reduce.json`
+than the display names -- the bin geometry, say.
 
 `ensemble_size` is not part of the title: it is annotated along the bottom of
 the figure ("(N = 100 runs)") by `PlotTracker`, which needs `reduce_info` at

@@ -210,10 +210,13 @@ def load_reduce_info(src_tmpl):
     each module's standalone main(), so the two entry points agree.
 
     Note: the names ride along as plain strings, so they survive pickling into
-    the driver's multiprocessing workers.
+    the driver's multiprocessing workers.  So does the scenario directory,
+    recorded as "_sim_dir" for the use of plots that need more of
+    config-reduce.json than its names (see rad_sma_common.configured_binner).
     """
     fn_info = src_tmpl % ('info', 'csv')
     reduce_info = pd.read_csv(fn_info).iloc[0].to_dict()
     sim_dir = os.path.dirname(fn_info) or '.'
     reduce_info.update(PlanetNames.from_dir(sim_dir).to_reduce_info())
+    reduce_info['_sim_dir'] = sim_dir
     return reduce_info

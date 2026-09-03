@@ -127,6 +127,14 @@ PLOT_REGISTRY = [
         'enabled': True,
         'mode': {},
     },
+    {
+        'name': 'rad_sma_chars',
+        'module': 'plot_drm_rad_sma_chars',
+        'function': 'plot_drm_rad_sma_chars',
+        'csv_files': ['earth-char-list'],
+        'enabled': True,
+        'mode': {},
+    },
 ]
 
 
