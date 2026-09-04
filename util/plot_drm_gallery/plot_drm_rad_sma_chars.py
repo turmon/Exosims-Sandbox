@@ -14,7 +14,6 @@ data, so a point can be located against the class definition it satisfies.
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
 import argparse
 import sys
 import os
@@ -31,12 +30,6 @@ PROGNAME = os.path.basename(sys.argv[0])
 
 # columns we cannot do without (added to reduce-earth-char-list.csv in 9/2026)
 NEEDED_COLUMNS = ('is_success', 'Rp', 'sma_scaled')
-
-# grid resolution for the density estimate, per axis
-KDE_GRID = 160
-# contour levels, as a fraction of the peak density: below the first one,
-# nothing is filled, so the bins underneath stay visible
-KDE_LEVELS = np.linspace(0.05, 1.0, 10)
 
 
 def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
@@ -146,10 +139,9 @@ def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
     # B: Kernel density
     ####################################################################
 
-    # The axes are log-log, so estimate the density in log coordinates
-    x, y = np.log10(sma), np.log10(rp)
+    # estimated in log coordinates, on the bin grid -- see rsc.kde_on_bins
     try:
-        kernel = gaussian_kde(np.vstack((x, y)))
+        Xg, Yg, Z, _n_used = rsc.kde_on_bins(sma, rp, binner)
     except (ValueError, np.linalg.LinAlgError) as e:
         # too few points, or all of them collinear/identical
         # (scipy's message is a paragraph; the first sentence is the reason)
@@ -157,16 +149,10 @@ def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
                   f'({n_ok} points): {str(e).split(".")[0]}')
         return tracker.get_files()
 
-    (sma_lo, sma_hi), (rp_lo, rp_hi) = rsc.koppa_bin_extent(binner)
-    xg = np.linspace(np.log10(sma_lo), np.log10(sma_hi), KDE_GRID)
-    yg = np.linspace(np.log10(rp_lo),  np.log10(rp_hi),  KDE_GRID)
-    Xg, Yg = np.meshgrid(xg, yg)
-    Z = kernel(np.vstack((Xg.ravel(), Yg.ravel()))).reshape(Xg.shape)
-
     fig, ax = plt.subplots(figsize=(8.5, 5))
     # bins are context here, not the subject: hold them back
     rsc.draw_koppa_boxes(ax, binner, alpha=0.30)
-    cs_kde = ax.contourf(10.0**Xg, 10.0**Yg, Z, levels=KDE_LEVELS * Z.max(),
+    cs_kde = ax.contourf(Xg, Yg, Z, levels=rsc.KDE_LEVELS * Z.max(),
                          cmap='magma_r', alpha=0.85, zorder=3, extend='max')
     # over the density, not under it: the kernel smooths across the class
     # boundary, so the boundary has to stay visible to read the plot

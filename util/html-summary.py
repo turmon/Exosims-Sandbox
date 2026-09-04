@@ -117,6 +117,17 @@ SECTION_HEADS = {
             arising due to planet types not present in the selected population.
             The "Popuation" plot allows verification that planets are being generated at the 
             correct rate, e.g., verification of {eta_html}.''',
+    'rad-sma-density': '''Kernel density estimates of where planets lie in the
+            radius/SMA plane, smoothed in log-log coordinates, with density
+            given per dex<sup>2</sup>.  The three plots are the mission funnel:
+            the planet population, those detected at least once, and those
+            characterized.
+            <p>"All planets" means planets around stars the mission observed,
+            which is what the reduction tabulates; planets around stars that
+            were never visited do not appear.  For a large population the
+            estimate is made from a capped random sample, and the plot title
+            says so.  Because the kernel smooths across the {planet_adj} class
+            boundary, some density appears outside the outlined region.''',
     'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
             Frequency values between plots when x-axis units are the same are comparable,
@@ -570,6 +581,7 @@ class SimSummary(object):
         ('/det-perstar-char', 'perstar-char'),
         ('/det-radlum', 'radlum'),
         ('/det-rad-sma', 'rad-sma'),
+        ('/det-planet-pop', 'rad-sma-density'),
         ('/det-duration', 'duration'),
         ('/det-event-count', 'event-count'),
         ('/det-visit-time', 'visit-time'),
@@ -592,6 +604,8 @@ class SimSummary(object):
     graphics_show = {
         'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics'),
         'rad-sma':     GraphicsDescription('Radius/SMA',                 'graphics'),
+        'rad-sma-density':
+                       GraphicsDescription('Radius/SMA Densities',       'graphics'),
         'duration':    GraphicsDescription('Event Duration',             'graphics'),
         'event-count': GraphicsDescription('Event Count',                'graphics'),
         'visit-time':  GraphicsDescription('Visits vs. Time',            'graphics'),

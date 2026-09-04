@@ -135,6 +135,14 @@ PLOT_REGISTRY = [
         'enabled': True,
         'mode': {},
     },
+    {
+        'name': 'planet_pop',
+        'module': 'plot_drm_planet_pop',
+        'function': 'plot_drm_planet_pop',
+        'csv_files': ['planet-population'],
+        'enabled': True,
+        'mode': {},
+    },
 ]
 
 
