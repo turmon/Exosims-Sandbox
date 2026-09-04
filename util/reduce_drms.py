@@ -165,6 +165,17 @@ PROMOTION_PHIST_T2_INX = 36
 PROMOTION_PHIST_NBINS = 40
 PROMOTION_PHIST_BINS = np.arange(PROMOTION_PHIST_NBINS+1)
 
+# Fields of the planet-population table (reduce-planet-population.csv), in
+# output order.  Named here, rather than taken from the first row as the
+# earth-char list does, so the header is written even for an empty table.
+PLANET_POP_FIELDS = ('ensemble', 'pind', 'name', 'sind',
+                     'sma', 'sma_scaled', 'radius', 'mass',
+                     'det_ok', 'char_ok')
+# significant figures for the floats there: this table has a row per planet
+# per sim, so the digits are most of the bytes, and 6 is far beyond the
+# precision of the population draw
+PLANET_POP_SIGFIGS = 4
+
 # filter incoming DRMs to characterization-only?  (disabled)
 #MODE = 'char'
 #MODE = 'det'
@@ -201,6 +212,10 @@ def np_force_string(x):
         return np.char.decode(x)
     except:
         return x
+
+def round_sigfig(x, digits=PLANET_POP_SIGFIGS):
+    r'''Round x to the given number of significant figures.'''
+    return float('%.*g' % (digits, x))
 
 def char_within_band(char, band):
     r'''Does a particular characterization fall within the given notional band?'''
@@ -669,6 +684,90 @@ class SimulationRun(object):
             'h_star_earth_per_star':   earth_per_star,
             }
         rv['_per_star_yield_keys'] = list(rv.keys())
+        return rv
+
+    def ensemble_number(self):
+        r'''The seed number of this sim, taken from its DRM filename (-1 if absent).'''
+        # FIXME: is there a better way than path manipulation to get this?
+        try:
+            return int(os.path.splitext(os.path.basename(self.name))[0])
+        except (ValueError, TypeError):
+            return -1
+
+    def per_planet_yield(self):
+        r'''Tabulate the planet population and its yield, planet-by-planet (for one DRM).
+
+        One record per planet of the simulated universe, giving the planet's
+        physical properties and whether it was ever detected or characterized.
+        Restricted to planets around stars the mission actually visited: the
+        rest would all read det_ok = char_ok = 0, and there are many of them.
+
+        Unlike per_star_yield(), which must keep per-star vectors-of-vectors,
+        the flags here index directly: obs['plan_inds'] holds .spc planet
+        indices, so a scan of the DRM fills two length-nPlans arrays, and the
+        records are composed from them afterward.
+
+        The returned list is concatenated across the ensemble without further
+        processing, by the "_list" convention in regroup_and_accum().
+        '''
+        rv = dict()
+        rv['planet_pop_list'] = []
+        rv['_planet_pop_keys'] = ['planet_pop_list']
+        # the dummy SimulationRun has no planets, and nothing to say
+        n_plan = int(self.spc['nPlans']) if 'nPlans' in self.spc else 0
+        if n_plan == 0:
+            return rv
+
+        ## 1: one scan of the DRM for detections, chars, and stars visited
+        det_ok = np.zeros(n_plan, dtype=bool)
+        char_ok = np.zeros(n_plan, dtype=bool)
+        seen_star = np.zeros(self.Nstar, dtype=bool)
+        # DRM-FMT
+        for obs in self.drm:
+            sind = obs['star_ind']
+            seen_star[sind] = True
+            plan_inds = np.array(obs['plan_inds'], dtype=int)
+            if plan_inds.size == 0:
+                continue # star was visited, but has no planets to flag
+            # detections: same det_info/det_time split as per_star_yield()
+            if ('det_info' in obs) or ('det_time' in obs):
+                obs_det = obs['det_info'][0] if 'det_info' in obs else obs
+                det_ok[plan_inds] |= (np.array(obs_det['det_status']) > 0)
+            # chars: full (+1) or partial (-1) both count, OR-ed across bands
+            if ('char_mode' in obs) or ('char_info' in obs):
+                char_info = obs['char_info'] if 'char_info' in obs else [obs]
+                this_char = np.zeros(1, dtype=bool) # loop will expand to vector
+                for char in char_info:
+                    this_char = np.logical_or(this_char,
+                                                  np.array(char['char_status']) != 0)
+                char_ok[plan_inds] |= this_char
+
+        ## 2: compose one record per planet around a visited star
+        ensemble_num = self.ensemble_number()
+        plan2star = np.asarray(self.spc['plan2star'])
+        star_name = np_force_string(self.spc['Name'])
+        # units: AU, earth radii, earth masses -- as is_earthlike() reads them
+        sma_all = strip_units(self.spc['a'])
+        Rp_all = strip_units(self.spc['Rp'])
+        Mp_all = strip_units(self.spc['Mp'])
+        L_star = self.spc['L']
+        for pind in np.where(seen_star[plan2star])[0]:
+            sind = int(plan2star[pind])
+            sma = sma_all[pind]
+            # the luminosity-scaled SMA is what the Rp/SMA bins are defined on
+            sma_scaled = sma / np.sqrt(L_star[sind])
+            rv['planet_pop_list'].append(OrderedDict([
+                ('ensemble',   ensemble_num),
+                ('pind',       int(pind)),
+                ('name',       star_name[sind]),
+                ('sind',       sind),
+                ('sma',        round_sigfig(sma)),
+                ('sma_scaled', round_sigfig(sma_scaled)),
+                ('radius',     round_sigfig(Rp_all[pind])),
+                ('mass',       round_sigfig(Mp_all[pind])),
+                ('det_ok',     int(det_ok[pind])),
+                ('char_ok',    int(char_ok[pind])),
+                ]))
         return rv
 
     def event_analysis(self):
@@ -2395,6 +2494,8 @@ class SimulationRun(object):
         summary.update(self.summarize_revisits())
         # fold in per-star summary of yield, tInt
         summary.update(self.per_star_yield())
+        # fold in the planet-by-planet population and its yield
+        summary.update(self.per_planet_yield())
         # fold in event durations
         summary.update(self.event_analysis())
         # fold in event counts
@@ -2632,7 +2733,7 @@ class EnsembleSummary(object):
                                'funnel', 'detfunnel', 
                                'per_star_yield', 'per_star_promotion', 'resource_analysis',
                                'summarize_revisits', 'visit_time', 
-                               'earth_char', 'yield_time', 'target_depletion', 
+                               'earth_char', 'planet_pop', 'yield_time', 'target_depletion', 
                                'radlum', 'earth', 'delta_v'):
             # e.g., all 'promo_count' attrs are found by looking up '_promo_count_keys' in reductions
             attrs_new = self.get_key_family_attrs(reductions, '_%s_keys' % key_family)
@@ -3168,6 +3269,22 @@ class EnsembleSummary(object):
             w.writeheader()
             # dictionary mapping field -> value
             for row in earth_char_data:
+                # dictionary mapping field -> value
+                w.writerow(row)
+        ensure_permissions(fn)
+
+        # 8b: planet-population analysis
+        fn = args.outfile % ('planet-population', 'csv')
+        print('\tDumping to %s' % fn)
+        # named field for the planet list (it's just one field in self.summary, hence [0])
+        planet_pop_qoi = self.auto_keys.get('planet_pop', [])
+        planet_pop_data = self.summary[planet_pop_qoi[0]] if planet_pop_qoi else []
+        # NB: unlike the earth-char list above, the field names are fixed
+        # (PLANET_POP_FIELDS), so the header is written even with no rows
+        with open(fn, 'w') as csvfile:
+            w = csv.DictWriter(csvfile, fieldnames=PLANET_POP_FIELDS)
+            w.writeheader()
+            for row in planet_pop_data:
                 # dictionary mapping field -> value
                 w.writerow(row)
         ensure_permissions(fn)
