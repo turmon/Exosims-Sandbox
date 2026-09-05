@@ -170,7 +170,8 @@ PROMOTION_PHIST_BINS = np.arange(PROMOTION_PHIST_NBINS+1)
 # earth-char list does, so the header is written even for an empty table.
 PLANET_POP_FIELDS = ('ensemble', 'pind', 'name', 'sind',
                      'sma', 'sma_scaled', 'radius', 'mass',
-                     'det_ok', 'char_ok')
+                     'det_ok', 'char_ok',
+                     'star_det_obs', 'star_char_obs')
 # significant figures for the floats there: this table has a row per planet
 # per sim, so the digits are most of the bytes, and 6 is far beyond the
 # precision of the population draw
@@ -722,10 +723,20 @@ class SimulationRun(object):
         det_ok = np.zeros(n_plan, dtype=bool)
         char_ok = np.zeros(n_plan, dtype=bool)
         seen_star = np.zeros(self.Nstar, dtype=bool)
+        # Star-level: was this star *observed* that way, whatever came of it.
+        # Separating this from the planet-level flags separates the scheduler's
+        # choice of target from the response to a planet at a given radius/SMA:
+        # P(planet char'd | present) = P(star observed) x P(planet | observed).
+        seen_star_det = np.zeros(self.Nstar, dtype=bool)
+        seen_star_char = np.zeros(self.Nstar, dtype=bool)
         # DRM-FMT
         for obs in self.drm:
             sind = obs['star_ind']
             seen_star[sind] = True
+            if ('det_info' in obs) or ('det_time' in obs):
+                seen_star_det[sind] = True
+            if ('char_mode' in obs) or ('char_info' in obs):
+                seen_star_char[sind] = True
             plan_inds = np.array(obs['plan_inds'], dtype=int)
             if plan_inds.size == 0:
                 continue # star was visited, but has no planets to flag
@@ -767,6 +778,8 @@ class SimulationRun(object):
                 ('mass',       round_sigfig(Mp_all[pind])),
                 ('det_ok',     int(det_ok[pind])),
                 ('char_ok',    int(char_ok[pind])),
+                ('star_det_obs',  int(seen_star_det[sind])),
+                ('star_char_obs', int(seen_star_char[sind])),
                 ]))
         return rv
 
