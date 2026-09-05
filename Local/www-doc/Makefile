@@ -26,7 +26,7 @@ INDEX_HEAD=index-plot-descriptions-head.md
 INDEX=index-plot-descriptions.md
 
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md $(INDEX)
+SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md planet-population-density.md $(INDEX)
 
 # grep '^Title: ' *.md | sed 's/Title: //' | awk -F : '{print "[" $2 "]" $1}'
 

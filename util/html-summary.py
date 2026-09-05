@@ -127,7 +127,13 @@ SECTION_HEADS = {
             were never visited do not appear.  For a large population the
             estimate is made from a capped random sample, and the plot title
             says so.  Because the kernel smooths across the {planet_adj} class
-            boundary, some density appears outside the outlined region.''',
+            boundary, some density appears outside the outlined region.
+            <p>The "tput" plots are throughputs: conditional probabilities on
+            an absolute 0-1 scale, so their colors mean one thing across the
+            series.  Four more of them, separating the scheduler's choice of
+            target from the response to a planet of a given radius and SMA,
+            are made with <code>make S=... graphics-plus</code>.'''
+,
     'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
             Frequency values between plots when x-axis units are the same are comparable,
@@ -605,7 +611,8 @@ class SimSummary(object):
         'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics'),
         'rad-sma':     GraphicsDescription('Radius/SMA',                 'graphics'),
         'rad-sma-density':
-                       GraphicsDescription('Radius/SMA Densities',       'graphics'),
+                       GraphicsDescription('Radius/SMA Densities',       'graphics',
+                                           filename=WWW_DOC/'planet-population-density.html'),
         'duration':    GraphicsDescription('Event Duration',             'graphics'),
         'event-count': GraphicsDescription('Event Count',                'graphics'),
         'visit-time':  GraphicsDescription('Visits vs. Time',            'graphics'),

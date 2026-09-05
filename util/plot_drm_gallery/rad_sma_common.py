@@ -61,6 +61,15 @@ KDE_MAX_POINTS = 10000
 # contour levels, as a fraction of the peak density: below the first one,
 # nothing is filled, so whatever is drawn underneath stays visible
 KDE_LEVELS = np.linspace(0.05, 1.0, 10)
+# Ratio maps (kde_ratios_on_bins) are probabilities, so their levels are
+# absolute, and the same for every such plot: the colors mean one thing.
+RATIO_LEVELS = np.linspace(0.0, 1.0, 11)
+# Where the denominator has essentially no data the ratio is meaningless, so
+# it is masked: cells holding less than this fraction of the peak kernel
+# weight come back NaN, and contourf leaves them blank.
+RATIO_WEIGHT_FLOOR = 1e-3
+# grid points evaluated per chunk, to bound the (n_points x chunk) work array
+RATIO_CHUNK = 512
 
 
 def configured_binner(sim_dir, log_origin=None):
@@ -143,6 +152,76 @@ def kde_on_bins(sma, rp, binner, grid=KDE_GRID, max_points=KDE_MAX_POINTS, seed=
     Xg, Yg = np.meshgrid(xg, yg)
     Z = kernel(np.vstack((Xg.ravel(), Yg.ravel()))).reshape(Xg.shape)
     return 10.0**Xg, 10.0**Yg, Z, n_used
+
+
+def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
+                           max_points=KDE_MAX_POINTS, seed=0):
+    r'''Kernel-regression estimate of P(mask | position) over the 5x3 bins.
+
+    Given points (sma, rp) and one or more boolean masks over those same
+    points, return P(mask is true | this position) as a smooth map, for each
+    mask, along with the grid to plot it on.
+
+    This is deliberately *not* a ratio of two separately-fitted densities.
+    Two gaussian_kde fits choose their bandwidth and orientation from their
+    own samples, so their ratio is not bounded, blows up wherever the
+    denominator thins out, and is not a probability.  Instead the numerator
+    and denominator here are kernel sums over the *same* sample with the
+    *same* kernel:
+
+        P(mask | x) = sum_i w_i(x) mask_i / sum_i w_i(x)
+
+    which is the Nadaraya-Watson estimator of the indicator, and lies in
+    [0, 1] by construction.  Cells where the denominator holds less than
+    RATIO_WEIGHT_FLOOR of its peak weight come back NaN rather than as a
+    ratio of two nearly-zero numbers.
+
+    The kernel is the one gaussian_kde would choose for the denominator
+    sample, so these maps and the density maps are smoothed alike.  Several
+    masks are evaluated in one pass because they share that kernel.
+
+    Returns (X, Y, {name: R}, n_used).
+    '''
+    x, y = np.log10(sma), np.log10(rp)
+    n_used = len(x)
+    if n_used > max_points:
+        inx = np.random.default_rng(seed).choice(n_used, max_points, replace=False)
+        x, y = x[inx], y[inx]
+        masks = {name: m[inx] for name, m in masks.items()}
+        n_used = max_points
+    # borrow scipy's bandwidth choice, then do the weighting ourselves
+    pts = np.vstack((x, y))
+    inv_cov = gaussian_kde(pts).inv_cov
+
+    (sma_lo, sma_hi), (rp_lo, rp_hi) = koppa_bin_extent(binner)
+    xg = np.linspace(np.log10(sma_lo), np.log10(sma_hi), grid)
+    yg = np.linspace(np.log10(rp_lo),  np.log10(rp_hi),  grid)
+    Xg, Yg = np.meshgrid(xg, yg)
+    flat = np.vstack((Xg.ravel(), Yg.ravel()))
+    n_grid = flat.shape[1]
+
+    den = np.zeros(n_grid)
+    num = {name: np.zeros(n_grid) for name in masks}
+    weights = {name: m.astype(float) for name, m in masks.items()}
+    for lo in range(0, n_grid, RATIO_CHUNK):
+        hi = min(lo + RATIO_CHUNK, n_grid)
+        # squared Mahalanobis distance from each grid point to each sample
+        dx = flat[0, lo:hi, None] - pts[0][None, :]
+        dy = flat[1, lo:hi, None] - pts[1][None, :]
+        d2 = (inv_cov[0, 0] * dx * dx + 2 * inv_cov[0, 1] * dx * dy
+                  + inv_cov[1, 1] * dy * dy)
+        w = np.exp(-0.5 * d2)
+        den[lo:hi] = w.sum(axis=1)
+        for name, wt in weights.items():
+            num[name][lo:hi] = w @ wt
+
+    ok = den > den.max() * RATIO_WEIGHT_FLOOR
+    ratios = {}
+    for name in masks:
+        r = np.full(n_grid, np.nan)
+        r[ok] = num[name][ok] / den[ok]
+        ratios[name] = r.reshape(Xg.shape)
+    return 10.0**Xg, 10.0**Yg, ratios, n_used
 
 
 def set_koppa_limits(ax, binner, margin=0.03):
