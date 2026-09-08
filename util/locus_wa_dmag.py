@@ -18,7 +18,7 @@ and:
 Output goes to stdout, which was a mistake.
 
 Typical usage:
-  PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv
+  PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv.gz
 
 '''
 
@@ -27,6 +27,7 @@ import argparse
 import sys
 import os
 import csv
+import gzip
 from collections import defaultdict, Counter
 import numpy as np
 import astropy.units as u
@@ -64,8 +65,11 @@ class RedirectStreams(object):
 def load_csv(infile):
     # load the CSV, convert some types
     info = []
+    # the reduction writes this table gzipped, but an older one, or one made
+    # by hand, is plain text: go by the name we were given
+    opener = gzip.open if infile.endswith('.gz') else open
     try:
-        with open(infile, 'r') as csvfile:
+        with opener(infile, 'rt') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
             for row in reader:
                 info.append(row)

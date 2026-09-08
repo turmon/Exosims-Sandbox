@@ -179,7 +179,8 @@ Example usage:
     plot_drm_rad_sma_chars.py SOURCE_TEMPLATE OUTPUT_TEMPLATE
 
 The first argument is the source template with two %s placeholders that will be
-filled with ("info", "csv") and ("earth-char-list", "csv") to locate input files.
+filled with ("info", "csv") and ("earth-char-list", "csv[.gz]") to locate input
+files -- the char list is written gzipped, and either spelling is accepted.
 
 The second argument is the destination template with two %s placeholders for
 the plot name and file extension.

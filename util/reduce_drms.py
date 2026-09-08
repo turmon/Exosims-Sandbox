@@ -3265,7 +3265,10 @@ class EnsembleSummary(object):
         ensure_permissions(fn)
 
         # 8: earth-char-attempts analysis
-        fn = args.outfile % ('earth-char-list', 'csv')
+        # Written gzipped: a row per characterization attempt is one of the
+        # two big reduction outputs, and it compresses ~4x.  Readers find it
+        # either way, through common_style.resolve_csv_path().
+        fn = args.outfile % ('earth-char-list', 'csv.gz')
         print('\tDumping to %s' % fn)
         # named fields for earth-char list (it's just one field in self.summary, hence [0])
         earth_char_qoi = self.auto_keys.get('earth_char', [])[0]
@@ -3274,8 +3277,14 @@ class EnsembleSummary(object):
         # compose the names of all fields to be saved
         # initial list
         earth_char_fields = list(earth_char_data[0].keys()) if earth_char_data else []
+        # a plain .csv here is an earlier reduction's, and readers prefer it to
+        # the .gz, so it would silently shadow what we are writing now
+        fn_stale = args.outfile % ('earth-char-list', 'csv')
+        if os.path.exists(fn_stale):
+            print('\tRemoving superseded %s' % fn_stale)
+            os.remove(fn_stale)
         # NB: earth_char_* quantities are scalars!
-        with open(fn, 'w') as csvfile:
+        with gzip.open(fn, 'wt', newline='') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=earth_char_fields)
             w.writeheader()
             # dictionary mapping field -> value
@@ -3285,9 +3294,8 @@ class EnsembleSummary(object):
         ensure_permissions(fn)
 
         # 8b: planet-population analysis
-        # This table has a row per planet per sim -- tens of MB for a 100-run
-        # ensemble -- and it compresses about 5x, so it alone is written
-        # gzipped.  Readers find it through common_style.resolve_csv_path().
+        # Gzipped for the same reason as the earth-char list above: a row
+        # per planet per sim is tens of MB for a 100-run ensemble.
         fn = args.outfile % ('planet-population', 'csv.gz')
         print('\tDumping to %s' % fn)
         # named field for the planet list (it's just one field in self.summary, hence [0])

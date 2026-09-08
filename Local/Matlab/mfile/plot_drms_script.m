@@ -99,8 +99,8 @@ t_star_targ = readtable(sprintf(in_tmpl, 'star-target', 'csv'));
 t_events = readtable(sprintf(in_tmpl, 'events', 'csv'));
 % event count table
 t_event_counts = readtable(sprintf(in_tmpl, 'event-counts', 'csv'));
-% earth char list
-t_earth_chars = readtable(sprintf(in_tmpl, 'earth-char-list', 'csv'));
+% earth char list (written gzipped, so go through the helper)
+t_earth_chars = read_reduce_table(in_tmpl, 'earth-char-list');
 % yield-vs-time table
 %   yield-vs-time is a superset of old det-vs-time info
 t_yield_time = readtable(sprintf(in_tmpl, 'yield-time', 'csv'));
