@@ -3,7 +3,7 @@ r"""
 Plot the simulated planet population, and its yield, as densities.
 
 Six plots over the radius vs. luminosity-scaled-SMA plane, from
-reduce-planet-population.csv.  Three kernel densities -- all the planets in
+reduce-planet-population.csv.gz.  Three kernel densities -- all the planets in
 the table, those that were detected, and those that were characterized --
 and three conditional probabilities read off the same plane: the chance that
 a planet at a given radius and SMA was detected, was characterized, and was
@@ -276,7 +276,8 @@ Example usage:
     plot_drm_planet_pop.py SOURCE_TEMPLATE OUTPUT_TEMPLATE
 
 The first argument is the source template with two %s placeholders that will be
-filled with ("info", "csv") and ("planet-population", "csv") to locate inputs.
+filled with ("info", "csv") and ("planet-population", "csv[.gz]") to locate
+inputs -- the population table is written gzipped, and either is accepted.
 
 The second argument is the destination template with two %s placeholders for
 the plot name and file extension.

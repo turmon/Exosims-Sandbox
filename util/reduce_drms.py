@@ -95,6 +95,7 @@ from pathlib import Path
 import gc
 import csv
 import re
+import gzip
 import warnings
 from functools import partial
 from collections import defaultdict, Counter, namedtuple, OrderedDict
@@ -165,11 +166,11 @@ PROMOTION_PHIST_T2_INX = 36
 PROMOTION_PHIST_NBINS = 40
 PROMOTION_PHIST_BINS = np.arange(PROMOTION_PHIST_NBINS+1)
 
-# Fields of the planet-population table (reduce-planet-population.csv), in
+# Fields of the planet-population table (reduce-planet-population.csv.gz), in
 # output order.  Named here, rather than taken from the first row as the
 # earth-char list does, so the header is written even for an empty table.
-PLANET_POP_FIELDS = ('ensemble', 'pind', 'name', 'sind',
-                     'sma', 'sma_scaled', 'radius', 'mass',
+PLANET_POP_FIELDS = ('ensemble', 'pind', 'sind',
+                     'sma', 'sma_scaled', 'radius',
                      'det_ok', 'char_ok',
                      'star_det_obs', 'star_char_obs')
 # significant figures for the floats there: this table has a row per planet
@@ -756,11 +757,10 @@ class SimulationRun(object):
         ## 2: compose one record per planet around a visited star
         ensemble_num = self.ensemble_number()
         plan2star = np.asarray(self.spc['plan2star'])
-        star_name = np_force_string(self.spc['Name'])
+        #star_name = np_force_string(self.spc['Name'])
         # units: AU, earth radii, earth masses -- as is_earthlike() reads them
         sma_all = strip_units(self.spc['a'])
         Rp_all = strip_units(self.spc['Rp'])
-        Mp_all = strip_units(self.spc['Mp'])
         L_star = self.spc['L']
         for pind in np.where(seen_star[plan2star])[0]:
             sind = int(plan2star[pind])
@@ -770,12 +770,10 @@ class SimulationRun(object):
             rv['planet_pop_list'].append(OrderedDict([
                 ('ensemble',   ensemble_num),
                 ('pind',       int(pind)),
-                ('name',       star_name[sind]),
                 ('sind',       sind),
                 ('sma',        round_sigfig(sma)),
                 ('sma_scaled', round_sigfig(sma_scaled)),
                 ('radius',     round_sigfig(Rp_all[pind])),
-                ('mass',       round_sigfig(Mp_all[pind])),
                 ('det_ok',     int(det_ok[pind])),
                 ('char_ok',    int(char_ok[pind])),
                 ('star_det_obs',  int(seen_star_det[sind])),
@@ -3287,14 +3285,23 @@ class EnsembleSummary(object):
         ensure_permissions(fn)
 
         # 8b: planet-population analysis
-        fn = args.outfile % ('planet-population', 'csv')
+        # This table has a row per planet per sim -- tens of MB for a 100-run
+        # ensemble -- and it compresses about 5x, so it alone is written
+        # gzipped.  Readers find it through common_style.resolve_csv_path().
+        fn = args.outfile % ('planet-population', 'csv.gz')
         print('\tDumping to %s' % fn)
         # named field for the planet list (it's just one field in self.summary, hence [0])
         planet_pop_qoi = self.auto_keys.get('planet_pop', [])
         planet_pop_data = self.summary[planet_pop_qoi[0]] if planet_pop_qoi else []
+        # a plain .csv here would be an earlier reduction's, and readers prefer
+        # it to the .gz, so it would silently shadow what we are writing now
+        fn_stale = args.outfile % ('planet-population', 'csv')
+        if os.path.exists(fn_stale):
+            print('\tRemoving superseded %s' % fn_stale)
+            os.remove(fn_stale)
         # NB: unlike the earth-char list above, the field names are fixed
         # (PLANET_POP_FIELDS), so the header is written even with no rows
-        with open(fn, 'w') as csvfile:
+        with gzip.open(fn, 'wt', newline='') as csvfile:
             w = csv.DictWriter(csvfile, fieldnames=PLANET_POP_FIELDS)
             w.writeheader()
             for row in planet_pop_data:

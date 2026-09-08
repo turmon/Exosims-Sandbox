@@ -195,7 +195,9 @@ Options are the same subset: `--mode_op`, `-v`/`--verbose`, `-q`/`--quiet`.
 
 Standalone modules use `cs.load_csv_files()` to load their own CSVs, and
 `cs.load_reduce_info()` for the metadata (the driver does both centrally when
-dispatching).
+dispatching).  Either loader accepts a table written as `.csv` or as `.csv.gz`
+(the larger ones, like `reduce-planet-population.csv.gz`, are compressed);
+`cs.resolve_csv_path()` is what settles which one is there.
 
 
 ## Adding a New Plot Module

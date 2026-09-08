@@ -8,7 +8,7 @@ lives on the same axes as the Kopparapu bin plots: planet radius against
 luminosity-scaled semi-major axis, both logarithmic. The 5x3 bins and the
 outline of the earthlike region are drawn behind the data as context.
 
-The data source is `reduce-planet-population.csv`, one row per planet per
+The data source is `reduce-planet-population.csv.gz`, one row per planet per
 simulation, produced by `per_planet_yield()` in `reduce_drms.py`. The columns
 used here are `sma_scaled`, `radius`, and four flags: `det_ok`, `char_ok`,
 `star_det_obs`, `star_char_obs`.

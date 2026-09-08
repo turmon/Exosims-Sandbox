@@ -174,6 +174,25 @@ def plot_make_title(reduce_info):
     return rv
 
 
+def resolve_csv_path(src_tmpl, csv_name):
+    """Return the path of one reduction table, gzipped or not.
+
+    Most reduction outputs are plain CSV, but the larger ones (the
+    planet-population table) are written as .csv.gz, so every reader has to
+    be prepared for either.  Plain .csv wins when both are present: it is the
+    format the reduction used to write, and a hand-made or hand-edited file
+    should override the compressed one.
+
+    Returns None if neither spelling exists.  pandas reads .gz by extension,
+    so the caller needs nothing else.
+    """
+    for ext in ('csv', 'csv.gz'):
+        csv_path = src_tmpl % (csv_name, ext)
+        if os.path.exists(csv_path):
+            return csv_path
+    return None
+
+
 def load_csv_files(src_tmpl, csv_files):
     """Load CSV files and return as a list of DataFrames.
 
@@ -181,7 +200,7 @@ def load_csv_files(src_tmpl, csv_files):
     """
     dataframes = []
     for csv_name in csv_files:
-        csv_path = src_tmpl % (csv_name, 'csv')
+        csv_path = resolve_csv_path(src_tmpl, csv_name) or src_tmpl % (csv_name, 'csv')
         try:
             dataframes.append(pd.read_csv(csv_path))
         except Exception as e:

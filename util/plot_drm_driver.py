@@ -169,9 +169,10 @@ def load_csv_files(src_tmpl, csv_files, plot_name):
     Missing files are just warnings."""
     dataframes = []
     for csv_file in csv_files:
-        filepath = src_tmpl % (csv_file, 'csv')
-        if not os.path.exists(filepath):
-            print(f"{PROGNAME}: Warning: CSV file '{filepath}' not found, skipping {plot_name} plot",
+        # either spelling, .csv or .csv.gz (see cs.resolve_csv_path)
+        filepath = cs.resolve_csv_path(src_tmpl, csv_file)
+        if filepath is None:
+            print(f"{PROGNAME}: Warning: CSV file '{src_tmpl % (csv_file, 'csv')}' not found, skipping {plot_name} plot",
                   file=sys.stderr)
             return None
         try:
