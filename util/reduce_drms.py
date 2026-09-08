@@ -166,16 +166,9 @@ PROMOTION_PHIST_T2_INX = 36
 PROMOTION_PHIST_NBINS = 40
 PROMOTION_PHIST_BINS = np.arange(PROMOTION_PHIST_NBINS+1)
 
-# Fields of the planet-population table (reduce-planet-population.csv.gz), in
-# output order.  Named here, rather than taken from the first row as the
-# earth-char list does, so the header is written even for an empty table.
-PLANET_POP_FIELDS = ('ensemble', 'pind', 'sind',
-                     'sma', 'sma_scaled', 'radius',
-                     'det_ok', 'char_ok',
-                     'star_det_obs', 'star_char_obs')
-# Significant figures for the floats in the two per-row list tables (the
-# planet population above, and the earth-char list).  These tables have a row
-# per planet or per attempt, rather than per bin, so their digits are most of
+# Significant figures for the floats in the two per-row list tables, the
+# earth-char list and the planet population.  These tables have a row per
+# attempt or per planet, rather than per bin, so their digits are most of
 # their bytes -- and 4 is already beyond the precision of a population draw or
 # a photometric estimate.
 LIST_TABLE_SIGFIGS = 4
@@ -3301,25 +3294,34 @@ class EnsembleSummary(object):
         # Gzipped for the same reason as the earth-char list above: a row
         # per planet per sim is tens of MB for a 100-run ensemble.
         fn = args.outfile % ('planet-population', 'csv.gz')
-        print('\tDumping to %s' % fn)
         # named field for the planet list (it's just one field in self.summary, hence [0])
         planet_pop_qoi = self.auto_keys.get('planet_pop', [])
         planet_pop_data = self.summary[planet_pop_qoi[0]] if planet_pop_qoi else []
         # a plain .csv here would be an earlier reduction's, and readers prefer
-        # it to the .gz, so it would silently shadow what we are writing now
+        # it to the .gz, so it would silently shadow what we write now
         fn_stale = args.outfile % ('planet-population', 'csv')
         if os.path.exists(fn_stale):
             print('\tRemoving superseded %s' % fn_stale)
             os.remove(fn_stale)
-        # NB: unlike the earth-char list above, the field names are fixed
-        # (PLANET_POP_FIELDS), so the header is written even with no rows
-        with gzip.open(fn, 'wt', newline='') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=PLANET_POP_FIELDS)
-            w.writeheader()
-            for row in planet_pop_data:
-                # dictionary mapping field -> value
-                w.writerow(row)
-        ensure_permissions(fn)
+        # The field names, and their order, come from the records themselves
+        # (per_planet_yield), which is the one place the schema is stated.
+        # With no records there is no schema to write, so leave no table
+        # rather than an unreadable one: readers treat an absent table the
+        # same as a reduction predating it, and skip.
+        if not planet_pop_data:
+            print('\tNo planet-population rows: not writing %s' % fn)
+            if os.path.exists(fn):
+                os.remove(fn)
+        else:
+            print('\tDumping to %s' % fn)
+            planet_pop_fields = list(planet_pop_data[0].keys())
+            with gzip.open(fn, 'wt', newline='') as csvfile:
+                w = csv.DictWriter(csvfile, fieldnames=planet_pop_fields)
+                w.writeheader()
+                for row in planet_pop_data:
+                    # dictionary mapping field -> value
+                    w.writerow(row)
+            ensure_permissions(fn)
 
         # 9: yield-vs-time analysis
         fn = args.outfile % ('yield-time', 'csv')
