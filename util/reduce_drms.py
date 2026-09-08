@@ -173,10 +173,12 @@ PLANET_POP_FIELDS = ('ensemble', 'pind', 'sind',
                      'sma', 'sma_scaled', 'radius',
                      'det_ok', 'char_ok',
                      'star_det_obs', 'star_char_obs')
-# significant figures for the floats there: this table has a row per planet
-# per sim, so the digits are most of the bytes, and 6 is far beyond the
-# precision of the population draw
-PLANET_POP_SIGFIGS = 4
+# Significant figures for the floats in the two per-row list tables (the
+# planet population above, and the earth-char list).  These tables have a row
+# per planet or per attempt, rather than per bin, so their digits are most of
+# their bytes -- and 4 is already beyond the precision of a population draw or
+# a photometric estimate.
+LIST_TABLE_SIGFIGS = 4
 
 # filter incoming DRMs to characterization-only?  (disabled)
 #MODE = 'char'
@@ -215,7 +217,7 @@ def np_force_string(x):
     except:
         return x
 
-def round_sigfig(x, digits=PLANET_POP_SIGFIGS):
+def round_sigfig(x, digits=LIST_TABLE_SIGFIGS):
     r'''Round x to the given number of significant figures.'''
     return float('%.*g' % (digits, x))
 
@@ -1303,14 +1305,16 @@ class SimulationRun(object):
                         ('is_success', int(this_char_yield[earth_inx])),
                         ('is_deep', int(sind_deep)),
                         ('is_promo', int(sind_promo)),
-                        ('Rp',         Rp_1),
-                        ('sma',        sma_1),
-                        ('sma_scaled', sma_scaled_1),
-                        ('WA',   parms['WA']    [earth_inx].to('mas').value),
-                        ('dMag', parms['dMag']  [earth_inx]),
-                        ('phi',  parms['phi']   [earth_inx]),
-                        ('char_SNR', char_SNR_1),
-                        ('MV', Vmag[sind]),
+                        # rounded (round_sigfig) because full repr precision here
+                        # is meaningless and is most of the file's bytes
+                        ('Rp',         round_sigfig(Rp_1)),
+                        ('sma',        round_sigfig(sma_1)),
+                        ('sma_scaled', round_sigfig(sma_scaled_1)),
+                        ('WA',   round_sigfig(parms['WA'][earth_inx].to('mas').value)),
+                        ('dMag', round_sigfig(parms['dMag'] [earth_inx])),
+                        ('phi',  round_sigfig(parms['phi']  [earth_inx])),
+                        ('char_SNR', round_sigfig(char_SNR_1)),
+                        ('MV', round_sigfig(Vmag[sind])),
                         ])
                     rv['earth_char_list'].append(char_dict)
                     # FIXME: temporary, for investigating char fails (2/2019)
