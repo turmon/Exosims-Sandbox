@@ -56,16 +56,18 @@ POPULATIONS = {
 # Each is P(numerator | denominator) as a function of position in the plane.
 # Stems sort after "density" so they follow those plots on the ensemble page.
 #
-# The last four are extras (mode_op "+"), and are there because the funnel is
+# The last five are extras (mode_op "+"), and are there because the funnel is
 # not a chain: characterization draws both from detected planets and, as
-# bycatch, from planets never detected.  all2starchar x starchar2char
-# factors all2char into the scheduler's choice of target and the response to
-# a planet at a given radius/SMA; nodet2char is the bycatch rate that det2char
-# cannot see; char2det says which of the two channels fed the chars here.
+# bycatch, from planets never detected.  det2char is an extra for that same
+# reason -- it covers only the targeted channel, so on its own it reads as
+# "the" char throughput and is not.  all2starchar x starchar2char factors
+# all2char into the scheduler's choice of target and the response to a planet
+# at a given radius/SMA; nodet2char is the bycatch rate that det2char cannot
+# see; char2det says which of the two channels fed the chars here.
 RATIOS = (
     ('tput-all2det',       'all',      'det',      'Detected | Planet Present',      False),
     ('tput-all2char',      'all',      'char',     'Characterized | Planet Present', False),
-    ('tput-det2char',      'det',      'char',     'Characterized | Detected',       False),
+    ('tput-det2char',      'det',      'char',     'Characterized | Detected',       True),
     ('tput-all2starchar',  'all',      'starchar', 'Star Observed for Char. | Planet Present', True),
     ('tput-starchar2char', 'starchar', 'char',     'Characterized | Star Observed for Char.',  True),
     ('tput-nodet2char',    'nodet',    'char',     'Characterized | Not Detected',   True),
@@ -96,8 +98,8 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         planet-pop-density-char.png
         planet-pop-tput-all2det.png
         planet-pop-tput-all2char.png
-        planet-pop-tput-det2char.png
     and, with mode_op "+":
+        planet-pop-tput-det2char.png
         planet-pop-tput-all2starchar.png
         planet-pop-tput-starchar2char.png
         planet-pop-tput-nodet2char.png

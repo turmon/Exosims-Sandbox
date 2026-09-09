@@ -111,7 +111,7 @@ nearly-zero numbers.
 
 ## The plots
 
-Six are always produced; four more with `mode_op` set to `+`
+Five are always produced; five more with `mode_op` set to `+`
 (`make S=... graphics-plus`). All are named `det-planet-pop-*.png` and appear
 in the *Radius/SMA Densities* section of the ensemble page.
 
@@ -122,7 +122,7 @@ in the *Radius/SMA Densities* section of the ensemble page.
 | `density-char`       | density of C, characterized planets                  |     |
 | `tput-all2det`       | P(detected \| planet present)                        |     |
 | `tput-all2char`      | P(characterized \| planet present)                   |     |
-| `tput-det2char`      | P(characterized \| detected) -- the targeted path only |   |
+| `tput-det2char`      | P(characterized \| detected) -- the targeted path only | x |
 | `tput-all2starchar`  | P(star observed for char. \| planet present) -- *targeting* | x |
 | `tput-starchar2char` | P(characterized \| star observed for char.) -- *response*   | x |
 | `tput-nodet2char`    | P(characterized \| not detected) -- the *bycatch rate*      | x |

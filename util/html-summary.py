@@ -128,7 +128,7 @@ SECTION_HEADS = {
             boundary, some density appears outside the outlined region.
             <p>The "tput" plots are throughputs: conditional probabilities on
             an absolute 0-1 scale.
-            Four more of them, separating the scheduler's choice of
+            Five more of them, separating the scheduler's choice of
             target from the response to a planet of a given radius and SMA,
             are made with <code>make S=... graphics-extra</code>.'''
 ,
