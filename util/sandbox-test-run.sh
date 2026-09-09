@@ -221,14 +221,15 @@ function check_programs() {
     python --version || die "No python"
     which parallel || die 'parallel not found'
     parallel --version | head -1
-    which matlab || die 'matlab not found'
-    echo "exit" | matlab -nodisplay -nosplash -nodesktop |& grep -v '^$' | head -4
+    # matlab is no longer a requirement!
+    # which matlab || die 'matlab not found'
+    # echo "exit" | matlab -nodisplay -nosplash -nodesktop |& grep -v '^$' | head -4
     }
 
 ################################################################################
 # check that we can ssh without password, for parallel runs
 
-REMOTES="aftac1 aftac2 aftac3 mustang2 mustang3 mustang4"
+REMOTES="mustang2 mustang3 mustang4"
 
 function check_ssh() {
     ssh_fails=

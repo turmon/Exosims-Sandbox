@@ -206,7 +206,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     
     fig, ax = plt.subplots(figsize=(8.5, 5))
     
-    # Dets/chars -- plot order changed in python vs. matlab to harmonize "char" colors
+    # Dets/chars -- plot order changed (mid-2026) to harmonize "char" colors
     names = ['h_event_count_det_rvplan', 'h_event_count_char_rvplan', 'h_event_count_char']
     names_legend = ['Detections, RV Targets', 'Characterizations, RV Targets', 'Characterizations, Any']
     n_plot = len(names)

@@ -4,8 +4,9 @@
 These are some of
 the plots we make summarizing an ensemble
 using compiled histograms.
-Done using Matlab-based plotting of 
-CSV files produced by `reduce-drms.py`.
+Done using matplotlib-based plotting of 
+CSV files produced by `reduce-drms.py`;
+see `util/plot_drm_gallery/`.
 
 ## Detections vs. Time 
 

@@ -117,8 +117,7 @@ REDUCE_PROG=util/reduce_drms.py
 # program used for reduction of multi-ensemble experiments
 # (-E: expand the given "parent" dir to subdirs with Ensembles)
 REDUCE_ENS_PROG=util/reduce_drm_sets.py -E
-# programs used for matlab/python graphics
-GRAPHOLD_PROG=util/plot_drms.sh
+# programs used for graphics
 GRAPHICS_PROG=util/plot_drm_driver.py
 GRAPHYCS_PROG=util/rad-sma-rectangle-plot-driver.sh -s
 # generates tables
@@ -303,14 +302,6 @@ $(GRAPHICS_SENTINEL): sims/$(S)/reduce-info.csv
 graphics-clean: script-exists
 	@ echo "Make: Removing existing graphics in sims/$(S)/gfx ..."
 	rm -f sims/$(S)/gfx/det-*.*
-
-# legacy graphics - one ensemble
-# this is imperative, not delegated to $(GRAPHICS_SENTINEL)
-graphics-old: script-exists sims/$(S)/reduce-info.csv
-	@ echo "Make: Graphics (legacy) into sims/$(S)/gfx ..."
-	@ rm -f sims/$(S)/gfx/det-*.*
-	$(GRAPHOLD_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
-	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
 
 # extra (and normal) graphics - one ensemble
 # this is imperative, not delegated to $(GRAPHICS_SENTINEL)

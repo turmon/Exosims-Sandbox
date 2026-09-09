@@ -339,7 +339,7 @@ export HDF5_USE_FILE_LOCKING="FALSE"
 #   --files ==> put chatter on stdout/stderr into log files instead of showing on stdout
 #   --progress ==> show a progress indication
 # 3: environment variables
-#   PATH: export it, else ssh gets a vanilla PATH without matlab, our python, etc.
+#   PATH: export it, else ssh gets a vanilla PATH without our python, etc.
 #   EXOSIMS_PARAMS: variable is used in JSON scripts for .fits files, etc.
 #   TQDM_DISABLE: allow to kill the python "tqdm" package progress bar
 #   note: parallel does not object if you give --env FOO when FOO is unset
