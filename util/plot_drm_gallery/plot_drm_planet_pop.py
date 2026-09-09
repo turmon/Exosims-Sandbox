@@ -137,7 +137,9 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         return []
 
     # bin geometry, as customized by config-reduce.json for this scenario
-    binner = rsc.configured_binner(reduce_info.get('_sim_dir', '.'), log_origin=PROGNAME)
+    binner = rsc.configured_binner(reduce_info.get('_sim_dir', '.'),
+                                       log_origin=PROGNAME,
+                                       verbose=mode.get('verbose', 1))
 
     # Track output files
     tracker = cs.PlotTracker(ext_list=mode.get('ext_list'), reduce_info=reduce_info)

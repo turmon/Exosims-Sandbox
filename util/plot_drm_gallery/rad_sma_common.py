@@ -72,16 +72,41 @@ RATIO_WEIGHT_FLOOR = 1e-3
 RATIO_CHUNK = 512
 
 
-def configured_binner(sim_dir, log_origin=None):
+## Configs already announced by configured_binner(), so that several plots
+## drawing this plane do not each repeat the same line.  Per process, so a
+## parallel driver run can still say it once per worker.
+_CONFIGS_REPORTED = set()
+
+
+def configured_binner(sim_dir, log_origin=None, verbose=1):
     r'''Return an RpLBins reflecting the config-reduce.json reachable from sim_dir.
 
     RpLBins refuses to instantiate until customize_parameters() has been
     called, because class-level customization does not survive being forked
     or pickled into a worker process.  So each process that wants a binner
     re-applies it; that is what this does.  An absent config is normal, and
-    leaves the default bins.'''
+    leaves the default bins.
+
+    Says which file it used, as util/rad-sma-rectangle-bin-plot.py does for
+    the same plane: the config governs where the earthlike region sits, one
+    can shadow another (a scenario's own file wins over its .fam parent's),
+    and a plot with surprising bins is otherwise hard to trace back.  Said
+    once per config (see _CONFIGS_REPORTED), not once per plot.'''
+    origin = log_origin or 'rad_sma_common.py'
     config = utils.load_reduce_config(Path(sim_dir), log_origin=log_origin) or {}
-    RpLBins.customize_parameters(config)
+    fails = RpLBins.customize_parameters(config)
+    said_before = config.get('_config_filename', str(sim_dir)) in _CONFIGS_REPORTED
+    _CONFIGS_REPORTED.add(config.get('_config_filename', str(sim_dir)))
+    if not said_before:
+        if verbose:
+            if config:
+                print(f'\t{origin}: Loaded reduction config: {config["_config_filename"]}')
+            else:
+                print(f'\t{origin}: No local reduction config file '
+                          f'({utils.REDUCTION_CONFIG} in {sim_dir}): using default bins')
+        if fails:
+            print(f'{origin}: Warning: Unused attribute(s) in '
+                      f'{config["_config_filename"]}: {", ".join(fails)}')
     return RpLBins()
 
 
