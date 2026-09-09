@@ -2897,6 +2897,37 @@ class EnsembleSummary(object):
             except OSError:
                 pass # e.g., don't own the file
 
+        def dump_list_table(name, data):
+            r'''Write one per-row list table: gzipped CSV, with the field
+            names taken from the records themselves.
+
+            The two such tables (the earth-char list, the planet population)
+            hold a row per attempt or per planet rather than per bin, so they
+            are the large reduction outputs, and the only ones gzipped.
+            Readers find either spelling through resolve_csv_path(), in
+            plot_drm_gallery/common_style.py.
+
+            With no records there are no field names, and the file holds just
+            a blank header line.  That is deliberate: every reader treats such
+            a file as nothing-to-plot and carries on, whereas writing no file
+            at all is a hard error in the Matlab path, which reads the
+            earth-char list without a guard.'''
+            fn = args.outfile % (name, 'csv.gz')
+            print('\tDumping to %s' % fn)
+            # a plain .csv here is an earlier reduction's, and readers prefer
+            # it to the .gz, so it would silently shadow what we write now
+            fn_stale = args.outfile % (name, 'csv')
+            if os.path.exists(fn_stale):
+                print('\tRemoving superseded %s' % fn_stale)
+                os.remove(fn_stale)
+            fields = list(data[0].keys()) if data else []
+            with gzip.open(fn, 'wt', newline='') as csvfile:
+                w = csv.DictWriter(csvfile, fieldnames=fields)
+                w.writeheader()
+                for row in data:
+                    w.writerow(row) # dictionary mapping field -> value
+            ensure_permissions(fn)
+
         # Implementation note:
         # The scheme used for dumping to each file is to define a list of QOIs, or
         # "quantities of interest", such as "exo-Earth full characterizations".
@@ -3262,66 +3293,19 @@ class EnsembleSummary(object):
         ensure_permissions(fn)
 
         # 8: earth-char-attempts analysis
-        # Written gzipped: a row per characterization attempt is one of the
-        # two big reduction outputs, and it compresses ~4x.  Readers find it
-        # either way, through common_style.resolve_csv_path().
-        fn = args.outfile % ('earth-char-list', 'csv.gz')
-        print('\tDumping to %s' % fn)
         # named fields for earth-char list (it's just one field in self.summary, hence [0])
         earth_char_qoi = self.auto_keys.get('earth_char', [])[0]
         # data for earth-char list (it's just one field in self.summary)
-        earth_char_data = self.summary[earth_char_qoi]
-        # compose the names of all fields to be saved
-        # initial list
-        earth_char_fields = list(earth_char_data[0].keys()) if earth_char_data else []
-        # a plain .csv here is an earlier reduction's, and readers prefer it to
-        # the .gz, so it would silently shadow what we are writing now
-        fn_stale = args.outfile % ('earth-char-list', 'csv')
-        if os.path.exists(fn_stale):
-            print('\tRemoving superseded %s' % fn_stale)
-            os.remove(fn_stale)
         # NB: earth_char_* quantities are scalars!
-        with gzip.open(fn, 'wt', newline='') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=earth_char_fields)
-            w.writeheader()
-            # dictionary mapping field -> value
-            for row in earth_char_data:
-                # dictionary mapping field -> value
-                w.writerow(row)
-        ensure_permissions(fn)
+        earth_char_data = self.summary[earth_char_qoi]
+        dump_list_table('earth-char-list', earth_char_data)
 
         # 8b: planet-population analysis
-        # Gzipped for the same reason as the earth-char list above: a row
-        # per planet per sim is tens of MB for a 100-run ensemble.
-        fn = args.outfile % ('planet-population', 'csv.gz')
         # named field for the planet list (it's just one field in self.summary, hence [0])
+        # the field names come from the records (see per_planet_yield)
         planet_pop_qoi = self.auto_keys.get('planet_pop', [])
         planet_pop_data = self.summary[planet_pop_qoi[0]] if planet_pop_qoi else []
-        # a plain .csv here would be an earlier reduction's, and readers prefer
-        # it to the .gz, so it would silently shadow what we write now
-        fn_stale = args.outfile % ('planet-population', 'csv')
-        if os.path.exists(fn_stale):
-            print('\tRemoving superseded %s' % fn_stale)
-            os.remove(fn_stale)
-        # The field names, and their order, come from the records themselves
-        # (per_planet_yield), which is the one place the schema is stated.
-        # With no records there is no schema to write, so leave no table
-        # rather than an unreadable one: readers treat an absent table the
-        # same as a reduction predating it, and skip.
-        if not planet_pop_data:
-            print('\tNo planet-population rows: not writing %s' % fn)
-            if os.path.exists(fn):
-                os.remove(fn)
-        else:
-            print('\tDumping to %s' % fn)
-            planet_pop_fields = list(planet_pop_data[0].keys())
-            with gzip.open(fn, 'wt', newline='') as csvfile:
-                w = csv.DictWriter(csvfile, fieldnames=planet_pop_fields)
-                w.writeheader()
-                for row in planet_pop_data:
-                    # dictionary mapping field -> value
-                    w.writerow(row)
-            ensure_permissions(fn)
+        dump_list_table('planet-population', planet_pop_data)
 
         # 9: yield-vs-time analysis
         fn = args.outfile % ('yield-time', 'csv')
