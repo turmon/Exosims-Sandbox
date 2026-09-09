@@ -118,21 +118,19 @@ SECTION_HEADS = {
             The "Popuation" plot allows verification that planets are being generated at the 
             correct rate, e.g., verification of {eta_html}.''',
     'rad-sma-density': '''Kernel density estimates of where planets lie in the
-            radius/SMA plane, smoothed in log-log coordinates, with density
-            given per dex<sup>2</sup>.  The three plots are the mission funnel:
-            the planet population, those detected at least once, and those
+            radius/SMA plane.  Three plots show the mission funnel:
+            the planet population, planets detected at least once, and planets
             characterized.
-            <p>"All planets" means planets around stars the mission observed,
-            which is what the reduction tabulates; planets around stars that
-            were never visited do not appear.  For a large population the
-            estimate is made from a capped random sample, and the plot title
-            says so.  Because the kernel smooths across the {planet_adj} class
+            <p>"All planets" means planets around stars the mission observed
+            (planets around un-visited stars do not appear).  For a large population the
+            estimate is made from a capped random sample.
+            Because the kernel smooths across the {planet} class
             boundary, some density appears outside the outlined region.
             <p>The "tput" plots are throughputs: conditional probabilities on
-            an absolute 0-1 scale, so their colors mean one thing across the
-            series.  Four more of them, separating the scheduler's choice of
+            an absolute 0-1 scale.
+            Four more of them, separating the scheduler's choice of
             target from the response to a planet of a given radius and SMA,
-            are made with <code>make S=... graphics-plus</code>.'''
+            are made with <code>make S=... graphics-extra</code>.'''
 ,
     'duration': '''X-axis shows event duration.  Note that x-axis range varies between plots 
             to accomodate large variations in duration.
@@ -609,9 +607,9 @@ class SimSummary(object):
     # Note: the order here gives the order of presentation!
     graphics_show = {
         'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics'),
-        'rad-sma':     GraphicsDescription('Radius/SMA',                 'graphics'),
+        'rad-sma':     GraphicsDescription('Radius/SMA Bin',             'graphics'),
         'rad-sma-density':
-                       GraphicsDescription('Radius/SMA Densities',       'graphics',
+                       GraphicsDescription('Radius/SMA Density',         'graphics',
                                            filename=WWW_DOC/'planet-population-density.html'),
         'duration':    GraphicsDescription('Event Duration',             'graphics'),
         'event-count': GraphicsDescription('Event Count',                'graphics'),
