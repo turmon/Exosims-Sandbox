@@ -82,7 +82,8 @@ from matplotlib.collections import PatchCollection
 from plot_drm_gallery import common_style as cs
 # shared with plot_drm_rad_sma_chars.py, which draws the same plane
 from plot_drm_gallery.rad_sma_common import (EARTH_STYLE, L_BIN_COLORS,
-                                                 earthlike_polygon_xy)
+                                                 earthlike_polygon_xy,
+                                                 koppa_bin_extent)
 from matplotlib.patches import Rectangle, Polygon
 from matplotlib.ticker import FuncFormatter
 
@@ -286,6 +287,69 @@ def make_text_slug(x, x_lo, x_hi, ranges=False, earth=False, eta=True, names=Non
             txt += r'^{{\pm}%#.2g}' % (x_lo, )
     return '$' + txt + '$'
 
+## Candidate spots for the earthlike-class label, as fractions across the
+## region (x) and up it (y).  Its region is placed by config-reduce.json, so
+## it is the one label that can land on another; the canonical 15 sit in their
+## own bins by construction.
+LABEL_GRID_X = (0.1, 0.23, 0.37, 0.5, 0.63, 0.77, 0.9)
+LABEL_GRID_Y = (0.3, 0.5, 0.7)
+## Pull toward the label's usual spot, per unit of distance from it: a
+## candidate has to clear the other labels by this much more, for each unit it
+## moves, to be worth moving to.  Keeps the label put when nothing is in the way.
+LABEL_CENTER_PULL = 0.25
+
+
+def choose_earthlike_label_xy(binner, earth_x, earth_y, anchors, home):
+    r'''Pick a spot inside the earthlike region that clears the bin labels.
+
+    The region is a trapezoid: flat top, with the bottom edge running between
+    the two lower corners.  We try a coarse grid of spots inside it, plus
+    "home" (where the label would go otherwise), and take the one whose
+    nearest canonical label is furthest away, discounted by how far it sits
+    from home.  Distances are in log10, normalized by the log-spans of the
+    5x3 bins, so x and y are comparable as seen on the page.
+
+    Deliberately crude: the labels are treated as points, not boxes, so some
+    overlap can survive.  Returns (sma, Rp) in data coordinates.'''
+    (sma_lo, sma_hi), (rp_lo, rp_hi) = koppa_bin_extent(binner)
+    x_span = math.log10(sma_hi / sma_lo)
+    y_span = math.log10(rp_hi / rp_lo)
+    # region corners, in log10: vertices run (lo, hi, hi, lo) in x, and
+    # (top, top, bottom-at-hi, bottom-at-lo) in y -- see earthlike_polygon_xy()
+    x0, x1 = math.log10(earth_x[0]), math.log10(earth_x[1])
+    y_top = math.log10(earth_y[0])
+    y_bot0, y_bot1 = math.log10(earth_y[3]), math.log10(earth_y[2])
+    others = [(math.log10(a), math.log10(r)) for a, r in anchors]
+
+    def bottom_at(fx):
+        r'''Log-Rp of the sloping bottom edge, fx of the way across.'''
+        return y_bot0 + fx * (y_bot1 - y_bot0)
+
+    # home, clamped inside the region: the caller's 0.95 nudge can drop it
+    # below the bottom edge when the region is a short one
+    home_fx = min(max((math.log10(home[0]) - x0) / (x1 - x0), 0.0), 1.0)
+    home_log = (math.log10(home[0]),
+                    min(max(math.log10(home[1]), bottom_at(home_fx)), y_top))
+
+    def score(spot):
+        r'''Clearance from the nearest canonical label, less the cost of moving.'''
+        def distance(other):
+            return math.hypot((spot[0] - other[0]) / x_span,
+                                  (spot[1] - other[1]) / y_span)
+        return min(distance(o) for o in others) - LABEL_CENTER_PULL * distance(home_log)
+
+    best = home_log
+    for fx in LABEL_GRID_X:
+        x = x0 + fx * (x1 - x0)
+        # the bottom edge slopes, so the usable height depends on x
+        y_bot = bottom_at(fx)
+        for fy in LABEL_GRID_Y:
+            spot = (x, y_bot + fy * (y_top - y_bot))
+            if score(spot) > score(best):
+                best = spot
+    return 10.0**best[0], 10.0**best[1]
+
+
 ## Legend swatch for the earthlike region: a fixed-size rectangle in the lower
 ## left of the figure, outside the axes.  In figure fractions: (x0, y0, w, h).
 ## Chosen to clear the x tick labels (which start at y = 0.08) and the centered
@@ -347,6 +411,8 @@ def make_koppa_boxes(args, ax, hist):
     # Create list for all the Kopparapu boxes
     # iterate to set up 5x3 boxes
     koppa_boxes = []
+    # where each canonical label lands, for the earthlike label to keep clear of
+    label_spots = []
     # number of Rp bins
     Rbin_num = len(Rp_bins) - 1
     for r_inx in range(Rbin_num):
@@ -370,6 +436,7 @@ def make_koppa_boxes(args, ax, hist):
             info = hist[L_inx + r_inx*Lbin_num]
             txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, eta=args.eta)
             tbox = ax.text(a_mid, r_mid, txt, **Text_style_eta)
+            label_spots.append((a_mid, r_mid))
     # Nevada-shaped polygon for Earths
     #   (zorder tweak needed for visibility)
     #   TBD: in is_earthlike(), Rp_hi (upper) is handled differently from Rp_lo (lower)
@@ -383,8 +450,12 @@ def make_koppa_boxes(args, ax, hist):
         info = hist[-1]
         txt = make_text_slug(info[0], info[1], info[2], SHOW_RANGES, earth=True,
                              eta=args.eta, names=args.planet_names)
+        # the region can be laid anywhere, so its label has to look before
+        # it sits down: the center is only the starting bid
         a_mid = np.exp(np.mean(np.log(earth_x)))
         r_mid = np.exp(np.mean(np.log(earth_y)))*0.95
+        a_mid, r_mid = choose_earthlike_label_xy(binner, earth_x, earth_y,
+                                                     label_spots, (a_mid, r_mid))
         tbox = ax.text(a_mid, r_mid, txt, color='darkgreen', **Text_style_eta)
     else:
         print(f'No {args.planet_names.name} info found.')
