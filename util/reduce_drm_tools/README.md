@@ -83,6 +83,7 @@ Top-level keys:
 | `earthlike`          | `PlanetBins.py`, `PlanetNames.py` | Definition and naming of the earthlike planet class |
 | `RpL_bins`           | `PlanetBins.py`        | `Rp_bins` / `L_bins` radius-luminosity grid  |
 | `reduce_info_extras` | `reduce_drms.py`       | Extra columns to append to `reduce-info.csv` |
+| `graphics`           | `plot_drm_driver.py`   | Which plot families make their extra plots  |
 
 Any key starting with `_` is a comment and is ignored.
 
@@ -131,6 +132,45 @@ $ diff <(util/reduce_drm_tools/PlanetNames.py sims/SCENARIO) \
 Note that the CSV column names, output filenames, and dict keys keep their
 historical `earth`/`exoE` spellings regardless of the configured name: they are
 data plumbing, not labels.
+
+#### The `graphics` group
+
+Several plot families have *extra* plots, made only when `mode.op` contains
+`+`: `make S=... graphics-extra` asks for all of them, plain `make S=...
+graphics` for none.  A scenario that wants one family's extras, and only that
+family's, says so here:
+
+```json
+{
+  "graphics": {
+    "_comment": "the planet-population throughput maps, and nothing else",
+    "mode_op": {
+      "planet_pop": "+"
+      }
+    }
+}
+```
+
+The families that have extras to ask for are `star_targets`, `promote`,
+`yield_times`, `event_counts`, `visit_times`, `time_used`, `earth_chars`, and
+`planet_pop`; naming any other plot is harmless but does nothing.
+
+Keys are `fnmatch` patterns over the driver's plot names -- `plot_drm_driver.py
+--list` prints them -- and the **first match in file order wins**, so put the
+specific ones first and use `"*"` as a scenario-wide default:
+
+```json
+  "mode_op": {"planet_pop": "+", "*": ""}
+```
+
+An entry applies to the plots it names, whatever the command line said, so the
+config can turn a family's extras on during a plain `make graphics` and equally
+turn them off during `make graphics-extra`.  Precedence, highest first: a
+plot's own `mode` in `PLOT_REGISTRY` (code), this file, then `--mode_op`.
+
+A pattern matching no plot draws a warning: it is a typo, and would otherwise
+do nothing quietly.  This group is read by the graphics driver alone; it
+changes no reduced numbers, so `make graphics` is enough to see its effect.
 
 
 ## Usage

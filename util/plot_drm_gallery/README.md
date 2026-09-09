@@ -99,9 +99,11 @@ downward to the plot code. Standard keys:
 - `ext_list` (list[str]) -- file extensions to write, e.g. `['png']` or
   `['png', 'pdf']`.
 
-The driver constructs an overall mode dict from CLI flags, then merges any
-per-plot `mode` overrides from the registry entry before calling the plot
-function.
+The driver constructs an overall mode dict from CLI flags, applies any
+per-plot `op` from the `graphics.mode_op` group of `config-reduce.json`, then
+merges the registry entry's own `mode` overrides before calling the plot
+function.  So `mode['op']` can differ from plot to plot within one run; a plot
+function cannot tell where its string came from, and should not care.
 
 ### The `reduce_info` Dict
 
@@ -159,7 +161,9 @@ Options:
 - `--only NAME` -- run only the named plot
 - `--skip NAME` -- skip the named plot (repeatable)
 - `--list` -- list all registered plots and exit
-- `--mode_op OP` -- set the global `mode['op']` string
+- `--mode_op OP` -- set the global `mode['op']` string (a scenario can
+  override it per plot; see `graphics.mode_op` in
+  `util/reduce_drm_tools/README.md`)
 - `--pdf` -- also write PDF output
 - `-v` / `--verbose` -- increase verbosity (repeatable)
 - `-q` / `--quiet` -- minimal output

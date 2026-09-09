@@ -24,10 +24,12 @@ import matplotlib
 matplotlib.use('Agg')
 import pandas as pd
 import importlib
+import fnmatch
 from pathlib import Path
 # this import must work: fail fast if it doesn't
 import plot_drm_gallery
 from plot_drm_gallery import common_style as cs
+from reduce_drm_tools import utils
 
 # Program name for error messages
 PROGNAME = os.path.basename(sys.argv[0])
@@ -184,6 +186,46 @@ def load_csv_files(src_tmpl, csv_files, plot_name):
     return dataframes
 
 
+def config_mode_ops(reduce_info, plot_names):
+    r"""Per-plot mode.op strings from config-reduce.json; {} if it says nothing.
+
+    A scenario can ask for the extra plots of one family, and only that
+    family, rather than the all-or-nothing --mode_op:
+
+        "graphics": {"mode_op": {"planet_pop": "+", "*": ""}}
+
+    Keys are fnmatch patterns over the PLOT_REGISTRY names (--list shows
+    them), and the first match in file order wins, so the specific-then-
+    general reading above works.  Returns name -> op for the plots a pattern
+    claimed; the rest are left to the command line.
+    """
+    sim_dir = reduce_info.get('_sim_dir', '.')
+    config = utils.load_reduce_config(Path(sim_dir), log_origin=PROGNAME) or {}
+    patterns = config.get('graphics', {}).get('mode_op', {})
+    if not patterns:
+        return {}
+    if not isinstance(patterns, dict):
+        print(f"{PROGNAME}: Warning: graphics.mode_op in "
+              f"{config.get('_config_filename', sim_dir)} is not a mapping: ignored",
+              file=sys.stderr)
+        return {}
+    # keys beginning with _ are comments, as elsewhere in config-reduce.json
+    patterns = {k: v for k, v in patterns.items() if not k.startswith('_')}
+    ops, claimed = {}, set()
+    for name in plot_names:
+        for pattern, op in patterns.items():
+            if fnmatch.fnmatch(name, pattern):
+                ops[name] = op
+                claimed.add(pattern)
+                break # first match wins
+    # a pattern that matches nothing is a typo, and would otherwise be silent
+    for pattern in patterns:
+        if pattern not in claimed:
+            print(f"{PROGNAME}: Warning: graphics.mode_op pattern '{pattern}' "
+                  f"matches no plot (see --list)", file=sys.stderr)
+    return ops
+
+
 def run_one_plot(plot_config, reduce_info, src_tmpl, dest_tmpl, overall_mode):
     """
     Run a single plot function
@@ -314,6 +356,8 @@ Optional arguments:
     --list              List all available plots and exit
     --jobs N, -j N      Number of parallel workers (default: auto; 0 or 1 for serial)
     --mode_op OP        Global mode.op string (default: ""; "+" => extra plots)
+                        Per-plot overrides can be set in config-reduce.json,
+                        as graphics.mode_op -- see reduce_drm_tools/README.md
     --pdf               Graphical output to PDF also
     --verbose, -v       More verbose progress messages (repeat for even more)
     --quiet             Minimal output
@@ -389,6 +433,17 @@ Optional arguments:
     # (this also folds in the planet-class display names from config-reduce.json,
     # so every plot function can label the earthlike class correctly)
     args.reduce_info = cs.load_reduce_info(args.src_tmpl)
+
+    # per-plot mode.op from config-reduce.json, for the plots it names.
+    # Precedence: a plot's own PLOT_REGISTRY mode (below, in run_one_plot),
+    # then this, then --mode_op.
+    config_ops = config_mode_ops(args.reduce_info, [p['name'] for p in PLOT_REGISTRY])
+
+    def mode_for(plot):
+        r'''The overall mode this plot sees: config op, if the config named it.'''
+        if plot['name'] not in config_ops:
+            return overall_mode
+        return {**overall_mode, 'op': config_ops[plot['name']]}
     
     # ensure the directory
     dir_path = os.path.dirname(args.dest_tmpl % ('dummy', 'txt'))
@@ -425,7 +480,7 @@ Optional arguments:
                                         args.reduce_info,
                                         args.src_tmpl,
                                         args.dest_tmpl,
-                                        overall_mode))
+                                        mode_for(plot)))
     else:
         # Parallel execution
         if args.verbose > 0:
@@ -434,7 +489,7 @@ Optional arguments:
             results = pool.starmap(
                 _worker_run_one_plot,
                 [(plot, args.reduce_info, args.src_tmpl, args.dest_tmpl,
-                  overall_mode) for plot in plots_to_run])
+                  mode_for(plot)) for plot in plots_to_run])
 
     # Tally results
     ok_count = 0
