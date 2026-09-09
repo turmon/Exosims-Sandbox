@@ -58,7 +58,7 @@ Running simulations is separate from make: use `add-sims.sh` to submit simulatio
 - **`Scripts/`** — JSON parameter files for EXOSIMS (gitignored except `sims.json`)
 - **`Experiments/`** — Parameter sweep infrastructure with JSON transform configs and seed files
 - **`sims/`** — All generated output (gitignored): DRMs, CSVs, plots, HTML per scenario
-- **`docs/`** — Static documentation website
+- **`util/doc_sandbox/`** — Documentation site sources (mkdocs, built with `uv`); `make doc` builds to `site/`, `make export` copies it to `Local/www-resources/doc_sandbox/`. Both build outputs are gitignored.
 
 ### Plot Gallery System
 

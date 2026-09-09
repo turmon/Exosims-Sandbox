@@ -19,6 +19,9 @@ from pathlib import Path
 import numpy as np
 import os
 
+# decorative planet artwork shipped alongside this module
+RESOURCE_DIR = Path(__file__).resolve().parent / 'resources'
+
 
 def plot_drm_planet_overlay(ax_dest, mode=None):
     """
@@ -104,8 +107,7 @@ def plot_drm_planet_overlay(ax_dest, mode=None):
     ax_dest.patch.set_facecolor('none')
     
     for p, pfile_ in enumerate(pfiles):
-        # FIXME: temporary hack for resources
-        pfile = 'Local/Matlab/mfile' / Path(pfile_)
+        pfile = RESOURCE_DIR / pfile_
         # Check if file exists
         if not os.path.exists(pfile):
             print(f"Warning: Planet image file '{pfile}' not found, skipping")

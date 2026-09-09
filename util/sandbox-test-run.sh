@@ -221,9 +221,6 @@ function check_programs() {
     python --version || die "No python"
     which parallel || die 'parallel not found'
     parallel --version | head -1
-    # matlab is no longer a requirement!
-    # which matlab || die 'matlab not found'
-    # echo "exit" | matlab -nodisplay -nosplash -nodesktop |& grep -v '^$' | head -4
     }
 
 ################################################################################

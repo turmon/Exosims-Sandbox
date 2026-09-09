@@ -2909,9 +2909,9 @@ class EnsembleSummary(object):
 
             With no records there are no field names, and the file holds just
             a blank header line.  That is deliberate: every reader treats such
-            a file as nothing-to-plot and carries on, whereas writing no file
-            at all is a hard error in the Matlab path, which reads the
-            earth-char list without a guard.'''
+            a file as nothing-to-plot and carries on, whereas omitting the
+            file entirely would be indistinguishable from a reduction that
+            failed before reaching this point.'''
             fn = args.outfile % (name, 'csv.gz')
             print('\tDumping to %s' % fn)
             # a plain .csv here is an earlier reduction's, and readers prefer

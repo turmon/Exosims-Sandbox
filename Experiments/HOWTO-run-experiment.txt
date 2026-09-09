@@ -107,8 +107,7 @@ make S=Habex_works_20181201.exp exp-html-only
 * To get deeper insight, make plots and diagnostics for a few specific
 ensembles.  This selects the top 10 (by yield) and another 20 (at random)
 ensembles, and makes all the plots.  It takes a while.  You can add "-j2"
-to the make to run in parallel (the limit being the number of Matlab
-instances you want to have running).
+to the make to run in parallel.
 
 make S=Habex_works_20181201.exp exp-html
 

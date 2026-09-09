@@ -19,9 +19,6 @@ Support for EXOSIMS runs under ipython-parallel
   00-path.py
   10-threads.py
 
-Matlab-based plots
-  Matlab/*
-
 Web server for results viewing
   www-resources/  -- CSS and JS and other static pieces supporting 
                      the results website, and accessed by httpd.

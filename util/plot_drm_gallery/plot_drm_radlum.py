@@ -27,6 +27,9 @@ import matplotlib.image as mpimg
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pathlib import Path
 
+# decorative planet artwork shipped alongside this module
+RESOURCE_DIR = Path(__file__).resolve().parent / 'resources'
+
 
 def plot_drm_planet_overlay(ax_dest, mode=None):
     """
@@ -115,8 +118,7 @@ def plot_drm_planet_overlay(ax_dest, mode=None):
     ax_dest.patch.set_facecolor('none')
     
     for p, pfile_ in enumerate(pfiles):
-        # FIXME: this temporary location for resources should become canonical
-        pfile = 'Local/Matlab/mfile' / Path(pfile_)
+        pfile = RESOURCE_DIR / pfile_
         # Check if file exists
         if not os.path.exists(pfile):
             print(f"{PROGNAME}: Warning: Planet image file '{pfile}' not found, skipping")
