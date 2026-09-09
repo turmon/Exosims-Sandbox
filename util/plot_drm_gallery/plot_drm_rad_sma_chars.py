@@ -50,8 +50,8 @@ def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
     Outputs
     -------
     Saves plots to disk with names:
-        rad-sma-chars-scatter.png
-        rad-sma-chars-density.png
+        rad-sma-scatter-point.png
+        rad-sma-scatter-density.png
     """
 
     # Unpack CSV data
@@ -132,7 +132,7 @@ def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
     style_rad_sma_plot(
         ax, f'Successful {pn.name} Characterizations, Pooled Over Ensemble')
     ax.legend(loc='upper left', framealpha=0.8)
-    write_plots(fig, 'rad-sma-chars-scatter')
+    write_plots(fig, 'rad-sma-scatter-point')
     plt.close(fig)
 
     ####################################################################
@@ -161,7 +161,7 @@ def plot_drm_rad_sma_chars(reduce_info, plot_data, dest_tmpl, mode):
         ax, f'Successful {pn.name} Characterization Density ({n_ok} chars)')
     cbar = fig.colorbar(cs_kde, ax=ax)
     cbar.set_label('Probability Density [/ dex$^2$]', fontweight='bold')
-    write_plots(fig, 'rad-sma-chars-density')
+    write_plots(fig, 'rad-sma-scatter-density')
     plt.close(fig)
 
     return tracker.get_files()
