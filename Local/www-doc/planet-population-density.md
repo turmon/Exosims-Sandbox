@@ -13,10 +13,10 @@ simulation, produced by `per_planet_yield()` in `reduce_drms.py`. The columns
 used here are `sma_scaled`, `radius`, and four flags: `det_ok`, `char_ok`,
 `star_det_obs`, `star_char_obs`.
 
-**Luminosity-scaled SMA.** The x coordinate is `a / sqrt(L_star)`, not the raw
-orbit. That is the coordinate the bins and the earthlike class are defined in,
-and it is what makes planets around different stars comparable. Raw SMA does
-not belong on these axes.
+**Luminosity-scaled SMA.** The x coordinate is `a / sqrt(L_star)`, because
+planets in our simulated universes are chosen in these scaled coordinates 
+to begin with. This makes, for instance, the all-planet density plot
+show the power law that defines it.
 
 ## The populations
 
@@ -29,7 +29,7 @@ Four planet populations, and one *star* variable that sits behind them:
 * **C** -- `char_ok`: the planet was successfully characterized at least once.
 * **B** -- *incidental characterizations*, C \ D: characterized but never
   detected. These planets are swept up as a side effect of working a star for
-  other reasons. 
+  other reasons. (Mnemonic: B = byproduct)
 * **S** -- the star. `star_det_obs` and `star_char_obs` say whether the star
   was *observed* that way, whatever came of it. S is not a planet property,
   and it is the scheduler's choice.
@@ -96,10 +96,10 @@ population, what fraction are also in the numerator population? These are
 bounded in [0, 1], and all such plots use the same absolute 0-1 color scale, so
 their colors mean one thing across the whole series.
 
-A throughput is *not* computed as a ratio of two densities. Two kernel fits
-choose their bandwidth and orientation from their own samples, so their ratio
-is unbounded, blows up where the denominator thins out, and is not a
-probability. Instead the numerator and denominator are kernel sums over the
+A throughput is not computed as a ratio of two densities. This is because two
+separate kernel fits would choose their bandwidth from their own samples, making 
+their ratio unbounded, potentially blowing up where the denominator thins out.
+Instead the numerator and denominator are kernel sums over the
 same sample with the same kernel,
 
         P(num | x)  =  sum_i w_i(x) num_i  /  sum_i w_i(x) .
