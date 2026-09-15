@@ -3,7 +3,7 @@
 
 Usage:
 
-  plot-str-obs-trace.py [-o OUTPATH] [--aspect R] DRM
+  `plot-str-obs-trace.py [-o OUTPATH] [--aspect R] DRM`
 
 where:
 
