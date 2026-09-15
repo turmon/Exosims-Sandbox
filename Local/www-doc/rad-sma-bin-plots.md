@@ -29,8 +29,8 @@ makes planets around different stars comparable. Both axes are logarithmic.
 
 Drawn behind the data are the 5x3 bin rectangles and the outline of the
 earthlike class. That class is a region rather than a bin, so it straddles bin
-boundaries -- its placement, and its name in the titles, come from
-`config-reduce.json`, described in
+boundaries. The earthlike bin placement, and its name in the titles, can be adjusted by 
+creating a configuration file, `config-reduce.json`. See 
 [Tailoring the Earthlike Planet Class](earthlike-tailoring.html).
 
 ## Counts and throughputs
@@ -47,25 +47,23 @@ radius/luminosity plots make between full and strict:
   the planets *present* in that bin that were characterized. The reduction
   forms this as
 
-```
-
-    h_RpL_char_tput_full = h_RpL_char_full / (Nstar * h_RpL_population)
-```
+  ```
+        h_RpL_char_tput_full = h_RpL_char_full / (Nstar * h_RpL_population)
+  ```
 
   where `h_RpL_population` is the per-star occurrence rate, so the denominator
   is the expected number of planets of that type across the target list.
 
 A throughput is a rate on an absolute scale, which makes it the right plot for
 comparing scenarios; a count depends on how many planets the universe happened
-to generate. Where a bin holds no planets the throughput is 0/0 and shows as
+to generate. When a bin holds no planets, the throughput is 0/0 and shows as
 **NaN** rather than zero -- an empty cell means "that planet type was not
 present", which is a different statement from "the mission reached none of
 them".
 
-For the deeper version of this question -- throughput as a smooth function of
-position rather than per bin, and the separation of scheduler targeting from
-response -- see the Radius/SMA Density plots, which estimate the same
-conditional probabilities without binning.
+To see throughput as a smooth function of
+Radius and SMA, rather than per-bin, 
+see the Radius/SMA Density plots.
 
 ## The plots
 
@@ -87,11 +85,10 @@ binned histograms, so they show individual events and are not averaged per
 simulation. They pool every simulation in the ensemble, which is why their
 point counts are much larger than the per-bin means beside them.
 
-## Caveats
+## Clarifications/Caveats
 
 * **The binned tables are per-simulation means**; the scatter plots are
-  ensemble totals. The two are not on the same footing and their numbers
-  should not be compared directly.
+  cumulations across the ensemble. 
 * **NaN is not zero.** See above -- it marks an absent planet population, and
   the distinction matters most in the corner bins.
 * **Strict characterizations carry no SNR**, since SNR differs across bands.
