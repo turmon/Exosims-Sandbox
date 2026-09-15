@@ -980,19 +980,18 @@ class SimSummary(object):
                     hh.header('Interactive Detection Plot Widget', level=3)
                     hh.div('<!-- det plot goes here -->', id='detPlotDiv', style='width: 900px; height: 700px;')
                     hh.div('Detection QOI for Plot Shading: <select class="det_qoi_select"> </select>')
-                    if g_desc.filename:
-                        hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                 elif tag == 'perstar-char':
                     hh.header('Interactive Characterization Plot Widget', level=3)
                     hh.div('<!-- char plot goes here -->', id='charPlotDiv', style='width: 900px; height: 700px;')
                     hh.div('Characterization QOI for Plot Shading: <select class="char_qoi_select"> </select>')
-                    if g_desc.filename:
-                        hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                 elif tag == 'path' and self.graphics[tag]:
                     hh.header('Interactive Ensemble Path Widget', level=3)
                     hh.div('<!-- ensemble path plot goes here; rendered by ens-path-plots.js -->',
                                id='slewPlotDiv', style='width: 1000px; height: 600px;',
                                data_path_root='../path-ens', data_path_mode='ensemble')
+                # link to descriptive webpage for this plot family, if any
+                if g_desc.filename:
+                    hh.paragraph(hh.link(g_desc.filename, 'Plot description and specifics', inner=True), br=True)
                 plots = self.graphics[tag]
                 if not plots:
                     if target:
