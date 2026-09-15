@@ -68,8 +68,8 @@ RATIOS = (
     ('tput-all2det',       'all',      'det',      'Detected | Planet Present',      False),
     ('tput-all2char',      'all',      'char',     'Characterized | Planet Present', False),
     ('tput-det2char',      'det',      'char',     'Characterized | Detected',       True),
-    ('tput-all2starchar',  'all',      'starchar', 'Star Observed for Char. | Planet Present', True),
-    ('tput-starchar2char', 'starchar', 'char',     'Characterized | Star Observed for Char.',  True),
+    ('tput-all2starchar',  'all',      'starchar', 'Star Obs. for Char. | Planet Present', True),
+    ('tput-starchar2char', 'starchar', 'char',     'Characterized | Star Obs. for Char.',  True),
     ('tput-nodet2char',    'nodet',    'char',     'Characterized | Not Detected',   True),
     ('tput-char2det',      'char',     'det',      'Detected | Characterized',       True),
     )
@@ -194,9 +194,11 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         # over the density, not under it: the kernel smooths across the class
         # boundary, so the boundary has to stay visible to read the plot
         rsc.draw_earthlike_region(ax, binner, zorder=4)
-        # say when the density rests on a subsample of the rows
-        sampled = '' if n_used == n_pl else f', {n_used} sampled'
-        style_rad_sma_plot(ax, f'{phrase}: Density ({n_pl} planets{sampled})')
+        # say when the density rests on a subsample of the rows.  "k" marks
+        # the KDE's point budget as a computational choice, so it cannot be
+        # read as one of the data-driven counts beside it.
+        fit = '' if n_used == n_pl else f', KDE on {n_used/1000:g}k'
+        style_rad_sma_plot(ax, f'{phrase}: Density ({n_pl} planets{fit})')
         cbar = fig.colorbar(cs_kde, ax=ax)
         cbar.set_label('Probability Density [/ dex$^2$]', fontweight='bold')
         write_plots(fig, f'planet-pop-density-{stem}')
@@ -257,9 +259,13 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
             cs_map = ax.contourf(Xg, Yg, ratios[stem], levels=rsc.RATIO_LEVELS,
                                  cmap='viridis', alpha=0.85, zorder=3)
             rsc.draw_earthlike_region(ax, binner, zorder=4)
-            sampled = '' if n_used == n_den else f', {n_used} sampled'
+            # n_num/n_den are exact over the whole population; the map behind
+            # them rests on the subsample, so the fit is set off on its own.
+            # The percentage is the aggregate rate -- the one number the
+            # position-dependent map does not show.
+            fit = '' if n_used == n_den else f' (KDE on {n_used/1000:g}k)'
             style_rad_sma_plot(
-                ax, f'P({phrase}): {n_num} of {n_den}{sampled}')
+                ax, f'P({phrase}): {n_num}/{n_den} = {100.0*n_num/n_den:.1f}%{fit}')
             cbar = fig.colorbar(cs_map, ax=ax)
             cbar.set_label('Probability', fontweight='bold')
             write_plots(fig, f'planet-pop-{stem}')
