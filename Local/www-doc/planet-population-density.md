@@ -27,9 +27,9 @@ Four planet populations, and one *star* variable that sits behind them:
   visited, because the remainder would all read `det_ok = char_ok = 0`.
 * **D** -- `det_ok`: the planet was successfully detected at least once.
 * **C** -- `char_ok`: the planet was successfully characterized at least once.
-* **B** -- *bycatch*, C \ D: characterized but never detected. The name is a
-  fishing analogy: these planets are swept up as a side effect of working a
-  star for other reasons.
+* **B** -- *incidental characterizations*, C \ D: characterized but never
+  detected. These planets are swept up as a side effect of working a star for
+  other reasons. 
 * **S** -- the star. `star_det_obs` and `star_char_obs` say whether the star
   was *observed* that way, whatever came of it. S is not a planet property,
   and it is the scheduler's choice.
@@ -49,12 +49,12 @@ C has two feeder streams:
                         |                            |
                         v                            v
      A  ------------->  D  ---------------------->  C n D
-    all    P(det|A)   det_ok      P(char|D)       "targeted catch"
+    all    P(det|A)   det_ok      P(char|D)         "targeted"
   planets    |                                        ^
              |  1 - P(det|A)                          |  both are in C
              v                                        v
             A \ D  ---------------------------->  B = C \ D
-         not detected      P(char|not det)        "bycatch"
+         not detected      P(char|not det)       "incidental"
 ```
 
 Because S gates both arrows out of the star box, a plot of P(char | planet
@@ -69,17 +69,17 @@ Every planet falls in exactly one of four cells. The table gives the cell
 names, which population each belongs to, and -- for orientation -- typical
 shares from one 100-simulation ensemble:
 
-| `det_ok` | `char_ok` | cell            | in A | in D | in C | example share |
-|:--------:|:---------:|-----------------|:----:|:----:|:----:|--------------:|
-|    0     |     0     | missed          |  x   |      |      |         0.713 |
-|    1     |     0     | detected only   |  x   |  x   |      |         0.194 |
-|    0     |     1     | **bycatch (B)** |  x   |      |  x   |         0.058 |
-|    1     |     1     | targeted catch  |  x   |  x   |  x   |         0.035 |
+| `det_ok` | `char_ok` | cell               | in A | in D | in C | example share |
+|:--------:|:---------:|--------------------|:----:|:----:|:----:|--------------:|
+|    0     |     0     | missed             |  x   |      |      |         0.713 |
+|    1     |     0     | detected only      |  x   |  x   |      |         0.194 |
+|    0     |     1     | **incidental (B)** |  x   |      |  x   |         0.058 |
+|    1     |     1     | targeted           |  x   |  x   |  x   |         0.035 |
 
 Read across: the *density* plots show where each column's population lies. The
 *throughput* plots show the ratio between two columns, as a function of
-position. The bycatch row is the one that A -> D -> C reasoning misses; in the
-example ensemble it is 62% of all characterizations.
+position. The incidental row is the one that A -> D -> C reasoning misses; in
+the example ensemble it is 62% of all characterizations.
 
 ## Densities and throughputs
 
@@ -102,18 +102,29 @@ is unbounded, blows up where the denominator thins out, and is not a
 probability. Instead the numerator and denominator are kernel sums over the
 same sample with the same kernel,
 
-        P(num | x)  =  sum_i w_i(x) num_i  /  sum_i w_i(x)
+        P(num | x)  =  sum_i w_i(x) num_i  /  sum_i w_i(x) .
 
-which is the Nadaraya-Watson estimator of the indicator and lies in [0, 1] by
-construction. Where the denominator holds less than a set fraction of its peak
-kernel weight, the cell is left blank rather than shown as a ratio of two
-nearly-zero numbers.
+This is the kernel regression (Nadaraya-Watson) estimator of the indicator 
+and lies in [0, 1] by construction. Where the denominator holds less than 
+a set fraction of its peak kernel weight, the cell is left blank rather than 
+shown as a ratio of two nearly-zero numbers.
 
 ## The plots
 
 Five are always produced; five more with `mode_op` set to `+`
-(`make S=... graphics-plus`). All are named `det-planet-pop-*.png` and appear
-in the *Radius/SMA Densities* section of the ensemble page.
+(`make S=... graphics-extra`). All are named `det-planet-pop-*.png` and appear
+in the *Radius/SMA Density Plots* section of the ensemble page.
+
+Customize either the scenario or the parent family/experiment
+to always make extra plots by adding this entry to `config-reduce.json`:
+```
+
+   "graphics": {
+     "mode_op": {
+       "planet_pop": "+"
+     }
+   }
+```
 
 | Plot | Quantity | Extra? |
 |------|----------|:------:|
@@ -125,7 +136,7 @@ in the *Radius/SMA Densities* section of the ensemble page.
 | `tput-det2char`      | P(characterized \| detected) -- the targeted path only | x |
 | `tput-all2starchar`  | P(star observed for char. \| planet present) -- *targeting* | x |
 | `tput-starchar2char` | P(characterized \| star observed for char.) -- *response*   | x |
-| `tput-nodet2char`    | P(characterized \| not detected) -- the *bycatch rate*      | x |
+| `tput-nodet2char`    | P(characterized \| not detected) -- the *incidental rate*   | x |
 | `tput-char2det`      | P(detected \| characterized) -- *provenance* of the chars    | x |
 
 Two identities tie the series together, and are worth checking on any new
@@ -136,7 +147,7 @@ scenario:
   SMA. If the targeting map is flat, target selection is planet-agnostic; if
   it is not, some planet property is driving the scheduler.
 * `all2char` = `det2char` x `all2det` + `nodet2char` x (1 - `all2det`), in the
-  aggregate: the targeted and bycatch channels, weighted by how much of the
+  aggregate: the targeted and incidental channels, weighted by how much of the
   population each draws from.
 
 ## Caveats

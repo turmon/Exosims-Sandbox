@@ -2,12 +2,11 @@
 r"""
 Plot the simulated planet population, and its yield, as densities.
 
-Six plots over the radius vs. luminosity-scaled-SMA plane, from
+Ten plots over the radius vs. luminosity-scaled-SMA plane, from
 reduce-planet-population.csv.gz.  Three kernel densities -- all the planets in
-the table, those that were detected, and those that were characterized --
-and three conditional probabilities read off the same plane: the chance that
-a planet at a given radius and SMA was detected, was characterized, and was
-characterized given that it was detected.
+the table, those that were detected, and those that were characterized -- and
+seven conditional probabilities ("throughputs") read off the same plane.  Five
+of the ten are made by default; the other five need mode_op "+" (see RATIOS).
 
 The table holds planets around stars the mission visited, so "all" is the
 population it had the chance to observe, not the whole simulated universe.
@@ -58,12 +57,13 @@ POPULATIONS = {
 #
 # The last five are extras (mode_op "+"), and are there because the funnel is
 # not a chain: characterization draws both from detected planets and, as
-# bycatch, from planets never detected.  det2char is an extra for that same
-# reason -- it covers only the targeted channel, so on its own it reads as
-# "the" char throughput and is not.  all2starchar x starchar2char factors
-# all2char into the scheduler's choice of target and the response to a planet
-# at a given radius/SMA; nodet2char is the bycatch rate that det2char cannot
-# see; char2det says which of the two channels fed the chars here.
+# incidental characterizations, from planets never detected.  det2char is an
+# extra for that same reason -- it covers only the targeted channel, so on its
+# own it reads as "the" char throughput and is not.  all2starchar x
+# starchar2char factors all2char into the scheduler's choice of target and the
+# response to a planet at a given radius/SMA; nodet2char is the incidental
+# rate that det2char cannot see; char2det says which of the two channels fed
+# the chars here.
 RATIOS = (
     ('tput-all2det',       'all',      'det',      'Detected | Planet Present',      False),
     ('tput-all2char',      'all',      'char',     'Characterized | Planet Present', False),
