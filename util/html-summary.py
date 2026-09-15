@@ -606,8 +606,10 @@ class SimSummary(object):
     # tag: GD() means that graphics of type "tag" have the given description
     # Note: the order here gives the order of presentation!
     graphics_show = {
-        'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics'),
-        'rad-sma':     GraphicsDescription('Radius/SMA Bin',             'graphics'),
+        'radlum':      GraphicsDescription('Radius/Luminosity',          'graphics',
+                                           filename=WWW_DOC/'radius-luminosity-plots.html'),
+        'rad-sma':     GraphicsDescription('Radius/SMA Bin',             'graphics',
+                                           filename=WWW_DOC/'rad-sma-bin-plots.html'),
         'rad-sma-density':
                        GraphicsDescription('Radius/SMA Density',         'graphics',
                                            filename=WWW_DOC/'planet-population-density.html'),
