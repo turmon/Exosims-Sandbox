@@ -1813,8 +1813,8 @@ if __name__ == '__main__':
     # program name, for convenience
     args.progname = os.path.basename(sys.argv[0])
     
-    # Announce updated version
-    print(f'{args.progname}: tabulator.js summarizer version.')
+    # Announce updated version (disabled)
+    # print(f'{args.progname}: tabulator.js summarizer version.')
 
     # Load Sandbox config file, updating args if needed (in principle)
     load_config_file(args, LOCAL_CONFIG / 'config-sandbox.json')
