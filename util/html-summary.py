@@ -620,7 +620,8 @@ class SimSummary(object):
         'perstar-char':GraphicsDescription('Per-Star Characterization',  'graphics', filename=WWW_DOC/'per-star-metrics.html'),
         'promote':     GraphicsDescription('Target Promotion',           'graphics', infotype='Information'),
         'earth-char':  GraphicsDescription('{planet} Characterizations', 'graphics'),
-        'observing':   GraphicsDescription('Characterization Observing', 'graphics'), # TODO: docs?
+        'observing':   GraphicsDescription('Characterization Observing', 'graphics',
+                                           filename=WWW_DOC/'char-observing-plots.html'),
         'path':        GraphicsDescription('Full-Ensemble Path',         'path-ensemble')
         }
     # tables_map: maps filename -> tag
