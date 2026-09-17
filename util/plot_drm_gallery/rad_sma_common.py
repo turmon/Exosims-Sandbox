@@ -103,7 +103,7 @@ def configured_binner(sim_dir, log_origin=None, verbose=1):
                 print(f'\t{origin}: Loaded reduction config: {config["_config_filename"]}')
             else:
                 print(f'\t{origin}: No local reduction config file '
-                          f'({utils.REDUCTION_CONFIG} in {sim_dir}): using default bins')
+                          f'({utils.REDUCTION_CONFIG}): using default bins')
         if fails:
             print(f'{origin}: Warning: Unused attribute(s) in '
                       f'{config["_config_filename"]}: {", ".join(fails)}')
