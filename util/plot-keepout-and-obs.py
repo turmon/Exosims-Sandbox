@@ -3,7 +3,9 @@
 
 Usage:
 
+```
   plot-keepout-and-obs.py [-o OUTPATH] SCRIPT DRM
+```
 
 where:
 

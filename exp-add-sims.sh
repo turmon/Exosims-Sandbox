@@ -14,23 +14,29 @@
 #   exp-add-sims.sh -0 -j 1  -m reduce,html-only Scripts/example.fam =777
 # 
 # Complete Usage:
+# ```
 #   exp-add-sims.sh [-0] [-j N] [-/ S] [[-m target,target,...] ...] [-q|-v] Experiment Seeds
+# ```
 #
 # where arguments are:
 #   Experiment: a directory name within Scripts/ of an Experiment or Family
 #   Seeds: a file of integer seeds, or =S to use a single integer seed S.
 #
 # and options are:
+# ```
 #   -0: Warm caches before ensemble seed-by-seed runs
 #   -j N: Ensemble is created with N-way parallelism
 #   -/ S: Divide the "M" scripts in the Experiment into "S" batches, 
 #         producing "S" scripts. Default 1. Needed for large M.
 #   -m TARGET: Run "make S==... TARGET postprocessing after ensemble
+# ```
 #
 # and less-used options:
+# ```
 #   -q: less chatty
 #   -v: chatty about job invocation
 #   -h: print this help
+# ```
 #
 # Note: comma-separated postprocessing steps are done in one invovation
 # of "make", and repeated "-m" options cause repeated invocations of

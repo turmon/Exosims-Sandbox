@@ -11,11 +11,13 @@ where:
   SCENARIO is a location (for now, directory) containing run information
 
 and:
+```
   -m MODE tells what mode
      by default this is "drm" (output the DRM filenames within the SCENARIO)
   -n N tells how many runs to select.  Default is 10.  Non-negative, or T for all runs.
      It is not an error if N is larger than the number of runs.
   -q means to exit quietly if SCENARIO is not present
+```
 
 Typical usage:
   util/select_runs.py -n 5 sims/HabEx_4m_TSDD

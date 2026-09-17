@@ -44,7 +44,7 @@ Typical usage:
 
   # (char_time, but only looking at characterizations)
   util/drm-grep.py -m char_time -a char_time sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408/drm/*
-```shell
+```
 
 '''
 # turmon apr 2019

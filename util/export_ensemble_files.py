@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r'''
-export-ensemble-files.py: export selected files (plots, csv) from an ensemble
+export_ensemble_files.py: export selected files (plots, csv) from an ensemble
 
 usage:
 

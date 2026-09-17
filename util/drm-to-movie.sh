@@ -16,6 +16,7 @@
 # These filenames are generated from the DRM filename, see "Conventions" below.
 #
 # where:
+# ```
 #  -F   signals to make only the final frame.  Don't use -l with -F.
 #  -l N is the movie length in years.
 #       Supply -l 0 to use the "missionLife" in the script.
@@ -23,11 +24,14 @@
 #  -d D is the delta-t between frames in days.
 #       Default is the keepout_path_graphics default, 5 days.
 #  -c   signals to output certain cumulative graphics.
+# ```
 #
 # and less-used options are:
+# ```
 #  -C   signals to write a coronagraph-only movie, even if a starshade is present
 #  -f   signals to output frame-by-frame graphics.  Don't use with -F.
 #  -D   means to load the python debugger while running -- developer use only
+# ```
 #
 # Conventions:
 #   The SPC file is deduced from the DRM filename.

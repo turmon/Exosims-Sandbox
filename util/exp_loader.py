@@ -1,3 +1,5 @@
+# exp_loader.py: load an Experiment's per-Ensemble reduction info into a pandas table
+#
 # script (no arguments) that:
 #   -- loads the s_index file for an Experiment, as a pandas table
 #      (one row per Ensemble)

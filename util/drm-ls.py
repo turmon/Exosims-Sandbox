@@ -8,11 +8,13 @@ Simplest usage:
   drm-ls.py
 
 where:
+```
  -l gives long-format output (extra columns)
  -q gives short, summary output (no per-DRM output)
  -r performs recursive descent (otherwise, named files/dirs are examined)
  -d N limits recursive descent to N levels
  -c gives CSV output instead of tabular output
+```
 
 A file, a list of files, a directory, or list thereof, can be given
 for listing.  By default, DRMs in the current working directory are

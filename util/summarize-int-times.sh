@@ -6,7 +6,9 @@
 # DRMs, and finds means and other scalar indexes for them
 #
 # Usage:
+# ```
 #   summarize-int-times.sh [-H] SIM
+# ```
 #
 # where SIM is a simulation directory, for example:
 #    SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229

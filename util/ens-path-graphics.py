@@ -18,9 +18,11 @@ where:
   SCRIPT is the JSON script used to generate the DRMs
   DRMs is a list of DRM pickle files
 and, optionally:
+```
   -a -> skip the animation of the ensemble path 3D plot
   --outfile FILE -> outputs filenames generated from a template,
         which should contain 2 appearances of %s (e.g., dir/ens-path-%s.%s)
+```
 """
 
 # plots summarizing DRM-sets

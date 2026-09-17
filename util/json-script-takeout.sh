@@ -3,7 +3,9 @@
 # json-script-takeout.sh: make a tarfile of the external files referenced by a script
 #
 # usage:
+# ```
 #   json-script-takeout.sh [-o outfile] script
+# ```
 # 
 # where:
 #   script: JSON script

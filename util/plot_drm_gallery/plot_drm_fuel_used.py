@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+r'''
+plot_drm_fuel_used.py: plot fuel used over the mission, in a drm-set
+
+Part of the plot gallery driven by util/plot_drm_driver.py; see
+plot_drm_gallery/README.md.
+'''
 
 import pandas as pd
 import numpy as np

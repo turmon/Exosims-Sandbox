@@ -1,3 +1,5 @@
+# summarizeResults.py: extract per-target fields from drm/spc, and export to CSV
+#
 # early script which appears to extract some fields about some targets from 
 # the drm/spc, and export to CSV.
 

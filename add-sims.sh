@@ -5,10 +5,14 @@
 # This is a wrapper around the python driver, sandbox_driver.py.
 #
 # Typical Usage:
+# ```
 #   add-sims.sh [-S | -Z] SCRIPT SEEDS
+# ```
 # 
 # Most General Usage:
+# ```
 #   add-sims.sh [-q] [-A | -S | -Z] [-j JOBS] [-v VERB] [-x SCRIPT] [-O OPTS] SCRIPT SEEDS
+# ```
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
 # * The runs are done on the local computer, from a pool that depends on machine
@@ -40,13 +44,16 @@
 #             (3) else, it is a filename giving a list of integer seeds, one per line.
 #
 # Options:
+# ```
 #   -h        => show this help message and exit.
 #   -0        => generate caches first, then do the requested SEEDS
 #   -S        => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
 #   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
 #   -c        => chatty console output (for debugging) even if #SEEDS > 1
+# ```
 #
 # Less-used Options:
+# ```
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -q        => quiet object creation
@@ -63,6 +70,7 @@
 #       Default: OPTS = 'drm:pkl,spc:spc'  -- this indicates the DRM
 #       is stored as a pickle with extension .pkl, and the planet parameters
 #       are stored as a pickle with extension .spc.
+# ```
 # 
 # turmon oct 2017, 2018, 2020, 2023
 #

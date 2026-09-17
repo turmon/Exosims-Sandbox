@@ -10,6 +10,7 @@ usage:
 where:
   ENS ... is a list of simulation *directories* ("ensembles"),
 and:
+```
   -O outfile gives a template (containing exactly two occurrences of %s) for
      file outputs.  This is optional - output will go to the ENS parent
      directory, according to Sandbox conventions, if not given.
@@ -24,11 +25,14 @@ and:
      corresponding parameter values.
      (Giving -i is usually un-needed: if Sandbox conventions are used, this
      code automatically looks for s_index.json in the ENS parent directory)
+```
 also, importantly:
+```
   -E means to glob-expand the given ENS into ENS/*/. In this case, s_index.json
      is sought within the given ENS, and outputs are put in ENS itself. That is,
      in this case, ENS is itself the parent directory.
      NOTE: Typically -E is used.
+```
 
 This program rolls up the summary information already recorded (for each ENS)
 in ENS/reduce_info.csv, and places the cumulative summary in a CSV file following

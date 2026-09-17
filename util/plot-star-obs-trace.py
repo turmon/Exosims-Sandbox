@@ -3,12 +3,14 @@
 
 Usage:
 
-  `plot-str-obs-trace.py [-o OUTPATH] [--aspect R] DRM`
+  `plot-star-obs-trace.py [-o OUTPATH] [--aspect R] DRM`
 
 where:
 
+```
   -o OUTPATH gives an output path for results, containing two %s slots  
   --aspect gives the (vertical) aspect ratio, >1 helps for large target lists
+```
 
 Most helpful Sandbox usage:
 

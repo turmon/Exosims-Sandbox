@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""spc-extract: Extract info from SPC files into CSV
+"""spc_extract.py: Extract info from SPC files into CSV
 
 For usage, use the -h option.  Some options may be described there but not here.
 

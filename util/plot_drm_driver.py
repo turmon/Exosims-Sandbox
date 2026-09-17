@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+plot_drm_driver.py: generate all Ensemble-level DRM plots
+
 Driver script to generate all Ensemble-level DRM plots
 
 This script orchestrates the execution of all DRM plotting functions in a

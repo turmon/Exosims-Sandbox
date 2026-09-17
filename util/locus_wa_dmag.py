@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r'''
-locus-wa-dmag.py: provide locus of WA, dMag pairs of simulated universe
+locus_wa_dmag.py: provide locus of WA, dMag pairs of simulated universe
 
 usage:
 ```
@@ -11,9 +11,11 @@ where:
   SCRIPT is a json script to initialize Exosims
   CSVFILE is a CSV file (or file pattern) with input fields for the table
 and:
+```
   [warning: below is out of date]
   -p means plain text output versus the default markdown
   -q means to continue quietly if CSVFILE is not present
+```
 
 Output goes to stdout, which was a mistake.
 

@@ -10,12 +10,14 @@ usage:
 where:
   DRM ... is a list of DRM pickles,
 and:
+```
   -O outfile gives a template (containing exactly two occurrences of %s) for
      file outputs.  This is optional - output will go to the sims/SCRIPT/...
      directory if not given.
   -j N means to use N parallel workers to process the files.  By default,
      about 2/3 of the available cores will be used (20 on aftac1, 30 on aftac2).
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
+```
 
 Typical usage:
   util/time-slew-vs-char.py sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408/drm/*

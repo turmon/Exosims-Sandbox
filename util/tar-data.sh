@@ -17,10 +17,12 @@
 # tar-and-delete their data directories also.
 # 
 # Options:
+# ```
 #   -d: dry run. No tar-files created, no data deleted. Informational scenario counts are given.
 #   -t THRESH: only archive data for scenarios with yield <= THRESH. Implies -l.
 #   -l: only archive data for low-yield scenarios; shortcut for -t 4.
 #   -v to increase verbosity.
+# ```
 #
 # Simplest usage:
 # ```

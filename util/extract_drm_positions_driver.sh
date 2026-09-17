@@ -7,17 +7,21 @@
 # supply the ensemble root directory.
 #
 # Usage:
+# ```
 #   extract_drm_positions_driver.sh [-D] DRM
+# ```
 #
 # to summarize the paths in the given directory DRMS.  Note, the star-planet config
 # file (SPC) corresponding to a DRM is also needed, as is the JSON script.
 # These filenames are generated from the DRM filename, see "Conventions" below.
 #
 # where:
+# ```
 #  -D   signals to run python with the debugger turned on
 #  -p   signals to use the (old-style) explicit PYTHONPATH
 #       (typically you should be using a virtual environment, not relying on
 #       -p to tell this script to set PYTHONPATH)
+# ```
 #
 # Conventions:
 #   The script file (.json) is deduced from the DRM filename (directory component).

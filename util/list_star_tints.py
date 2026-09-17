@@ -1,3 +1,7 @@
+# list_star_tints.py: list integration times for a fixed set of HIP targets
+#
+# Ad-hoc script: the target list is hardcoded below.
+
 from __future__ import print_function
 import pickle
 import numpy as np

@@ -18,12 +18,14 @@
 # will not pollute the corresponding sims/... files.
 # 
 # Options are:
+# ```
 #   -L: use the SCRIPT literally. This does *not* use the copied script-file
 #       scheme above, so the new sims and plots (if they succeed) 
 #       will land in sims/SCRIPT/... among whatever might be already there.
 #   -R: remove the simulation directory corresponding to the given SCRIPT, before
 #       the test run, so the run is clean (except for EXOSIMS file caches).
 #       This code prompts for confirmation of -R.
+# ```
 #
 # Note that using -R and -L *together* will delete the possibly-existing sims/SCRIPT
 # directory, and all its contents.

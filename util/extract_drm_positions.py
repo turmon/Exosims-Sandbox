@@ -20,11 +20,13 @@ Usage:
   `extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl`
 
 where the TWO required arguments are the script, and the DRM, and optionally:
+```
  -p FILE -- a filename template (containing a %s) for the output .csv file; the
             %s hold the seed.  By default, ./%s-position.csv is used.
  -x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script;
               if the given SCRIPT name begins with !, it is treated as a
               json literal rather than a filename
+```
 
 Actual usage example for reference:
   This command adds the Local/ subdirectory here to PYTHONPATH, and then

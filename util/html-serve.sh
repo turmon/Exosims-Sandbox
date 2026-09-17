@@ -29,6 +29,7 @@
 #   defaults:   echo server, port, etc., and exit
 #
 # and:
+# ```
 #  -p PORT   => gives the HTTP port number.  Default is:
 #                 8090: mustang, gattaca2 /projects
 #                 8091: gattaca2 /scratch
@@ -41,6 +42,7 @@
 #               (default is the working dir, this is always correct,
 #               this option is vestigial)
 #  -h        => shows this help text.
+# ```
 #
 # Implementation:
 # Status is kept in these files:

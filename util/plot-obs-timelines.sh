@@ -8,12 +8,14 @@
 #```
 #
 # where:
+# ```
 #  -o TEMPLATE  gives the explicit output file template
 #               must contain two %s's, such as timelines-%s.%s
 #               By default, this is deduced from Sandbox conventions
 #  -j JSON      gives the JSON script name
 #               By default, this is deduced from Sandbox conventions
 #  -D           signals to run python with the debugger on
+# ```
 #
 # This is a wrapper around (currently) two python plotter-scripts:
 #   plot-timeline.py

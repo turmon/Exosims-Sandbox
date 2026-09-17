@@ -3,7 +3,9 @@
 
 Usage:
 
+```
   plot-keepout-and-snr.py [-o OUTPATH] SCRIPT DRM
+```
 
 where:
 

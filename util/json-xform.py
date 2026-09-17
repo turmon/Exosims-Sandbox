@@ -10,9 +10,11 @@ where:
   SCRIPT is the JSON script used by EXOSIMS
   XSCRIPT is a JSON script giving the transform
 and, optionally:
+```
   -o FILE to specify where files should go; FILE must
      have one %s to receive a file index or name.
   -v for some verbose output
+```
 The input SCRIPT (first required argument) is transformed according
 to the given XSCRIPT(s), and written to the given file template.
 Also, an index file summarizing the output files and the changing
