@@ -10,8 +10,11 @@
 # discard builtin rules
 MAKEFLAGS += -r
 
-# remote holding the github pages branch; the JPL mirror is a separate remote,
-# e.g. "make publish GH_REMOTE=jpl"
+# remote holding the github pages branch. The two documented sites are:
+#   origin => github.jpl.nasa.gov/pages/turmon/EXOSIMS-sandbox  (JPL internal)
+#   export => turmon.github.io/Exosims-Sandbox                  (public)
+# The default is the internal one, so that publishing publicly is deliberate:
+#   make publish GH_REMOTE=export
 GH_REMOTE ?= origin
 
 .PHONY: doc default rebuild export publish

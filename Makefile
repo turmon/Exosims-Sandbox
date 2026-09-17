@@ -625,8 +625,10 @@ doc-lint:
 	util/dev/doc-lint.py
 
 # push the generated code documentation to github pages.
-# NOTE: this pushes to the gh-pages branch. Use GH_REMOTE to pick the remote,
-# e.g. "make doc-publish GH_REMOTE=jpl" for the JPL mirror.
+# NOTE: this pushes to the gh-pages branch. GH_REMOTE picks the site:
+#   origin (default) => the JPL-internal Pages site
+#   export           => the public turmon.github.io site
+# e.g. "make doc-publish GH_REMOTE=export" to update the public site.
 .PHONY: doc-publish
 doc-publish:
 	cd util/doc_sandbox && make publish
