@@ -925,8 +925,9 @@ class SimSummary(object):
             # navigation link -- from ENSEMBLE/html/ to ../../
             if uplink:
                 hh.paragraph('Up to ' + hh.link('../../', uplink, inner=True))
-            # fixed link to documentation
+            # fixed links to documentation
             hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
+            hh.paragraph('Index of ' + hh.link(WWW_DOC/'index-plot-descriptions.html', 'plot descriptions', inner=True))
             # summary
             hh.header('Ensemble Summary')
             hh.paragraph(f'Ensemble: <code>{self.name}</code>')
@@ -1516,6 +1517,7 @@ def index_group(args, startpath, title, uplink):
         if uplink:
             hh.paragraph('Up to ' + hh.link('../', uplink, inner=True))
         hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
+        hh.paragraph('Index of ' + hh.link(WWW_DOC/'index-plot-descriptions.html', 'plot descriptions', inner=True))
         # overall section
         hh.header('Ensembles')
         # summary

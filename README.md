@@ -31,6 +31,11 @@ viewed directly.
 `make html-serve`, then invoke `make html-status` and point your
 browser to the indicated location.
 
+7. Once per sandbox, invoke `make doc` to build the plot descriptions and the
+code documentation.  These are generated files, so they are not part of the
+source distribution, and the webpage links to them will not resolve until
+they are built.
+
 ## Documentation
 
 Further documentation is available on how execution works and how 
