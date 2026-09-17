@@ -618,3 +618,15 @@ doc:
 	@echo "******************************"
 	cd util/doc_sandbox && make export
 
+# check documentation formatting: docstring/usage blocks in the utility
+# scripts, and agreement between the plot-topic lists (see util/dev/doc-lint.py)
+.PHONY: doc-lint
+doc-lint:
+	util/dev/doc-lint.py
+
+# push the generated code documentation to github pages.
+# NOTE: this pushes to the gh-pages branch. Use GH_REMOTE to pick the remote,
+# e.g. "make doc-publish GH_REMOTE=jpl" for the JPL mirror.
+.PHONY: doc-publish
+doc-publish:
+	cd util/doc_sandbox && make publish
