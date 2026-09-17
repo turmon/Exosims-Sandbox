@@ -1,0 +1,1530 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="binned-ensemble-gallery/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>EXOSIMS-Sandbox</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#exosims-sandbox" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="EXOSIMS-Sandbox" class="md-header__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EXOSIMS-Sandbox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="binned-ensemble-gallery/" class="md-tabs__link">
+          
+  
+  
+  Galleries
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="execution/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Execution
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="plots/obs-timeline/" class="md-tabs__link">
+          
+  
+  
+  Plot Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="script_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Script Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="impl_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Key Tools
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="EXOSIMS-Sandbox" class="md-nav__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    EXOSIMS-Sandbox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sandbox-file-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sandbox File Layout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sandbox File Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simulation-output-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulation Output Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Reduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#graphical-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Graphical Output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files-tours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files: Tours
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files-single-drm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files: Single DRM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Galleries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Galleries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="binned-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binned Ensemble Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="path-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ensemble Path Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="single-drm-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single DRM Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plot Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plot Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/obs-timeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observation Timelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/star-obs-trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Star-Observation Trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/path-movie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Path Movie
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/detection-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Detection Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/promotion-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Promotion Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/per-star-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-Star Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/planet-population-density/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planet-Population Densities and Throughputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/char-observing-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Characterization Observing Conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/radius-luminosity-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/Luminosity Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/rad-sma-bin-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/SMA Bin Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="plots/earthlike-tailoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tailoring the Earthlike Planet Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="script_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="impl_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Key Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sandbox-file-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sandbox File Layout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sandbox File Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simulation-output-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simulation Output Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Reduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#graphical-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Graphical Output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files-tours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files: Tours
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphical-output-files-single-drm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graphical Output Files: Single DRM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="exosims-sandbox">EXOSIMS Sandbox</h1>
+<p>Our environment for running batches of Exosims simulations
+is called the EXOSIMS Sandbox.
+It has four main functional pieces:
+simulation execution, data reduction, 
+graphics generation, and webpage generation.
+Also, there is some support for
+ensembles of related simulations for parameter-tuning, 
+utilities for data extraction, 
+and a webserver for inspection of results.</p>
+<p>In general, the workflow is to create an Exosims script, 
+run an ensemble of simulations that dumps output files to disk,
+reduce data from those simulations to
+a set of CSV files, and generate plots.</p>
+<p>Most of the workflow execution is controlled by a <code>Makefile</code>, and
+thus invoked by running <code>make</code> from the shell with an appropriate target.
+The components making up this tower of abstraction are described <a href="execution/">elsewhere</a>.
+The <code>make</code> mechanism both feeds off of and imposes a file structure,
+which we describe next.</p>
+<h2 id="sandbox-file-layout">Sandbox File Layout</h2>
+<p>We run simulations tailored to many mission scenarios.
+We show HWO here for example, other simulations have
+the same layout.</p>
+<pre><code>hwo/
+    README 
+    Makefile             -- controls execution
+    Scripts/             -- JSON scripts for Exosims
+      .../HabEx.fam/     -- family of related scripts
+      .../HabEx.fam/H4m.json -- typical input script 
+    sims/                -- Ensembles of DRM outputs
+      .../HabEx.fam/H4m/ -- DRMs and data from above script
+    add-sims.sh          -- adds more Exosims runs to sims/
+    Experiments/         -- groups of ensembles
+      seed100.txt        -- standard set of 100 PRNG seeds
+    util/                -- mission-generic utilities
+    Local/               -- Sandbox internal configuration
+../Python-venvs/
+    README.txt           -- how to make a Python virtual environment
+    exosims-3.2.0        -- venv containing EXOSIMS 3.2.0
+</code></pre>
+<p>The main conventions here are:</p>
+<ul>
+<li>EXOSIMS input scripts are all under the <code>Scripts</code> directory.
+All runs using that script (an <em>ensemble</em>)
+have output in the corresponding directory
+underneath <code>sims</code>.
+This convention allows all utilities to place reduced data, graphics,
+and html index pages into standard locations.</li>
+<li>Python virtual environments are used for EXOSIMS model runs and
+data reduction.</li>
+<li>Families of related scripts can be placed under a directory ending
+in <code>.fam</code>; these families can be nested.</li>
+<li>For use cases like parameter sweeps, several related ensembles will
+be generated for different settings.  We call this an <em>experiment</em>,
+and Experiment scripts are contained in a directory ending in <code>.exp</code>, with
+an index file <code>s_index.json</code> describing the parameter settings.
+For more, see <code>HOWTO-run-experiment.txt</code>.</li>
+<li>The <code>Makefile</code> has targets (beginning in <code>exp-</code>)
+applicable to <em>both</em> Families and
+Experiments, such that they process all the members at once.</li>
+<li>Most reduction and graphics code lives in <code>util</code> and <code>Local</code>;
+the latter is intended to be mission-tailored, but the tailoring
+has turned out to be minimal.</li>
+</ul>
+<h3 id="simulation-output-files">Simulation Output Files</h3>
+<p>The subdirectories of <code>sims</code> are of particular interest, because they store
+Exosims outputs like DRMs, reduced data like CSV files, and graphical
+outputs like plots and movies:</p>
+<pre><code>drm/                   -- DRM outputs (time-ordered observation lists)
+    .../NNN.pkl        -- a specific run as a python pickle
+    ...                -- (and a bunch more runs)
+spc/                   -- SPC (star-planet configuration) files
+    .../NNN.spc        -- a specific SimulatedUniverse as a pickle
+    ...
+log/                       -- run logs
+    console/NNN.out   -- console log from a run
+    environ/NNN.txt   -- runtime environment from a run
+    outspec/NNN.json  -- outspec from a run
+reduce-info.csv       -- CSV files summarizing the ensemble
+reduce-radlum.csv
+reduce-times.csv
+reduce-visits.csv, etc.
+reduce-pool.json
+html/                  -- html page(s) indexing graphics below
+gfx/                   -- various plots as images 
+tbl/                   -- tabulated data from reduction
+path/                  -- single-DRM movies/graphics
+    .../NNN.mp4        -- observing sequence movie
+    .../NNN-*.png      -- various graphics
+path-ens/              -- ensemble-wide observing sequences
+</code></pre>
+<p>Each Exosims run produces a single DRM, stored in <code>drm/</code> according to the
+random-number seed, and a corresponding star-planet configuration
+(the <code>SimulatedUniverse</code>), stored in <code>spc/</code>.
+Depending on how it was run, it may produce a text runlog in <code>log/console</code>, and
+a JSON outspec in <code>log/outspec</code>.</p>
+<p>This set of outputs (DRM, SPC, logs) is made by
+a tailored <code>SurveyEnsemble</code> class
+(<code>Local/EXOSIMS_local/IPClusterEnsembleJPL2.py</code>),
+and a shell-level driver and "run_one" (<code>Local/sandbox_driver.py</code>).
+These have been generalized and updated from the Exosims standard files,
+which are documented in EXOSIMS as subclasses following the
+<code>SurveyEnsemble</code> prototype.</p>
+<p>As mentioned, after an ensemble is run, a reduction script
+is typically invoked that generates the CSV output files,
+and subsequent graphics commands use the ensemble summaries,
+or in some cases just single DRMs.</p>
+<h2 id="data-reduction">Data Reduction</h2>
+<p>We separated data reduction from plotting so that reduction of
+the ensemble could be done once, and then various plots could
+be remade and tweaked quickly from the reduced data.
+The python driver is <code>reduce_drms.py</code>.
+It contains some re-usable code for loading the ensemble of DRMs
+and for computing summaries (means, standard errors,
+medians, quantiles, histograms).
+With only one exception, <code>reduce_drms</code> produces averages over
+the ensemble.  Note that this does not limit us to mean values!
+For example, a histogram of yields is also an average over the ensemble:
+bin number "N" of a yield histogram
+contains the average, across the ensemble,
+of this 0/1 variable: "N" exo-Earths were detected in the simulation.</p>
+<p>Data reduction happens at the ensemble level, by reading in
+the set of typically ~100 DRMs and corresponding SPCs, and putting
+out CSV files such as the following non-exclusive list:</p>
+<pre><code>reduce-info.csv    -- metadata
+reduce-times.csv   -- temporal summaries like fuel use 
+reduce-radlum.csv  -- histograms segmented by radius/luminosity
+reduce-visits.csv  -- histograms of revisits
+reduce-earth.csv   -- exo-Earth detection counts
+</code></pre>
+<p>Currently, there are 14 such files.</p>
+<p>The CSV format is good at storing vectors, so the above CSV files are
+all vectorized along some index set: time, radius/luminosity, or 
+revisit-count.
+This format enforces a certain discipline in how a summary should be
+done: within a bin defined by the index set
+("month 15 of the simulation", "radius in range X, luminosity in range Y"),
+counts that fall in each bin are accumulated across DRMs.
+Then, means, standard errors, and quantiles can be computed from
+the counts.
+So, all CSVs have two columns indicating the lower and upper bin
+boundaries, and for each quantity
+of interest, there is one column each for the mean, standard error, 
+each quantile needed, and the number of ensemble members comprising
+that mean.</p>
+<p>As an example, the fields now stored in <code>reduce_times.csv</code> include:</p>
+<pre><code>h_det_time_lo,         -- bin boundaries
+h_det_time_hi,
+h_det_time_all_mean,   -- cumulative detections
+h_det_time_all_std, 
+h_det_time_all_nEns, 
+h_det_time_unq_mean,   -- unique detections only
+h_det_time_unq_std, 
+h_det_time_unq_nEns, 
+h_det_time_rev_mean,   -- revisits only
+h_det_time_rev_std, 
+h_det_time_rev_nEns, 
+h_time_fuel_all_mean,  -- fuel use
+h_time_fuel_all_std, 
+h_time_fuel_all_nEns, 
+h_time_fuel_slew_mean, -- fuel used for slews
+h_time_fuel_slew_std, 
+h_time_fuel_slew_nEns, 
+h_time_fuel_keep_mean, -- fuel for station-keeping
+h_time_fuel_keep_std, 
+h_time_fuel_keep_nEns
+</code></pre>
+<p>In all, there are 89 fields in that particular file, and about 1100 summarized quantities
+across all the files.</p>
+<p>One exception to this format convention is the file <code>reduce-earth-char-list.csv</code>, which
+simply contains a list of all attempted characterizations across the entire
+ensemble (all observations for all simulations).</p>
+<h2 id="graphical-output">Graphical Output</h2>
+<p>Graphical outputs are generated by Python/matplotlib scripts
+in <code>util/plot_drm_gallery</code>.</p>
+<h3 id="graphical-output-files">Graphical Output Files</h3>
+<p>To make the whole-ensemble
+plots from the CSV files above,
+you run <code>make S=(SCRIPT) graphics</code>. 
+The resulting output graphics are put into files like the following in 
+<code>sims/&lt;script&gt;/gfx/</code>:</p>
+<pre><code>gfx/det-detects.png
+gfx/det-cume-detects.png
+gfx/det-fuel.png
+gfx/det-radlum-det.png
+gfx/det-radlum-char.png
+gfx/det-radlum-det-all.png
+</code></pre>
+<p>Currently, about 50 files are generated, almost all PNG image files.
+You can use <code>make S=(SCRIPT) graphics-extra</code> to make a deeper set of
+plots that are not always useful.
+These plots will be linked into the summary web page automatically 
+the next time it is regenerated, e.g. with <code>make S=(SCRIPT) html-only</code>. </p>
+<p>See the <a href="binned-ensemble-gallery/">binned ensemble plot gallery</a>.</p>
+<h3 id="graphical-output-files-tours">Graphical Output Files: Tours</h3>
+<p>Other plots show the tour of characterizations
+made by a starshade mission.
+These are made by the python script
+ <code>util/ens-path-graphics.py</code>
+ which is invoked by <code>util/ens-path-summary.sh</code>.
+ The <code>make</code> target is <code>path-ensemble</code>. </p>
+<p>The resulting output files are put into files in 
+<code>sims/&lt;script&gt;/path-ens</code>:</p>
+<pre><code>path-map.png                  -- map-format plot of activity
+path-adjacency-lon.png    -- slews, targets ordered by lon 
+path-adjacency-lat.png    -- slews, targets ordered by lat
+path-visits.csv                 -- mean number of visits per star 
+path-slews.csv                 -- total slews between pairs of stars
+</code></pre>
+<p>See the <a href="path-ensemble-gallery/">ensemble path plot gallery</a>.</p>
+<p>The latter two CSV files are used by a javascript widget in the generated HTML
+page to show a zoomable plot of slews across the ensemble.</p>
+<h3 id="graphical-output-files-single-drm">Graphical Output Files: Single DRM</h3>
+<p>A final set of plots shows the observations, keepout, or slews for a single
+DRM.
+They are useful in analyzing observation-scheduling behavior, 
+verifying that keepout constraints are honored, and related questions.
+They are made by <code>plot-keepout-and-obs.py</code>, <code>plot-timeline.py</code>,
+and <code>keepout_path_graphics.py</code>.</p>
+<p>For a given DRM with a certain (integer) SEED,
+these files are placed in the directory
+<code>sims/&lt;script&gt;/path/</code>, and named like:</p>
+<pre><code>SEED-obs-timeline.png  -- time-format plot of all observations
+SEED-obs-keepout-all.png -- time-format plot of keepout (all obs.)
+SEED-obs-keepout-char.png -- time-format plot of keepout (char only)
+SEED-obs-timeline-info.csv
+SEED.mp4 -- movie of all detection and char observations
+SEED-final.png -- final frame of above movie
+</code></pre>
+<p>Some other plots and summaries are placed in the directory
+<code>sims/&lt;script&gt;/path/SEED-cume</code>, including:</p>
+<pre><code>path-visits.csv
+path-slews.csv
+</code></pre>
+<p>which are used by the same javascript widget described above, to
+show a zoomable plot of slews for just that DRM.</p>
+<p>See the <a href="single-drm-gallery/">single-drm gallery</a>. </p>
+<h2 id="web-output">Web Output</h2>
+<p>These diverse plots are stored as files in given locations, but are easier
+to grasp when displayed in context.  The web output helps with this: it is
+a web page devoted to that particular ensemble of runs.  To make the web page
+plots, you run <code>make S=(SCRIPT) html</code>.  This became our default 
+diagnostic path in understanding results from an ensemble.</p>
+<p>The script that performs this is <code>util/html-summary.py</code>.   When pointed at
+a particular ensemble directory, it locates <em>all</em>  graphical files below
+that point.  For each located file, it pattern-matches the filename against
+a table of patterns that gives the skeleton of a web page.  It then
+iterates over the filled-in skeleton to generate a page divided into
+sections such as "Resource Use" and "Planet Yield".</p>
+<p>Additionally, it generates a top-level index into all the ensembles.  This
+index page serves as a dashboard for the sandbox.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

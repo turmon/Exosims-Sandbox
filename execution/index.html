@@ -1,0 +1,1509 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../single-drm-gallery/">
+      
+      
+        <link rel="next" href="../plots/obs-timeline/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Execution - EXOSIMS-Sandbox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pipeline-execution-scheme" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="EXOSIMS-Sandbox" class="md-header__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EXOSIMS-Sandbox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Execution
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../binned-ensemble-gallery/" class="md-tabs__link">
+          
+  
+  
+  Galleries
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Execution
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../plots/obs-timeline/" class="md-tabs__link">
+          
+  
+  
+  Plot Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../script_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Script Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../impl_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Key Tools
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="EXOSIMS-Sandbox" class="md-nav__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    EXOSIMS-Sandbox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Galleries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Galleries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binned-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binned Ensemble Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../path-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ensemble Path Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../single-drm-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single DRM Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fundamental-operating-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fundamental operating concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-simulations-to-the-ensemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding simulations to the ensemble
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generating-basic-result-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating basic result summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extra Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#additional-result-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional result summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#webserver-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webserver support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-experiment-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning experiment support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plot Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plot Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/obs-timeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observation Timelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/star-obs-trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Star-Observation Trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/path-movie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Path Movie
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/detection-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Detection Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/promotion-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Promotion Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/per-star-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-Star Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/planet-population-density/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planet-Population Densities and Throughputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/char-observing-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Characterization Observing Conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/radius-luminosity-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/Luminosity Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/rad-sma-bin-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/SMA Bin Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots/earthlike-tailoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tailoring the Earthlike Planet Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../script_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../impl_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Key Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fundamental-operating-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fundamental operating concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-simulations-to-the-ensemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding simulations to the ensemble
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generating-basic-result-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generating basic result summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extra Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#additional-result-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional result summaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#webserver-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webserver support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-experiment-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning experiment support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="pipeline-execution-scheme">Pipeline Execution Scheme</h1>
+<p>At the top level, you need to perform simulations, and perform
+data reduction and plotting. 
+For the first, you use <code>add-sims.sh</code>, and execution of all
+data reduction, plotting, and webpage generation is
+is controlled by standard unix <code>make</code>.</p>
+<p>This page describes how <code>add-sims.sh</code> and <code>make</code> 
+are invoked in standard Sandbox usage patterns.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>The top-level workflow to run 100 simulations from a canned
+set of seeds (using N-fold parallelism on the local computer),
+reduce their output, and
+produce a summarizing webpage is simply:</p>
+<pre><code># Create the input script, Scripts/example.json
+# Enter a venv with: source ../Python-venvs/ENV/bin/activate
+add-sims.sh Scripts/example.json Experiments/seed100.txt
+make S=example reduce
+make S=example html
+</code></pre>
+<p>If you go away and forget whether the graphics are up to date because
+you might have added more simulations, you can just:</p>
+<pre><code>make S=example html
+</code></pre>
+<p>The graphical plots and the html page containing them
+will be refreshed if there were new simulations added
+since the last time the webpage was made, otherwise, the <code>make</code> returns
+immediately.</p>
+<h2 id="core-functions">Core Functions</h2>
+<h3 id="fundamental-operating-concept">Fundamental operating concept</h3>
+<p>The short-circuiting of unneeded processing just described
+is possible because the <code>Makefile</code> includes the dependency network
+of the data and graphics.  The <code>html</code> target depends on the 
+the <code>reduce</code> target, which finally depends on the <code>sims/example/drm</code>
+directory, where the simulation outputs are placed.
+Dependency management is a powerful feature of <code>make</code>.</p>
+<p>This works automatically whenever downstream data (webpage) needs to change in
+response to new upstream data (simulations).
+However, if the underlying graphics code changes ("put the titles in 14 point") you
+need to force the webpage refresh by supplying <code>-B</code> to <code>make</code>,
+which forces the rebuild (mnemonic: B =&gt; force build):</p>
+<pre><code>make -B S=example html
+</code></pre>
+<p>The chain of data artifacts (DRM's, reduced data, graphics, html pages)
+is connected by driver scripts throughout.
+Thus, <code>make</code> calls a shell-script driver to do data reductions and produce graphics.
+Typically the shell-script will enforce the naming conventions
+on inputs and outputs, and then call a Python script to do
+the actual processing.
+So, there are roughly three levels of abstraction: the <code>make</code> target,
+the shell driver script invoked by <code>make</code>,
+and the 'doing' routine, typically in python.</p>
+<p>The <code>Makefile</code> lists all the targets at the top of the file, with an
+explanation.  This document adds some context to that helpful summary.</p>
+<h3 id="adding-simulations-to-the-ensemble">Adding simulations to the ensemble</h3>
+<p>Adding simulations is done outside of make with the <code>add-sims.sh</code>
+shell script driver.
+Its basic usage is simply:</p>
+<pre><code>add-sims.sh SCRIPT N
+</code></pre>
+<p>where <code>SCRIPT</code> is the JSON script for Exosims,
+and <code>N</code> is the number of sims
+to add to the ensemble tied to <code>SCRIPT</code>.
+More commonly, <code>N</code> is actually the filename of a 
+standardized list of seeds, e.g., <code>Experiments/seed100.txt</code>.</p>
+<p>This pushes down to call a driver script for
+Exosims, <code>Local/sandbox_driver.py</code>.
+The main function of this driver is to put result files in the proper place,
+and to perform logging.
+In particular, the observing sequence ("DRM") for each sim is named for
+the seed and goes in one directory, and the star-planet configuration
+for that sim ("SPC"), also named for the seed, goes in a separate directory.</p>
+<p>In the above usage case, a number of independent jobs 
+(maximum of about 40) is run in parallel 
+at the shell level on the local host only using GNU <code>parallel</code>.</p>
+<p>Two parallelization options to add-sims are noteworthy:</p>
+<pre><code>-Z =&gt; run in parallel across mustang2/3/4, aftac1/2/3 (100-way parallel)
+-S =&gt; run in parallel across mustang2/3/4 (64-way parallel)
+</code></pre>
+<p>These are available as long as you have passwordless ssh set up
+between the various machines above.
+(Test this with <code>ssh mustang4 ls</code>
+while logged in to mustang2, for example.)
+In the above cases, the independent jobs are farmed out to the 
+indicated machines by GNU <code>parallel</code>.</p>
+<p>Scripts typically need to generate cache files when run the first
+time.
+We support this by allowing the <code>N</code> option above to refer not to a 
+seed filename, but to give a seed itself:</p>
+<pre><code>=SEED =&gt; run a single simulation with the given integer SEED
+=0 =&gt; initialize caches, but exit before running the simulation
+</code></pre>
+<p>For the single-seed cases above, the usual simulation chatter is
+sent to standard output rather than being logged, to make it easier
+to diagnose first-run problems.</p>
+<p>So typically, when generating results from a new script, you run:</p>
+<pre><code>add-sims.sh SCRIPT =0
+</code></pre>
+<p>first, to initialize the cache files, and only then run:</p>
+<pre><code>add-sims.sh -Z SCRIPT Experiments/seed100.txt
+</code></pre>
+<p>to run 100 Monte Carlo simulations.</p>
+<p>More options and further details in the output of
+<code>add-sims.sh -h</code>, or in the <code>add-sims.sh</code> header.</p>
+<h3 id="generating-basic-result-summaries">Generating basic result summaries</h3>
+<p>As described in the top-level documentation, data from simulation
+runs is reduced by averaging across the ensemble and dumping the results
+to CSV files.  The reduction itself is triggered by invoking</p>
+<pre><code>make S=example reduce
+</code></pre>
+<p>Typically the reduction does not have to be directly invoked, because the
+generation of other products invokes reduction as a side-effect, if it is
+needed.  The reduction script is multi-threaded internally.</p>
+<p>Graphics are generated by
+Python scripts that generally only
+access the CSV files.
+The top-level invocation for the basic graphical suite is:</p>
+<pre><code>make S=example graphics
+</code></pre>
+<p>As with reduction, this is not typically directly invoked.</p>
+<p>The graphics can be summarized and organized into a single-script HTML
+file (with linked graphics) using:</p>
+<pre><code>make S=example html
+</code></pre>
+<p>As noted, this is the usual top-level command for reduction/graphics as
+well.  There is an overall summary or "Table of Contents" page,
+for all ensembles, that is also
+updated when this is run.</p>
+<h2 id="extra-functions">Extra Functions</h2>
+<h3 id="additional-result-summaries">Additional result summaries</h3>
+<p>Additional graphical products can be made for a sample of single DRMs,
+showing things like instrument selection (versus time) and slews (in a lat/lon format).
+Python code is used for these graphics, and DRMs are directly accessed
+rather than whole-ensemble reduced data.</p>
+<p>The <code>Makefile</code> targets for these are:</p>
+<p><code>path-movie-N</code>: make "N" path-movies and final frames 
+   <code>path-final-N</code>: make "N" final frames, only
+   <code>obs-timeline-N</code>: make "N" observing-target timelines
+   <code>keepout-N</code>: make "N" keepout-vs-time plots</p>
+<p>where <code>N</code> is 1, 2, 5, 10, 20, etc.  If the <code>-N</code> part is omitted, 10 is used.
+These run independently across <code>N</code> DRMs, so they can be parallelized by using the
+<code>-j P</code> option to <code>make</code> for <code>P</code>-way parallelization.  Typical usage is</p>
+<pre><code>make -j 10 S=example path-movie
+</code></pre>
+<p>which makes 10 path movies (the default number) in parallel.</p>
+<p>The dependencies in the <code>Makefile</code> are incomplete for these graphics.
+That is, <code>make</code> knows how to build them, but the <code>html</code> target doesn't
+automatically know to re-make the html index file when they are changed.
+So, when any of these additional graphics are made or changed, you should
+update just the html index with</p>
+<pre><code>make S=example html-only
+</code></pre>
+<p>This re-makes the html file (which is quick) but does not refresh the
+basic graphic suite (which takes minutes).  The html-maker will notice the
+additional graphics generated as above and include them in the new index.</p>
+<h3 id="webserver-support">Webserver support</h3>
+<p>Results are produced as graphic files and as a webpage that summarizes the
+graphics.  You could view the html in several ways, but one easy way is to
+start a server within the simulations directory.  A simple Python server
+(<code>python -m http.server 8000</code>) is too slow and does not support some
+video functions, so we use httpd (Apache).</p>
+<p>To control this server, the <code>Makefile</code> has these targets:</p>
+<ul>
+<li>
+<p><code>html-ensure</code>: ensure httpd server is running (starts new one if needed)</p>
+</li>
+<li>
+<p><code>html-stop</code>: stop httpd server</p>
+</li>
+<li>
+<p><code>html-start</code>: start a new httpd server</p>
+</li>
+<li>
+<p><code>html-status</code>: show running servers, if any, by inspecting their log
+    files.</p>
+</li>
+</ul>
+<p>Using <code>make html-status</code> tells you where to point your browser.
+The server typically can stay up until its own job is killed.
+(The servers on local HPC systems are auto-restarted by <code>cron</code> so the
+servers there will restart automatically.)</p>
+<h3 id="tuning-experiment-support">Tuning experiment support</h3>
+<p>We had occasional need to run multiple linked ensembles to understand
+performance of schedulers in response to different tuning parameters.
+For instance, a scheduler might need to trade off slew time against
+Brown completeness ("should we spend time slewing to a far-off
+high-completeness target, or
+integrate longer on a nearby target with smaller completeness").
+So we seek to compute and maximize yield
+across a selected set of tuning parameters.</p>
+<p>This was handled by creating a series of Exosims input scripts, one for
+each parameter setting, running
+<code>add-sims.sh</code> for each, and performing data reduction as noted above.
+This amounts to an outer loop around the above process.</p>
+<p>Regarding execution, we would generate a list of the input script
+filenames, and farm this list out to the machines available (aftac1,
+aftac2, aftac3).  The detailed process is described in the file 
+<code>Experiments/run-experiment-howto.txt</code>.</p>
+<p>One important detail has to do with Monte Carlo noise.  When tuning the
+scheduler, we want to randomize over multiple simulated universes to
+provide robust parameter choices.  But, when comparing two parameter
+settings, we want to use the same <em>set</em> of simulated universes for both, to
+suppress the additional noise that would arise if the two settings used
+independent simulated universes.  (This is a simple instance of stratified
+sampling.)  So the sets of random number seeds used for each ensemble
+across the tuning experiment should be the same.  This is one purpose of the
+standardized seed files in the <code>Experiments</code> directory.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

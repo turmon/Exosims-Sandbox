@@ -1,0 +1,2041 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>PlanetBins - EXOSIMS-Sandbox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#planetbins" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="EXOSIMS-Sandbox" class="md-header__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EXOSIMS-Sandbox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PlanetBins
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../binned-ensemble-gallery/" class="md-tabs__link">
+          
+  
+  
+  Galleries
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../execution/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Execution
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../plots/obs-timeline/" class="md-tabs__link">
+          
+  
+  
+  Plot Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../script_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Script Index
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../impl_index/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Key Tools
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="EXOSIMS-Sandbox" class="md-nav__button md-logo" aria-label="EXOSIMS-Sandbox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    EXOSIMS-Sandbox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Galleries
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Galleries
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../binned-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binned Ensemble Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../path-ensemble-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ensemble Path Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../single-drm-gallery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Single DRM Galleries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plot Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plot Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/obs-timeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observation Timelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/star-obs-trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Star-Observation Trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/path-movie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Path Movie
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/detection-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Detection Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/promotion-tabulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target Promotion Tabulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/per-star-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-Star Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/planet-population-density/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planet-Population Densities and Throughputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/char-observing-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Characterization Observing Conditions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/radius-luminosity-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/Luminosity Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/rad-sma-bin-plots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Radius/SMA Bin Plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plots/earthlike-tailoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tailoring the Earthlike Planet Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../script_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../impl_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Key Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PlanetBins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RpLBins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RpLBins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins.customize_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        customize_parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins.is_earthlike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_earthlike
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins.is_hab_zone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_hab_zone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins.quantize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        quantize
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drm_tools.PlanetBins.RpLBins.show" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        show
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="planetbins">PlanetBins</h1>
+<p>Implementation details of <code>reduce_drm_tools/PlanetBins</code>.
+</p>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="reduce_drm_tools.PlanetBins"></a>
+    <div class="doc doc-contents first">
+
+        <p>PlanetBins.py -- Class for binning planets by physical characteristics.</p>
+<p>Centralized so binning can stay consistent across modules here.</p>
+<p>Can run as an executable, to verify customization, like so:</p>
+<pre><code>$ PlanetBins.py [DIR]
+</code></pre>
+<p>where <code>DIR</code> is an optional directory to look for a <code>config-reduce.json</code>
+customization file. It will print a summary of the bin parameters
+after applying customization. A useful idiom is:</p>
+<pre><code>$ diff &lt;(util/reduce_drm_tools/PlanetBins.py sims/SCENARIO) &lt;(util/reduce_drm_tools/PlanetBins.py)
+</code></pre>
+<p>which will output any differences from the customization.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="reduce_drm_tools.PlanetBins.RpLBins" class="doc doc-heading">
+            <code>RpLBins</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class to hold Rp - Luminosity bin properties.</p>
+<p>Both a container object for bin properties, and a method-holding class.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RpLBins</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Class to hold Rp - Luminosity bin properties.</span>
+
+<span class="sd">    Both a container object for bin properties, and a method-holding class.&#39;&#39;&#39;</span>
+    <span class="c1"># guard variable: set to true when customize_parameters() was called</span>
+    <span class="c1"># ensures that class instances have received customization (which</span>
+    <span class="c1"># can be {}), even if multiprocessing is in effect</span>
+    <span class="n">_customized</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># attributes of a known group that are *display names*, not bin geometry:</span>
+    <span class="c1"># they are handled by PlanetNames.py, and are skipped (silently) here</span>
+    <span class="n">_display_attrs</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">DISPLAY_KEYS</span><span class="p">)</span>
+
+    <span class="c1"># known group names and their allowed attribute names</span>
+    <span class="n">_custom_groups</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;earthlike&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;Earth_Rp_scaled&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Earth_SMA_lo&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Earth_SMA_hi&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Earth_Rp_hi&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Earth_Rp_lo&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;RpL_bins&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;Rp_bins&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;L_bins&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+
+    <span class="c1"># extracted from the original definition</span>
+    <span class="c1"># TBD: scaling flag present, but interpretation unclear, see elsewhere in this file</span>
+    <span class="n">Earth_Rp_scaled</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># scale Earth_Rp_lo to obtain sloped lower boundary</span>
+    <span class="n">Earth_SMA_lo</span> <span class="o">=</span> <span class="mf">0.95</span>
+    <span class="n">Earth_SMA_hi</span> <span class="o">=</span> <span class="mf">1.67</span>
+    <span class="n">Earth_Rp_hi</span> <span class="o">=</span> <span class="mf">1.40</span>
+    <span class="n">Earth_Rp_lo</span> <span class="o">=</span> <span class="mf">0.80</span>
+
+    <span class="c1"># valid keys for Rp/L binning</span>
+    <span class="c1"># Bin the detected planets into types</span>
+    <span class="c1"># 1: planet-radius bin-edges  [units = Earth radii]</span>
+    <span class="c1"># Original (v1), 3 x 3 bins:</span>
+    <span class="c1">#   Rp_bins = np.array([0.5, 1.4, 4.0, 14.3])</span>
+    <span class="c1"># Later (v2, May 2018):</span>
+    <span class="c1"># 5 x 3 bins, see Kopparapu et al, arxiv:1802.09602v1,</span>
+    <span class="c1"># Table 1 and in particular Table 3 column 1, column 2 and Fig. 2:</span>
+    <span class="n">Rp_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.75</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="mf">14.3</span><span class="p">])</span>
+    <span class="c1"># 2: stellar luminosity bins, in hot -&gt; cold order</span>
+    <span class="c1">#    Luminosity and SMA are inter-convertible: SMA = 1/sqrt(L).</span>
+    <span class="c1">#    NB: *decreasing ordering* in L &lt;=&gt; increasing in SMA</span>
+    <span class="c1">#    So for example, for the outer bin boundary:</span>
+    <span class="c1">#         L = .0030  [unit: Lsun]</span>
+    <span class="c1">#      =&gt; SMA = 18.26  [unit: AU]</span>
+    <span class="c1">#    Referencing the radius/SMA plot (rad-sma-rectangle-bin-plot):</span>
+    <span class="c1">#       Rp_bins controls y-axis</span>
+    <span class="c1">#       1/sqrt(L_bins) controls x-axis for each Rp_bins stripe</span>
+    <span class="c1"># v1:</span>
+    <span class="c1"># L_bins = np.array([</span>
+    <span class="c1">#    [185, 1.5,  0.38, 0.0065],</span>
+    <span class="c1">#    [185, 1.6,  0.42, 0.0065],</span>
+    <span class="c1">#    [185, 1.55, 0.40, 0.0055]])</span>
+    <span class="c1"># v2:</span>
+    <span class="n">L_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="p">[</span><span class="mi">182</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="mf">0.28</span><span class="p">,</span> <span class="mf">0.0035</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">187</span><span class="p">,</span> <span class="mf">1.12</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.0030</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">188</span><span class="p">,</span> <span class="mf">1.15</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">,</span> <span class="mf">0.0030</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">220</span><span class="p">,</span> <span class="mf">1.65</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.0030</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">220</span><span class="p">,</span> <span class="mf">1.65</span><span class="p">,</span> <span class="mf">0.40</span><span class="p">,</span> <span class="mf">0.0025</span><span class="p">],</span>
+        <span class="p">])</span>
+    <span class="c1">## TODO: set up on __init__ based on L_bins -- for now,</span>
+    <span class="c1">## we are restricted to 3x5</span>
+    <span class="c1"># set up the bin-number map from (Rp_bin, L_bin) -&gt; RpL_bin</span>
+    <span class="c1"># this is a map from (int,int) -&gt; int:</span>
+    <span class="c1">#   yields 0 for input pairs outside the allowed range</span>
+    <span class="c1">#        [namely, 1..len(Rp_bins) and 1..len(L_bins[i])]</span>
+    <span class="c1">#   yields 1...9 otherwise, with 1, 2, 3 for the small planets (Rp bin number = 1).</span>
+    <span class="n">Rp_L_to_RpL_bin</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="c1"># there are many ways to set this up: here is one.</span>
+    <span class="c1"># (the below lines are enough for the old 3x3 setup,</span>
+    <span class="c1"># and they work for the new 5x3 setup too)</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># smallest radius, highest luminosity =&gt; L bin number 1</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="c1"># New setup has 5*3 bins due to two new radius bins: added below</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">13</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">14</span>
+    <span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">15</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># convenenience variables useful for plots</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_customized</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RpLBins: Error: Class was not customized.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;RpLBins class used before customization&quot;</span><span class="p">)</span>
+
+        <span class="c1"># parametric w/r/t Earth_Rp_lo_1AU</span>
+        <span class="c1"># derived attributes: earthlike</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_scaled</span><span class="p">:</span>
+            <span class="c1"># default is to scale lower Rp boundary to get &quot;Nevada&quot; shape</span>
+            <span class="c1"># these quantities are here for the plotter to later access, so it does not</span>
+            <span class="c1"># have to embed too much domain knowledge</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_lo</span><span class="p">)</span> <span class="c1"># left boundary</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_hi</span><span class="p">)</span> <span class="c1"># right boundary</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: We want to extend is_earthlike() to other planet classes, but to do so,</span>
+            <span class="c1"># we need to determine the behavior w/r/t SMA we want in is_earthlike for these</span>
+            <span class="c1"># other classes. Once we decide that, we can:</span>
+            <span class="c1">#   -- modify is_earthlike to obtain the desired behavior</span>
+            <span class="c1">#   -- generalize rad-sma-rectangle-bin-plot.py so that the</span>
+            <span class="c1">#      correct boundary is drawn</span>
+            <span class="c1">#   -- insert any other needed data here (that the plotter, etc., may want)</span>
+            <span class="c1">#raise RuntimeError(&quot;Unimplemented scaling flag.&quot;)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span> <span class="c1"># left boundary</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span> <span class="c1"># right boundary</span>
+
+        <span class="c1"># derived attributes: RpL histogram</span>
+        <span class="c1"># the below &quot;:&quot; selectors are correct for increasing ordering</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_lo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_bins</span><span class="p">[:,:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L_hi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_bins</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="c1"># 1b: bin lo/hi edges, same size as the resulting histograms</span>
+        <span class="c1">#     simple copies of entries of Rp_bins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Rp_lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Rp_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>  <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="c1"># total number of bins (e.g., 9 = 3*4-3, for a 3x3 histogram)</span>
+        <span class="n">RpL_bin_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_bins</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># radius/luminosity bin boundaries</span>
+        <span class="c1">#   if there are 9 bins, there are 10 bin-edges, at 0.5, 1.5, ..., 9.5.</span>
+        <span class="c1">#   this histogram drops the &quot;0&quot;, or out-of-range, RpL region</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">RpL_bin_edge_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">RpL_bin_count</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">customize_parameters</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;Set up the class parameters using a custom mapping passed in.</span>
+
+<span class="sd">        Return the list of unmatched attribute names (but only those within</span>
+<span class="sd">        attribute groups we care about, like &quot;earthlike&quot;.</span>
+<span class="sd">        We assume the mapping is a dict.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_customized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">fails</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Look for attribute groups we care about</span>
+        <span class="k">for</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">ok_attrs</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_custom_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">group_name</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+                <span class="c1"># plug mapping in where possible, as attributes</span>
+                <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">attr_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+                        <span class="k">continue</span> <span class="c1"># comment</span>
+                    <span class="k">elif</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_display_attrs</span><span class="p">:</span>
+                        <span class="k">continue</span> <span class="c1"># display name, not bin geometry -- see PlanetNames.py</span>
+                    <span class="k">elif</span> <span class="n">attr_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ok_attrs</span><span class="p">:</span>
+                        <span class="n">fails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1">#print(f&quot;binner: Set {attr_name} to {value}&quot;)</span>
+                        <span class="c1"># assumption: lists convert to np.array</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="c1"># insist on 5 x 3 bins for now</span>
+        <span class="k">if</span> <span class="s1">&#39;RpL_bins&#39;</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Rp_bins</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">5</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Rp wrong size: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">Rp_bins</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">L_bins</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;L wrong size: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">L_bins</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">fails</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Print the set-able attributes that we know about.&#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Group: </span><span class="si">{</span><span class="n">group_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  attribute: </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="s1">&#39;uninitialized!&#39;</span><span class="p">)),</span>
+                    <span class="s2">&quot; &quot;</span><span class="o">*</span><span class="mi">4</span><span class="p">))</span>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute the final radius/luminosity bin, an integer, for a given planet and star.</span>
+
+<span class="sd">        Returns 0 if the planet/star lies outside the bin boundaries.  Returns 1..15 otherwise.</span>
+<span class="sd">        Note: Not vectorized; scalar plan_id only.&#39;&#39;&#39;</span>
+        <span class="c1"># extract planet and star properties</span>
+        <span class="n">Rp_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;Rp&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+        <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+        <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+        <span class="n">L_plan</span> <span class="o">=</span> <span class="n">L_star</span> <span class="o">/</span> <span class="p">(</span><span class="n">a_plan</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># adjust star luminosity by distance^2 in AU</span>
+        <span class="c1"># Bin by Rp.  &quot;too low&quot; maps to 0, and &quot;too high&quot; maps to len(Rp_bins).</span>
+        <span class="n">Rp_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">Rp_plan</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">)</span>
+        <span class="c1"># index into L_bins array: if Rp is out-of-range, index is irrelevant</span>
+        <span class="n">Rp_bin_index</span> <span class="o">=</span> <span class="n">Rp_bin</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">Rp_bin</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Rp_bin</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">))</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="c1"># bin by L</span>
+        <span class="n">L_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">L_plan</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_bins</span><span class="p">[</span><span class="n">Rp_bin_index</span><span class="p">])</span>
+        <span class="c1"># map the pair (Rp,L) -&gt; RpL</span>
+        <span class="c1"># Rp_bin and L_bin are np arrays, so need to cast to integers</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">Rp_bin</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">L_bin</span><span class="p">))]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_hab_zone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Is the planet in the habitable zone?&#39;&#39;&#39;</span>
+        <span class="c1"># Note: must work for bare integer plan_id, and for [] plan_id.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan_id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c1"># bare integer does not have len()</span>
+        <span class="c1"># rescale SMA by luminosity</span>
+        <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+        <span class="n">a_scaled</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">L_star</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+            <span class="n">a_scaled</span> <span class="o">&gt;=</span>  <span class="mf">.95</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">,</span>
+            <span class="n">a_scaled</span> <span class="o">&lt;=</span> <span class="mf">1.67</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_earthlike</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Is the planet earthlike?</span>
+
+<span class="sd">        This version parallels the one in the EXOSIMS SurveySimulation prototype.&#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan_id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c1"># bare integer does not have len()</span>
+
+        <span class="c1"># Note: this is an assumption, typically true for JPL scripts</span>
+        <span class="n">scaleOrbits</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># extract planet and star properties</span>
+        <span class="n">Rp_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;Rp&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+        <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">scaleOrbits</span><span class="p">:</span>
+            <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">L_star</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+        <span class="c1"># Definition: planet radius (in earth radii) and solar-equivalent luminosity must be</span>
+        <span class="c1"># between the given bounds.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_scaled</span><span class="p">:</span>
+            <span class="c1"># Default case: we scale the lower Rp boundary (only)</span>
+            <span class="c1">#  -- this is the definition used by the SAG13 notion of &quot;earthlike&quot;</span>
+            <span class="c1">#  -- this is the same logic in EXOSIMS SurveySimulation Prototype</span>
+            <span class="n">Rp_plan_lo_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_plan</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Special case: this special scaling is turned off</span>
+            <span class="c1">#  -- this makes is_earthlike() have axis-parallel Rp/SMA boundaries</span>
+            <span class="c1">#  -- thus allowing is_earthlike() to be turned to other purposes</span>
+            <span class="n">Rp_plan_lo_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span>
+        <span class="c1"># We use the numpy versions so that plan_ind can be a numpy vector.</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+           <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">Rp_plan</span> <span class="o">&gt;=</span> <span class="n">Rp_plan_lo_s</span><span class="p">,</span> <span class="n">Rp_plan</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_hi</span><span class="p">),</span>
+           <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">a_plan</span>  <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_lo</span><span class="p">,</span> <span class="n">a_plan</span>  <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_hi</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="reduce_drm_tools.PlanetBins.RpLBins.customize_parameters" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">customize_parameters</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Set up the class parameters using a custom mapping passed in.</p>
+<p>Return the list of unmatched attribute names (but only those within
+attribute groups we care about, like "earthlike".
+We assume the mapping is a dict.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">customize_parameters</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Set up the class parameters using a custom mapping passed in.</span>
+
+<span class="sd">    Return the list of unmatched attribute names (but only those within</span>
+<span class="sd">    attribute groups we care about, like &quot;earthlike&quot;.</span>
+<span class="sd">    We assume the mapping is a dict.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">_customized</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">fails</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Look for attribute groups we care about</span>
+    <span class="k">for</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">ok_attrs</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_custom_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">group_name</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+            <span class="c1"># plug mapping in where possible, as attributes</span>
+            <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">attr_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+                    <span class="k">continue</span> <span class="c1"># comment</span>
+                <span class="k">elif</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_display_attrs</span><span class="p">:</span>
+                    <span class="k">continue</span> <span class="c1"># display name, not bin geometry -- see PlanetNames.py</span>
+                <span class="k">elif</span> <span class="n">attr_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ok_attrs</span><span class="p">:</span>
+                    <span class="n">fails</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attr_name</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1">#print(f&quot;binner: Set {attr_name} to {value}&quot;)</span>
+                    <span class="c1"># assumption: lists convert to np.array</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="c1"># insist on 5 x 3 bins for now</span>
+    <span class="k">if</span> <span class="s1">&#39;RpL_bins&#39;</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Rp_bins</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">5</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Rp wrong size: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">Rp_bins</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">L_bins</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;L wrong size: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">L_bins</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="si">= }</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">fails</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="reduce_drm_tools.PlanetBins.RpLBins.is_earthlike" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_earthlike</span><span class="p">(</span><span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Is the planet earthlike?</p>
+<p>This version parallels the one in the EXOSIMS SurveySimulation prototype.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_earthlike</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Is the planet earthlike?</span>
+
+<span class="sd">    This version parallels the one in the EXOSIMS SurveySimulation prototype.&#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan_id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span> <span class="c1"># bare integer does not have len()</span>
+
+    <span class="c1"># Note: this is an assumption, typically true for JPL scripts</span>
+    <span class="n">scaleOrbits</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># extract planet and star properties</span>
+    <span class="n">Rp_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;Rp&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+    <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">scaleOrbits</span><span class="p">:</span>
+        <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">L_star</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+    <span class="c1"># Definition: planet radius (in earth radii) and solar-equivalent luminosity must be</span>
+    <span class="c1"># between the given bounds.</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_scaled</span><span class="p">:</span>
+        <span class="c1"># Default case: we scale the lower Rp boundary (only)</span>
+        <span class="c1">#  -- this is the definition used by the SAG13 notion of &quot;earthlike&quot;</span>
+        <span class="c1">#  -- this is the same logic in EXOSIMS SurveySimulation Prototype</span>
+        <span class="n">Rp_plan_lo_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a_plan</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Special case: this special scaling is turned off</span>
+        <span class="c1">#  -- this makes is_earthlike() have axis-parallel Rp/SMA boundaries</span>
+        <span class="c1">#  -- thus allowing is_earthlike() to be turned to other purposes</span>
+        <span class="n">Rp_plan_lo_s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_lo</span>
+    <span class="c1"># We use the numpy versions so that plan_ind can be a numpy vector.</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+       <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">Rp_plan</span> <span class="o">&gt;=</span> <span class="n">Rp_plan_lo_s</span><span class="p">,</span> <span class="n">Rp_plan</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_Rp_hi</span><span class="p">),</span>
+       <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">a_plan</span>  <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_lo</span><span class="p">,</span> <span class="n">a_plan</span>  <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Earth_SMA_hi</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="reduce_drm_tools.PlanetBins.RpLBins.is_hab_zone" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_hab_zone</span><span class="p">(</span><span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Is the planet in the habitable zone?</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_hab_zone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Is the planet in the habitable zone?&#39;&#39;&#39;</span>
+    <span class="c1"># Note: must work for bare integer plan_id, and for [] plan_id.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan_id</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span> <span class="c1"># bare integer does not have len()</span>
+    <span class="c1"># rescale SMA by luminosity</span>
+    <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+    <span class="n">a_scaled</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">L_star</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+        <span class="n">a_scaled</span> <span class="o">&gt;=</span>  <span class="mf">.95</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">,</span>
+        <span class="n">a_scaled</span> <span class="o">&lt;=</span> <span class="mf">1.67</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">AU</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="reduce_drm_tools.PlanetBins.RpLBins.quantize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">quantize</span><span class="p">(</span><span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the final radius/luminosity bin, an integer, for a given planet and star.</p>
+<p>Returns 0 if the planet/star lies outside the bin boundaries.  Returns 1..15 otherwise.
+Note: Not vectorized; scalar plan_id only.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">quantize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spc</span><span class="p">,</span> <span class="n">plan_id</span><span class="p">,</span> <span class="n">star_ind</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute the final radius/luminosity bin, an integer, for a given planet and star.</span>
+
+<span class="sd">    Returns 0 if the planet/star lies outside the bin boundaries.  Returns 1..15 otherwise.</span>
+<span class="sd">    Note: Not vectorized; scalar plan_id only.&#39;&#39;&#39;</span>
+    <span class="c1"># extract planet and star properties</span>
+    <span class="n">Rp_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;Rp&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+    <span class="n">a_plan</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">][</span><span class="n">plan_id</span><span class="p">])</span>
+    <span class="n">L_star</span> <span class="o">=</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">][</span><span class="n">star_ind</span><span class="p">]</span>
+    <span class="n">L_plan</span> <span class="o">=</span> <span class="n">L_star</span> <span class="o">/</span> <span class="p">(</span><span class="n">a_plan</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># adjust star luminosity by distance^2 in AU</span>
+    <span class="c1"># Bin by Rp.  &quot;too low&quot; maps to 0, and &quot;too high&quot; maps to len(Rp_bins).</span>
+    <span class="n">Rp_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">Rp_plan</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">)</span>
+    <span class="c1"># index into L_bins array: if Rp is out-of-range, index is irrelevant</span>
+    <span class="n">Rp_bin_index</span> <span class="o">=</span> <span class="n">Rp_bin</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">Rp_bin</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Rp_bin</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rp_bins</span><span class="p">))</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="c1"># bin by L</span>
+    <span class="n">L_bin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">L_plan</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L_bins</span><span class="p">[</span><span class="n">Rp_bin_index</span><span class="p">])</span>
+    <span class="c1"># map the pair (Rp,L) -&gt; RpL</span>
+    <span class="c1"># Rp_bin and L_bin are np arrays, so need to cast to integers</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rp_L_to_RpL_bin</span><span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">Rp_bin</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">L_bin</span><span class="p">))]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="reduce_drm_tools.PlanetBins.RpLBins.show" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">show</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Print the set-able attributes that we know about.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>reduce_drm_tools/PlanetBins.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Print the set-able attributes that we know about.&#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Group: </span><span class="si">{</span><span class="n">group_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  attribute: </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="s1">&#39;uninitialized!&#39;</span><span class="p">)),</span>
+                <span class="s2">&quot; &quot;</span><span class="o">*</span><span class="mi">4</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
