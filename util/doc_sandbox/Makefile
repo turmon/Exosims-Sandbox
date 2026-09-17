@@ -10,23 +10,16 @@
 # discard builtin rules
 MAKEFLAGS += -r
 
-PREFLIGHT_SENTINEL=docs/implementation/drm_tabulate.py
+# remote holding the github pages branch; the JPL mirror is a separate remote,
+# e.g. "make publish GH_REMOTE=jpl"
+GH_REMOTE ?= origin
 
-.PHONY: doc preflight default rebuild export
+.PHONY: doc default rebuild export publish
 
 default: doc
 
-# (remove this as a dependency)
-preflight:
-# preflight: $(PREFLIGHT_SENTINEL)
-
-# this preflight routine makes the sentinel
-# as well as some other files
-# $(PREFLIGHT_SENTINEL): ../drm_tabulate.py
-# 	pre_mkdocs.py
-
 # typical entry point
-doc: preflight
+doc:
 	uv run mkdocs build
 
 # one way to tell "mkdocs serve" to rebuild
@@ -36,4 +29,7 @@ rebuild:
 export:
 	rsync -q -av --delete --exclude=README.txt ./site/ ../../Local/www-resources/doc_sandbox/
 
-
+# push the built site to the gh-pages branch of $(GH_REMOTE).
+# NOTE: this pushes. Run it deliberately.
+publish:
+	uv run mkdocs gh-deploy --remote-name $(GH_REMOTE)

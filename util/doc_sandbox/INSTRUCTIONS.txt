@@ -51,7 +51,42 @@ To add a new source file (new.py) to the detail list:
   - Place a markdown in docs/implementation/new.md, with a :::
     pointer showing how to import it.
   - Ensure it can be imported when "mkdocs build" is run.
-  - This has nothing to do with util_detail, which is obsolete!
+  - Nothing else is needed: gen_pages.py looks for
+    docs/implementation/<stem>.md and links to it from the script index
+    when it is there.
+
+Plot documentation:
+
+The per-plot reference pages under Local/www-doc are rendered twice, from
+one source. Local/www-doc/Makefile renders them with markdown+m4 for the
+sandbox web UI, where they are deep-linked next to the plots themselves
+(see WWW_DOC in util/html-summary.py). gen_pages.py *also* reads them and
+writes them into this site under plots/, which is what puts them into the
+exported and github-pages documentation. Nothing is written back to
+Local/www-doc.
+
+Consequence: adding a plot page means naming it in two lists -- TOPICS in
+Local/www-doc/Makefile, and the "Plot Reference" nav in mkdocs.yml here.
+"make doc-lint" from the Sandbox root checks that they agree, which seemed
+better than taking on a literate-nav dependency to avoid the duplication.
+
+Docstring conventions:
+
+The documentation block is what gets rendered, so it has to be Markdown.
+util/drm_tabulate.py is the model. In brief:
+
+  - First line is "name.py: one-line summary". gen_pages.py builds the
+    Script Index description by finding the script's own name in the
+    block, so a block that never names the script gets a bare index entry.
+  - Usage lines and option lists go inside ``` fences. Indentation alone
+    does not work: markdown needs 4 spaces, and these blocks are
+    conventionally written at 1-3, so they reflow into one paragraph.
+  - A closing fence carries no info string. ```shell opens a block;
+    it never closes one.
+  - Prose is prose; use + or * bullets and backticks for flags.
+
+"make doc-lint" (util/dev/doc-lint.py) checks all of the above, plus the
+plot-topic lists. It is reporting-only.
 
 See the Makefile here for some usage lines. Also:
 
@@ -69,7 +104,6 @@ TODO:
   to move this directory to the top-level package.
 - Is my gen_pages really doing the best job, given current best practice for
   docstrings/documentation blocks?
-- edit the ../util/*.sh,*.py files so the usage block at the top renders in Markdown
 - edit the .py usage blocks so they are surrounded by ''' ... ''' and not by #
 - Add other existing PDF/Markdown Sandbox documentation to this pile of documentation
 - Increase documentation "usefulness density" by:
@@ -81,9 +115,10 @@ TODO:
     the file, or (reverse-wise) a keyword like "maintained" within the 
     complement of these files?)
 
-Formerly: pre_mkdocs, an ordinary python script, auto-generated 
-.md templates for a few scripts (the ones symlinked in util_details).
+Formerly: pre_mkdocs.py, an ordinary python script, auto-generated
+.md templates for a few scripts (the ones symlinked in util_detail/).
 This was scrapped; we just put the markdown template into
 docs/implementation and link to the corresponding python file.
+Both pre_mkdocs.py and util_detail/ were deleted in 2026/09.
 
 

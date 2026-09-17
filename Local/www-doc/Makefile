@@ -26,7 +26,13 @@ INDEX_HEAD=index-plot-descriptions-head.md
 INDEX=index-plot-descriptions.md
 
 # source files - markdown
-SOURCES=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md planet-population-density.md char-observing-plots.md radius-luminosity-plots.md rad-sma-bin-plots.md earthlike-tailoring.md $(INDEX)
+# TOPICS are the authored pages; SOURCES adds the generated index.
+# NOTE: adding a topic here also requires adding it to the "Plot Reference"
+# nav section of ../../util/doc_sandbox/mkdocs.yml, which renders these same
+# files for the exportable (github pages) documentation.
+# "make doc-lint" from the Sandbox root checks that the two lists agree.
+TOPICS=obs-timeline.md star-obs-trace.md path-movie.md promotion-tabulation.md detection-tabulation.md per-star-metrics.md planet-population-density.md char-observing-plots.md radius-luminosity-plots.md rad-sma-bin-plots.md earthlike-tailoring.md
+SOURCES=$(TOPICS) $(INDEX)
 
 # grep '^Title: ' *.md | sed 's/Title: //' | awk -F : '{print "[" $2 "]" $1}'
 
@@ -46,7 +52,7 @@ all: $(PAGES)
 
 index: $(INDEX)
 
-$(INDEX): $(INDEX_HEAD)
+$(INDEX): $(INDEX_HEAD) $(TOPICS)
 	@ echo "Remaking index file: $@"
 	cp $(INDEX_HEAD) $(INDEX)
 	util/compile-plot-index.sh >> $(INDEX)

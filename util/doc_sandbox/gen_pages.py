@@ -15,6 +15,7 @@ do some of this automatically, but I could not find it.
 import os
 import glob
 import ast
+import re
 from pathlib import Path
 import docstring_to_markdown
 import docstring_to_markdown.google
@@ -27,12 +28,23 @@ import mkdocs_gen_files
 
 # verbosity
 VERBOSE = False
-# directory to look for scripts in
+# directory to look for scripts in (the util/ dir)
 ROOT_DIR = Path('..')
-# directory for detailed views of script implementations
-IMPL_DIR = Path('util_detail')
+# the Sandbox root, for the top-level driver scripts
+SANDBOX_DIR = Path('../..')
+# driver scripts at the Sandbox root that belong in the script index
+SANDBOX_SCRIPTS = ['add-sims.sh', 'exp-add-sims.sh']
+# directory holding the hand-written detail pages (":::" mkdocstrings stubs)
+IMPL_DIR = Path('docs/implementation')
 # filename of overall script index
 INDEX_FILE = 'script_index.md'
+# plot documentation: source (rendered separately by Local/www-doc/Makefile
+# for the web UI; rendered here so it also reaches the exported/github site)
+PLOT_DOC_DIR = Path('../../Local/www-doc')
+# subdirectory of the mkdocs tree that the plot docs are written to
+PLOT_OUT_DIR = 'plots'
+# image types copied alongside the plot docs (.pptx source art is skipped)
+PLOT_MEDIA_SUFFIXES = ('.png', '.jpg', '.jpeg', '.gif')
 
 def find_oneliner(block, title):
     r'''Find one-line description of form title: Description
@@ -124,6 +136,67 @@ def get_doc_py(script, stem):
         return doc, line1
     return 'No documentation found.', stem
     
+def gen_plot_docs():
+    r'''Render the Local/www-doc plot pages into the mkdocs tree.
+
+    These pages describe individual plots and tabulations. They are
+    *also* rendered, independently, by Local/www-doc/Makefile (markdown
+    + m4) for the sandbox web UI, where they are deep-linked next to the
+    plots themselves. Rendering them here too is what puts them into the
+    exportable (github pages) documentation, which otherwise would not
+    carry any plot documentation at all.
+
+    Source-of-truth stays in Local/www-doc; nothing is written back there.
+    '''
+    if not PLOT_DOC_DIR.is_dir():
+        # a sandbox without the www-doc tree still builds
+        return
+    for page in sorted(PLOT_DOC_DIR.glob('*.md')):
+        # by convention "index*" files are the generated index, which the
+        # mkdocs nav replaces
+        if page.name.startswith('index'):
+            continue
+        title, body = split_plot_metadata(page.read_text())
+        # the www-doc pages cross-link each other by rendered .html name;
+        # mkdocs resolves links by source (.md) name instead
+        body = re.sub(r'\]\(([^)/:#]+)\.html([)#])', r'](\1.md\2', body)
+        out = f'{PLOT_OUT_DIR}/{page.stem}.md'
+        if VERBOSE:
+            print(f'{page} -> {out}')
+        with mkdocs_gen_files.open(out, "w") as f:
+            f.write(''.join(gen_metadata(title or page.stem)) + body)
+    # supporting imagery, referenced as Media/foo.png from the pages above
+    media = PLOT_DOC_DIR / 'Media'
+    if media.is_dir():
+        for art in sorted(media.iterdir()):
+            if art.suffix.lower() not in PLOT_MEDIA_SUFFIXES:
+                continue
+            with mkdocs_gen_files.open(f'{PLOT_OUT_DIR}/Media/{art.name}', "wb") as f:
+                f.write(art.read_bytes())
+
+
+def split_plot_metadata(text):
+    r'''Split a "Title: ..." metadata header off a www-doc page.
+
+    The www-doc pages carry a python-markdown Meta-Data block --
+    "<tag>: <value>" lines terminated by a blank line (see
+    Local/www-doc/util/meta-extract.sh). Returns (title, body).
+    '''
+    lines = text.splitlines(keepends=True)
+    title, n = '', 0
+    for n, l in enumerate(lines):
+        if not l.strip():
+            n += 1
+            break
+        m = re.match(r'([A-Za-z][\w-]*):\s*(.*)', l)
+        if not m:
+            # no metadata block at all; keep the whole file
+            return '', text
+        if m.group(1).lower() == 'title':
+            title = m.group(2).strip()
+    return title, ''.join(lines[n:])
+
+
 ###
 ### Main routine
 ###
@@ -140,7 +213,13 @@ def main():
     index.append('## Shell Scripts')
     index.append('')
 
-    for script in sorted(ROOT_DIR.glob('*.sh')):
+    # util/*.sh plus the named driver scripts at the Sandbox root
+    # (add-sims.sh is step 3 of the README workflow, so it belongs here)
+    shell_scripts = sorted(
+        list(ROOT_DIR.glob('*.sh')) +
+        [SANDBOX_DIR / n for n in SANDBOX_SCRIPTS if (SANDBOX_DIR / n).is_file()],
+        key=lambda s: s.stem)
+    for script in shell_scripts:
         out = script.stem + '.md'
         if VERBOSE: 
             print(f'{script} -> {out}')
@@ -159,9 +238,8 @@ def main():
         # stop-list
         if script.name in ['__init__.py']:
             continue
-        # if the implementation dir has an entry, find it
-        # and generate a link in the index
-        details_file = IMPL_DIR / script.name
+        # if a hand-written detail page exists, link to it from the index
+        details_file = IMPL_DIR / (script.stem + '.md')
         if VERBOSE:
             print(f'looking for {details_file}...')
         has_detail = os.path.isfile(details_file)
@@ -182,6 +260,9 @@ def main():
     # write the index file out
     with mkdocs_gen_files.open(INDEX_FILE, "w") as fp:
         fp.write('\n'.join(index))
+
+    # plot documentation (shared source with the sandbox web UI)
+    gen_plot_docs()
 
 #
 # "do it"
