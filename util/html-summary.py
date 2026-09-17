@@ -1517,7 +1517,6 @@ def index_group(args, startpath, title, uplink):
         if uplink:
             hh.paragraph('Up to ' + hh.link('../', uplink, inner=True))
         hh.paragraph('Sandbox ' + hh.link(WWW_RES/'doc_sandbox/', 'documentation', inner=True))
-        hh.paragraph('Index of ' + hh.link(WWW_DOC/'index-plot-descriptions.html', 'plot descriptions', inner=True))
         # overall section
         hh.header('Ensembles')
         # summary
