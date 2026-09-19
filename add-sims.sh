@@ -2,7 +2,7 @@
 #
 # add-sims: Perform EXOSIMS simulations, accumulating runs into subdirectories
 #
-# This is a wrapper around the python driver, sandbox_driver.py.
+# This is a wrapper around the python driver, `sandbox_driver.py`.
 #
 # Typical Usage:
 # ```
@@ -15,41 +15,52 @@
 # ```
 #
 # Uses the JSON script SCRIPT and performs a series of parallel runs given by SEEDS.
+#
 # * The runs are done on the local computer, from a pool that depends on machine
-# (four less than the number of cores, so for example: mustang2/3 = 68).
+#   (four less than the number of cores, so for example: mustang2/3 = 68).
 # * If just one SEED is given, Exosims output is sent directly to standard output - 
-# useful for checking validity.  If more than one SEED, the Exosims output is sent
-# to a set of log files (sims/SCRIPT/log/*), and a summary of current job status
-# is sent to standard output.
+#   useful for checking validity.  If more than one SEED, the Exosims output is sent
+#   to a set of log files (`sims/SCRIPT/log/*`), and a summary of current job status
+#   is sent to standard output.
 # * To repeat an error-causing run interactively, paste the command-line printed by 
-# this script (the one that calls sandbox_driver.py) into your terminal,
-# and add "--interactive" to the options.
+#   this script (the one that calls `sandbox_driver.py`) into your terminal,
+#   and add `--interactive` to the options.
 #
 # Typical Usage:
-#   (a) Run a machine-dependent number of jobs spanning 64 seeds on the local machine
-#     add-sims.sh Scripts/ExampleScript.json Experiments/seed64.txt 
-#   (b) Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
-#     add-sims.sh -Z Scripts/ExampleScript.json Experiments/seed100.txt 
-#   (c) Do a test run for a single arbitrary seed (we use 777):
-#     add-sims.sh Scripts/ExampleScript.json =777
-#   (d) Write cache files for a new script, but do not run a sim:
-#     add-sims.sh Scripts/ExampleScript.json =0
+#
+# * Run a machine-dependent number of jobs spanning 64 seeds on the local machine
+#
+#     `add-sims.sh Scripts/ExampleScript.json Experiments/seed64.txt`
+#
+# * Run 100 jobs on mustang* and aftac*, across 100 deterministic seeds
+#
+#     `add-sims.sh -Z Scripts/ExampleScript.json Experiments/seed100.txt`
+#
+# * Do a test run for a single arbitrary seed (we use 777):
+#
+#     `add-sims.sh Scripts/ExampleScript.json =777`
+#
+# * Write cache files for a new script, but do not run a sim:
+#
+#     `add-sims.sh Scripts/ExampleScript.json =0`
 #
 # Arguments:
+# ```
 #   SCRIPT -- a JSON script suitable for EXOSIMS
 #   SEEDS  -- either:
-#             (1) if a plain integer, that number of randomly-chosen initial seeds.
-#             (2) if of the form =SEED, where SEED is an integer, that single integer 
-#                 is the seed. If SEED is 0, only cache warming is done (no run_sim).
-#             (3) else, it is a filename giving a list of integer seeds, one per line.
+#       (1) if a plain integer, that number of randomly-chosen initial seeds.
+#       (2) if of the form =SEED, where SEED is an integer, that single integer 
+#           is the seed. If SEED is 0, only cache warming is done (no run_sim).
+#       (3) else, it is a filename giving a list of integer seeds, one per line.
+# ```
 #
 # Options:
 # ```
-#   -h        => show this help message and exit.
-#   -0        => generate caches first, then do the requested SEEDS
-#   -S        => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
-#   -Z        => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
-#   -c        => chatty console output (for debugging) even if #SEEDS > 1
+#   -h      => show this help message and exit.
+#   -0      => generate caches first, then do the requested SEEDS
+#   -S      => run using Speedy's (mustang2/3/4 -- 24 + 24 + 16 jobs = 64 jobs)
+#   -Z      => run using all (mustang2/3/4 + aftac1/2/3 -- total of 100 jobs)
+#   -c      => chatty console output (for debugging) even if #SEEDS > 1
 # ```
 #
 # Less-used Options:
@@ -57,7 +68,7 @@
 #   -j JOBS   => runs only JOBS parallel jobs (not used with -A)
 #   -v VERB   => set verbosity to VERB (0=quiet or 1=verbose)
 #   -q        => quiet object creation
-#   -P        => do not show the gnu parallel progress bar (good for scripted batch jobs)
+#   -P        => omit the gnu parallel progress bar (good for scripted batch jobs)
 #   -x SCRIPT => an extra scenario-specific script loaded on top of the argument SCRIPT
 #   -p PATH   => EXOSIMS path is PATH instead of the default in your environment.
 #                If you are in a Python venv, this will be detected and you should not 
@@ -65,15 +76,12 @@
 #                Using PATH=@ abbreviates the command-line default (what you get from
 #                "python -c import EXOSIMS").
 #   -O OPTS   => output options, a string of comma-separated tags telling
-#       which EXOSIMS variables should be written, and to which files.
-#       See the notes in the python driver file for how it works.
-#       Default: OPTS = 'drm:pkl,spc:spc'  -- this indicates the DRM
-#       is stored as a pickle with extension .pkl, and the planet parameters
-#       are stored as a pickle with extension .spc.
+#                which EXOSIMS variables should be written, and to which files.
+#                See the python driver file for how it works.
+#                Default: OPTS = 'drm:pkl,spc:spc'  -- store the DRM as a
+#                pickle with extension .pkl, and the star/planet parameters
+#                as a pickle with extension .spc.
 # ```
-# 
-# turmon oct 2017, 2018, 2020, 2023
-#
 ## [end comment block]
 
 # exit-on-error
