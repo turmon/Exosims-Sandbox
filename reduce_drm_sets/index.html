@@ -1143,9 +1143,11 @@ must generate these files.</p>
 </ul>
 </li>
 </ul>
-<p>These cases are in fact all the same. In each case, this code is loading
-<code>ENS/reduce-info.csv</code> for each relevant ENS, and producing a one-line
-"maximal" summary, and a multi-line summary file of all these reduce-info's.</p>
+<p>These cases are in fact all the same. In each case, this code loads 
+<code>ENS/reduce-info.csv</code> for each relevant <code>ENS</code>, and produces two products: 
+a multi-line summary file with one row for each of these reduce-info's,
+and a one-line "maximum-along-rows" rollup of all the rows, i.e., all 
+ensembles below that location.</p>
 <h2 id="typical-usage">Typical usage</h2>
 <pre><code>  util/reduce_drm_sets.py -E sims/Yokohama_Extended.fam
 </code></pre>
