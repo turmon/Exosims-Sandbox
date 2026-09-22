@@ -374,38 +374,53 @@ sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
 	@ echo "Make: Keepout \`$@'"
 	$(KEEPOUT_PROG) -o sims/$(S)/path/$(*)-%s.%s Scripts/$(S).json $<
 
-# Rule to make a group of movies, given a count.  The rule ends up looking like:
-#  path-movie-N: sims/$(S)/path/SEED1.mp4 sims/SCRIPT/path/SEED2.mp4 ...
-# where N is the number of movies (mp4's).  The number N is given to head
-# as a ceiling on the number of path movie targets requested.  The .mp4 targets,
-# in turn, are made by $(PATH_PROG) as shown above.
-# The obs-timelines are not movies, but piggy-back on this same setup.
-## Note: if sims/$(S)/drm/ does not exist (e.g., if S is an "experiment"),
-## the $(... find ...) will be empty and the Makefile would be syntactically
-## invalid (causing a hard error) *unless* some target is present. So,
-## script-exists has a dual purpose - raise error if there's no script, and
-## ensure the rule syntax is OK.
+## Note: script-exists is the first prerequisite of each rule below.  It
+## raises a clear error when S names neither a script nor an experiment
+## (e.g., if S is an "experiment", sims/$(S)/drm/ does not exist and the
+## selector below quietly returns nothing).
 
-define MAKE_N_MOVIES
-.PHONY: path-movie-$1 path-final-$1 obs-timeline-$1
-path-movie-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:.mp4:')
+# Enable deferred ("secondary") expansion of prerequisites for the rules
+# defined below.  This is what makes the $(SELECT_RUN_PROG) call lazy: the
+# selector runs only for a -N target actually asked for, instead of once per
+# (count x target-kind) combination on every single invocation of make.
+.SECONDEXPANSION:
+
+# Map a run-count onto the list of per-DRM products to build.
+#   $1 = number of runs to select (or T for all)
+#   $2 = suffix that replaces ".pkl" on each selected DRM
+# NOTE: the shell command lives here in a variable, rather than inline as
+# $$(shell ...) in the prerequisite lists below.  Make scans a rule line for
+# the target/prereq ":" before expanding anything, so a literal ":" inside
+# $$(...) would be misread as a second rule separator ("*** multiple target
+# patterns.  Stop.").  Keeping the command here makes the rule lines immune
+# to the choice of sed delimiter.
+SELECT_RUN_TARGETS = $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | \
+                       sed -e 's:/drm/:/path/:' -e 's:\.pkl:$2:')
+
+# Targets to make a group of per-DRM products, given a count N, e.g.:
+#   path-movie-5: sims/$(S)/path/SEED1.mp4 sims/$(S)/path/SEED2.mp4 ...
+# N may be any non-negative integer, or T for all runs.  The individual
+# products are made by the per-DRM rules above ($(PATH_PROG) and friends).
+# The obs-timelines and keepout maps are not movies, but piggy-back on the
+# same setup.
+# NOTE: these targets must NOT be declared .PHONY.  Make skips pattern-rule
+# search for phony targets, which would silently disable all four rules.
+path-movie-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,.mp4)
 	@ echo "Make: Placed movies in \`sims/$(S)/path'."
-path-final-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-final.png:')
+
+path-final-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png)
 	@ echo "Make: Placed final-frames in \`sims/$(S)/path'."
-obs-timeline-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-obs-timelines.txt:')
+
+obs-timeline-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt)
 	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
-keepout-$1: script-exists $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | sed -e 's:/drm/:/path/:' -e 's:\.pkl:-keepout-and-obs.png:')
+
+keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-keepout-and-obs.png)
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
-endef
 
-# Allowable path-movie counts to construct targets for below
-# gnu head accepts T as an abbreviation for Tera, so T is in effect an alias for everything
+# Per-DRM counts used to construct the exp-* targets further below
+# (the single-scenario -N targets above accept any N, so they do not use this).
+# T is the abbreviation for "all runs".
 MOVIE_COUNTS:=1 2 5 10 20 50 100 T
-
-# For each N in MOVIE_COUNTS, the foreach constructs targets of the form:
-#   path-movie-N
-#   path-final-N
-$(foreach N,$(MOVIE_COUNTS),$(eval $(call MAKE_N_MOVIES,$N)))
 
 ########################################
 ## HTML indexes
