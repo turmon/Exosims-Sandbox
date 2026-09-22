@@ -38,8 +38,8 @@ USAGE="Usage: $progname [ -o outfile ] SCRIPT"
 # get options
 outfile=
 while getopts "o:" opt; do
-    case "$o" in
-	o)    outfile="$opt";;
+    case "$opt" in
+	o)    outfile="$OPTARG";;
 	[?])  echo "$USAGE" 1>&2
 	      exit 2;;
     esac
