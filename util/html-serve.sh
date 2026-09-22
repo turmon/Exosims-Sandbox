@@ -46,6 +46,9 @@
 #  -r ROOT   => use the named dir as document root
 #               (default is the working dir, this is always correct,
 #               this option is vestigial)
+#  -q        => quiet: suppress the informational messages confirming
+#               server type, port, and document root, and the
+#               "server is OK" note.  Errors are still reported.
 #  -h        => shows this help text.
 # ```
 #

@@ -39,7 +39,7 @@ also, importantly:
 ## Output files
 
 This program rolls up the summary information already recorded (for each ENS)
-in `ENS/reduce_info.csv`, and places the cumulative summary in a CSV file following
+in `ENS/reduce-info.csv`, and places the cumulative summary in a CSV file following
 the given filename template. It also tabulates some yield metrics and places in
 related CSV files. Overall:
 
