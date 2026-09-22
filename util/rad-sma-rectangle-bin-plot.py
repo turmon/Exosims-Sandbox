@@ -41,7 +41,7 @@ where the argument CSV is either:
 +  `-t`, `--title`: set graph title.  By default, a string
    derived from the field name is used, so this option
    is not much needed.
-+  `--eta`: suppress \eta = ... text label in table.  Generally
++  `--eta`: suppress \eta = ... text label in table - you want this.  
 +  `--sigma`: add +/- sigma suffix to the numbers in the table
 +  `--quantile`: add ^{U}_{L} where U and L are the distance
    to the upper and lower quantile (U = q75 - mean, etc.)
