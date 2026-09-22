@@ -102,9 +102,11 @@ The typical use cases are as follows:
     - `reduce-yield-plus.csv` will contain N lines, one for each collection,
       with the collection name and maximal yield.
 
-These cases are in fact all the same. In each case, this code is loading
-`ENS/reduce-info.csv` for each relevant ENS, and producing a one-line
-"maximal" summary, and a multi-line summary file of all these reduce-info's.
+These cases are in fact all the same. In each case, this code loads 
+`ENS/reduce-info.csv` for each relevant `ENS`, and produces two products: 
+a multi-line summary file with one row for each of these reduce-info's,
+and a one-line "maximum-along-rows" rollup of all the rows, i.e., all 
+ensembles below that location.
 
 ## Typical usage
 ```
