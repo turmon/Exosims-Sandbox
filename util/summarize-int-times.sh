@@ -47,8 +47,8 @@ while getopts "Hh" opt; do
             att_name=char_time
 	    ;;
 	h)
-	    # help text
-	    sed 's/^# \?//' $(which $0) | awk '/^#/{exit};NR>1{print}'
+	    # help text -- -E for portability with ? in RE
+	    sed -E 's/^# ?//' $(which $0) | awk '/^#/{exit};NR>1{print}'
 	    exit 2
 	    ;;
 	\?)

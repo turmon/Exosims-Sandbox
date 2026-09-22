@@ -201,8 +201,8 @@ while getopts "hqp:r:s:" opt; do
 	    verbosity=quiet
 	    ;;
 	h)
-	    # help text
-	    sed 's/^# \?//' "$(which "$0")" | awk '/^#/{exit};NR>1{print}'
+	    # help text -- -E for portability with ? in RE
+	    sed -E 's/^# ?//' "$(which "$0")" | awk '/^#/{exit};NR>1{print}'
 	    exit 2
 	    ;;
 	\?)
