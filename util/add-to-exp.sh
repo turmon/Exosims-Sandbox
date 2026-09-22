@@ -5,14 +5,14 @@
 # This performs batch runs for experiments.
 #
 # Usage:
+# ```
 #   add-to-exp.sh EXP SEEDS
+# ```
 #
 # where EXP is an experiment name, and SEEDS gives the seeds to use (file of seeds,
 # or single number giving one seed explicitly).
-# In this case, Scripts/EXP must contain several json scripts.
+# In this case, `Scripts/EXP` must contain several json scripts.
 # One of them is an index, and the others will be used for ensemble runs.
-# 
-# turmon may 2020
 #
 ## [end comment block]
 

@@ -2,7 +2,7 @@
 #
 # html-serve.sh: start/stop/status HTTP server
 #
-# This starts, stops, or status-queries the HTTP server that 
+# This starts, stops, or status-queries the HTTP server that
 # serves up the EXOSIMS index and ensemble-summary files.
 #
 # For security, the server only serves out to connections coming
@@ -10,23 +10,28 @@
 #
 # We run the server on a non-standard port - 8090 by default.
 # To see the table of contents, navigate to:
+# ```
 #   http://localhost:8090/sims/
+# ```
 # To connect your own system to localhost, use an ssh tunnel:
+# ```
 #   ssh -fnNT -L8090:localhost:8090 mustang2.jpl.nasa.gov
+# ```
 # and visit the above URL on your own system (e.g., laptop).
 #
 # Usage:
-#```
+# ```
 #   html-serve.sh [-h] [-p PORT] [-r ROOT] [-s apache|simple] MODE
-#```
+# ```
 #
 # where MODE is one of:
-#   ensure: if no server is running, start one
-#           this is generally preferred over "start"
-#   start:  start the server on the given port
-#   stop:   stop the server on the given port
-#   status: list the servers running, if any
-#   defaults:   echo server, port, etc., and exit
+#
+# * `ensure`: if no server is running, start one --
+#   this is generally preferred over `start`
+# * `start`: start the server on the given port
+# * `stop`: stop the server on the given port
+# * `status`: list the servers running, if any
+# * `defaults`: echo server, port, etc., and exit
 #
 # and:
 # ```
@@ -35,7 +40,7 @@
 #                 8091: gattaca2 /scratch
 #                 8092: gattaca2 /scratch-edge
 #                 8100: macOS
-#  -s apache => use apache2/httpd server (default, but has fussy 
+#  -s apache => use apache2/httpd server (default, but has fussy
 #               internal config which can fail after OS upgrades)
 #  -s simple => use python httpd.server (less performant, less fussy)
 #  -r ROOT   => use the named dir as document root
@@ -45,17 +50,21 @@
 # ```
 #
 # Implementation:
+#
 # Status is kept in these files:
-#      Local/www-service/var/http-HOST.PORT.*
-# where PORT is given above (unless set manually).
-# There is:
-#    -- a server error log (.log) 
-#    -- a file containing the process ID (PID) of the server (.pid).
-# The PID is used to signal the running server to exit.  If the basic "stop" 
+# ```
+#   Local/www-service/var/http-HOST.PORT.*
+# ```
+# where PORT is given above (unless set manually).  There is:
+#
+# * a server error log (`.log`)
+# * a file containing the process ID (PID) of the server (`.pid`)
+#
+# The PID is used to signal the running server to exit.  If the basic `stop`
 # MODE of this command does not work, you can kill the server by sending TERM
-# to process ID (pid) named in that file. "ps ufx" can also be helpful to
+# to process ID (pid) named in that file. `ps ufx` can also be helpful to
 # get status of the server (if you're the process owner).
-# 
+#
 ## [end comment block]
 
 # turmon sep 2018, dec 2021, jan 2022, jul 2024

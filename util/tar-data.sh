@@ -5,17 +5,18 @@
 # Make an archive of data files to save inodes on gattaca.
 #
 # Usage:
-#   `tar-data.sh [-v] [-d] [-l] SCENARIO`
+# ```
+#   tar-data.sh [-v] [-d] [-l] SCENARIO
+# ```
 #
-# (1) If SCENARIO is an ensemble directory, then typically SCENARIO/drm, 
-# etc., exist within it.  The data directories
-#   SCENARIO/{drm,spc}
-# are compiled into a tarfile indexed with the current date, and the
-# *drm/spc directories are removed*.
-# (2) If SCENARIO is a .fam/exp directory, we descend into the child
-# directories (but just down *one level* into ensembles there), and
-# tar-and-delete their data directories also.
-# 
+# 1. If SCENARIO is an ensemble directory, then typically `SCENARIO/drm`,
+#    etc., exist within it.  The data directories `SCENARIO/{drm,spc}`
+#    are compiled into a tarfile indexed with the current date, and the
+#    *drm/spc directories are removed*.
+# 2. If SCENARIO is a `.fam`/`.exp` directory, we descend into the child
+#    directories (but just down *one level* into ensembles there), and
+#    tar-and-delete their data directories also.
+#
 # Options:
 # ```
 #   -d: dry run. No tar-files created, no data deleted. Informational scenario counts are given.
@@ -29,11 +30,11 @@
 #   $ util/tar-data.sh sims/Example.fam/coroOnlyScenario
 # ```
 #
-# turmon 2025-dec
-# note:
-#   - There may be interactions with other components that use existence of
-#     SCENARIO/drm to validate that it's a real Exosims scenario.
-#   - Best with bash 4.2+
+# Notes:
+#
+# * There may be interactions with other components that use existence of
+#   `SCENARIO/drm` to validate that it's a real Exosims scenario.
+# * Best with bash 4.2+
 #
 ## [end comment block]
 

@@ -3,9 +3,9 @@
 # plot-obs-timelines.sh: Wrapper script, makes plots of observations from a DRM
 #
 # Usage:
-#```
+# ```
 #   plot-obs-timelines.sh [-o TEMPLATE] [-j JSON] DRM
-#```
+# ```
 #
 # where:
 # ```
@@ -18,14 +18,16 @@
 # ```
 #
 # This is a wrapper around (currently) two python plotter-scripts:
-#   plot-timeline.py
-#   plot-star-obs-trace.py
+#
+# * `plot-timeline.py`
+# * `plot-star-obs-trace.py`
+#
 # The above scripts make *per-run* plots (one-plot-per-drm). Such plots are
 # somewhat analogous to the movies, and to the keepout plots. But both
 # of those take more time to run, so they are broken out separately.
 #
 # The reason for wrapping these is to make a one-call interface for the Makefile
-# to use (make obs-timeline is the target). Because we create more than one output
+# to use (`make obs-timeline` is the target). Because we create more than one output
 # file, a sentinel text file is created by this script upon successful exit,
 # signaling that all files were made OK.
 #
@@ -34,17 +36,19 @@
 # DRM filename (see "Conventions" below), but they can also be supplied.
 #
 # Conventions:
-#   The SPC file will be deduced from the DRM filename by the called routines (not
-#   by this script).
-#   The script file (.json) is deduced from the DRM filename (directory component),
-#   but can be supplied explicitly with -j
-#   The image output name is generated from the DRM, but can be explicitly given.
-#   E.g.:
+#
+# * The SPC file will be deduced from the DRM filename by the called routines
+#   (not by this script).
+# * The script file (`.json`) is deduced from the DRM filename (directory
+#   component), but can be supplied explicitly with `-j`
+# * The image output name is generated from the DRM, but can be explicitly given.
+#
+# For example:
+# ```
 #       drm  = sims/HabEx_4m_TS_dmag26p0_20180206/drm/777.pkl
 #       spc  = sims/HabEx_4m_TS_dmag26p0_20180206/spc/777.spc
 #       json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
-# 
-# turmon jul 2023
+# ```
 #
 ## [end comment block]
 

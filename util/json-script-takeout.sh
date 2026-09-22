@@ -1,29 +1,33 @@
 #!/usr/bin/env bash
-# 
+#
 # json-script-takeout.sh: make a tarfile of the external files referenced by a script
 #
-# usage:
+# Usage:
 # ```
 #   json-script-takeout.sh [-o outfile] script
 # ```
-# 
-# where:
-#   script: JSON script
-#       e.g.: Scripts/HabEx_4m_TSDD_pop100DD_revwt.json
-# optionally:
-#   outfile: the destination filename for the tar archive
-#            (if not supplied, a ".tgz" is added to the script basename)
 #
-# We make the assumption that the files are referenced by the $EXOSIMS_PARAMS
+# where:
+#
+# * `script`: JSON script, for example
+#   `Scripts/HabEx_4m_TSDD_pop100DD_revwt.json`
+#
+# optionally:
+#
+# * `outfile`: the destination filename for the tar archive
+#   (if not supplied, a `.tgz` is added to the script basename)
+#
+# We make the assumption that the files are referenced by the `$EXOSIMS_PARAMS`
 # variable.
 #
 # For example,
+# ```
+#   json-script-takeout.sh Scripts/HabEx_4m_TSDD_pop100DD_revwt.json
+# ```
 #
-#  json-script-takeout.sh Scripts/HabEx_4m_TSDD_pop100DD_revwt.json
+# See also: `json-attr-edit`
 #
-# See also: json-attr-edit
-#
-# Michael Turmon, JPL, Dec 2023
+## [end comment block]
 
 # exit-on-error
 set -euo pipefail

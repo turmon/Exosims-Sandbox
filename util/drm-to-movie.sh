@@ -2,14 +2,14 @@
 #
 # drm-to-movie: Convert DRM to movie
 #
-# This is a wrapper around the python driver, keepout_path_graphics.py.
+# This is a wrapper around the python driver, `keepout_path_graphics.py`.
 # It mainly handles annoying filename transformations, so you only need to
 # supply the DRM file name.
 #
 # Usage:
-#```
+# ```
 #   drm-to-movie.sh [-F] [-l N] [-d D] DRM
-#```
+# ```
 #
 # to make a movie from the given DRM file.  Note, the star-planet config
 # file (SPC) corresponding to the DRM is also needed, as is the JSON script.
@@ -34,16 +34,18 @@
 # ```
 #
 # Conventions:
-#   The SPC file is deduced from the DRM filename.
-#   The script file (.json) is deduced from the DRM filename (directory component).
-#   The movie output name is generated from the DRM.
-#   E.g.:
+#
+# * The SPC file is deduced from the DRM filename.
+# * The script file (`.json`) is deduced from the DRM filename (directory component).
+# * The movie output name is generated from the DRM.
+#
+# For example:
+# ```
 #       drm   = sims/HabEx_4m_TS_dmag26p0_20180206/drm/163191934.pkl
 #       spc   = sims/HabEx_4m_TS_dmag26p0_20180206/spc/163191934.spc
 #       json  = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
 #       movie = sims/HabEx_4m_TS_dmag26p0_20180206/path/163191934.mp4 (output)
-# 
-# turmon feb 2018
+# ```
 #
 ## [end comment block]
 

@@ -2,7 +2,7 @@
 #
 # extract_drm_positions_driver.sh: extract observer (etc) positions from DRM
 #
-# This is a wrapper around the python script, extract_drm_positions.py
+# This is a wrapper around the python script, `extract_drm_positions.py`.
 # It mainly handles annoying filename transformations, so you only need to
 # supply the ensemble root directory.
 #
@@ -24,14 +24,16 @@
 # ```
 #
 # Conventions:
-#   The script file (.json) is deduced from the DRM filename (directory component).
-#   The output CSV name is generated from the DRM.
-#   E.g.:
+#
+# * The script file (`.json`) is deduced from the DRM filename (directory component).
+# * The output CSV name is generated from the DRM.
+#
+# For example:
+# ```
 #       drm  = sims/HabEx_4m_TS_dmag26p0_20180206/drm/NNNN.pkl
 #       json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
 #       csv  = sims/HabEx_4m_TS_dmag26p0_20180206/pos/NNNN-position.csv (output)
-# 
-# turmon oct 2018, updated 2023 for newer Sandbox conventions
+# ```
 #
 ## [end comment block]
 

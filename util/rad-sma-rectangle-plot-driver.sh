@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
-# 
+#
 # rad-sma-rectangle-plot-driver.sh: sh driver for radius/luminosity box-format plots
 #
-# usage:
-#```
-#   rad-sma-rectangle-plot-driver.sh [-d] [-o OP] in_tmpl
-#```
+# Usage:
+# ```
+#   rad-sma-rectangle-plot-driver.sh [-q] [-o OP] in_tmpl
+# ```
+#
 # where:
 #
-# +  in_tmpl: filename template for data input
-#       e.g.: sims/ExoS_A_SAG13/reduce-%s.%s
-# +  dest_tmpl: the destination template for graphical output
-#       e.g.: sims/ExoS_A_SAG13/gfx/plot-%s.%s
-# +  -q indicates to plot quantiles, otherwise, means are plotted.
+# +  `in_tmpl`: filename template for data input,
+#    e.g. `sims/ExoS_A_SAG13/reduce-%s.%s`
+# +  `dest_tmpl`: the destination template for graphical output,
+#    e.g. `sims/ExoS_A_SAG13/gfx/plot-%s.%s`
+# +  `-q` indicates to plot quantiles, otherwise, means are plotted.
 #
 # For example,
-#
-# +  `rad-sma-rectangle-plot-driver.sh self`
+# ```
+#   rad-sma-rectangle-plot-driver.sh self
+# ```
 #
 ## [end comment block]
 

@@ -1,17 +1,20 @@
 #!/bin/bash
 # 
-# exp-add-sims.sh: Generate a SLURM batch script for an Experiment/Family
+# exp-add-sims.sh: Generate a Slurm batch script for an Experiment/Family
 #
 # Given an Experiment or Family consisting of multiple EXOSIMS scripts, and a
-# seed or list of seeds, makes a batch script ready for SLURM submission.
+# seed or list of seeds, writes out a batch script ready for Slurm submission.
 # Features:
-#   - Submits an array job over all Scripts in the Family/Experiment
-#   - With -j N, allows N-way parallelism over seeds in each Script
-#   - With -m TARGET, allows postprocessing with "make reduce", etc.
+#
+#   - Composes an array job over all Scripts in the Family/Experiment
+#   - With `-j N`, allows N-way parallelism over seeds in each Script
+#   - With `-m TARGET`, allows postprocessing with `make reduce`, etc.
 #
 # Simple Usage:
+# ```
 #   exp-add-sims.sh -0 -j 16 -m reduce,html-only Scripts/example.fam Experiment/seed100.txt
 #   exp-add-sims.sh -0 -j 1  -m reduce,html-only Scripts/example.fam =777
+# ```
 # 
 # Complete Usage:
 # ```
@@ -19,15 +22,16 @@
 # ```
 #
 # where arguments are:
-#   Experiment: a directory name within Scripts/ of an Experiment or Family
-#   Seeds: a file of integer seeds, or =S to use a single integer seed S.
+# 
+#   - Experiment: a directory name within Scripts/ of an Experiment or Family
+#   - Seeds: a file of integer seeds, or `=S` to use a single integer seed S.
 #
 # and options are:
 # ```
 #   -0: Warm caches before ensemble seed-by-seed runs
 #   -j N: Ensemble is created with N-way parallelism
 #   -/ S: Divide the "M" scripts in the Experiment into "S" batches, 
-#         producing "S" scripts. Default 1. Needed for large M.
+#         producing "S" batch scripts. Default 1. Needed for large M.
 #   -m TARGET: Run "make S==... TARGET postprocessing after ensemble
 # ```
 #
@@ -38,22 +42,33 @@
 #   -h: print this help
 # ```
 #
-# Note: comma-separated postprocessing steps are done in one invovation
-# of "make", and repeated "-m" options cause repeated invocations of
-# "make". So -m reduce,obs-timeline-2 -m html-only will:
+# The output batch file is named `Batch/Run.sh` within the `Scripts/...` 
+# root of the Experiment or Family, helping trace provenance. (If `-/` was 
+# given, scripts are in the same directory, but named sequentially.)
+#
+# Control over `make` postprocessing: comma-separated postprocessing 
+# steps are done in one invovation `make`, and repeated `-m` options 
+# cause repeated invocations of `make`. Thus:
+# ```
+#    -m reduce,obs-timeline-2 -m html-only
+# ```
+# will have the batch job run:
+# ```
 #   make S=... reduce obs-timeline-2
 #   make S=... html-only
+# ```
 # within each script directory. The comma-separated form is quicker 
-# to type, but the trailing "-m html-only" ensures that a final HTML 
+# to type, but the trailing `-m html-only` ensures that a final HTML 
 # page is generated with the timelines in it.
 #
 # Context:
-#   - Your working directory is the /scratch or /scratch-edge Sandbox
+# 
+#   - Your working directory is the `/scratch` or `/scratch-edge` Sandbox
 #   - Your scripts are in a Family/Experiment in same Sandbox
 #   - You should be in the Python VENV you wish to use
 #
 # The generated script can be submitted to either the "slurm" or "edge" cluster, 
-# provided that the Experiment/Family exists in the Scripts/ directory
+# provided that the Experiment/Family exists in the `Scripts/` directory
 # on the scratch for that cluster.  (You must copy the files
 # in `Scripts/...` between clusters yourself.) Just use `sbatch -M edge` or 
 # `sbatch -M slurm`. Or, `sbatch` without `-M` will submit to the default 
@@ -62,6 +77,7 @@
 #
 # Example:
 # 
+# ```
 # # we are in /scratch, in a VENV
 # $ pwd; echo $VIRTUAL_ENV
 # /scratch/exo-yield/Sandbox/hwo
@@ -75,6 +91,7 @@
 # # submit the generated file
 # $ sbatch Scripts/Test.exp/Batch/Run.sh
 # Submitted batch job 4987542
+# ```
 #   
 ##
 
@@ -128,8 +145,8 @@ while getopts "0vqhj:/:m:" opt; do
             verbosity=2
             ;;
         h)
-            # help text
-            sed 's/^# \?//' "$(which "$0")" | awk '/^#$/{exit};NR>1{print}'
+            # help text -- -E for portability with ? in RE
+            sed -E 's/^# ?//' "$(which "$0")" | awk '/^#$/{exit};NR>1{print}'
             exit 2
             ;;
         \?)

@@ -7,30 +7,32 @@
 # supply the ensemble root directory.
 #
 # ## Usage:
-#   `ens-path-summary.sh [-a] [-D] DRMS`
+# ```
+#   ens-path-summary.sh [-a] [-D] DRMS
+# ```
 #
 # to summarize the paths in the given directory DRMS.  Note, the star-planet config
 # file (SPC) corresponding to a DRM is also needed, as is the JSON script.
-# These filenames are generated from the DRM filename, see "Note" below.
+# These filenames are generated from the DRM filename, see "Conventions" below.
 #
 # ### Options:
-# 
+#
 # * `-a` signals to omit the animation of the 3d path summary.
 # * `-D` signals to run python with the debugger on
 #
 # ### Conventions:
-#   The SPC file will be deduced from the DRM filename(s) by `ens-path-graphics`.
-#   The script file (`.json`) is deduced from the DRM filename (directory component).
-#   The image output name is generated from the DRM.
-#   For example,
+#
+# * The SPC file will be deduced from the DRM filename(s) by `ens-path-graphics`.
+# * The script file (`.json`) is deduced from the DRM filename (directory component).
+# * The image output name is generated from the DRM.
+#
+# For example,
 # ``` shell
 #       drms  = sims/HabEx_4m_TS_dmag26p0_20180206/drm
 #       spc   = sims/HabEx_4m_TS_dmag26p0_20180206/spc/???.spc (one will be selected)
 #       json  = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
 #       movie = sims/HabEx_4m_TS_dmag26p0_20180206/path-ens/*.* (output)
 # ```
-# 
-# turmon feb 2018
 #
 ## [end comment block]
 

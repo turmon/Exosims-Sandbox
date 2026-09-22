@@ -3,53 +3,55 @@
 # sandbox-test-run.sh: perform a test run to exercise sandbox functions
 #
 # Usage:
-#```
+# ```
 #   sandbox-test-run.sh [ -L ] [ -R ] SCRIPT
-#```
+# ```
 #
-# where SCRIPT is a script name (e.g., Scripts/HabEx-foobar.json).
+# where SCRIPT is a script name (e.g., `Scripts/HabEx-foobar.json`).
 #
 # By default, the SCRIPT is copied to a temporary file (in the above
-# example, Scripts/HabEx-foobar-testrun.json) before running tests,
-# so that the test runs land in sims/HabEx-foobar-testrun/... rather than a
+# example, `Scripts/HabEx-foobar-testrun.json`) before running tests,
+# so that the test runs land in `sims/HabEx-foobar-testrun/...` rather than a
 # possibly-useful existing directory.
 #
 # This means that SCRIPT can be an existing script name, and a test run
-# will not pollute the corresponding sims/... files.
-# 
+# will not pollute the corresponding `sims/...` files.
+#
 # Options are:
 # ```
 #   -L: use the SCRIPT literally. This does *not* use the copied script-file
-#       scheme above, so the new sims and plots (if they succeed) 
+#       scheme above, so the new sims and plots (if they succeed)
 #       will land in sims/SCRIPT/... among whatever might be already there.
 #   -R: remove the simulation directory corresponding to the given SCRIPT, before
 #       the test run, so the run is clean (except for EXOSIMS file caches).
 #       This code prompts for confirmation of -R.
 # ```
 #
-# Note that using -R and -L *together* will delete the possibly-existing sims/SCRIPT
-# directory, and all its contents.
+# Note that using `-R` and `-L` *together* will delete the possibly-existing
+# `sims/SCRIPT` directory, and all its contents.
 #
 # Description:
 #
 # The test sequence exercises several sandbox functions within the processing
 # pipeline. This is approximately:
-#   - single test run  (add-sims.sh ... =777)
-#   - ensemble of runs (add-sims.sh ... 100)
-# and then various invocations of "make":
-#   - reduce data (make reduce)
-#   - basic plots (make html)
+#
+#   - single test run  (`add-sims.sh ... =777`)
+#   - ensemble of runs (`add-sims.sh ... 100`)
+#
+# and then various invocations of `make`:
+#
+#   - reduce data (`make reduce`)
+#   - basic plots (`make html`)
 #   - movies and final frames
-#   - webpage update (make html-only)
+#   - webpage update (`make html-only`)
 #   - other ancillary graphics [*]
-#   - final webpage update (make html-only)
+#   - final webpage update (`make html-only`)
+#
 # The intent is to shake out any errors in the infrastructure by exercising most
 # of the mainline functions, all at once. Note that the ancillary graphics [*] above
 # can be fragile for some scripts, and they need a 3-year mission.
-# 
-# See also: python-version-check.py 
 #
-# turmon dec 2021
+# See also: `python_version_check.py`
 #
 ## [end comment block]
 

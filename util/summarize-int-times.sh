@@ -11,21 +11,21 @@
 # ```
 #
 # where SIM is a simulation directory, for example:
-#    SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229
-# In this case, SIM/drm must contain several DRM's as .pkl files
+# ```
+#   SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229
+# ```
+# In this case, `SIM/drm` must contain several DRM's as `.pkl` files
 #
-# Use -H for hybrid DRM's, which store the integration time attribute
+# Use `-H` for hybrid DRM's, which store the integration time attribute
 # differently.
 #
 # Context:
-#  * This assumes the "mlr" CSV utility is in your PATH. It is at:
-#      /proj/exep/rhonda/Sandbox/Tools/bin/mlr
-#    so you can:
-#      export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin
-#    or place the above in your .bash_profile
 #
-# 
-# turmon jan 2024
+#  * This assumes the `mlr` CSV utility is in your PATH. It is at
+#    `/proj/exep/rhonda/Sandbox/Tools/bin/mlr`.
+#  * To find it, say
+#    `export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin`,
+#    or place that line in your `.bash_profile`.
 #
 ## [end comment block]
 
