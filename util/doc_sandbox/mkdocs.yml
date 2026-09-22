@@ -25,6 +25,14 @@ nav:
     - Script Index: script_index.md
     - Key Tools: impl_index.md
 
+# The ~50 per-script pages written by gen_pages.py, and the docs/implementation/
+# detail pages, are deliberately outside the nav: they are reached from the
+# Script Index and Key Tools pages. Without this, every mkdocs build prints
+# them all as "pages ... not included in the nav".
+validation:
+  nav:
+    omitted_files: ignore
+
 # attr_list: the plot pages size images with {: width="100%" }
 # md_in_html: lets those pages mix markdown inside HTML blocks
 markdown_extensions:

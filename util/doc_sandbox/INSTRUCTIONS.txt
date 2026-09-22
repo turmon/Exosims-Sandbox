@@ -46,6 +46,12 @@ Command-lines:
   - gen_pages.py, a mkdocs plugin, generates .md files containing
     the usage information for all util/ commands, at runtime, 
     whenever mkdocs build is run
+    These generated pages, and the docs/implementation detail pages,
+    are deliberately not in the mkdocs.yml "nav" -- they are reached
+    from the Script Index and Key Tools pages instead. mkdocs would
+    otherwise log all ~50 of them on every build ("pages ... not
+    included in the nav"), so mkdocs.yml sets
+    validation.nav.omitted_files to "ignore".
 
 To add a new source file (new.py) to the detail list:
   - Place a markdown in docs/implementation/new.md, with a :::
