@@ -626,38 +626,29 @@ html-status:
 ########################################
 ## documentation (per-installation)
 ##
-.PHONY: doc
+.PHONY: doc doc-lint doc-publish
 doc:
-	@echo "******************************"
-	@echo "***"
-	@echo "*** Making plot documentation"
-	@echo "***"
-	@echo "******************************"
+	@echo "=============================="
+	@echo ">>  Making plot documentation"
+	@echo "=============================="
 	cd Local/www-doc && make install
-	@echo "******************************"
-	@echo "***"
-	@echo "*** Making code documentation"
-	@echo "***"
-	@echo "******************************"
+	@echo "=============================="
+	@echo ">>  Making code documentation"
+	@echo "=============================="
 	cd util/doc_sandbox && make doc
-	@echo "******************************"
-	@echo "***"
-	@echo "*** Moving code documentation into place"
-	@echo "***"
-	@echo "******************************"
+	@echo "=============================="
+	@echo ">>  Moving code docs into place"
+	@echo "=============================="
 	cd util/doc_sandbox && make export
 
-# check documentation formatting: docstring/usage blocks in the utility
-# scripts, and agreement between the plot-topic lists (see util/dev/doc-lint.py)
-.PHONY: doc-lint
+# check doc formatting: docstring blocks in scripts
 doc-lint:
 	util/dev/doc-lint.py
 
 # push the generated code documentation to github pages.
 # NOTE: this pushes to the gh-pages branch. GH_REMOTE picks the site:
 #   origin (default) => the JPL-internal Pages site
-#   export           => the public turmon.github.io site
+#   export           => the github.com  (turmon.github.io) site
 # e.g. "make doc-publish GH_REMOTE=export" to update the public site.
-.PHONY: doc-publish
 doc-publish:
 	cd util/doc_sandbox && make publish
