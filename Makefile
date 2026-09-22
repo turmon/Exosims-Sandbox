@@ -211,18 +211,14 @@ tar-some-data:
 ## Data reductions
 ##
 .PHONY: reduce reduce-only exp-reduce exp-reduce-only
-# (TODO: do without for-loop. the loop forces remake of top-level
-# index files for every scenario)
-# the presence of sims/X/drm is the cue that X is an ensemble
-exp-reduce: experiment-exists
-	@ for d in sims/$(S)/*; do \
-	        [ -d $$d/drm -a -d $$d/spc ] || continue; \
-		d_prime=$$(echo $$d | sed 's:sims/::'); \
-		echo $(MAKE) S=$$d_prime reduce; \
-		$(MAKE) --no-print-directory S=$$d_prime reduce || exit $$?; \
-	done
-	@ echo "Make: Reducing overall experiment..."
-	$(REDUCE_ENS_PROG) sims/$(S)
+# 'make exp-reduce' flows through the same dependency graph as 'make reduce':
+#   sims/reduce-info.csv <- ... <- sims/$(S)/reduce-info.csv <- each ensemble's
+# Because this is one make process, every node is reduced exactly once, however
+# many ensembles the experiment holds.  (This was formerly a shell for-loop
+# running a sub-make per ensemble; each of those independently walked the
+# PROPAGATE_REDUCTION_UPWARD chain up to sims/, so every ancestor directory was
+# re-reduced once per ensemble.)
+exp-reduce: experiment-exists sims/reduce-info.csv
 
 exp-reduce-only: experiment-exists
 	@ echo "Make: Reducing ONLY overall experiment..."
@@ -235,11 +231,29 @@ reduce: script-exists sims/reduce-info.csv
 # 'make reduce-only' does not flow from sims -> $S: it just does the bottom level
 reduce-only: script-exists sims/$(S)/reduce-info.csv
 
-# dependence for a bottom-level reduction in sims/$S
-#   writes sims/$(S)/reduce-info.csv, and many others
-sims/$(S)/reduce-info.csv: sims/$(S)/drm
+# dependence for a bottom-level reduction: any directory holding a drm/ is an
+# ensemble.  Writes DIR/reduce-info.csv, and many others.
+# This is a pattern rule, not an explicit rule for $(S) alone, so that the
+# ensembles *within* an experiment can also be built as prerequisites (see
+# exp-reduce above).  It declines to match container directories, which have
+# no drm/, so those fall through to PROPAGATE_REDUCTION_UPWARD below.
+sims/%/reduce-info.csv: sims/%/drm
 	@ echo "Make: Reducing $< ..."
-	$(REDUCE_PROG) sims/$(S)/drm
+	$(REDUCE_PROG) $<
+
+# When $(S) is an experiment/family -- it has no drm/ of its own -- its
+# reduction depends on the reduction of every ensemble it contains.  This rule
+# is what replaces the old exp-reduce for-loop.  As before, the presence of
+# both drm/ and spc/ is the cue that a subdirectory is an ensemble.
+# The ifeq guard matters: when $(S) is an ensemble this rule must not exist,
+# or its recipe would shadow the pattern rule above.
+EXP_ENSEMBLES     = $(patsubst %/drm,%,$(wildcard sims/$(S)/*/drm))
+EXP_ENSEMBLE_CSVS = $(foreach d,$(EXP_ENSEMBLES),$(if $(wildcard $d/spc),$d/reduce-info.csv))
+ifeq ($(wildcard sims/$(S)/drm),)
+sims/$(S)/reduce-info.csv: $(EXP_ENSEMBLE_CSVS)
+	@ echo "Make: Reducing overall experiment: $(@D) ..."
+	$(REDUCE_ENS_PROG) $(@D)
+endif
 
 # Below: a variable, a macro, and a foreach link the top-level reduce
 # target (sims/reduce-info.csv) to the base-level one (sims/$S/reduce-info.csv)
