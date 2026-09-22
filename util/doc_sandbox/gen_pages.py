@@ -78,6 +78,16 @@ def gen_metadata(title):
     chunk.append('---\n')
     return chunk
 
+# google_to_markdown() always emits one final section, even for a block with
+# no Google-style headings at all -- it lands as an empty "#### " heading plus
+# an empty list item at the foot of the page.  Matches only the empty-titled
+# section, so real trailing sections (#### Note, etc.) are left alone.
+EMPTY_SECTION_RE = re.compile(r'\n+#### *\n+- *\n?$')
+
+def google_to_markdown(block):
+    r'''Convert a doc block to markdown, minus the parser's empty last section.'''
+    return EMPTY_SECTION_RE.sub('\n', docstring_to_markdown.google.google_to_markdown(block))
+
 def get_doc_block_sh(script, title):
     # line1 is the 
     line1 = ''
@@ -110,7 +120,7 @@ def get_doc_block_sh(script, title):
     #  utility to convert google-style doc-blocks to markdown
     #  (is mostly a no-op, but can recognize headings like Args:
     #  and Note:)
-    block_md = docstring_to_markdown.google.google_to_markdown(block)
+    block_md = google_to_markdown(block)
     # turmon 04/2026: above may be obsolete? Consider:
     # block_md = docstring_to_markdown.convert(block)
     return block_md, line1
