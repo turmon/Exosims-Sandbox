@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,36 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,7 +992,7 @@
   <h1>csv2json</h1>
 
 <p>csv2json.py: Convert table in CSV format to a list of JSON objects</p>
-<p>Usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>    csv2json.py test.csv test.json
   (or)
     csv2json.py test.csv &gt; anything.json
@@ -991,11 +1026,11 @@ row, like this:</p>
       }
   ]
 </code></pre>
+<h2 id="notes">Notes</h2>
 <ul>
-<li>Note that the RowNum field will be added for convenience.</li>
+<li>Note that the <code>RowNum</code> field will be added for convenience.</li>
 <li>Not tested with complex/quoted strings within the input CSV</li>
 </ul>
-<p>turmon 2022-july</p>
 
 
 

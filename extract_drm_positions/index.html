@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#algorithm-and-notes" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#algorithm-and-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithm and notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actual-usage-example-for-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actual usage example for reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,20 +1003,23 @@
   <h1>extract_drm_positions</h1>
 
 <p>extract_drm_positions: Extract targets, observatory, and planet positions from DRM</p>
-<p>For usage, use the -h option.  Some options may be described there but not here.</p>
+<p>For usage, use the <code>-h</code> option.  Some options may be described there but not here.</p>
 <p>This script produces a CSV of target and observatory positions, with one entry for
 every observation in the give DRM.
 Note: this 2023 version is updated for micro-thruster analysis (POC: Cameron Haag)</p>
-<p>Algorithm and notes:
-- A pickle summarizing a DRM is loaded, and the corresponding MissionSim
-object is instantiated from the supplied script.  The observations are
-stepped through, the sim is moved to the observation time, and properties
-(like keepout and observatory orbit) are queried.
-- The DRM file (.pkl extension, name supplied via --drm) is the one produced
-by the standard simulation setup.  The seed is taken from the name of the
-DRM file, and the sim object is instantiated by giving it that seed.</p>
-<p>Usage:
-  <code>extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl</code></p>
+<h2 id="algorithm-and-notes">Algorithm and notes</h2>
+<ul>
+<li>A pickle summarizing a DRM is loaded, and the corresponding MissionSim
+  object is instantiated from the supplied script.  The observations are
+  stepped through, the sim is moved to the observation time, and properties
+  (like keepout and observatory orbit) are queried.</li>
+<li>The DRM file (<code>.pkl</code> extension, name supplied via <code>--drm</code>) is the one produced
+  by the standard simulation setup.  The seed is taken from the name of the
+  DRM file, and the sim object is instantiated by giving it that seed.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<pre><code>  extract_drm_positions.py [-p FILE] [-x SCRIPT] SCRIPT.json SEED.pkl
+</code></pre>
 <p>where the TWO required arguments are the script, and the DRM, and optionally:</p>
 <pre><code> -p FILE -- a filename template (containing a %s) for the output .csv file; the
             %s hold the seed.  By default, ./%s-position.csv is used.
@@ -978,16 +1027,17 @@ DRM file, and the sim object is instantiated by giving it that seed.</p>
               if the given SCRIPT name begins with !, it is treated as a
               json literal rather than a filename
 </code></pre>
-<p>Actual usage example for reference:
-  This command adds the Local/ subdirectory here to PYTHONPATH, and then
-  runs the command.  The Local/ directory must be added because this particular script
-  inherits from a SurveyEnsemble (IPClusterEnsembleJPL2) which is in Local/ here.
-  The Exosims instance should come from your current Python venv.
-    S=HabEx_4m_TSDD_top200DD_52m_5184_20181015_obs
-    PYTHONPATH=Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl</p>
+<h2 id="actual-usage-example-for-reference">Actual usage example for reference</h2>
+<p>This command adds the <code>Local/</code> subdirectory here to PYTHONPATH, and then
+runs the command.  The <code>Local/</code> directory must be added because this particular
+script inherits from a SurveyEnsemble (IPClusterEnsembleJPL2) which is in
+<code>Local/</code> here.  The Exosims instance should come from your current Python venv.</p>
+<pre><code>  S=HabEx_4m_TSDD_top200DD_52m_5184_20181015_obs
+  PYTHONPATH=Local util/extract_drm_positions.py -p sims/$S/pos/%s-position.csv Scripts/$S.json sims/$S/drm/1351679.pkl
+</code></pre>
 <p>Note: there is a sh driver for this script, and if using the Sandbox, it's easier
 to just use the driver, which enforces the filename conventions.
-See: extract_drm_positions_driver.sh</p>
+See: <code>extract_drm_positions_driver.sh</code></p>
 
 
 

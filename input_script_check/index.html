@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,36 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,17 +992,22 @@
   <h1>input_script_check</h1>
 
 <p>input_script_check.py: Check EXOSIMS input script "specs" for keywords that are unused.</p>
-<p>Usage:
-  input_script_check.py script.json [...]</p>
-<p>Notes:
-  * JPL scripts use a localized sim-runner, so you will need to put the
-    sim-runner class in your PYTHONPATH with the shell construct:
-    PYTHONPATH=Local util/input_script_check.py ...</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  input_script_check.py script.json [...]
+</code></pre>
+<h2 id="notes">Notes</h2>
 <ul>
-<li>You can give a list of scripts, and they will be cycled through
-  and checked one-by-one.</li>
+<li>
+<p>JPL scripts use a localized sim-runner, so you will need to put the
+  sim-runner class in your PYTHONPATH with the shell construct:
+  <code>PYTHONPATH=Local util/input_script_check.py ...</code></p>
+</li>
+<li>
+<p>You can give a list of scripts, and they will be cycled through
+  and checked one-by-one.</p>
+</li>
 </ul>
-<p>Use with -h for more usage help.</p>
+<p>Use with <code>-h</code> for more usage help.</p>
 
 
 

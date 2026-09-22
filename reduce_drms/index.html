@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,36 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,19 +992,22 @@
   <h1>reduce_drms</h1>
 
 <p>reduce_drms.py: reduce a pile of DRMs to various summary CSV files</p>
-<p>usage:
-  <code>reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]</code></p>
+<h2 id="usage">Usage</h2>
+<pre><code>  reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]
+</code></pre>
 <p>Args:
   DRM (file): a list of DRM pickles</p>
-<p>Options:
-  + <code>-O outfile</code> gives a template (containing exactly two occurrences of %s) for
-     file outputs.  This is optional, but is best to supply.
-  + <code>-j N</code> means to use N parallel workers to process the files.  By default,
-     about 1/3 of the available cores will be used (25 on mustang*), which balances
-     parallel makes (outside this routine) and parallel reductions (within it).
-     If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
-  + <code>-D TYPE</code> gives a (string) TYPE that is inserted into the DEBUG variable in the 
-     script, and which can be used to print a selected TYPE of debug output.</p>
+<h2 id="options">Options</h2>
+<ul>
+<li><code>-O outfile</code> gives a template (containing exactly two occurrences of %s) for
+  file outputs.  This is optional, but is best to supply.</li>
+<li><code>-j N</code> means to use N parallel workers to process the files.  By default,
+  about 1/3 of the available cores will be used (25 on mustang*), which balances
+  parallel makes (outside this routine) and parallel reductions (within it).
+  If N = 0 or 1, no parallel workers are used, which is helpful for debugging.</li>
+<li><code>-D TYPE</code> gives a (string) TYPE that is inserted into the DEBUG variable in the
+  script, and which can be used to print a selected TYPE of debug output.</li>
+</ul>
 
 
 

@@ -961,6 +961,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="reduce_drms">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drms--usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce_drms--options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1467,12 +1495,10 @@
     <div class="doc doc-contents first">
 
         <p>reduce_drms.py: reduce a pile of DRMs to various summary CSV files</p>
+<h3 id="reduce_drms--usage">Usage</h3>
+<pre><code>  reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]
+</code></pre>
 
-
-<details class="usage" open>
-  <summary>usage</summary>
-  <p><code>reduce_drms.py [ -O outfile ] [ -j N ] DRM [...]</code></p>
-</details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <table>
@@ -1503,21 +1529,18 @@
           </tr>
       </tbody>
     </table>
-
-
-<details class="options" open>
-  <summary>Options</summary>
-  <ul>
+        <h3 id="reduce_drms--options">Options</h3>
+<ul>
 <li><code>-O outfile</code> gives a template (containing exactly two occurrences of %s) for
-   file outputs.  This is optional, but is best to supply.</li>
+  file outputs.  This is optional, but is best to supply.</li>
 <li><code>-j N</code> means to use N parallel workers to process the files.  By default,
-   about 1/3 of the available cores will be used (25 on mustang*), which balances
-   parallel makes (outside this routine) and parallel reductions (within it).
-   If N = 0 or 1, no parallel workers are used, which is helpful for debugging.</li>
-<li><code>-D TYPE</code> gives a (string) TYPE that is inserted into the DEBUG variable in the 
-   script, and which can be used to print a selected TYPE of debug output.</li>
+  about 1/3 of the available cores will be used (25 on mustang*), which balances
+  parallel makes (outside this routine) and parallel reductions (within it).
+  If N = 0 or 1, no parallel workers are used, which is helpful for debugging.</li>
+<li><code>-D TYPE</code> gives a (string) TYPE that is inserted into the DEBUG variable in the
+  script, and which can be used to print a selected TYPE of debug output.</li>
 </ul>
-</details>
+
 
 
 
@@ -1565,9 +1588,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/reduce_drms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2545</span>
-<span class="normal">2546</span>
-<span class="normal">2547</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2547</span>
 <span class="normal">2548</span>
 <span class="normal">2549</span>
 <span class="normal">2550</span>
@@ -2423,7 +2444,9 @@
 <span class="normal">3400</span>
 <span class="normal">3401</span>
 <span class="normal">3402</span>
-<span class="normal">3403</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EnsembleSummary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">3403</span>
+<span class="normal">3404</span>
+<span class="normal">3405</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EnsembleSummary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute, store, and dump summary information for an ensemble of many simulations.&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Load an ensemble of simulations.&#39;&#39;&#39;</span>
@@ -3314,9 +3337,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2547</span>
-<span class="normal">2548</span>
-<span class="normal">2549</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2549</span>
 <span class="normal">2550</span>
 <span class="normal">2551</span>
 <span class="normal">2552</span>
@@ -3341,7 +3362,9 @@
 <span class="normal">2571</span>
 <span class="normal">2572</span>
 <span class="normal">2573</span>
-<span class="normal">2574</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="normal">2574</span>
+<span class="normal">2575</span>
+<span class="normal">2576</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Load an ensemble of simulations.&#39;&#39;&#39;</span>
     <span class="c1"># filter the .spc files out: some dirs contain both</span>
     <span class="n">sim_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">in_files</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.spc&#39;</span><span class="p">)]</span>
@@ -3391,9 +3414,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2889</span>
-<span class="normal">2890</span>
-<span class="normal">2891</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2891</span>
 <span class="normal">2892</span>
 <span class="normal">2893</span>
 <span class="normal">2894</span>
@@ -3905,7 +3926,9 @@
 <span class="normal">3400</span>
 <span class="normal">3401</span>
 <span class="normal">3402</span>
-<span class="normal">3403</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="normal">3403</span>
+<span class="normal">3404</span>
+<span class="normal">3405</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Dump reduced data to files.&#39;&#39;&#39;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">ensure_permissions</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
@@ -4442,9 +4465,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2860</span>
-<span class="normal">2861</span>
-<span class="normal">2862</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2862</span>
 <span class="normal">2863</span>
 <span class="normal">2864</span>
 <span class="normal">2865</span>
@@ -4468,7 +4489,9 @@
 <span class="normal">2883</span>
 <span class="normal">2884</span>
 <span class="normal">2885</span>
-<span class="normal">2886</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_config</span><span class="p">):</span>
+<span class="normal">2886</span>
+<span class="normal">2887</span>
+<span class="normal">2888</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_extras</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reduce_config</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Extract extra keys, as needed, from summary; package into dict.&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_one</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">locator</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Helper: Extract a single key given by locator-list, from d&#39;&#39;&#39;</span>
@@ -4527,9 +4550,7 @@ exoE_* parameters are float's, while the h_time_... are np.ndarray's.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2586</span>
-<span class="normal">2587</span>
-<span class="normal">2588</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2588</span>
 <span class="normal">2589</span>
 <span class="normal">2590</span>
 <span class="normal">2591</span>
@@ -4556,7 +4577,9 @@ exoE_* parameters are float's, while the h_time_... are np.ndarray's.</p>
 <span class="normal">2612</span>
 <span class="normal">2613</span>
 <span class="normal">2614</span>
-<span class="normal">2615</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_attr_null_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">valid_value</span><span class="p">):</span>
+<span class="normal">2615</span>
+<span class="normal">2616</span>
+<span class="normal">2617</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_attr_null_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">valid_value</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Utility, return the null value for the attribute named attr.</span>
 
 <span class="sd">    The null value is the value which, when averaged in with valid values, will produce</span>
@@ -4608,15 +4631,15 @@ exoE_* parameters are float's, while the h_time_... are np.ndarray's.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2576</span>
-<span class="normal">2577</span>
-<span class="normal">2578</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2578</span>
 <span class="normal">2579</span>
 <span class="normal">2580</span>
 <span class="normal">2581</span>
 <span class="normal">2582</span>
 <span class="normal">2583</span>
-<span class="normal">2584</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_key_family_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="normal">2584</span>
+<span class="normal">2585</span>
+<span class="normal">2586</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_key_family_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Pool the attrs named by the given key (the key family) across all reductions.&#39;&#39;&#39;</span>
     <span class="n">attr_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reductions</span><span class="p">:</span>
@@ -4649,9 +4672,7 @@ quantiles, et., across the DRM ensemble.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2653</span>
-<span class="normal">2654</span>
-<span class="normal">2655</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2655</span>
 <span class="normal">2656</span>
 <span class="normal">2657</span>
 <span class="normal">2658</span>
@@ -4712,7 +4733,9 @@ quantiles, et., across the DRM ensemble.</p>
 <span class="normal">2713</span>
 <span class="normal">2714</span>
 <span class="normal">2715</span>
-<span class="normal">2716</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert_static_entries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2716</span>
+<span class="normal">2717</span>
+<span class="normal">2718</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert_static_entries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Insert extra values, that are pass-thru&#39;s from other sources, to the summary.</span>
 
 <span class="sd">    The distinction from the other values is that these values are not means, </span>
@@ -4799,9 +4822,7 @@ quantiles, et., across the DRM ensemble.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2631</span>
-<span class="normal">2632</span>
-<span class="normal">2633</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2633</span>
 <span class="normal">2634</span>
 <span class="normal">2635</span>
 <span class="normal">2636</span>
@@ -4819,7 +4840,9 @@ quantiles, et., across the DRM ensemble.</p>
 <span class="normal">2648</span>
 <span class="normal">2649</span>
 <span class="normal">2650</span>
-<span class="normal">2651</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_and_reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2651</span>
+<span class="normal">2652</span>
+<span class="normal">2653</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_and_reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load sim drm/spc, reduce each sim, accumulate summaries across sims.</span>
 
 <span class="sd">    Each dict gives one summary statistic over that single sim.&#39;&#39;&#39;</span>
@@ -4865,9 +4888,7 @@ and then reducing them all.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2617</span>
-<span class="normal">2618</span>
-<span class="normal">2619</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2619</span>
 <span class="normal">2620</span>
 <span class="normal">2621</span>
 <span class="normal">2622</span>
@@ -4877,7 +4898,9 @@ and then reducing them all.</p>
 <span class="normal">2626</span>
 <span class="normal">2627</span>
 <span class="normal">2628</span>
-<span class="normal">2629</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reduce_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2629</span>
+<span class="normal">2630</span>
+<span class="normal">2631</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reduce_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Make reductions as a list-of-dicts, one per sim.  </span>
 
 <span class="sd">    NOTE: This routine is obsolete.</span>
@@ -4913,9 +4936,7 @@ and then reducing them all.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2718</span>
-<span class="normal">2719</span>
-<span class="normal">2720</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2720</span>
 <span class="normal">2721</span>
 <span class="normal">2722</span>
 <span class="normal">2723</span>
@@ -5052,7 +5073,9 @@ and then reducing them all.</p>
 <span class="normal">2854</span>
 <span class="normal">2855</span>
 <span class="normal">2856</span>
-<span class="normal">2857</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regroup_and_accum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">):</span>
+<span class="normal">2857</span>
+<span class="normal">2858</span>
+<span class="normal">2859</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regroup_and_accum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Accumulate various summaries across the ensemble.</span>
 
 <span class="sd">    Nothing is returned: result is placed in the object state.&#39;&#39;&#39;</span>
@@ -5235,9 +5258,7 @@ and then reducing them all.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/reduce_drms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">325</span>
 <span class="normal">326</span>
 <span class="normal">327</span>
 <span class="normal">328</span>
@@ -5251,7 +5272,9 @@ and then reducing them all.</p>
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span>
-<span class="normal">339</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RedirectStreams</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RedirectStreams</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Set stdout and stderr to redirect to the named streams.</span>
 
 <span class="sd">    Used for eliminating chatter to stdout upon module creation.&quot;&quot;&quot;</span>
@@ -5320,9 +5343,7 @@ and then reducing them all.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/reduce_drms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 389</span>
-<span class="normal"> 390</span>
-<span class="normal"> 391</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 391</span>
 <span class="normal"> 392</span>
 <span class="normal"> 393</span>
 <span class="normal"> 394</span>
@@ -7457,7 +7478,9 @@ and then reducing them all.</p>
 <span class="normal">2523</span>
 <span class="normal">2524</span>
 <span class="normal">2525</span>
-<span class="normal">2526</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimulationRun</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">2526</span>
+<span class="normal">2527</span>
+<span class="normal">2528</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimulationRun</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load and summarize a simulation: one DRM and its corresponding SPC.&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sim_info</span><span class="o">=</span><span class="p">{}):</span>
         <span class="c1"># allow creating a dummy object so that its properties may be queried</span>
@@ -9634,9 +9657,7 @@ histogram in the last lines.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">859</span>
-<span class="normal">860</span>
-<span class="normal">861</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">861</span>
 <span class="normal">862</span>
 <span class="normal">863</span>
 <span class="normal">864</span>
@@ -9692,7 +9713,9 @@ histogram in the last lines.</p>
 <span class="normal">914</span>
 <span class="normal">915</span>
 <span class="normal">916</span>
-<span class="normal">917</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">917</span>
+<span class="normal">918</span>
+<span class="normal">919</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract event counts (#slew, #char, and #det) from DRM.</span>
 
 <span class="sd">    The return value starts out as just a count (integer), and is then</span>
@@ -9778,9 +9801,7 @@ associated with an observation window, and later bin those chunks into a histogr
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1099</span>
-<span class="normal">1100</span>
-<span class="normal">1101</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1101</span>
 <span class="normal">1102</span>
 <span class="normal">1103</span>
 <span class="normal">1104</span>
@@ -9845,7 +9866,9 @@ associated with an observation window, and later bin those chunks into a histogr
 <span class="normal">1163</span>
 <span class="normal">1164</span>
 <span class="normal">1165</span>
-<span class="normal">1166</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delta_v_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1166</span>
+<span class="normal">1167</span>
+<span class="normal">1168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delta_v_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract time-binned delta-V information.</span>
 
 <span class="sd">    This analysis is handled differently than the earlier resource_analysis() algorithm.</span>
@@ -9936,9 +9959,7 @@ associated with an observation window, and later bin those chunks into a histogr
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1383</span>
-<span class="normal">1384</span>
-<span class="normal">1385</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1385</span>
 <span class="normal">1386</span>
 <span class="normal">1387</span>
 <span class="normal">1388</span>
@@ -10102,7 +10123,9 @@ associated with an observation window, and later bin those chunks into a histogr
 <span class="normal">1546</span>
 <span class="normal">1547</span>
 <span class="normal">1548</span>
-<span class="normal">1549</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">det_funnel_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1549</span>
+<span class="normal">1550</span>
+<span class="normal">1551</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">det_funnel_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract detection observation status from DRM.</span>
 
 <span class="sd">    For each sim, these are scalar quantities.&#39;&#39;&#39;</span>
@@ -10291,13 +10314,13 @@ associated with an observation window, and later bin those chunks into a histogr
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">686</span>
-<span class="normal">687</span>
-<span class="normal">688</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">688</span>
 <span class="normal">689</span>
 <span class="normal">690</span>
 <span class="normal">691</span>
-<span class="normal">692</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ensemble_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ensemble_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;The seed number of this sim, taken from its DRM filename (-1 if absent).&#39;&#39;&#39;</span>
     <span class="c1"># FIXME: is there a better way than path manipulation to get this?</span>
     <span class="k">try</span><span class="p">:</span>
@@ -10334,9 +10357,7 @@ the durations.  This histogram will be averaged across the ensemble.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">779</span>
-<span class="normal">780</span>
-<span class="normal">781</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">781</span>
 <span class="normal">782</span>
 <span class="normal">783</span>
 <span class="normal">784</span>
@@ -10412,7 +10433,9 @@ the durations.  This histogram will be averaged across the ensemble.</p>
 <span class="normal">854</span>
 <span class="normal">855</span>
 <span class="normal">856</span>
-<span class="normal">857</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">event_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">857</span>
+<span class="normal">858</span>
+<span class="normal">859</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">event_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract certain event information (slew, char, and det integration times) from DRM.</span>
 
 <span class="sd">    Usage is binned by event duration.  This is distinct from resource_analysis(), which </span>
@@ -10514,9 +10537,7 @@ the durations.  This histogram will be averaged across the ensemble.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1168</span>
-<span class="normal">1169</span>
-<span class="normal">1170</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1170</span>
 <span class="normal">1171</span>
 <span class="normal">1172</span>
 <span class="normal">1173</span>
@@ -10726,7 +10747,9 @@ the durations.  This histogram will be averaged across the ensemble.</p>
 <span class="normal">1377</span>
 <span class="normal">1378</span>
 <span class="normal">1379</span>
-<span class="normal">1380</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">funnel_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1380</span>
+<span class="normal">1381</span>
+<span class="normal">1382</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">funnel_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract promotion and characterization counts from DRM.</span>
 
 <span class="sd">    For each sim, these are scalar quantities.&#39;&#39;&#39;</span>
@@ -10971,9 +10994,7 @@ processing, by the "_list" convention in regroup_and_accum().</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">694</span>
-<span class="normal">695</span>
-<span class="normal">696</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">696</span>
 <span class="normal">697</span>
 <span class="normal">698</span>
 <span class="normal">699</span>
@@ -11054,7 +11075,9 @@ processing, by the "_list" convention in regroup_and_accum().</p>
 <span class="normal">774</span>
 <span class="normal">775</span>
 <span class="normal">776</span>
-<span class="normal">777</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_planet_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">777</span>
+<span class="normal">778</span>
+<span class="normal">779</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_planet_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Tabulate the planet population and its yield, planet-by-planet (for one DRM).</span>
 
 <span class="sd">    One record per planet of the simulated universe, giving the planet&#39;s</span>
@@ -11161,9 +11184,7 @@ processing, by the "_list" convention in regroup_and_accum().</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1809</span>
-<span class="normal">1810</span>
-<span class="normal">1811</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1811</span>
 <span class="normal">1812</span>
 <span class="normal">1813</span>
 <span class="normal">1814</span>
@@ -11195,7 +11216,9 @@ processing, by the "_list" convention in regroup_and_accum().</p>
 <span class="normal">1840</span>
 <span class="normal">1841</span>
 <span class="normal">1842</span>
-<span class="normal">1843</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_star_promotion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1843</span>
+<span class="normal">1844</span>
+<span class="normal">1845</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_star_promotion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute per-star summaries relating to promotions.</span>
 
 <span class="sd">    Note: All of these summaries are itemized by star.</span>
@@ -11258,9 +11281,7 @@ by radius and luminosity.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span>
 <span class="normal">496</span>
@@ -11451,7 +11472,9 @@ by radius and luminosity.</p>
 <span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
-<span class="normal">684</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_star_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">per_star_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute yield, tInt, etc., binned by target star (for one DRM).</span>
 
 <span class="sd">    We currently account for detections (all), detections (Earth), </span>
@@ -11669,9 +11692,7 @@ At selected times, densities of planet-counts are also found.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1552</span>
-<span class="normal">1553</span>
-<span class="normal">1554</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1554</span>
 <span class="normal">1555</span>
 <span class="normal">1556</span>
 <span class="normal">1557</span>
@@ -11924,7 +11945,9 @@ At selected times, densities of planet-counts are also found.</p>
 <span class="normal">1804</span>
 <span class="normal">1805</span>
 <span class="normal">1806</span>
-<span class="normal">1807</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">promotion_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1807</span>
+<span class="normal">1808</span>
+<span class="normal">1809</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">promotion_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract time-binned target promotion candidate numbers from DRM.</span>
 
 <span class="sd">    Planet-counts are binned by instrument observing time used.</span>
@@ -12208,9 +12231,7 @@ We also keep track of detections, but we do not spread these out over time.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 920</span>
-<span class="normal"> 921</span>
-<span class="normal"> 922</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 922</span>
 <span class="normal"> 923</span>
 <span class="normal"> 924</span>
 <span class="normal"> 925</span>
@@ -12385,7 +12406,9 @@ We also keep track of detections, but we do not spread these out over time.</p>
 <span class="normal">1094</span>
 <span class="normal">1095</span>
 <span class="normal">1096</span>
-<span class="normal">1097</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resource_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1097</span>
+<span class="normal">1098</span>
+<span class="normal">1099</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resource_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract time-binned resource usage (fuel and integration time) from DRM.</span>
 
 <span class="sd">    Usage is binned by mission elapsed time.  This routine is written so that </span>
@@ -12589,9 +12612,7 @@ If econo, delete the DRM and keep only the summary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2482</span>
-<span class="normal">2483</span>
-<span class="normal">2484</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2484</span>
 <span class="normal">2485</span>
 <span class="normal">2486</span>
 <span class="normal">2487</span>
@@ -12633,7 +12654,9 @@ If econo, delete the DRM and keep only the summary.</p>
 <span class="normal">2523</span>
 <span class="normal">2524</span>
 <span class="normal">2525</span>
-<span class="normal">2526</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">econo</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="normal">2526</span>
+<span class="normal">2527</span>
+<span class="normal">2528</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">econo</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Find the summary of the sim as a dictionary held within the object.</span>
 
 <span class="sd">    The convention is that the summary is built up by calling a series of analytic</span>
@@ -12705,9 +12728,7 @@ falling into each visit-range bin.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">434</span>
-<span class="normal">435</span>
-<span class="normal">436</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">436</span>
 <span class="normal">437</span>
 <span class="normal">438</span>
 <span class="normal">439</span>
@@ -12760,7 +12781,9 @@ falling into each visit-range bin.</p>
 <span class="normal">486</span>
 <span class="normal">487</span>
 <span class="normal">488</span>
-<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize_revisits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize_revisits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute revisit-count summary statistics (for one DRM).</span>
 
 <span class="sd">    All of these results are binned by observation time.</span>
@@ -12841,9 +12864,7 @@ Note: the most chacteristic field of interest is:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2372</span>
-<span class="normal">2373</span>
-<span class="normal">2374</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2374</span>
 <span class="normal">2375</span>
 <span class="normal">2376</span>
 <span class="normal">2377</span>
@@ -12896,7 +12917,9 @@ Note: the most chacteristic field of interest is:
 <span class="normal">2424</span>
 <span class="normal">2425</span>
 <span class="normal">2426</span>
-<span class="normal">2427</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">target_depletion_subanalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">yac</span><span class="p">):</span>
+<span class="normal">2427</span>
+<span class="normal">2428</span>
+<span class="normal">2429</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">target_depletion_subanalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">yac</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Uses the yield accumulator (list of times of yield events) to</span>
 <span class="sd">    find metrics for target depletion</span>
@@ -12976,9 +12999,7 @@ counting by stars (visits) not counting by planets (yield).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2430</span>
-<span class="normal">2431</span>
-<span class="normal">2432</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2432</span>
 <span class="normal">2433</span>
 <span class="normal">2434</span>
 <span class="normal">2435</span>
@@ -13025,7 +13046,9 @@ counting by stars (visits) not counting by planets (yield).</p>
 <span class="normal">2476</span>
 <span class="normal">2477</span>
 <span class="normal">2478</span>
-<span class="normal">2479</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">visit_time_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2479</span>
+<span class="normal">2480</span>
+<span class="normal">2481</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">visit_time_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extracts visits-vs-time information from a DRM structure, for a SINGLE Exosims run.</span>
 
 <span class="sd">    Method handles mission-time-related detection/characterization information,</span>
@@ -13099,9 +13122,7 @@ Although the intent is to extract only yield information, some time info is foun
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1846</span>
-<span class="normal">1847</span>
-<span class="normal">1848</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1848</span>
 <span class="normal">1849</span>
 <span class="normal">1850</span>
 <span class="normal">1851</span>
@@ -13482,7 +13503,9 @@ Although the intent is to extract only yield information, some time info is foun
 <span class="normal">2226</span>
 <span class="normal">2227</span>
 <span class="normal">2228</span>
-<span class="normal">2229</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">yield_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2229</span>
+<span class="normal">2230</span>
+<span class="normal">2231</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">yield_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extracts yield information from a DRM structure, for a SINGLE Exosims run.</span>
 <span class="sd">    Uses the associated star-planet config (&quot;spc&quot;) to classify into radius/luminosity bins</span>
 <span class="sd">    Although the intent is to extract only yield information, some time info is found too.&#39;&#39;&#39;</span>
@@ -13891,9 +13914,7 @@ while yield_analysis() handles non-time information.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2231</span>
-<span class="normal">2232</span>
-<span class="normal">2233</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2233</span>
 <span class="normal">2234</span>
 <span class="normal">2235</span>
 <span class="normal">2236</span>
@@ -14029,7 +14050,9 @@ while yield_analysis() handles non-time information.</p>
 <span class="normal">2366</span>
 <span class="normal">2367</span>
 <span class="normal">2368</span>
-<span class="normal">2369</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">yield_time_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">2369</span>
+<span class="normal">2370</span>
+<span class="normal">2371</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">yield_time_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extracts yield-vs-time information from a DRM structure, for a SINGLE Exosims run.</span>
 
 <span class="sd">    Uses the associated star-planet config (&quot;spc&quot;) to identify exo-Earths.</span>
@@ -14212,9 +14235,7 @@ number of jobs to 1.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/reduce_drms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">343</span>
 <span class="normal">344</span>
 <span class="normal">345</span>
 <span class="normal">346</span>
@@ -14233,7 +14254,9 @@ number of jobs to 1.</p>
 <span class="normal">359</span>
 <span class="normal">360</span>
 <span class="normal">361</span>
-<span class="normal">362</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WorkerMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WorkerMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Abstracts the multiprocessing worker-pool; switches to no workers if jobs &lt;= 1.</span>
 
 <span class="sd">    This allows you to go back to ordinary single-job processing by setting the </span>
@@ -14309,9 +14332,7 @@ bins defined at runtime in yield_analysis().</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/reduce_drms.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">366</span>
 <span class="normal">367</span>
 <span class="normal">368</span>
 <span class="normal">369</span>
@@ -14330,7 +14351,9 @@ bins defined at runtime in yield_analysis().</p>
 <span class="normal">382</span>
 <span class="normal">383</span>
 <span class="normal">384</span>
-<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">YieldAccumulator</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">YieldAccumulator</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Custom accumulator with initial empty-list except for special cases.</span>
 
 <span class="sd">    This accumulator allows us to accumulate various quantities into</span>
@@ -14393,12 +14416,12 @@ bins defined at runtime in yield_analysis().</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">187</span>
 <span class="normal">188</span>
 <span class="normal">189</span>
-<span class="normal">190</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">UPDATE_GLOBALS</span><span class="p">(</span><span class="n">sim_info</span><span class="p">):</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">UPDATE_GLOBALS</span><span class="p">(</span><span class="n">sim_info</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Update selected global variables upon initialization.&#39;&#39;&#39;</span>
     <span class="k">global</span> <span class="n">DETECTION_TIME_BINS</span>
     <span class="n">missionLife</span> <span class="o">=</span> <span class="n">sim_info</span><span class="p">[</span><span class="s1">&#39;missionLife&#39;</span><span class="p">]</span>
@@ -14431,9 +14454,7 @@ they unpack recursively into types for which encoding is known.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">273</span>
 <span class="normal">274</span>
 <span class="normal">275</span>
 <span class="normal">276</span>
@@ -14480,7 +14501,9 @@ they unpack recursively into types for which encoding is known.</p>
 <span class="normal">317</span>
 <span class="normal">318</span>
 <span class="normal">319</span>
-<span class="normal">320</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">array_encoder</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">array_encoder</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Encodes numpy arrays, astropy Times, and astropy Quantities, into JSON.</span>
 
 <span class="sd">    Called from json.dump for types that it does not already know how to represent,</span>
@@ -14552,15 +14575,15 @@ they unpack recursively into types for which encoding is known.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
 <span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
-<span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_within_band</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">band</span><span class="p">):</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_within_band</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">band</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Does a particular characterization fall within the given notional band?&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">band</span> <span class="o">==</span> <span class="s1">&#39;union&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -14592,9 +14615,7 @@ they unpack recursively into types for which encoding is known.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">249</span>
 <span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
@@ -14613,7 +14634,9 @@ they unpack recursively into types for which encoding is known.</p>
 <span class="normal">265</span>
 <span class="normal">266</span>
 <span class="normal">267</span>
-<span class="normal">268</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_status</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_status</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Utility function, gets char status from a drm observation.</span>
 
 <span class="sd">    Not yet used.&#39;&#39;&#39;</span>
@@ -14661,9 +14684,7 @@ added up since they occur serially.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">235</span>
 <span class="normal">236</span>
 <span class="normal">237</span>
 <span class="normal">238</span>
@@ -14673,7 +14694,9 @@ added up since they occur serially.</p>
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
-<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_time</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_time</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Utility function, gets char time from a drm observation.</span>
 
 <span class="sd">    The tricky issue here is that some characterizations (with starshade)</span>
@@ -14709,11 +14732,11 @@ added up since they occur serially.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">229</span>
 <span class="normal">230</span>
-<span class="normal">231</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">has_char_info</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">has_char_info</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Utility function, does the observation have characterization info?</span>
 
 <span class="sd">    See get_char_time for more on the need for this.&#39;&#39;&#39;</span>
@@ -14743,9 +14766,7 @@ None is returned if the script could not be loaded.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3431</span>
-<span class="normal">3432</span>
-<span class="normal">3433</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3433</span>
 <span class="normal">3434</span>
 <span class="normal">3435</span>
 <span class="normal">3436</span>
@@ -14812,7 +14833,9 @@ None is returned if the script could not be loaded.</p>
 <span class="normal">3497</span>
 <span class="normal">3498</span>
 <span class="normal">3499</span>
-<span class="normal">3500</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_exosims_sim</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="normal">3500</span>
+<span class="normal">3501</span>
+<span class="normal">3502</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_exosims_sim</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract fields from an Exosims sim corresponding to the DRMs being reduced.</span>
 
 <span class="sd">    We return a &quot;god object&quot; with only the fields we need present.</span>
@@ -14909,9 +14932,7 @@ Python3 pickles, these objects are already strings, and there is no decoding.</p
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
 <span class="normal">204</span>
@@ -14921,7 +14942,9 @@ Python3 pickles, these objects are already strings, and there is no decoding.</p
 <span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">np_force_string</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">np_force_string</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Convert np bytes_ array to a string array, if possible.</span>
 
 <span class="sd">    Context: When Python3 reads a Python2 pickle with numpy strings, they will be</span>
@@ -14960,9 +14983,7 @@ preference to the script, so that the defaults will be explicit.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3406</span>
-<span class="normal">3407</span>
-<span class="normal">3408</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3408</span>
 <span class="normal">3409</span>
 <span class="normal">3410</span>
 <span class="normal">3411</span>
@@ -14982,7 +15003,9 @@ preference to the script, so that the defaults will be explicit.</p>
 <span class="normal">3425</span>
 <span class="normal">3426</span>
 <span class="normal">3427</span>
-<span class="normal">3428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obtain_outspec</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">announce</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="normal">3428</span>
+<span class="normal">3429</span>
+<span class="normal">3430</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obtain_outspec</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">announce</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Identify a good &quot;specs&quot; (script) file using Sandbox structure</span>
 
 <span class="sd">    If the script takes Exosims defaults, it will not contain explicit</span>
@@ -15029,9 +15052,7 @@ by a separate process that is created by the multiprocessing module.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2530</span>
-<span class="normal">2531</span>
-<span class="normal">2532</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2532</span>
 <span class="normal">2533</span>
 <span class="normal">2534</span>
 <span class="normal">2535</span>
@@ -15042,7 +15063,9 @@ by a separate process that is created by the multiprocessing module.</p>
 <span class="normal">2540</span>
 <span class="normal">2541</span>
 <span class="normal">2542</span>
-<span class="normal">2543</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">outer_load_and_reduce</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">2543</span>
+<span class="normal">2544</span>
+<span class="normal">2545</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">outer_load_and_reduce</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load a sim and summarize it into a dict.</span>
 
 <span class="sd">    This must be present at the outer scope of the file so it can be loaded</span>
@@ -15078,9 +15101,9 @@ by a separate process that is created by the multiprocessing module.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/reduce_drms.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">round_sigfig</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="n">LIST_TABLE_SIGFIGS</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">round_sigfig</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="n">LIST_TABLE_SIGFIGS</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Round x to the given number of significant figures.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.*g</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">digits</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>

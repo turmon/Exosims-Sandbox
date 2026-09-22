@@ -982,23 +982,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Conventions:">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -1030,30 +1013,28 @@
 It mainly handles annoying filename transformations, so you only need to
 supply the ensemble root directory.</p>
 <h2 id="usage">Usage:</h2>
-<p><code>ens-path-summary.sh [-a] [-D] DRMS</code></p>
+<pre><code>  ens-path-summary.sh [-a] [-D] DRMS
+</code></pre>
 <p>to summarize the paths in the given directory DRMS.  Note, the star-planet config
 file (SPC) corresponding to a DRM is also needed, as is the JSON script.
-These filenames are generated from the DRM filename, see "Note" below.</p>
+These filenames are generated from the DRM filename, see "Conventions" below.</p>
 <h3 id="options">Options:</h3>
 <ul>
 <li><code>-a</code> signals to omit the animation of the 3d path summary.</li>
 <li><code>-D</code> signals to run python with the debugger on</li>
 </ul>
 <h3 id="conventions">Conventions:</h3>
-<p>The SPC file will be deduced from the DRM filename(s) by <code>ens-path-graphics</code>.
-  The script file (<code>.json</code>) is deduced from the DRM filename (directory component).
-  The image output name is generated from the DRM.
-  For example,</p>
+<ul>
+<li>The SPC file will be deduced from the DRM filename(s) by <code>ens-path-graphics</code>.</li>
+<li>The script file (<code>.json</code>) is deduced from the DRM filename (directory component).</li>
+<li>The image output name is generated from the DRM.</li>
+</ul>
+<p>For example,</p>
 <pre><code class="language-shell">      drms  = sims/HabEx_4m_TS_dmag26p0_20180206/drm
       spc   = sims/HabEx_4m_TS_dmag26p0_20180206/spc/???.spc (one will be selected)
       json  = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
       movie = sims/HabEx_4m_TS_dmag26p0_20180206/path-ens/*.* (output)
 </code></pre>
-<p>turmon feb 2018</p>
-<h4 id="_1"></h4>
-<ul>
-<li></li>
-</ul>
 
 
 

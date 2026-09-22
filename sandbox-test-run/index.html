@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -984,44 +960,43 @@
 <p>Usage:</p>
 <pre><code>  sandbox-test-run.sh [ -L ] [ -R ] SCRIPT
 </code></pre>
-<p>where SCRIPT is a script name (e.g., Scripts/HabEx-foobar.json).</p>
+<p>where SCRIPT is a script name (e.g., <code>Scripts/HabEx-foobar.json</code>).</p>
 <p>By default, the SCRIPT is copied to a temporary file (in the above
-example, Scripts/HabEx-foobar-testrun.json) before running tests,
-so that the test runs land in sims/HabEx-foobar-testrun/... rather than a
+example, <code>Scripts/HabEx-foobar-testrun.json</code>) before running tests,
+so that the test runs land in <code>sims/HabEx-foobar-testrun/...</code> rather than a
 possibly-useful existing directory.</p>
 <p>This means that SCRIPT can be an existing script name, and a test run
-will not pollute the corresponding sims/... files.</p>
+will not pollute the corresponding <code>sims/...</code> files.</p>
 <p>Options are:</p>
 <pre><code>  -L: use the SCRIPT literally. This does *not* use the copied script-file
-      scheme above, so the new sims and plots (if they succeed) 
+      scheme above, so the new sims and plots (if they succeed)
       will land in sims/SCRIPT/... among whatever might be already there.
   -R: remove the simulation directory corresponding to the given SCRIPT, before
       the test run, so the run is clean (except for EXOSIMS file caches).
       This code prompts for confirmation of -R.
 </code></pre>
-<p>Note that using -R and -L <em>together</em> will delete the possibly-existing sims/SCRIPT
-directory, and all its contents.</p>
+<p>Note that using <code>-R</code> and <code>-L</code> <em>together</em> will delete the possibly-existing
+<code>sims/SCRIPT</code> directory, and all its contents.</p>
 <p>Description:</p>
 <p>The test sequence exercises several sandbox functions within the processing
-pipeline. This is approximately:
-  - single test run  (add-sims.sh ... =777)
-  - ensemble of runs (add-sims.sh ... 100)
-and then various invocations of "make":
-  - reduce data (make reduce)
-  - basic plots (make html)
-  - movies and final frames
-  - webpage update (make html-only)
-  - other ancillary graphics [<em>]
-  - final webpage update (make html-only)
-The intent is to shake out any errors in the infrastructure by exercising most
-of the mainline functions, all at once. Note that the ancillary graphics [</em>] above
-can be fragile for some scripts, and they need a 3-year mission.</p>
-<p>See also: python-version-check.py </p>
-<p>turmon dec 2021</p>
-<h4 id="_1"></h4>
+pipeline. This is approximately:</p>
 <ul>
-<li></li>
+<li>single test run  (<code>add-sims.sh ... =777</code>)</li>
+<li>ensemble of runs (<code>add-sims.sh ... 100</code>)</li>
 </ul>
+<p>and then various invocations of <code>make</code>:</p>
+<ul>
+<li>reduce data (<code>make reduce</code>)</li>
+<li>basic plots (<code>make html</code>)</li>
+<li>movies and final frames</li>
+<li>webpage update (<code>make html-only</code>)</li>
+<li>other ancillary graphics [*]</li>
+<li>final webpage update (<code>make html-only</code>)</li>
+</ul>
+<p>The intent is to shake out any errors in the infrastructure by exercising most
+of the mainline functions, all at once. Note that the ancillary graphics [*] above
+can be fragile for some scripts, and they need a 3-year mission.</p>
+<p>See also: <code>python_version_check.py</code></p>
 
 
 

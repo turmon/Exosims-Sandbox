@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#drm-attributes" class="md-skip">
+        <a href="#usage" class="md-skip">
           Skip to content
         </a>
       
@@ -951,10 +951,76 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attribute-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attribute naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudo-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudo-attributes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#match-only-a-subset-of-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match only a subset of observations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#external-file-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External file option
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#less-useful-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Less-useful options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#drm-attributes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DRM ATTRIBUTES
+        DRM attributes
       
     </span>
   </a>
@@ -965,7 +1031,7 @@
   <a href="#star-planet-attributes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        STAR-PLANET ATTRIBUTES
+        Star-planet attributes
       
     </span>
   </a>
@@ -976,7 +1042,7 @@
   <a href="#external-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        EXTERNAL FILE
+        External file
       
     </span>
   </a>
@@ -984,10 +1050,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#typical-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        USAGE
+        Typical usage
       
     </span>
   </a>
@@ -1014,43 +1080,54 @@
   <h1>drm_tabulate</h1>
 
 <p>drm_tabulate.py: extract named fields from a pile of DRMs</p>
-<p>usage:
-  <code>drm_tabulate.py [-1sn] [--json|--pandas] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...</code></p>
+<h2 id="usage">Usage</h2>
+<pre><code>  drm_tabulate.py [-1sn] [--json|--pandas] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...
+</code></pre>
 <p>Args:
   DRM (file): a list of DRM pickles</p>
-<p>Attributes of an observation "obs" in the DRM are printed by 
+<p>Attributes of an observation "obs" in the DRM are printed by
 naming them in one of the following ways.</p>
 <p>If any DRM argument is a directory, we descend from there recursively
-into scripts, .exp, or .fam directories to find pickles (drm/*.pkl).</p>
-<p>Attribute naming:
-  + <code>-a ATTR</code>: output <code>obs[ATTR]</code> (repeat -a OK, see below)
-  + <code>-S ATTR</code>: output the SPC attribute ATTR for <code>obs[star_ind]</code>
-  + <code>-P ATTR</code>: output the SPC attributes ATTR for <code>obs[plan_inds[:]]</code>
-  + <code>-p ATTR</code>: output the list of SPC attributes ATTR for <code>obs[plan_inds]</code>
-  + <code>-e CODE</code>: compute a value by [e]valuating the Python CODE expression</p>
-<p>Pseudo-attributes:
-  + <code>-s</code>: output the DRM seed number (<code>__seed__</code>, boolean)
-  + <code>-n</code>: output the DRM observation number (<code>__obs_num__</code>, boolean)
-  + <code>--plan_num</code>: output the planet number (<code>__plan_num__</code>, boolean)
-  + <code>-N</code>, <code>--name</code>: output the scenario name (<code>__scenario__</code>, boolean)
-  + <code>-B</code>, <code>--basename</code>: last directory in scenario (<code>__basename__</code>, boolean)
-  + <code>-1</code>: supply the CSV header on line 1 (<code>__header__</code>, boolean)</p>
-<p>Match only a subset of observations:
-  + <code>-m ATTR</code>: produce output only if ATTR is a keyword in obs
-  + <code>-M ATTR</code>: produce output if ATTR is NOT a keyword in obs</p>
-<p>External file:
-  + -f FILE: take ATTRs from FILE <em>instead of</em> <code>-a/-S/-P/-p</code> options (see below)</p>
-<p>Less-useful options:
-  + <code>-A</code>: list available DRM and SPC attributes and values on stderr, as a reference.
-      It honors match (<code>-m</code>), and inverse match (<code>-M</code>); supply <code>-S ""</code> to get SPC attributes.
-  + <code>--json</code>: output is JSON, rather than standard CSV
-  + <code>--pandas</code>: output is to a pandas pickle, rather than standard CSV
-  + <code>--format</code>: supply a printf-style format string (e.g., %.3g) for CSV floats
-  + <code>--empty</code>: output a record when planet attributes selected, even if no planets present
-  + <code>-v</code>: increase verbosity (output is to stderr)
-  + <code>-j N</code>: use N parallel workers (default = ~2/3 of cores)
-        If N = 0 or 1, no parallelism: needed for debugging.</p>
-<h2 id="drm-attributes">DRM ATTRIBUTES</h2>
+into scripts, <code>.exp</code>, or <code>.fam</code> directories to find pickles (<code>drm/*.pkl</code>).</p>
+<h2 id="attribute-naming">Attribute naming</h2>
+<ul>
+<li><code>-a ATTR</code>: output <code>obs[ATTR]</code> (repeat <code>-a</code> OK, see below)</li>
+<li><code>-S ATTR</code>: output the SPC attribute ATTR for <code>obs[star_ind]</code></li>
+<li><code>-P ATTR</code>: output the SPC attributes ATTR for <code>obs[plan_inds[:]]</code></li>
+<li><code>-p ATTR</code>: output the list of SPC attributes ATTR for <code>obs[plan_inds]</code></li>
+<li><code>-e CODE</code>: compute a value by [e]valuating the Python CODE expression</li>
+</ul>
+<h2 id="pseudo-attributes">Pseudo-attributes</h2>
+<ul>
+<li><code>-s</code>: output the DRM seed number (<code>__seed__</code>, boolean)</li>
+<li><code>-n</code>: output the DRM observation number (<code>__obs_num__</code>, boolean)</li>
+<li><code>--plan_num</code>: output the planet number (<code>__plan_num__</code>, boolean)</li>
+<li><code>-N</code>, <code>--name</code>: output the scenario name (<code>__scenario__</code>, boolean)</li>
+<li><code>-B</code>, <code>--basename</code>: last directory in scenario (<code>__basename__</code>, boolean)</li>
+<li><code>-1</code>: supply the CSV header on line 1 (<code>__header__</code>, boolean)</li>
+</ul>
+<h2 id="match-only-a-subset-of-observations">Match only a subset of observations</h2>
+<ul>
+<li><code>-m ATTR</code>: produce output only if ATTR is a keyword in obs</li>
+<li><code>-M ATTR</code>: produce output if ATTR is NOT a keyword in obs</li>
+</ul>
+<h2 id="external-file-option">External file option</h2>
+<ul>
+<li><code>-f FILE</code>: take ATTRs from FILE <em>instead of</em> <code>-a/-S/-P/-p</code> options (see below)</li>
+</ul>
+<h2 id="less-useful-options">Less-useful options</h2>
+<ul>
+<li><code>-A</code>: list available DRM and SPC attributes and values on stderr, as a reference.
+    It honors match (<code>-m</code>), and inverse match (<code>-M</code>); supply <code>-S ""</code> to get SPC attributes.</li>
+<li><code>--json</code>: output is JSON, rather than standard CSV</li>
+<li><code>--pandas</code>: output is to a pandas pickle, rather than standard CSV</li>
+<li><code>--format</code>: supply a printf-style format string (e.g., %.3g) for CSV floats</li>
+<li><code>--empty</code>: output a record when planet attributes selected, even if no planets present</li>
+<li><code>-v</code>: increase verbosity (output is to stderr)</li>
+<li><code>-j N</code>: use N parallel workers (default = ~2/3 of cores).
+    If N = 0 or 1, no parallelism: needed for debugging.</li>
+</ul>
+<h2 id="drm-attributes">DRM attributes</h2>
 <p>The main degree of freedom is attribute specification -- which is done
 using either of two notations. Below, suppose "obs" is one entry in the DRM.</p>
 <ul>
@@ -1059,86 +1136,83 @@ using either of two notations. Below, suppose "obs" is one entry in the DRM.</p>
 <ol>
 <li>Get a field in obs by giving: <code>-a arrival_time</code></li>
 <li>Drill into nested attributes with <code>.</code>. For example
-      <code>obs['char_mode']['lam']</code>
-    is extracted with:
-      <code>-a char_mode.lam</code>
-    For lists, give the index number; <code>obs['plan_inds'][0]</code> is
-      <code>-a plan_inds.0</code>
-    The last phase angle, <code>obs['char_params'][-1]</code>, is:
-      <code>-a char_params.phi.-1</code></li>
+   <code>obs['char_mode']['lam']</code> is extracted with <code>-a char_mode.lam</code>.
+   For lists, give the index number; <code>obs['plan_inds'][0]</code> is
+   <code>-a plan_inds.0</code>.
+   The last phase angle, <code>obs['char_params'][-1]</code>, is
+   <code>-a char_params.phi.-1</code>.</li>
 <li>Supply a comma-separated list of such DRM fields at once with
-      <code>-a arrival_time,slew_time,scMass</code></li>
+   <code>-a arrival_time,slew_time,scMass</code></li>
 </ol>
 </li>
 <li>
 <p><code>-e</code> =&gt; Evaluated expressions</p>
 <ol>
-<li>A Python expression can be given, which is evaluated in the context 
-    of variables named for each field in "obs". To output a count of 
-    detections using the <code>obs['det_status']</code> list, use:
-      <code>-e "np.sum(det_status == 1)"</code></li>
+<li>A Python expression can be given, which is evaluated in the context
+   of variables named for each field in "obs". To output a count of
+   detections using the <code>obs['det_status']</code> list, use:
+   <code>-e "np.sum(det_status == 1)"</code></li>
 <li>No comma-separated lists are allowed, due to ambiguity.</li>
 <li>The full SPC is available, if desired, using <code>spc[...]</code>, so
-   <code>-e "spc['Spec'][star_ind]"</code>  &lt;==&gt; <code>-S Spec</code>
+   <code>-e "spc['Spec'][star_ind]"</code> &lt;==&gt; <code>-S Spec</code>.
    See below for more on <code>-S</code>.</li>
 <li>"Boxing" the result of <code>-e</code> allows the value to be scalar-expanded
    across multiple planets (cf. <code>-P</code> below). For star name:
-   <code>-e "[spc['Name'][star_ind]]"</code>  &lt;==&gt; <code>-S Name</code></li>
+   <code>-e "[spc['Name'][star_ind]]"</code> &lt;==&gt; <code>-S Name</code></li>
 </ol>
 </li>
 </ul>
-<p>For either <code>-a</code> or <code>-e</code>, the resulting column can be custom-named with 
+<p>For either <code>-a</code> or <code>-e</code>, the resulting column can be custom-named with
 a <code>label:attr</code> construct, such as</p>
-<pre><code class="language-shell">          -a &quot;lambda:char_mode.lam&quot;
-          -e &quot;det_count:np.sum(det_status == 1)&quot;
+<pre><code class="language-shell">  -a &quot;lambda:char_mode.lam&quot;
+  -e &quot;det_count:np.sum(det_status == 1)&quot;
 </code></pre>
 <p>otherwise a basic generated name is used.
 (But: Attributes in comma-separated expressions cannot be custom-named.)</p>
-<h2 id="star-planet-attributes">STAR-PLANET ATTRIBUTES</h2>
+<h2 id="star-planet-attributes">Star-planet attributes</h2>
 <ul>
 <li>
 <p><code>-S</code> =&gt; shortcut for Star attributes.</p>
 <p><code>-S ATTR</code> means: look up the named ATTR for <code>obs['star_ind']</code> in
-the corresponding SPC file, e.g.
-  <code>-S Spec</code> =&gt; <code>spc['Spec'][obs['star_ind']]</code>
+the corresponding SPC file, e.g. <code>-S Spec</code> =&gt; <code>spc['Spec'][obs['star_ind']]</code>,
 which will output the spectral class of <code>obs['star_ind']</code></p>
 </li>
 <li>
 <p><code>-P</code> =&gt; shortcut for Planet attributes.</p>
-<p><code>-P ATTR</code> means to look up the named ATTR for each planet in 
-<code>obs['plan_inds']</code> in the SPC file, e.g.
-  <code>-P Mp</code> =&gt; <code>spc['Mp'][obs['plan_inds']]</code>.</p>
-<p>Note that <code>obs['plan_inds']</code> is in general a vector. 
+<p><code>-P ATTR</code> means to look up the named ATTR for each planet in
+<code>obs['plan_inds']</code> in the SPC file, e.g. <code>-P Mp</code> =&gt; <code>spc['Mp'][obs['plan_inds']]</code>.</p>
+<p>Note that <code>obs['plan_inds']</code> is in general a vector.
 So, if you give <code>-P</code>, this program "scalar-expands" the vector
-to write one row of output <em>for each plan_ind in plan_inds</em>. 
+to write one row of output <em>for each plan_ind in plan_inds</em>.
 This facilitates row-by-row processing.</p>
-<p>Note that if <code>plan_inds = []</code>, no record will be written. 
+<p>Note that if <code>plan_inds = []</code>, no record will be written.
 To write a record in the zero-planet case anyway, specify <code>--empty</code>.</p>
 </li>
 <li>
 <p><code>-p</code> =&gt; shortcut for alternate Planet attributes.</p>
 <p>This is the same lookup as <code>-P</code>, but the vector is output to
-that <em>one</em> column in the row. This would be more useful for 
-the JSON output; the CSV format looks like:
-   <code>"[0.282, 1.044]"</code>
+that <em>one</em> column in the row. This would be more useful for
+the JSON output; the CSV format looks like <code>"[0.282, 1.044]"</code>,
 which would not look like a number to downstream consumers.</p>
 </li>
 </ul>
 <p>For all of the above, an optional column-name can be given just as
 for <code>-a</code> and <code>-e</code>. If not given, the attribute name, or a generated
 string, will be used.</p>
-<p>The SPC file is loaded using the filename convention that 
-  <code>.../drm/NAME.pkl</code> goes with <code>.../spc/NAME.spc</code>
-If no <code>-S/-P/-p</code> is given, the SPC is not loaded, to allow use of 
+<p>The SPC file is loaded using the filename convention that
+<code>.../drm/NAME.pkl</code> goes with <code>.../spc/NAME.spc</code>.
+If no <code>-S/-P/-p</code> is given, the SPC is not loaded, to allow use of
 this program when only the DRM is present. If the SPC file is needed
-to support <code>spc[...]</code> within <code>-e</code> constructs above, load of the SPC 
+to support <code>spc[...]</code> within <code>-e</code> constructs above, load of the SPC
 can be forced by giving <code>--load_spc</code> (or if using External File,
 <code>"load_spc": true</code>).</p>
 <p>All attributes in the SPC file are available. In addition, the following
-attributes are derived from the SPC and made available:
-   _earthlike: is the planet Earthlike (Radius, SMA), via -P _earthlike</p>
-<h2 id="external-file">EXTERNAL FILE</h2>
-<p>These expressions can become complex, so the "-a ATTR" and all above
+attributes are derived from the SPC and made available:</p>
+<ul>
+<li><code>_earthlike</code>: is the planet Earthlike (Radius, SMA), via <code>-P _earthlike</code></li>
+</ul>
+<h2 id="external-file">External file</h2>
+<p>These expressions can become complex, so the <code>-a ATTR</code> and all above
 constructs can be placed in a JSON file and specified with <code>-f FILE</code>:</p>
 <pre><code class="language-json"># drm_tabulate parameters: count chars
 {
@@ -1159,24 +1233,23 @@ can be extracted with <code>d['attr']</code>, so there is no conflict between qu
 The column name (e.g., <code>char_count</code> above) is used as the column name for the CSV.
 Above, <code>__match__</code> abbreviates the <code>-m</code> construct, so the JSON file can be
 self-contained. The full list is:</p>
-<pre><code>   &quot;__eval__&quot;    -&gt; -e 
+<pre><code>   &quot;__eval__&quot;    -&gt; -e
    &quot;__star__&quot;    -&gt; -S
    &quot;__planet__&quot;  -&gt; -P  (one row per planet)
    &quot;__planets__&quot; -&gt; -p  (list placed in one field)
    &quot;__match_inv__&quot;  -M  (inverse match)
 </code></pre>
-<p>Other program flags (like <code>-s</code>) can be given by Booleans in the 
+<p>Other program flags (like <code>-s</code>) can be given by Booleans in the
 JSON file as well. See the top of this usage note for the <code>__attribute_name__</code>
 controlling each flag.</p>
-<p>As on the command line, the SPC file is loaded if <code>__star__</code>, <code>__planet__</code>, 
-or <code>__planets__</code>is present. To force the load if an <code>__eval__</code> construct needs
+<p>As on the command line, the SPC file is loaded if <code>__star__</code>, <code>__planet__</code>,
+or <code>__planets__</code> is present. To force the load if an <code>__eval__</code> construct needs
 the SPC file, use <code>--load_spc</code>, or the Boolean directive <code>"__load_spc__": true</code>
 within the JSON.</p>
 <p>Discarding #-starting lines permits use of the shell's "shebang" convention.
 You can capture a complex argument structure in a file and re-use it in other
-circumstances. See: util/drm-tab-demo.json5 for an example.</p>
-<h2 id="usage">USAGE</h2>
-<p>Typical usage:</p>
+circumstances. See <code>util/drm-tab-demo.json5</code> for an example.</p>
+<h2 id="typical-usage">Typical usage</h2>
 <pre><code class="language-shell">  # each arrival_time for one pickle
   util/drm_tabulate.py -a arrival_time sims/HabEx_4m_dmag26/drm/777.pkl
 

@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -982,27 +958,25 @@
 
 <p>tar-log.sh: archive log files for scenario(s)</p>
 <p>Make an archive of log files to save inodes on gattaca.</p>
-<p>Usage:
-  <code>tar-log.sh [-v] [-r] SCENARIO</code></p>
-<p>(1) If SCENARIO is an ensemble directory, then typically SCENARIO/drm, 
-etc., exist within it.  The log directory
-  SCENARIO/log
-is compiled into a tarfile indexed with the current date, and the
-<em>log directory is removed</em>.
-(2) If SCENARIO is a .fam/exp directory, then the log directory:
-   SCENARIO/Batch/log
-is compiled into a tarfile as above, and the <em>log directory is removed</em>.
-Also, in this case, if -r is given, then we descend into the child
-directories (.fam/.exp/ensemble), and compress their log directories also.</p>
-<p>Give -v to increase verbosity.</p>
+<p>Usage:</p>
+<pre><code>  tar-log.sh [-v] [-r] SCENARIO
+</code></pre>
+<ol>
+<li>If SCENARIO is an ensemble directory, then typically <code>SCENARIO/drm</code>,
+   etc., exist within it.  The log directory <code>SCENARIO/log</code>
+   is compiled into a tarfile indexed with the current date, and the
+   <em>log directory is removed</em>.</li>
+<li>If SCENARIO is a <code>.fam</code>/<code>.exp</code> directory, then the log directory
+   <code>SCENARIO/Batch/log</code> is compiled into a tarfile as above, and the
+   <em>log directory is removed</em>.
+   Also, in this case, if <code>-r</code> is given, then we descend into the child
+   directories (<code>.fam</code>/<code>.exp</code>/ensemble), and compress their log directories
+   also.</li>
+</ol>
+<p>Give <code>-v</code> to increase verbosity.</p>
 <p>Simplest usage:</p>
 <pre><code>  $ util/tar-log.sh sims/Example.fam/coroOnlyScenario
 </code></pre>
-<p>turmon 2025-oct</p>
-<h4 id="_1"></h4>
-<ul>
-<li></li>
-</ul>
 
 
 

@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,91 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nested-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested Experiments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical use cases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,21 +1047,23 @@
   <h1>reduce_drm_sets</h1>
 
 <p>reduce_drm_sets.py: reduce a list of simulation-ensembles to summary CSV files</p>
-<p>usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  reduce_drm_sets.py [ -E ] [ -O outfile ] [ -j N ] [ -i indexfile] ENS [...]
 </code></pre>
-<p>where:
-  ENS ... is a list of simulation <em>directories</em> ("ensembles"),
-and:</p>
-<pre><code>  -O outfile gives a template (containing exactly two occurrences of %s) for
-     file outputs.  This is optional - output will go to the ENS parent
-     directory, according to Sandbox conventions, if not given.
-     So, -O is normally not needed, but is good for debugging.
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>ENS ...</code> is a list of simulation <em>directories</em> ("ensembles")</li>
+</ul>
+<h2 id="options">Options</h2>
+<pre><code>  -O outfile gives a template (containing exactly two occurrences of &quot;%s&quot;) for
+     file outputs.  This is optional, and output will go to the ENS parent
+     directory (according to Sandbox conventions) if not given.
+     So, -O is normally not needed, but is helpful for debugging.
   -j N means to use N parallel workers to read files (default 1).
      Parallelism is vestigial; it slows processing on current hosts.
      If N = 0 or 1, no parallel workers are used: fastest for our
      small workload, and helpful for debugging.
-  -i indexfile names a JSON index file (by convention, s_index.json) that 
+  -i indexfile names a JSON index file (by convention, s_index.json) that
      associates experiment names with parameter values for that experiment.
      This allows output of summary information that is labeled with the
      corresponding parameter values.
@@ -984,17 +1076,18 @@ and:</p>
      in this case, ENS is itself the parent directory.
      NOTE: Typically -E is used.
 </code></pre>
+<h2 id="output-files">Output files</h2>
 <p>This program rolls up the summary information already recorded (for each ENS)
-in ENS/reduce_info.csv, and places the cumulative summary in a CSV file following
+in <code>ENS/reduce-info.csv</code>, and places the cumulative summary in a CSV file following
 the given filename template. It also tabulates some yield metrics and places in
 related CSV files. Overall:</p>
 <ul>
-<li>reduce-info.csv: one-line file with overall yield and size information</li>
-<li>reduce-yield.csv: same as below but with no ensemble name information</li>
-<li>reduce-yield-all.json: one JSON object per ENS, with summary information as
-    in <code>reduce-yield-plus.csv</code> (below), as well as some other information such as runtime.</li>
-<li>reduce-yield-plus.csv: one line per ENS, with summary yield information,
-    ENS name, and parameter information (if s_index.json exists). Like so:</li>
+<li><code>reduce-info.csv</code>: one-line file with overall yield and size information</li>
+<li><code>reduce-yield.csv</code>: same as below but with no ensemble name information</li>
+<li><code>reduce-yield-all.json</code>: one JSON object per ENS, with summary information as
+  in <code>reduce-yield-plus.csv</code> (below), as well as some other information such as runtime.</li>
+<li><code>reduce-yield-plus.csv</code>: one line per ENS, with summary yield information,
+  ENS name, and parameter information (if <code>s_index.json</code> exists). Like so:</li>
 </ul>
 <pre><code>  experiment,diam,contrast,tput,iwa,chars_earth_unique,detections_earth_all,detections_earth_unique,ensemble_size
   s_YX_D7.8_iwa44_C6.36e-11_tput0.22,7.8,6.36e-11,0.22,44,7.42,20.41,10.89,100
@@ -1006,45 +1099,56 @@ related CSV files. Overall:</p>
 </code></pre>
 <p>(Note: the "experiment" column should have been labeled "scenario", according to
 our current naming conventions.)</p>
-<p>This program supports nested Experiments. That is, if -E is given, and if the
-parent ENS contains only Experiments (.exp suffixes -- no .fam), an omnibus 
-summary is generated (ENS/reduce-yield-plus.csv) that consolidates all 
-sub-Experiments (ENS/<em>.exp/reduce-yield-plus.csv). This allows "chunking" 
+<h2 id="nested-experiments">Nested Experiments</h2>
+<p>This program supports nested Experiments. That is, if <code>-E</code> is given, and if the
+parent ENS contains only Experiments (<code>.exp</code> suffixes -- no <code>.fam</code>), an omnibus
+summary is generated (<code>ENS/reduce-yield-plus.csv</code>) that consolidates <em>all
+sub-Experiments</em> (<code>ENS/*.exp/reduce-yield-plus.csv</code>). This allows "chunking"
 large Experiments into sub-Experiments, but still generating a single yield
-summary CSV. To support this, all Experiments (ENS and ENS/</em>.exp) must contain
-their own s_index.json (with their portion of the whole). Upstream tooling
+summary CSV. To support this, all Experiments (ENS and <code>ENS/*.exp</code>) must contain
+their own <code>s_index.json</code> (with their portion of the whole). Upstream tooling
 must generate these files.</p>
-<p>The typical use cases are as follows:
-- ENS list contains N basic Ensembles (single scenario yields)
-  The parent ENS should end in .exp (s_index.json expected) or .fam.
-  + reduce-info.csv contains the Ensemble sizing (N, and the sum of DRM 
-    counts within each Ensemble), and maximum yields.
-  + reduce-yield-plus.csv contains N lines, each with average 
-    yields for one Ensemble, and the Ensemble name.
-    If s_index.json exists (parent is an Experiment, and ends in .exp
-    by convention), this file will have extra columns giving all
-    parameters for that Ensemble.
-- ENS list contains N Experiments (all ending in .exp, no .fam).
-  + reduce-info.csv is now summarizing summaries. It contains the number
-    (N) of child Experiments, and the overall number
-    of Ensembles underneath, and maximal yields (which are informative).
-  + reduce-yield-plus.csv will contain yields for <em>all</em> Experiments
-    below (typically many more than just N, the number of Experiments),
-    together with their relevant parameter values.
-- ENS list contains mixed Ensemble collections (Experiments and Families,
-  ending in .exp and .fam), for a total of N collections.
-  + reduce-info.csv is now summarizing summaries, but that's OK. It
-    contains the number (N) of child collections, and the overall number
-    of Ensembles underneath, and maximal yields. In some cases, these
-    maximal yields will be for completely unrelated scenarios, and
-    so not very informative, but in other cases, they will be.
-  + reduce-yield-plus.csv will contain N lines, one for each collection,
-    with the collection name and maximal yield. </p>
+<h2 id="typical-use-cases">Typical use cases</h2>
+<p>The typical use cases are as follows:</p>
+<ul>
+<li>ENS list contains N basic Ensembles (single scenario yields).
+  The parent ENS should end in <code>.exp</code> (<code>s_index.json</code> expected) or <code>.fam</code>.<ul>
+<li><code>reduce-info.csv</code> contains the Ensemble sizing (N, and the sum of DRM
+  counts within each Ensemble), and maximum yields.</li>
+<li><code>reduce-yield-plus.csv</code> contains N lines, each with average
+  yields for one Ensemble, and the Ensemble name.
+  If <code>s_index.json</code> exists (parent is an Experiment, and ends in
+  <code>.exp</code> by convention), this file will have extra columns giving
+  all parameters for that Ensemble.</li>
+</ul>
+</li>
+<li>ENS list contains N Experiments (all ending in <code>.exp</code>, no <code>.fam</code>).<ul>
+<li><code>reduce-info.csv</code> is now summarizing summaries. It contains the number
+  (N) of child Experiments, and the overall number
+  of Ensembles underneath, and maximal yields (which are informative).</li>
+<li><code>reduce-yield-plus.csv</code> will contain yields for <em>all</em> Experiments
+  below (typically many more than just N, the number of Experiments),
+  together with their relevant parameter values.</li>
+</ul>
+</li>
+<li>ENS list contains mixed Ensemble collections (Experiments and Families,
+  ending in <code>.exp</code> and <code>.fam</code>), for a total of N collections.<ul>
+<li><code>reduce-info.csv</code> is now summarizing summaries, but that's OK. It
+  contains the number (N) of child collections, and the overall number
+  of Ensembles underneath, and maximal yields. In some cases, these
+  maximal yields will be for completely unrelated scenarios, and
+  so not very informative, but in other cases, they will be.</li>
+<li><code>reduce-yield-plus.csv</code> will contain N lines, one for each collection,
+  with the collection name and maximal yield.</li>
+</ul>
+</li>
+</ul>
 <p>These cases are in fact all the same. In each case, this code is loading
-ENS/reduce-info.csv for each relevant ENS, and producing a one-line
+<code>ENS/reduce-info.csv</code> for each relevant ENS, and producing a one-line
 "maximal" summary, and a multi-line summary file of all these reduce-info's.</p>
-<p>Typical usage:
-  util/reduce_drm_sets.py -E sims/Yokohama_Extended.fam</p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  util/reduce_drm_sets.py -E sims/Yokohama_Extended.fam
+</code></pre>
 
 
 

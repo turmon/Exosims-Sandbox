@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,69 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simplest-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplest usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes-and-specifics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes and specifics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP server
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -960,50 +1028,53 @@
 <p>The given directory (or directories) within <code>sims/</code>, containing an ensemble of DRMs
 and corresponding graphical outputs, is summarized to HTML.
 Note that arguments should not contain the <code>sims/</code> prefix.</p>
-<p>Usage:
-  <code>html-summary.py [-r] [-i] [SIM ...]</code></p>
-<p>Optionally (using <code>-i</code>), a top-level index.html is updated as a table of contents
+<h2 id="usage">Usage</h2>
+<pre><code>  html-summary.py [-r] [-i] [SIM ...]
+</code></pre>
+<p>Optionally (using <code>-i</code>), a top-level <code>index.html</code> is updated as a table of contents
 for all the simulations. You typically want this.
-Also for <code>-i</code>, any intermediate index.html's between <code>sims/index.html</code> and
+Also for <code>-i</code>, any intermediate <code>index.html</code> files between <code>sims/index.html</code> and
 <code>sims/SIM/index.html</code> will also be made; this is needed when SIM is nested ("families").</p>
-<p>Options are:</p>
+<h2 id="options">Options</h2>
 <ul>
-<li>-i =&gt; generate intermediate index.html's after generating any named SIM indexes.</li>
-<li>-r =&gt; performs recursive descent (otherwise, only named SIMS are indexed)</li>
-<li>-h =&gt; help</li>
+<li><code>-i</code> =&gt; generate intermediate <code>index.html</code> files after generating any named SIM indexes.</li>
+<li><code>-r</code> =&gt; performs recursive descent (otherwise, only named SIMS are indexed)</li>
+<li><code>-h</code> =&gt; help</li>
 </ul>
-<p>Simplest usage:</p>
+<h2 id="simplest-usage">Simplest usage</h2>
 <pre><code> $ html-summary.py -i SIM
 </code></pre>
-<p>where SIM is one of the sim ensemble directories, like HabEx_4m_TSDD.
-  Re-generates the HTML for this ensemble and the top-level index.
-Other usage:</p>
+<p>where SIM is one of the sim ensemble directories, like <code>HabEx_4m_TSDD</code>.
+Re-generates the HTML for this ensemble and the top-level index.</p>
+<p>Other usage:</p>
 <pre><code> $ html-summary.py -i SIM.exp
  $ html-summary.py -r -i SIM.exp
 </code></pre>
-<p>where SIM.exp is a multi-ensemble experiment.  The usage with "-r" summarizes
-  all ensembles under SIM.exp; without "-r", it generates only the top-level summary
-  file, which lists a one-line overview of each ensemble.</p>
+<p>where <code>SIM.exp</code> is a multi-ensemble experiment.  The usage with <code>-r</code> summarizes
+all ensembles under <code>SIM.exp</code>; without <code>-r</code>, it generates only the top-level summary
+file, which lists a one-line overview of each ensemble.</p>
 <pre><code> $ html-summary.py -r
 </code></pre>
-<p>regenerates <em>all</em> indexes for everything in sims/*.</p>
-<p>Notes and Specifics</p>
+<p>regenerates <em>all</em> indexes for everything in <code>sims/*</code>.</p>
+<h2 id="notes-and-specifics">Notes and specifics</h2>
 <ul>
-<li>The output is written to the file:
-    sims/SIM/index.html
+<li>The output is written to the file <code>sims/SIM/index.html</code>.
   This file can be viewed by starting an HTTP server on an unused port, see below.</li>
 <li>The generated HTML file links directly to whatever graphical outputs are present
-  below the sims/SIM/... directory.  Use "make S=SIM html" to make the graphics files
-  and then call this script to make the graphics viewable through the webpage.</li>
+  below the <code>sims/SIM/...</code> directory.  Use <code>make S=SIM html</code> to make the graphics
+  files and then call this script to make the graphics viewable through the webpage.</li>
 </ul>
-<p>HTTP Server: To see the HTML files and the images they point to, an HTTP server
+<h2 id="http-server">HTTP server</h2>
+<p>To see the HTML files and the images they point to, an HTTP server
 must be started to send them to a browser.  We start a server listening on a
-non-standard port, and the browser is directed to that port with a special URL qualifier.
-The server invocation wrapper is html-serve.sh, and it can be invoked by:
-  make html-status   -- to see if there is one already running
-  make html-start    -- to start one if not
-See the Makefile, or util/html-serve.sh, for more.</p>
-<p>For more on usage, use the -h option.
+non-standard port, and the browser is directed to that port with a special URL
+qualifier.  The server invocation wrapper is <code>html-serve.sh</code>, and it can be invoked by:</p>
+<ul>
+<li><code>make html-status</code> -- to see if there is one already running</li>
+<li><code>make html-start</code> -- to start one if not</li>
+</ul>
+<p>See the Makefile, or <code>util/html-serve.sh</code>, for more.</p>
+<p>For more on usage, use the <code>-h</code> option.
 Some options may be described there but not documented here.</p>
 
 

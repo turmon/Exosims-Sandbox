@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -986,21 +962,19 @@ DRMs, and finds means and other scalar indexes for them</p>
 <p>Usage:</p>
 <pre><code>  summarize-int-times.sh [-H] SIM
 </code></pre>
-<p>where SIM is a simulation directory, for example:
-   SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229
-In this case, SIM/drm must contain several DRM's as .pkl files</p>
-<p>Use -H for hybrid DRM's, which store the integration time attribute
+<p>where SIM is a simulation directory, for example:</p>
+<pre><code>  SIM = sims/SPIE_2023_coro.fam/H6C_CO_DulzE_omniNUV_ideal_20231229
+</code></pre>
+<p>In this case, <code>SIM/drm</code> must contain several DRM's as <code>.pkl</code> files</p>
+<p>Use <code>-H</code> for hybrid DRM's, which store the integration time attribute
 differently.</p>
-<p>Context:
- * This assumes the "mlr" CSV utility is in your PATH. It is at:
-     /proj/exep/rhonda/Sandbox/Tools/bin/mlr
-   so you can:
-     export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin
-   or place the above in your .bash_profile</p>
-<p>turmon jan 2024</p>
-<h4 id="_1"></h4>
+<p>Context:</p>
 <ul>
-<li></li>
+<li>This assumes the <code>mlr</code> CSV utility is in your PATH. It is at
+   <code>/proj/exep/rhonda/Sandbox/Tools/bin/mlr</code>.</li>
+<li>To find it, say
+   <code>export PATH=${PATH}:/proj/exep/rhonda/Sandbox/Tools/bin</code>,
+   or place that line in your <code>.bash_profile</code>.</li>
 </ul>
 
 

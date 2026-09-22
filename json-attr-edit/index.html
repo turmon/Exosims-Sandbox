@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,36 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,21 +992,22 @@
   <h1>json-attr-edit</h1>
 
 <p>json-attr-edit.py: edit attributes of a JSON script</p>
-<p>Usage:
-   <code>json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...</code></p>
-<p>where</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  json-attr-edit.py [-f] [-v] [-b BASE] [-a REPL] [-s REPL] [-c DIR] [-o OUTPUT] SCRIPT ...
+</code></pre>
+<h2 id="options">Options</h2>
 <ul>
-<li>-h gives more complete documentation</li>
-<li>-b BASE gives a basket of pre-defined transforms (see -h for all)</li>
-<li>-a REPL replaces of every instance of the attribute named in REPL</li>
-<li>-s REPL replaces a specific (drilled-down) attribute named in REPL</li>
-<li>-c DIR gives a new cache directory</li>
-<li>-o OUTPUT gives an output filename pattern
-            (the script name is plugged into the single %s in OUTPUT)</li>
-<li>-f forces the write of generated files, possibly over-writing existing files</li>
-<li>-v increases verbosity</li>
+<li><code>-h</code> gives more complete documentation</li>
+<li><code>-b BASE</code> gives a basket of pre-defined transforms (see <code>-h</code> for all)</li>
+<li><code>-a REPL</code> replaces of every instance of the attribute named in REPL</li>
+<li><code>-s REPL</code> replaces a specific (drilled-down) attribute named in REPL</li>
+<li><code>-c DIR</code> gives a new cache directory</li>
+<li><code>-o OUTPUT</code> gives an output filename pattern
+    (the script name is plugged into the single %s in OUTPUT)</li>
+<li><code>-f</code> forces the write of generated files, possibly over-writing existing files</li>
+<li><code>-v</code> increases verbosity</li>
 </ul>
-<p>See -h for more.</p>
+<p>See <code>-h</code> for more.</p>
 
 
 

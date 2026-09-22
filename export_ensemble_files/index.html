@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,16 +1003,18 @@
   <h1>export_ensemble_files</h1>
 
 <p>export_ensemble_files.py: export selected files (plots, csv) from an ensemble</p>
-<p>usage:</p>
-<p><code>export-ensemble-files.py [ -p ] [ -o ] SIMDIR</code></p>
-<p>where:</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  export-ensemble-files.py [ -p ] [ -o ] SIMDIR
+</code></pre>
+<h2 id="arguments">Arguments</h2>
 <ul>
 <li><code>SIMDIR</code> is a simulation directory, typically, <code>sims/FOO</code></li>
 <li><code>-o outfile</code> gives an output subdirectory</li>
 <li><code>-p</code> means plain text output versus the default markdown</li>
 </ul>
-<p>Typical usage:
-  <code>util/export-ensemble-files.py sims/HabEx_4m_foo</code></p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  util/export-ensemble-files.py sims/HabEx_4m_foo
+</code></pre>
 
 
 

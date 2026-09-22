@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,36 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,11 +992,13 @@
   <h1>drm-ls</h1>
 
 <p>drm-ls.py: Summarize DRMs to the terminal similar to "ls".</p>
-<p>Usage:
-  <code>drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]</code></p>
-<p>Simplest usage:
-  drm-ls.py</p>
-<p>where:</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]
+</code></pre>
+<p>Simplest usage:</p>
+<pre><code>  drm-ls.py
+</code></pre>
+<h2 id="options">Options</h2>
 <pre><code> -l gives long-format output (extra columns)
  -q gives short, summary output (no per-DRM output)
  -r performs recursive descent (otherwise, named files/dirs are examined)
@@ -971,10 +1008,10 @@
 <p>A file, a list of files, a directory, or list thereof, can be given
 for listing.  By default, DRMs in the current working directory are
 listed.</p>
-<p>DRM files should be named with extensions .pkl, .drm, .gz, or .bz2, and
+<p>DRM files should be named with extensions <code>.pkl</code>, <code>.drm</code>, <code>.gz</code>, or <code>.bz2</code>, and
 should correspond to Python pickles.  Gzip or bzip2 compressed files
-(bearing any extension, even .pkl) will be uncompressed and examined.</p>
-<p>For more on usage, use the -h option.
+(bearing any extension, even <code>.pkl</code>) will be uncompressed and examined.</p>
+<p>For more on usage, use the <code>-h</code> option.
 Some options may be described there but not documented here.</p>
 
 

@@ -961,6 +961,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="keepout_path_graphics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#keepout_path_graphics--typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepout_path_graphics--options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepout_path_graphics--option-for-experts-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option for experts only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1302,43 +1341,44 @@
     <div class="doc doc-contents first">
 
         <p>keepout_path_graphics: Plot targets, planets, and keepout regions, with optional DRM overlay</p>
-<p>For usage, use the -h option.  Some options may be described there but not here.</p>
-<p>Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout regions,
-and, if a DRM is provided (see below), detections, characterizations, and slews.
-Output is to a movie (.mp4), or individual frames (.png).  Also, some cumulative keepout
-summary statistics, and plots, can optionally be generated.</p>
-<p>DRM or observing-tour display:  If pickles summarizing a DRM are supplied (--drm), then the
-observing tour is loaded and the observations are shown. It is assumed that --drm and --spc
-are used together.</p>
-<p>Typical usage:</p>
-<p><code>keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json</code></p>
-<p>where:</p>
+<p>For usage, use the <code>-h</code> option.  Some options may be described there but not here.</p>
+<p>Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout
+regions, and, if a DRM is provided (see below), detections, characterizations, and slews.
+Output is to a movie (<code>.mp4</code>), or individual frames (<code>.png</code>).  Also, some cumulative
+keepout summary statistics, and plots, can optionally be generated.</p>
+<p>DRM or observing-tour display:  If pickles summarizing a DRM are supplied (<code>--drm</code>), then
+the observing tour is loaded and the observations are shown. It is assumed that <code>--drm</code>
+and <code>--spc</code> are used together.</p>
+<h3 id="keepout_path_graphics--typical-usage">Typical usage</h3>
+<pre><code>  keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json
+</code></pre>
+<h3 id="keepout_path_graphics--options">Options</h3>
 <ul>
-<li>-s is the start-time of the movie
-       if zero, the start-time from the script is used.
-       if a float in [0,1], the movie is started that proportion of the way through the mission.
-       if a number &lt;= 10000 is given, this is the offset from mission start in days
-       if a number &gt; 10000 is given, this is the MJD start time.</li>
-<li>-l is the length in years
-       if zero is given (-l 0), the duration from the script is used.</li>
-<li>-d is the delta-t between frames in days</li>
-<li>-m is the name of the movie</li>
+<li><code>-s</code> is the start-time of the movie.
+  If zero, the start-time from the script is used.
+  If a float in [0,1], the movie is started that proportion of the way through the mission.
+  If a number &lt;= 10000 is given, this is the offset from mission start in days.
+  If a number &gt; 10000 is given, this is the MJD start time.</li>
+<li><code>-l</code> is the length in years.
+  If zero is given (<code>-l 0</code>), the duration from the script is used.</li>
+<li><code>-d</code> is the delta-t between frames in days</li>
+<li><code>-m</code> is the name of the movie</li>
 </ul>
 <p>optionally:</p>
 <ul>
-<li>-e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended</li>
-<li>-C     -- make a coronagraph-only movie, even if a starshade is present.
-            (only affects movie and final frame, not cumulative keepout)</li>
-<li>-f DIR -- the directory name for .png frame-by-frame output</li>
-<li>-c DIR -- the directory name for cumulative keepout output</li>
-<li>--drm FILE -- the file containing the DRM as a pickle</li>
-<li>--spc FILE -- the file containing the SPC as a pickle</li>
+<li><code>-e</code> -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended</li>
+<li><code>-C</code> -- make a coronagraph-only movie, even if a starshade is present.
+  (only affects movie and final frame, not cumulative keepout)</li>
+<li><code>-f DIR</code> -- the directory name for <code>.png</code> frame-by-frame output</li>
+<li><code>-c DIR</code> -- the directory name for cumulative keepout output</li>
+<li><code>--drm FILE</code> -- the file containing the DRM as a pickle</li>
+<li><code>--spc FILE</code> -- the file containing the SPC as a pickle</li>
 </ul>
-<p>Option for experts only:</p>
+<h3 id="keepout_path_graphics--option-for-experts-only">Option for experts only</h3>
 <ul>
-<li>-x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
-              if the given SCRIPT name begins with !, it is treated as a
-              json literal rather than a filename</li>
+<li><code>-x SCRIPT</code> -- the given SCRIPT filename is loaded on top of the argument script.
+  If the given SCRIPT name begins with <code>!</code>, it is treated as a
+  json literal rather than a filename.</li>
 </ul>
 
 
@@ -1388,8 +1428,7 @@ are used together.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
-<span class="normal">213</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
 <span class="normal">214</span>
 <span class="normal">215</span>
 <span class="normal">216</span>
@@ -1413,7 +1452,8 @@ are used together.</p>
 <span class="normal">234</span>
 <span class="normal">235</span>
 <span class="normal">236</span>
-<span class="normal">237</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">GraphicsStyle</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">237</span>
+<span class="normal">238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">GraphicsStyle</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Singleton class that holds graphics styles.&#39;&#39;&#39;</span>
     <span class="c1"># mapping of conditions to colors</span>
     <span class="c1"># formerly: char_ok   = (0.0, 0.5, 1.0) # sky blue</span>
@@ -1471,9 +1511,9 @@ are used together.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count2pt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count2pt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Display &quot;points&quot; (i.e., circle radius in point units) per detection.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.3</span> <span class="o">+</span> <span class="mf">1.7</span> <span class="o">*</span> <span class="n">count</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -1499,10 +1539,10 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">234</span>
-<span class="normal">235</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">235</span>
 <span class="normal">236</span>
-<span class="normal">237</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count2pt2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+<span class="normal">237</span>
+<span class="normal">238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">count2pt2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Display &quot;points&quot; (i.e., markersize point^2 units) per detection.</span>
 <span class="sd">    The relationship between count2pt vs. count2pt2 is empirical.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="mf">1.7</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">count</span>
@@ -1548,8 +1588,7 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
-<span class="normal">242</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
 <span class="normal">245</span>
@@ -1824,7 +1863,8 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 <span class="normal">514</span>
 <span class="normal">515</span>
 <span class="normal">516</span>
-<span class="normal">517</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ObserveInfo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">517</span>
+<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ObserveInfo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Observations made by a mission, in order, as loaded from an external DRM pickle.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">load_from_spc_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">spc</span><span class="p">):</span>
@@ -2133,14 +2173,14 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">497</span>
-<span class="normal">498</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">498</span>
 <span class="normal">499</span>
 <span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span>
 <span class="normal">503</span>
-<span class="normal">504</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_after</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">504</span>
+<span class="normal">505</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_after</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Return index of the next characterization AFTER day&#39;&#39;&#39;</span>
     <span class="n">center</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -2170,14 +2210,14 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">488</span>
-<span class="normal">489</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
 <span class="normal">492</span>
 <span class="normal">493</span>
 <span class="normal">494</span>
-<span class="normal">495</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_before</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">495</span>
+<span class="normal">496</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_before</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Return index of the previous characterization BEFORE day&#39;&#39;&#39;</span>
     <span class="n">center</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -2207,8 +2247,7 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">476</span>
-<span class="normal">477</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">477</span>
 <span class="normal">478</span>
 <span class="normal">479</span>
 <span class="normal">480</span>
@@ -2217,7 +2256,8 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 <span class="normal">483</span>
 <span class="normal">484</span>
 <span class="normal">485</span>
-<span class="normal">486</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_bracket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">486</span>
+<span class="normal">487</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_bracket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return pair of characterization observations bracketing a given day.&quot;&quot;&quot;</span>
     <span class="n">center</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
     <span class="n">hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">was_det</span><span class="p">[</span><span class="n">center</span><span class="p">:]</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
@@ -2250,12 +2290,12 @@ The relationship between count2pt vs. count2pt2 is empirical.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">506</span>
-<span class="normal">507</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">507</span>
 <span class="normal">508</span>
 <span class="normal">509</span>
 <span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_to_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">char_to_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return all characterization observations up to a given day.&quot;&quot;&quot;</span>
     <span class="c1"># catch the next characterization AFTER day</span>
     <span class="n">endpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">char_after</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
@@ -2284,8 +2324,7 @@ This drm + spc file transfer is compatible the Exosims ipyparallel output.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">244</span>
-<span class="normal">245</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
 <span class="normal">246</span>
 <span class="normal">247</span>
 <span class="normal">248</span>
@@ -2299,7 +2338,8 @@ This drm + spc file transfer is compatible the Exosims ipyparallel output.</p>
 <span class="normal">256</span>
 <span class="normal">257</span>
 <span class="normal">258</span>
-<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_from_spc_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">spc</span><span class="p">):</span>
+<span class="normal">259</span>
+<span class="normal">260</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_from_spc_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">spc</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load the DRM, and star/planet info from a &quot;spc&quot; file given as an argument.</span>
 <span class="sd">    This drm + spc file transfer is compatible the Exosims ipyparallel output.&#39;&#39;&#39;</span>
     <span class="c1"># these will fail noisily if there is no file present</span>
@@ -2337,9 +2377,9 @@ This drm + spc file transfer is compatible the Exosims ipyparallel output.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">375</span>
-<span class="normal">376</span>
-<span class="normal">377</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return index of observation closest to day.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">-</span> <span class="n">day</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -2371,8 +2411,7 @@ Could enhance to add another counter, for habitable-zone detections vs. non-HZ d
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">379</span>
-<span class="normal">380</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">380</span>
 <span class="normal">381</span>
 <span class="normal">382</span>
 <span class="normal">383</span>
@@ -2407,7 +2446,8 @@ Could enhance to add another counter, for habitable-zone detections vs. non-HZ d
 <span class="normal">412</span>
 <span class="normal">413</span>
 <span class="normal">414</span>
-<span class="normal">415</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obs_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">415</span>
+<span class="normal">416</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obs_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return observation history up to the given day: counts of detections and charaterizations.</span>
 <span class="sd">    Each observation fits into one of the cases below.</span>
 <span class="sd">    Coded as below, where each is a Counter indexed by star number. </span>
@@ -2474,8 +2514,7 @@ Because of closely-packed binaries, it is important to put chars on top.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
-<span class="normal">418</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">418</span>
 <span class="normal">419</span>
 <span class="normal">420</span>
 <span class="normal">421</span>
@@ -2531,7 +2570,8 @@ Because of closely-packed binaries, it is important to put chars on top.</p>
 <span class="normal">471</span>
 <span class="normal">472</span>
 <span class="normal">473</span>
-<span class="normal">474</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obs_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">normal</span><span class="p">,</span> <span class="n">z0</span><span class="p">):</span>
+<span class="normal">474</span>
+<span class="normal">475</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">obs_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">normal</span><span class="p">,</span> <span class="n">z0</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a summary of observation history up to given day.</span>
 
 <span class="sd">    If normal is False, it is the last day, and slightly different summary rules hold.</span>
@@ -2611,11 +2651,11 @@ Because of closely-packed binaries, it is important to put chars on top.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">513</span>
-<span class="normal">514</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">514</span>
 <span class="normal">515</span>
 <span class="normal">516</span>
-<span class="normal">517</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">stars_on_slew</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<span class="normal">517</span>
+<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">stars_on_slew</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return list of all stars in the characterization-slew-interval containing day.&quot;&quot;&quot;</span>
     <span class="n">i0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">char_before</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
     <span class="n">i1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">char_after</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
@@ -2642,8 +2682,7 @@ Because of closely-packed binaries, it is important to put chars on top.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">313</span>
-<span class="normal">314</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">314</span>
 <span class="normal">315</span>
 <span class="normal">316</span>
 <span class="normal">317</span>
@@ -2698,7 +2737,8 @@ Because of closely-packed binaries, it is important to put chars on top.</p>
 <span class="normal">366</span>
 <span class="normal">367</span>
 <span class="normal">368</span>
-<span class="normal">369</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">tour_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="normal">369</span>
+<span class="normal">370</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">tour_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Compute and optionally dump tour summary statistics.&#39;&#39;&#39;</span>
     <span class="n">Nstar</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snm</span><span class="p">)</span>
     <span class="n">tour</span> <span class="o">=</span> <span class="p">[</span><span class="n">obs</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obs</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drm</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">was_det</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
@@ -2788,8 +2828,7 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">699</span>
-<span class="normal">700</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">700</span>
 <span class="normal">701</span>
 <span class="normal">702</span>
 <span class="normal">703</span>
@@ -2798,7 +2837,8 @@ markerfacecolor (mfc), markersize.</p>
 <span class="normal">706</span>
 <span class="normal">707</span>
 <span class="normal">708</span>
-<span class="normal">709</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">circle_marker</span><span class="p">(</span><span class="o">**</span><span class="n">given_props</span><span class="p">):</span>
+<span class="normal">709</span>
+<span class="normal">710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">circle_marker</span><span class="p">(</span><span class="o">**</span><span class="n">given_props</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Return a Line2D with circular markers for an axis legend, given_props over-rides.</span>
 <span class="sd">    Some key properties to pass in: markeredgecolor (mec), markeredgewidth (mew), </span>
 <span class="sd">    markerfacecolor (mfc), markersize.&#39;&#39;&#39;</span>
@@ -2831,8 +2871,7 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">131</span>
-<span class="normal">132</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">132</span>
 <span class="normal">133</span>
 <span class="normal">134</span>
 <span class="normal">135</span>
@@ -2845,7 +2884,8 @@ markerfacecolor (mfc), markersize.</p>
 <span class="normal">142</span>
 <span class="normal">143</span>
 <span class="normal">144</span>
-<span class="normal">145</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ensure_dir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+<span class="normal">145</span>
+<span class="normal">146</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ensure_dir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Ensure enclosing dir exists, especially in multiprocessing context.&#39;&#39;&#39;</span>
     <span class="c1"># the loop guards against another process creating the dir after we checked,</span>
     <span class="c1"># but before the os.makedirs() call.</span>
@@ -2882,12 +2922,12 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
-<span class="normal">170</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span>
 <span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_time</span><span class="p">(</span><span class="n">tm</span><span class="p">):</span>
+<span class="normal">174</span>
+<span class="normal">175</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_time</span><span class="p">(</span><span class="n">tm</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Unbox a time, if it is boxed, for compatibility with multiple DRMs.&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tm</span><span class="o">.</span><span class="n">value</span>
@@ -2916,8 +2956,7 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">532</span>
-<span class="normal">533</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">533</span>
 <span class="normal">534</span>
 <span class="normal">535</span>
 <span class="normal">536</span>
@@ -2931,7 +2970,8 @@ markerfacecolor (mfc), markersize.</p>
 <span class="normal">544</span>
 <span class="normal">545</span>
 <span class="normal">546</span>
-<span class="normal">547</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">gcp</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">):</span>
+<span class="normal">547</span>
+<span class="normal">548</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">gcp</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;GCP = great circle points from (lon1,lat1) -&gt; (lon2,lat2).</span>
 
 <span class="sd">    Point-count is auto-determined for smoothness without waste.&quot;&quot;&quot;</span>
@@ -2969,15 +3009,15 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">582</span>
-<span class="normal">583</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">583</span>
 <span class="normal">584</span>
 <span class="normal">585</span>
 <span class="normal">586</span>
 <span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
-<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_arrow</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+<span class="normal">590</span>
+<span class="normal">591</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_arrow</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;&quot;Pick one of the line segments within lines, and make an arrow point along it.&quot;&quot;&quot;</span>
     <span class="n">n0</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="n">arrow_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="n">n0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
@@ -3008,8 +3048,7 @@ markerfacecolor (mfc), markersize.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
-<span class="normal">177</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
@@ -3027,7 +3066,8 @@ markerfacecolor (mfc), markersize.</p>
 <span class="normal">192</span>
 <span class="normal">193</span>
 <span class="normal">194</span>
-<span class="normal">195</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_status</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_char_status</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Utility function, gets char status from a drm observation.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="s1">&#39;char_status&#39;</span> <span class="ow">in</span> <span class="n">obs</span><span class="p">:</span>
@@ -3072,8 +3112,7 @@ the Observatory.keepout() method.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
-<span class="normal">148</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
 <span class="normal">151</span>
@@ -3092,7 +3131,8 @@ the Observatory.keepout() method.</p>
 <span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
-<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_koangles</span><span class="p">(</span><span class="n">OS</span><span class="p">):</span>
+<span class="normal">167</span>
+<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_koangles</span><span class="p">(</span><span class="n">OS</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Get koangles array from information in the OpticalSystem.</span>
 <span class="sd">    The (un-pythonic) code here is copied from Prototypes/SurveySimulation so that </span>
 <span class="sd">    we generate exactly the koangles as expected by the caching mechanism and</span>
@@ -3135,11 +3175,11 @@ the Observatory.keepout() method.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
-<span class="normal">206</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
-<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_slew_begin</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_slew_begin</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Return the time of the beginning of the slew, if any, for obs&#39;&#39;&#39;</span>
     <span class="n">slew_time</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slew_time&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
     <span class="n">arrival_time</span> <span class="o">=</span> <span class="n">strip_units</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;arrival_time&#39;</span><span class="p">])</span>
@@ -3169,8 +3209,7 @@ and right to ensure this.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">682</span>
-<span class="normal">683</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">683</span>
 <span class="normal">684</span>
 <span class="normal">685</span>
 <span class="normal">686</span>
@@ -3184,7 +3223,8 @@ and right to ensure this.</p>
 <span class="normal">694</span>
 <span class="normal">695</span>
 <span class="normal">696</span>
-<span class="normal">697</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_max</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="normal">697</span>
+<span class="normal">698</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_max</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the maximal run of True along each row of a 2d matrix x.</span>
 
 <span class="sd">    It is assumed that all rows start and end False, with one or more</span>
@@ -3228,8 +3268,7 @@ lon/lat plot, and appear as two half-circles.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">650</span>
-<span class="normal">651</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">651</span>
 <span class="normal">652</span>
 <span class="normal">653</span>
 <span class="normal">654</span>
@@ -3257,7 +3296,8 @@ lon/lat plot, and appear as two half-circles.</p>
 <span class="normal">676</span>
 <span class="normal">677</span>
 <span class="normal">678</span>
-<span class="normal">679</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">spherical_cap</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="normal">679</span>
+<span class="normal">680</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">spherical_cap</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Return lon-lat point-list of a spherical cap of theta degrees around (lon,lat).</span>
 
 <span class="sd">    Envision the (lon,lat) point with a line connecting it to the origin of a unit sphere,</span>
@@ -3309,13 +3349,13 @@ lon/lat plot, and appear as two half-circles.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">197</span>
-<span class="normal">198</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">198</span>
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
 <span class="normal">202</span>
-<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">strip_units</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="normal">203</span>
+<span class="normal">204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">strip_units</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Strip astropy units from x.&#39;&#39;&#39;</span>
     <span class="c1"># TODO: allow coercing units to a supplied value</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">):</span>
@@ -3351,8 +3391,7 @@ each enclose a closed boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
-<span class="normal">593</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">593</span>
 <span class="normal">594</span>
 <span class="normal">595</span>
 <span class="normal">596</span>
@@ -3407,7 +3446,8 @@ each enclose a closed boundary.</p>
 <span class="normal">645</span>
 <span class="normal">646</span>
 <span class="normal">647</span>
-<span class="normal">648</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">wrap_path</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="normal">648</span>
+<span class="normal">649</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">wrap_path</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Given a path as lists of x&#39;s and y&#39;s, separate it into contiguous path segments.</span>
 
 <span class="sd">    The input paths are lists of (lon,lat), and if the jump between adjacent values is</span>
@@ -3487,8 +3527,7 @@ each enclose a closed boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/keepout_path_graphics.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">549</span>
-<span class="normal">550</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">550</span>
 <span class="normal">551</span>
 <span class="normal">552</span>
 <span class="normal">553</span>
@@ -3518,7 +3557,8 @@ each enclose a closed boundary.</p>
 <span class="normal">577</span>
 <span class="normal">578</span>
 <span class="normal">579</span>
-<span class="normal">580</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">wrap_paths</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+<span class="normal">580</span>
+<span class="normal">581</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">wrap_paths</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Construct a path from p1 to p2, allowing for wrap-around of longitude.</span>
 
 <span class="sd">    Note that latitude does not wrap, because +90 is distinct from -90.&#39;&#39;&#39;</span>

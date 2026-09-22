@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -981,55 +957,60 @@
   <h1>html-serve</h1>
 
 <p>html-serve.sh: start/stop/status HTTP server</p>
-<p>This starts, stops, or status-queries the HTTP server that 
+<p>This starts, stops, or status-queries the HTTP server that
 serves up the EXOSIMS index and ensemble-summary files.</p>
 <p>For security, the server only serves out to connections coming
 from localhost, i.e., the system the server is running on.</p>
 <p>We run the server on a non-standard port - 8090 by default.
-To see the table of contents, navigate to:
-  http://localhost:8090/sims/
-To connect your own system to localhost, use an ssh tunnel:
-  ssh -fnNT -L8090:localhost:8090 mustang2.jpl.nasa.gov
-and visit the above URL on your own system (e.g., laptop).</p>
+To see the table of contents, navigate to:</p>
+<pre><code>  http://localhost:8090/sims/
+</code></pre>
+<p>To connect your own system to localhost, use an ssh tunnel:</p>
+<pre><code>  ssh -fnNT -L8090:localhost:8090 mustang2.jpl.nasa.gov
+</code></pre>
+<p>and visit the above URL on your own system (e.g., laptop).</p>
 <p>Usage:</p>
 <pre><code>  html-serve.sh [-h] [-p PORT] [-r ROOT] [-s apache|simple] MODE
 </code></pre>
-<p>where MODE is one of:
-  ensure: if no server is running, start one
-          this is generally preferred over "start"
-  start:  start the server on the given port
-  stop:   stop the server on the given port
-  status: list the servers running, if any
-  defaults:   echo server, port, etc., and exit</p>
+<p>where MODE is one of:</p>
+<ul>
+<li><code>ensure</code>: if no server is running, start one --
+  this is generally preferred over <code>start</code></li>
+<li><code>start</code>: start the server on the given port</li>
+<li><code>stop</code>: stop the server on the given port</li>
+<li><code>status</code>: list the servers running, if any</li>
+<li><code>defaults</code>: echo server, port, etc., and exit</li>
+</ul>
 <p>and:</p>
 <pre><code> -p PORT   =&gt; gives the HTTP port number.  Default is:
                 8090: mustang, gattaca2 /projects
                 8091: gattaca2 /scratch
                 8092: gattaca2 /scratch-edge
                 8100: macOS
- -s apache =&gt; use apache2/httpd server (default, but has fussy 
+ -s apache =&gt; use apache2/httpd server (default, but has fussy
               internal config which can fail after OS upgrades)
  -s simple =&gt; use python httpd.server (less performant, less fussy)
  -r ROOT   =&gt; use the named dir as document root
               (default is the working dir, this is always correct,
               this option is vestigial)
+ -q        =&gt; quiet: suppress the informational messages confirming
+              server type, port, and document root, and the
+              &quot;server is OK&quot; note.  Errors are still reported.
  -h        =&gt; shows this help text.
 </code></pre>
-<p>Implementation:
-Status is kept in these files:
-     Local/www-service/var/http-HOST.PORT.*
-where PORT is given above (unless set manually).
-There is:
-   -- a server error log (.log) 
-   -- a file containing the process ID (PID) of the server (.pid).
-The PID is used to signal the running server to exit.  If the basic "stop" 
-MODE of this command does not work, you can kill the server by sending TERM
-to process ID (pid) named in that file. "ps ufx" can also be helpful to
-get status of the server (if you're the process owner).</p>
-<h4 id="_1"></h4>
+<p>Implementation:</p>
+<p>Status is kept in these files:</p>
+<pre><code>  Local/www-service/var/http-HOST.PORT.*
+</code></pre>
+<p>where PORT is given above (unless set manually).  There is:</p>
 <ul>
-<li></li>
+<li>a server error log (<code>.log</code>)</li>
+<li>a file containing the process ID (PID) of the server (<code>.pid</code>)</li>
 </ul>
+<p>The PID is used to signal the running server to exit.  If the basic <code>stop</code>
+MODE of this command does not work, you can kill the server by sending TERM
+to process ID (pid) named in that file. <code>ps ufx</code> can also be helpful to
+get status of the server (if you're the process owner).</p>
 
 
 

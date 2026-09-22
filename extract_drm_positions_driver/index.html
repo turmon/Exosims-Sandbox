@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -981,7 +957,7 @@
   <h1>extract_drm_positions_driver</h1>
 
 <p>extract_drm_positions_driver.sh: extract observer (etc) positions from DRM</p>
-<p>This is a wrapper around the python script, extract_drm_positions.py
+<p>This is a wrapper around the python script, <code>extract_drm_positions.py</code>.
 It mainly handles annoying filename transformations, so you only need to
 supply the ensemble root directory.</p>
 <p>Usage:</p>
@@ -996,18 +972,16 @@ These filenames are generated from the DRM filename, see "Conventions" below.</p
       (typically you should be using a virtual environment, not relying on
       -p to tell this script to set PYTHONPATH)
 </code></pre>
-<p>Conventions:
-  The script file (.json) is deduced from the DRM filename (directory component).
-  The output CSV name is generated from the DRM.
-  E.g.:
-      drm  = sims/HabEx_4m_TS_dmag26p0_20180206/drm/NNNN.pkl
-      json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
-      csv  = sims/HabEx_4m_TS_dmag26p0_20180206/pos/NNNN-position.csv (output)</p>
-<p>turmon oct 2018, updated 2023 for newer Sandbox conventions</p>
-<h4 id="_1"></h4>
+<p>Conventions:</p>
 <ul>
-<li></li>
+<li>The script file (<code>.json</code>) is deduced from the DRM filename (directory component).</li>
+<li>The output CSV name is generated from the DRM.</li>
 </ul>
+<p>For example:</p>
+<pre><code>      drm  = sims/HabEx_4m_TS_dmag26p0_20180206/drm/NNNN.pkl
+      json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
+      csv  = sims/HabEx_4m_TS_dmag26p0_20180206/pos/NNNN-position.csv (output)
+</code></pre>
 
 
 

@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,21 +1014,23 @@
   <h1>select_runs</h1>
 
 <p>select_runs.py: select runs from a list</p>
-<p>usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  select_runs.py [ -q ] [ -n N ] [ -m MODE ] SCENARIO
 </code></pre>
-<p>where:
-  SCENARIO is a location (for now, directory) containing run information</p>
-<p>and:</p>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>SCENARIO</code> is a location (for now, directory) containing run information</li>
+</ul>
+<h2 id="options">Options</h2>
 <pre><code>  -m MODE tells what mode
      by default this is &quot;drm&quot; (output the DRM filenames within the SCENARIO)
   -n N tells how many runs to select.  Default is 10.  Non-negative, or T for all runs.
      It is not an error if N is larger than the number of runs.
   -q means to exit quietly if SCENARIO is not present
 </code></pre>
-<p>Typical usage:
-  util/select_runs.py -n 5 sims/HabEx_4m_TSDD</p>
-<p>turmon aug 2023</p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  util/select_runs.py -n 5 sims/HabEx_4m_TSDD
+</code></pre>
 
 
 

@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#typical-usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#identifier-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identifier columns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other options
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,33 +1014,37 @@
   <h1>spc_extract</h1>
 
 <p>spc_extract.py: Extract info from SPC files into CSV</p>
-<p>For usage, use the -h option.  Some options may be described there but not here.</p>
-<p>Typical usage:
-  <code>spc-extract.py sims/script/spc/*.spc</code>
-or:
-  <code>spc-extract.py -k .len sims/script/spc/*.spc</code></p>
+<p>For usage, use the <code>-h</code> option.  Some options may be described there but not here.</p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  spc-extract.py sims/script/spc/*.spc
+</code></pre>
+<p>or:</p>
+<pre><code>  spc-extract.py -k .len sims/script/spc/*.spc
+</code></pre>
 <p>SPC files, directories of <code>.spc</code> files, or scenario/experiment directories
 may be given; directories are expanded recursively to all <code>.spc</code> files within.</p>
+<h2 id="keys">Keys</h2>
 <p>The <code>-k</code> option can be repeated to name particular SPC keys to output.
 If no <code>-k</code> is given, <code>.default-star</code> is used.  Special KEY values:</p>
 <ul>
 <li><code>.len</code>            =&gt; give field names and their vector lengths (diagnostic)</li>
 <li><code>.name</code>           =&gt; give field names only (diagnostic)</li>
 <li><code>.all</code>            =&gt; output fields of the most-common non-scalar length,
-                       plus all scalar fields.  Use <code>--like KEY</code> to target
-                       a specific length (e.g., <code>--like Mp</code> for planet-length
-                       fields, <code>--like L</code> for star-length fields).</li>
-<li><code>.default-star</code>   =&gt; output a standard set of star keys (default when no -k given)</li>
+  plus all scalar fields.  Use <code>--like KEY</code> to target
+  a specific length (e.g., <code>--like Mp</code> for planet-length
+  fields, <code>--like L</code> for star-length fields).</li>
+<li><code>.default-star</code>   =&gt; output a standard set of star keys (default when no <code>-k</code> given)</li>
 <li><code>.default-planet</code> =&gt; output a standard set of planet keys</li>
 </ul>
-<p>You may include identifier columns, prepended before data columns in the 
+<h2 id="identifier-columns">Identifier columns</h2>
+<p>You may include identifier columns, prepended before data columns in the
 order scenario, basename, seed, by giving these options:</p>
 <ul>
 <li><code>-N</code> =&gt; scenario name (<code>sims/A.fam/B.exp/C</code> becomes <code>A.fam/B.exp/C</code>)</li>
 <li><code>-B</code> =&gt; scenario basename (last path component of the scenario; <code>C</code> above)</li>
 <li><code>-s</code> =&gt; seed (numeric stem of the <code>.spc</code> filename)</li>
 </ul>
-<p>Other options:</p>
+<h2 id="other-options">Other options</h2>
 <ul>
 <li><code>--json</code>     =&gt; emit JSON array of objects instead of CSV</li>
 <li><code>--like KEY</code> =&gt; with <code>-k .all</code>, select fields of the same length as KEY</li>

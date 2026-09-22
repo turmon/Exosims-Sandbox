@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,20 +1014,23 @@
   <h1>locus_wa_dmag</h1>
 
 <p>locus_wa_dmag.py: provide locus of WA, dMag pairs of simulated universe</p>
-<p>usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  locus-wa-dmag.py [ -q ] [ -p ] SCRIPT CSVFILE
 </code></pre>
-<p>where:
-  SCRIPT is a json script to initialize Exosims
-  CSVFILE is a CSV file (or file pattern) with input fields for the table
-and:</p>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>SCRIPT</code> is a json script to initialize Exosims</li>
+<li><code>CSVFILE</code> is a CSV file (or file pattern) with input fields for the table</li>
+</ul>
+<h2 id="options">Options</h2>
 <pre><code>  [warning: below is out of date]
   -p means plain text output versus the default markdown
   -q means to continue quietly if CSVFILE is not present
 </code></pre>
 <p>Output goes to stdout, which was a mistake.</p>
-<p>Typical usage:
-  PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv.gz</p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv.gz
+</code></pre>
 
 
 

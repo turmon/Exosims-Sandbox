@@ -965,10 +965,76 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#drm_tabulate--usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drm_tabulate--attribute-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attribute naming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drm_tabulate--pseudo-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudo-attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drm_tabulate--match-only-a-subset-of-observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match only a subset of observations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drm_tabulate--external-file-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External file option
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drm_tabulate--less-useful-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Less-useful options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#drm_tabulate--drm-attributes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DRM ATTRIBUTES
+        DRM attributes
       
     </span>
   </a>
@@ -979,7 +1045,7 @@
   <a href="#drm_tabulate--star-planet-attributes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        STAR-PLANET ATTRIBUTES
+        Star-planet attributes
       
     </span>
   </a>
@@ -990,7 +1056,7 @@
   <a href="#drm_tabulate--external-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        EXTERNAL FILE
+        External file
       
     </span>
   </a>
@@ -998,10 +1064,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#drm_tabulate--usage" class="md-nav__link">
+  <a href="#drm_tabulate--typical-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        USAGE
+        Typical usage
       
     </span>
   </a>
@@ -1341,12 +1407,10 @@
     <div class="doc doc-contents first">
 
         <p>drm_tabulate.py: extract named fields from a pile of DRMs</p>
+<h3 id="drm_tabulate--usage">Usage</h3>
+<pre><code>  drm_tabulate.py [-1sn] [--json|--pandas] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...
+</code></pre>
 
-
-<details class="usage" open>
-  <summary>usage</summary>
-  <p><code>drm_tabulate.py [-1sn] [--json|--pandas] [ -m ATTR ] [-a ATTR | -f FILE] DRM ...</code></p>
-</details>
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <table>
@@ -1377,26 +1441,20 @@
           </tr>
       </tbody>
     </table>
-        <p>Attributes of an observation "obs" in the DRM are printed by 
+        <p>Attributes of an observation "obs" in the DRM are printed by
 naming them in one of the following ways.</p>
 <p>If any DRM argument is a directory, we descend from there recursively
-into scripts, .exp, or .fam directories to find pickles (drm/*.pkl).</p>
-
-
-<details class="attribute-naming" open>
-  <summary>Attribute naming</summary>
-  <ul>
-<li><code>-a ATTR</code>: output <code>obs[ATTR]</code> (repeat -a OK, see below)</li>
+into scripts, <code>.exp</code>, or <code>.fam</code> directories to find pickles (<code>drm/*.pkl</code>).</p>
+<h3 id="drm_tabulate--attribute-naming">Attribute naming</h3>
+<ul>
+<li><code>-a ATTR</code>: output <code>obs[ATTR]</code> (repeat <code>-a</code> OK, see below)</li>
 <li><code>-S ATTR</code>: output the SPC attribute ATTR for <code>obs[star_ind]</code></li>
 <li><code>-P ATTR</code>: output the SPC attributes ATTR for <code>obs[plan_inds[:]]</code></li>
 <li><code>-p ATTR</code>: output the list of SPC attributes ATTR for <code>obs[plan_inds]</code></li>
 <li><code>-e CODE</code>: compute a value by [e]valuating the Python CODE expression</li>
 </ul>
-</details>
-
-<details class="pseudo-attributes" open>
-  <summary>Pseudo-attributes</summary>
-  <ul>
+<h3 id="drm_tabulate--pseudo-attributes">Pseudo-attributes</h3>
+<ul>
 <li><code>-s</code>: output the DRM seed number (<code>__seed__</code>, boolean)</li>
 <li><code>-n</code>: output the DRM observation number (<code>__obs_num__</code>, boolean)</li>
 <li><code>--plan_num</code>: output the planet number (<code>__plan_num__</code>, boolean)</li>
@@ -1404,26 +1462,17 @@ into scripts, .exp, or .fam directories to find pickles (drm/*.pkl).</p>
 <li><code>-B</code>, <code>--basename</code>: last directory in scenario (<code>__basename__</code>, boolean)</li>
 <li><code>-1</code>: supply the CSV header on line 1 (<code>__header__</code>, boolean)</li>
 </ul>
-</details>
-
-<details class="match-only-a-subset-of-observations" open>
-  <summary>Match only a subset of observations</summary>
-  <ul>
+<h3 id="drm_tabulate--match-only-a-subset-of-observations">Match only a subset of observations</h3>
+<ul>
 <li><code>-m ATTR</code>: produce output only if ATTR is a keyword in obs</li>
 <li><code>-M ATTR</code>: produce output if ATTR is NOT a keyword in obs</li>
 </ul>
-</details>
-
-<details class="external-file" open>
-  <summary>External file</summary>
-  <ul>
-<li>-f FILE: take ATTRs from FILE <em>instead of</em> <code>-a/-S/-P/-p</code> options (see below)</li>
+<h3 id="drm_tabulate--external-file-option">External file option</h3>
+<ul>
+<li><code>-f FILE</code>: take ATTRs from FILE <em>instead of</em> <code>-a/-S/-P/-p</code> options (see below)</li>
 </ul>
-</details>
-
-<details class="less-useful-options" open>
-  <summary>Less-useful options</summary>
-  <ul>
+<h3 id="drm_tabulate--less-useful-options">Less-useful options</h3>
+<ul>
 <li><code>-A</code>: list available DRM and SPC attributes and values on stderr, as a reference.
     It honors match (<code>-m</code>), and inverse match (<code>-M</code>); supply <code>-S ""</code> to get SPC attributes.</li>
 <li><code>--json</code>: output is JSON, rather than standard CSV</li>
@@ -1431,10 +1480,10 @@ into scripts, .exp, or .fam directories to find pickles (drm/*.pkl).</p>
 <li><code>--format</code>: supply a printf-style format string (e.g., %.3g) for CSV floats</li>
 <li><code>--empty</code>: output a record when planet attributes selected, even if no planets present</li>
 <li><code>-v</code>: increase verbosity (output is to stderr)</li>
-<li><code>-j N</code>: use N parallel workers (default = ~2/3 of cores)
-      If N = 0 or 1, no parallelism: needed for debugging.</li>
+<li><code>-j N</code>: use N parallel workers (default = ~2/3 of cores).
+    If N = 0 or 1, no parallelism: needed for debugging.</li>
 </ul>
-</details>        <h3 id="drm_tabulate--drm-attributes">DRM ATTRIBUTES</h3>
+<h3 id="drm_tabulate--drm-attributes">DRM attributes</h3>
 <p>The main degree of freedom is attribute specification -- which is done
 using either of two notations. Below, suppose "obs" is one entry in the DRM.</p>
 <ul>
@@ -1443,86 +1492,83 @@ using either of two notations. Below, suppose "obs" is one entry in the DRM.</p>
 <ol>
 <li>Get a field in obs by giving: <code>-a arrival_time</code></li>
 <li>Drill into nested attributes with <code>.</code>. For example
-      <code>obs['char_mode']['lam']</code>
-    is extracted with:
-      <code>-a char_mode.lam</code>
-    For lists, give the index number; <code>obs['plan_inds'][0]</code> is
-      <code>-a plan_inds.0</code>
-    The last phase angle, <code>obs['char_params'][-1]</code>, is:
-      <code>-a char_params.phi.-1</code></li>
+   <code>obs['char_mode']['lam']</code> is extracted with <code>-a char_mode.lam</code>.
+   For lists, give the index number; <code>obs['plan_inds'][0]</code> is
+   <code>-a plan_inds.0</code>.
+   The last phase angle, <code>obs['char_params'][-1]</code>, is
+   <code>-a char_params.phi.-1</code>.</li>
 <li>Supply a comma-separated list of such DRM fields at once with
-      <code>-a arrival_time,slew_time,scMass</code></li>
+   <code>-a arrival_time,slew_time,scMass</code></li>
 </ol>
 </li>
 <li>
 <p><code>-e</code> =&gt; Evaluated expressions</p>
 <ol>
-<li>A Python expression can be given, which is evaluated in the context 
-    of variables named for each field in "obs". To output a count of 
-    detections using the <code>obs['det_status']</code> list, use:
-      <code>-e "np.sum(det_status == 1)"</code></li>
+<li>A Python expression can be given, which is evaluated in the context
+   of variables named for each field in "obs". To output a count of
+   detections using the <code>obs['det_status']</code> list, use:
+   <code>-e "np.sum(det_status == 1)"</code></li>
 <li>No comma-separated lists are allowed, due to ambiguity.</li>
 <li>The full SPC is available, if desired, using <code>spc[...]</code>, so
-   <code>-e "spc['Spec'][star_ind]"</code>  &lt;==&gt; <code>-S Spec</code>
+   <code>-e "spc['Spec'][star_ind]"</code> &lt;==&gt; <code>-S Spec</code>.
    See below for more on <code>-S</code>.</li>
 <li>"Boxing" the result of <code>-e</code> allows the value to be scalar-expanded
    across multiple planets (cf. <code>-P</code> below). For star name:
-   <code>-e "[spc['Name'][star_ind]]"</code>  &lt;==&gt; <code>-S Name</code></li>
+   <code>-e "[spc['Name'][star_ind]]"</code> &lt;==&gt; <code>-S Name</code></li>
 </ol>
 </li>
 </ul>
-<p>For either <code>-a</code> or <code>-e</code>, the resulting column can be custom-named with 
+<p>For either <code>-a</code> or <code>-e</code>, the resulting column can be custom-named with
 a <code>label:attr</code> construct, such as</p>
-<pre><code class="language-shell">          -a &quot;lambda:char_mode.lam&quot;
-          -e &quot;det_count:np.sum(det_status == 1)&quot;
+<pre><code class="language-shell">  -a &quot;lambda:char_mode.lam&quot;
+  -e &quot;det_count:np.sum(det_status == 1)&quot;
 </code></pre>
 <p>otherwise a basic generated name is used.
 (But: Attributes in comma-separated expressions cannot be custom-named.)</p>
-<h3 id="drm_tabulate--star-planet-attributes">STAR-PLANET ATTRIBUTES</h3>
+<h3 id="drm_tabulate--star-planet-attributes">Star-planet attributes</h3>
 <ul>
 <li>
 <p><code>-S</code> =&gt; shortcut for Star attributes.</p>
 <p><code>-S ATTR</code> means: look up the named ATTR for <code>obs['star_ind']</code> in
-the corresponding SPC file, e.g.
-  <code>-S Spec</code> =&gt; <code>spc['Spec'][obs['star_ind']]</code>
+the corresponding SPC file, e.g. <code>-S Spec</code> =&gt; <code>spc['Spec'][obs['star_ind']]</code>,
 which will output the spectral class of <code>obs['star_ind']</code></p>
 </li>
 <li>
 <p><code>-P</code> =&gt; shortcut for Planet attributes.</p>
-<p><code>-P ATTR</code> means to look up the named ATTR for each planet in 
-<code>obs['plan_inds']</code> in the SPC file, e.g.
-  <code>-P Mp</code> =&gt; <code>spc['Mp'][obs['plan_inds']]</code>.</p>
-<p>Note that <code>obs['plan_inds']</code> is in general a vector. 
+<p><code>-P ATTR</code> means to look up the named ATTR for each planet in
+<code>obs['plan_inds']</code> in the SPC file, e.g. <code>-P Mp</code> =&gt; <code>spc['Mp'][obs['plan_inds']]</code>.</p>
+<p>Note that <code>obs['plan_inds']</code> is in general a vector.
 So, if you give <code>-P</code>, this program "scalar-expands" the vector
-to write one row of output <em>for each plan_ind in plan_inds</em>. 
+to write one row of output <em>for each plan_ind in plan_inds</em>.
 This facilitates row-by-row processing.</p>
-<p>Note that if <code>plan_inds = []</code>, no record will be written. 
+<p>Note that if <code>plan_inds = []</code>, no record will be written.
 To write a record in the zero-planet case anyway, specify <code>--empty</code>.</p>
 </li>
 <li>
 <p><code>-p</code> =&gt; shortcut for alternate Planet attributes.</p>
 <p>This is the same lookup as <code>-P</code>, but the vector is output to
-that <em>one</em> column in the row. This would be more useful for 
-the JSON output; the CSV format looks like:
-   <code>"[0.282, 1.044]"</code>
+that <em>one</em> column in the row. This would be more useful for
+the JSON output; the CSV format looks like <code>"[0.282, 1.044]"</code>,
 which would not look like a number to downstream consumers.</p>
 </li>
 </ul>
 <p>For all of the above, an optional column-name can be given just as
 for <code>-a</code> and <code>-e</code>. If not given, the attribute name, or a generated
 string, will be used.</p>
-<p>The SPC file is loaded using the filename convention that 
-  <code>.../drm/NAME.pkl</code> goes with <code>.../spc/NAME.spc</code>
-If no <code>-S/-P/-p</code> is given, the SPC is not loaded, to allow use of 
+<p>The SPC file is loaded using the filename convention that
+<code>.../drm/NAME.pkl</code> goes with <code>.../spc/NAME.spc</code>.
+If no <code>-S/-P/-p</code> is given, the SPC is not loaded, to allow use of
 this program when only the DRM is present. If the SPC file is needed
-to support <code>spc[...]</code> within <code>-e</code> constructs above, load of the SPC 
+to support <code>spc[...]</code> within <code>-e</code> constructs above, load of the SPC
 can be forced by giving <code>--load_spc</code> (or if using External File,
 <code>"load_spc": true</code>).</p>
 <p>All attributes in the SPC file are available. In addition, the following
-attributes are derived from the SPC and made available:
-   _earthlike: is the planet Earthlike (Radius, SMA), via -P _earthlike</p>
-<h3 id="drm_tabulate--external-file">EXTERNAL FILE</h3>
-<p>These expressions can become complex, so the "-a ATTR" and all above
+attributes are derived from the SPC and made available:</p>
+<ul>
+<li><code>_earthlike</code>: is the planet Earthlike (Radius, SMA), via <code>-P _earthlike</code></li>
+</ul>
+<h3 id="drm_tabulate--external-file">External file</h3>
+<p>These expressions can become complex, so the <code>-a ATTR</code> and all above
 constructs can be placed in a JSON file and specified with <code>-f FILE</code>:</p>
 <pre><code class="language-json"># drm_tabulate parameters: count chars
 {
@@ -1543,24 +1589,23 @@ can be extracted with <code>d['attr']</code>, so there is no conflict between qu
 The column name (e.g., <code>char_count</code> above) is used as the column name for the CSV.
 Above, <code>__match__</code> abbreviates the <code>-m</code> construct, so the JSON file can be
 self-contained. The full list is:</p>
-<pre><code>   &quot;__eval__&quot;    -&gt; -e 
+<pre><code>   &quot;__eval__&quot;    -&gt; -e
    &quot;__star__&quot;    -&gt; -S
    &quot;__planet__&quot;  -&gt; -P  (one row per planet)
    &quot;__planets__&quot; -&gt; -p  (list placed in one field)
    &quot;__match_inv__&quot;  -M  (inverse match)
 </code></pre>
-<p>Other program flags (like <code>-s</code>) can be given by Booleans in the 
+<p>Other program flags (like <code>-s</code>) can be given by Booleans in the
 JSON file as well. See the top of this usage note for the <code>__attribute_name__</code>
 controlling each flag.</p>
-<p>As on the command line, the SPC file is loaded if <code>__star__</code>, <code>__planet__</code>, 
-or <code>__planets__</code>is present. To force the load if an <code>__eval__</code> construct needs
+<p>As on the command line, the SPC file is loaded if <code>__star__</code>, <code>__planet__</code>,
+or <code>__planets__</code> is present. To force the load if an <code>__eval__</code> construct needs
 the SPC file, use <code>--load_spc</code>, or the Boolean directive <code>"__load_spc__": true</code>
 within the JSON.</p>
 <p>Discarding #-starting lines permits use of the shell's "shebang" convention.
 You can capture a complex argument structure in a file and re-use it in other
-circumstances. See: util/drm-tab-demo.json5 for an example.</p>
-<h3 id="drm_tabulate--usage">USAGE</h3>
-<p>Typical usage:</p>
+circumstances. See <code>util/drm-tab-demo.json5</code> for an example.</p>
+<h3 id="drm_tabulate--typical-usage">Typical usage</h3>
 <pre><code class="language-shell">  # each arrival_time for one pickle
   util/drm_tabulate.py -a arrival_time sims/HabEx_4m_dmag26/drm/777.pkl
 
@@ -1625,7 +1670,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">753</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">749</span>
+<span class="normal">750</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
 <span class="normal">754</span>
 <span class="normal">755</span>
 <span class="normal">756</span>
@@ -1720,11 +1769,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">845</span>
 <span class="normal">846</span>
 <span class="normal">847</span>
-<span class="normal">848</span>
-<span class="normal">849</span>
-<span class="normal">850</span>
-<span class="normal">851</span>
-<span class="normal">852</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EnsembleSummary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">848</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EnsembleSummary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Compute, store, and dump summary information for an ensemble of many simulations.&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&#39;&#39;&#39;Load an ensemble of simulations.&#39;&#39;&#39;</span>
@@ -1856,14 +1901,14 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">755</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
 <span class="normal">756</span>
 <span class="normal">757</span>
-<span class="normal">758</span>
-<span class="normal">759</span>
-<span class="normal">760</span>
-<span class="normal">761</span>
-<span class="normal">762</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="normal">758</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;Load an ensemble of simulations.&#39;&#39;&#39;</span>
     <span class="c1"># filter the .spc files out: some dirs contain both</span>
     <span class="n">sim_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">in_files</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.spc&#39;</span><span class="p">)]</span>
@@ -1940,7 +1985,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">798</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">794</span>
+<span class="normal">795</span>
+<span class="normal">796</span>
+<span class="normal">797</span>
+<span class="normal">798</span>
 <span class="normal">799</span>
 <span class="normal">800</span>
 <span class="normal">801</span>
@@ -1990,11 +2039,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">845</span>
 <span class="normal">846</span>
 <span class="normal">847</span>
-<span class="normal">848</span>
-<span class="normal">849</span>
-<span class="normal">850</span>
-<span class="normal">851</span>
-<span class="normal">852</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
+<span class="normal">848</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Dump reduced data to output.</span>
 
 <span class="sd">    Args:</span>
@@ -2072,7 +2117,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">764</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">760</span>
+<span class="normal">761</span>
+<span class="normal">762</span>
+<span class="normal">763</span>
+<span class="normal">764</span>
 <span class="normal">765</span>
 <span class="normal">766</span>
 <span class="normal">767</span>
@@ -2085,11 +2134,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">774</span>
 <span class="normal">775</span>
 <span class="normal">776</span>
-<span class="normal">777</span>
-<span class="normal">778</span>
-<span class="normal">779</span>
-<span class="normal">780</span>
-<span class="normal">781</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_and_reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">777</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_and_reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load sim drm/spc, reduce each sim, accumulate summaries across sims.</span>
 
 <span class="sd">    Each dict gives one summary statistic over that single sim.&#39;&#39;&#39;</span>
@@ -2130,7 +2175,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">783</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">779</span>
+<span class="normal">780</span>
+<span class="normal">781</span>
+<span class="normal">782</span>
+<span class="normal">783</span>
 <span class="normal">784</span>
 <span class="normal">785</span>
 <span class="normal">786</span>
@@ -2138,11 +2187,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">788</span>
 <span class="normal">789</span>
 <span class="normal">790</span>
-<span class="normal">791</span>
-<span class="normal">792</span>
-<span class="normal">793</span>
-<span class="normal">794</span>
-<span class="normal">795</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regroup_and_accum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">,</span> <span class="n">attr_names</span><span class="p">):</span>
+<span class="normal">791</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">regroup_and_accum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reductions</span><span class="p">,</span> <span class="n">attr_names</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Accumulate various summaries across the ensemble.</span>
 
 <span class="sd">    Nothing is returned: result is placed in the object state.&#39;&#39;&#39;</span>
@@ -2197,14 +2242,14 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">861</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">857</span>
+<span class="normal">858</span>
+<span class="normal">859</span>
+<span class="normal">860</span>
+<span class="normal">861</span>
 <span class="normal">862</span>
 <span class="normal">863</span>
-<span class="normal">864</span>
-<span class="normal">865</span>
-<span class="normal">866</span>
-<span class="normal">867</span>
-<span class="normal">868</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">JSONWithCommentsDecoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">):</span>
+<span class="normal">864</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">JSONWithCommentsDecoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Remove JSON lines starting with # to allow -f with shebang&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
@@ -2264,7 +2309,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">288</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
 <span class="normal">291</span>
@@ -2278,11 +2327,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">299</span>
 <span class="normal">300</span>
 <span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NumpyEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NumpyEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Custom JSON encoder for numpy types.&quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
@@ -2353,7 +2398,11 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">341</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
 <span class="normal">342</span>
 <span class="normal">343</span>
 <span class="normal">344</span>
@@ -2745,11 +2794,7 @@ circumstances. See: util/drm-tab-demo.json5 for an example.</p>
 <span class="normal">730</span>
 <span class="normal">731</span>
 <span class="normal">732</span>
-<span class="normal">733</span>
-<span class="normal">734</span>
-<span class="normal">735</span>
-<span class="normal">736</span>
-<span class="normal">737</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimulationRun</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">733</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SimulationRun</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load and summarize a simulation: one DRM and its corresponding SPC.&#39;&#39;&#39;</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">load_spc</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="c1"># allow creating a dummy object so that its properties may be queried</span>
@@ -3180,7 +3225,11 @@ per DRM observation.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">640</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
 <span class="normal">641</span>
 <span class="normal">642</span>
 <span class="normal">643</span>
@@ -3255,11 +3304,7 @@ per DRM observation.</p>
 <span class="normal">712</span>
 <span class="normal">713</span>
 <span class="normal">714</span>
-<span class="normal">715</span>
-<span class="normal">716</span>
-<span class="normal">717</span>
-<span class="normal">718</span>
-<span class="normal">719</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">match_inv</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">show_attrs</span><span class="p">):</span>
+<span class="normal">715</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match</span><span class="p">,</span> <span class="n">match_inv</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">show_attrs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract attributes from each obs in the DRM.</span>
 
 <span class="sd">    Returns a dictionary mapping attributes to lists, one list entry</span>
@@ -3361,7 +3406,11 @@ per DRM observation.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">473</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
 <span class="normal">474</span>
 <span class="normal">475</span>
 <span class="normal">476</span>
@@ -3375,11 +3424,7 @@ per DRM observation.</p>
 <span class="normal">484</span>
 <span class="normal">485</span>
 <span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_pseudo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">nobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">487</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_pseudo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">nobs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract pseudo-attribute, which can have special naming conventions.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;obs_num&#39;</span><span class="p">:</span>
         <span class="k">if</span> <span class="s1">&#39;ObsNum&#39;</span> <span class="ow">in</span> <span class="n">obs</span><span class="p">:</span>
@@ -3420,7 +3465,11 @@ per DRM observation.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">539</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
 <span class="normal">540</span>
 <span class="normal">541</span>
 <span class="normal">542</span>
@@ -3471,11 +3520,7 @@ per DRM observation.</p>
 <span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
-<span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span>
-<span class="normal">593</span>
-<span class="normal">594</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_any</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_any</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Selector function that switches on the attribute flavor to extract a value.&#39;&#39;&#39;</span>
     <span class="n">flavor</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">flavor</span><span class="p">,</span> <span class="n">attr</span><span class="o">.</span><span class="n">text</span>
     <span class="k">if</span> <span class="n">flavor</span> <span class="o">==</span> <span class="s1">&#39;attr&#39;</span><span class="p">:</span>
@@ -3555,7 +3600,11 @@ It returns True/False, not the attribute itself.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">430</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
 <span class="normal">431</span>
 <span class="normal">432</span>
 <span class="normal">433</span>
@@ -3592,11 +3641,7 @@ It returns True/False, not the attribute itself.</p>
 <span class="normal">464</span>
 <span class="normal">465</span>
 <span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
-<span class="normal">470</span>
-<span class="normal">471</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">just_peeking</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="normal">467</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">just_peeking</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract a value, attr, from an observation, obs, allowing recursive lookup.</span>
 
 <span class="sd">    The just_peeking argument is to detect presence of an attribute.</span>
@@ -3660,7 +3705,11 @@ It returns True/False, not the attribute itself.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">524</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
 <span class="normal">525</span>
 <span class="normal">526</span>
 <span class="normal">527</span>
@@ -3669,11 +3718,7 @@ It returns True/False, not the attribute itself.</p>
 <span class="normal">530</span>
 <span class="normal">531</span>
 <span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_planet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+<span class="normal">533</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_planet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract planet-related attribute by evaluating attr in the context of obs.&#39;&#39;&#39;</span>
     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">spc</span><span class="p">,</span> <span class="s1">&#39;No SPC info loaded for lookup of </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -3709,7 +3754,11 @@ It returns True/False, not the attribute itself.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">510</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
 <span class="normal">511</span>
 <span class="normal">512</span>
 <span class="normal">513</span>
@@ -3717,11 +3766,7 @@ It returns True/False, not the attribute itself.</p>
 <span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_star</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">extract_value_star</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract star-related attribute by evaluating attr in the context of obs.&#39;&#39;&#39;</span>
     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">spc</span><span class="p">,</span> <span class="s1">&#39;No SPC info loaded for lookup of </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -3762,7 +3807,11 @@ we attempt to do something reasonable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">404</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
 <span class="normal">405</span>
 <span class="normal">406</span>
 <span class="normal">407</span>
@@ -3782,11 +3831,7 @@ we attempt to do something reasonable.</p>
 <span class="normal">421</span>
 <span class="normal">422</span>
 <span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_scenario</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+<span class="normal">424</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_scenario</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Get scenario name from DRM file name.</span>
 
 <span class="sd">    Attempt to honor sandbox conventions, e.g., </span>
@@ -3834,7 +3879,11 @@ we attempt to do something reasonable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">379</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
 <span class="normal">380</span>
 <span class="normal">381</span>
 <span class="normal">382</span>
@@ -3853,11 +3902,7 @@ we attempt to do something reasonable.</p>
 <span class="normal">395</span>
 <span class="normal">396</span>
 <span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span>
-<span class="normal">401</span>
-<span class="normal">402</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_earthlike_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">398</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_earthlike_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Is the planet earthlike? (for a vector of every planet)</span>
 
 <span class="sd">    This follows the reference version in reduce_drms.py.&#39;&#39;&#39;</span>
@@ -3903,7 +3948,11 @@ we attempt to do something reasonable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">493</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span>
 <span class="normal">496</span>
@@ -3914,11 +3963,7 @@ we attempt to do something reasonable.</p>
 <span class="normal">501</span>
 <span class="normal">502</span>
 <span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">perform_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+<span class="normal">504</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">perform_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Extract attribute by evaluating attr in the context of obs.&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">val</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;np&quot;</span><span class="p">:</span> <span class="n">np</span><span class="p">,</span> <span class="s2">&quot;spc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">spc</span><span class="p">,</span> <span class="o">**</span><span class="n">obs</span><span class="p">})</span>
@@ -3956,7 +4001,11 @@ we attempt to do something reasonable.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">596</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span>
 <span class="normal">599</span>
@@ -3993,11 +4042,7 @@ we attempt to do something reasonable.</p>
 <span class="normal">630</span>
 <span class="normal">631</span>
 <span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">msg_obs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_spc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">633</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">msg_obs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_spc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Pretty-print available attributes to stderr.&#39;&#39;&#39;</span>
     <span class="c1"># global-var synchronization scheme only works with -j 1: adequate</span>
     <span class="k">global</span> <span class="n">RECORD_WAS_SHOWN</span>
@@ -4065,7 +4110,11 @@ If econo, delete the DRM and keep only the summary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">721</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
 <span class="normal">722</span>
 <span class="normal">723</span>
 <span class="normal">724</span>
@@ -4077,11 +4126,7 @@ If econo, delete the DRM and keep only the summary.</p>
 <span class="normal">730</span>
 <span class="normal">731</span>
 <span class="normal">732</span>
-<span class="normal">733</span>
-<span class="normal">734</span>
-<span class="normal">735</span>
-<span class="normal">736</span>
-<span class="normal">737</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">econo</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="normal">733</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">econo</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Find the summary of the sim as a dictionary held within the object.</span>
 
 <span class="sd">    The convention is that the summary is built up by calling a series of analytic</span>
@@ -4142,7 +4187,11 @@ number of jobs to 1.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">317</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
 <span class="normal">318</span>
 <span class="normal">319</span>
 <span class="normal">320</span>
@@ -4159,11 +4208,7 @@ number of jobs to 1.</p>
 <span class="normal">331</span>
 <span class="normal">332</span>
 <span class="normal">333</span>
-<span class="normal">334</span>
-<span class="normal">335</span>
-<span class="normal">336</span>
-<span class="normal">337</span>
-<span class="normal">338</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WorkerMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">334</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WorkerMap</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Abstracts the multiprocessing worker-pool; switches to no workers if jobs &lt;= 1.</span>
 
 <span class="sd">    This allows you to go back to ordinary single-job processing by setting the </span>
@@ -4226,7 +4271,11 @@ number of jobs to 1.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">908</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">904</span>
+<span class="normal">905</span>
+<span class="normal">906</span>
+<span class="normal">907</span>
+<span class="normal">908</span>
 <span class="normal">909</span>
 <span class="normal">910</span>
 <span class="normal">911</span>
@@ -4265,11 +4314,7 @@ number of jobs to 1.</p>
 <span class="normal">944</span>
 <span class="normal">945</span>
 <span class="normal">946</span>
-<span class="normal">947</span>
-<span class="normal">948</span>
-<span class="normal">949</span>
-<span class="normal">950</span>
-<span class="normal">951</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">argtexts_to_object</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="normal">947</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">argtexts_to_object</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Convert lists of argument-texts to a dict-of-dicts indexed by flavor.&#39;&#39;&#39;</span>
 
     <span class="c1"># make a unique name for flavor (Eval_1, Attr_5, etc.)</span>
@@ -4336,7 +4381,11 @@ number of jobs to 1.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1079</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1075</span>
+<span class="normal">1076</span>
+<span class="normal">1077</span>
+<span class="normal">1078</span>
+<span class="normal">1079</span>
 <span class="normal">1080</span>
 <span class="normal">1081</span>
 <span class="normal">1082</span>
@@ -4368,11 +4417,7 @@ number of jobs to 1.</p>
 <span class="normal">1108</span>
 <span class="normal">1109</span>
 <span class="normal">1110</span>
-<span class="normal">1111</span>
-<span class="normal">1112</span>
-<span class="normal">1113</span>
-<span class="normal">1114</span>
-<span class="normal">1115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">expand_drm</span><span class="p">(</span><span class="n">progname</span><span class="p">,</span> <span class="n">drm</span><span class="p">):</span>
+<span class="normal">1111</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">expand_drm</span><span class="p">(</span><span class="n">progname</span><span class="p">,</span> <span class="n">drm</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Expand drm input arg such that it descends into directories.</span>
 
 <span class="sd">    TODO: Filename manipulation using Pathlib not f-strings.&#39;&#39;&#39;</span>
@@ -4431,7 +4476,11 @@ number of jobs to 1.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">870</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">866</span>
+<span class="normal">867</span>
+<span class="normal">868</span>
+<span class="normal">869</span>
+<span class="normal">870</span>
 <span class="normal">871</span>
 <span class="normal">872</span>
 <span class="normal">873</span>
@@ -4462,11 +4511,7 @@ number of jobs to 1.</p>
 <span class="normal">898</span>
 <span class="normal">899</span>
 <span class="normal">900</span>
-<span class="normal">901</span>
-<span class="normal">902</span>
-<span class="normal">903</span>
-<span class="normal">904</span>
-<span class="normal">905</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">json_to_object</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="normal">901</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">json_to_object</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load a JSON dictionary, extract any program flags, return the remainder.&#39;&#39;&#39;</span>
     <span class="c1"># 1: attempt to load a dict from a JSON file</span>
     <span class="k">try</span><span class="p">:</span>
@@ -4526,16 +4571,16 @@ by a separate process that is created by the multiprocessing module.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">741</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">737</span>
+<span class="normal">738</span>
+<span class="normal">739</span>
+<span class="normal">740</span>
+<span class="normal">741</span>
 <span class="normal">742</span>
 <span class="normal">743</span>
 <span class="normal">744</span>
 <span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
-<span class="normal">750</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">outer_load_and_reduce</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">746</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">outer_load_and_reduce</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Load a sim and summarize it into a dict.</span>
 
 <span class="sd">    This must be present at the outer scope of the file so it can be loaded</span>
@@ -4570,7 +4615,11 @@ by the attribute name ("column name") in the output tablulation.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">954</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">950</span>
+<span class="normal">951</span>
+<span class="normal">952</span>
+<span class="normal">953</span>
+<span class="normal">954</span>
 <span class="normal">955</span>
 <span class="normal">956</span>
 <span class="normal">957</span>
@@ -4600,11 +4649,7 @@ by the attribute name ("column name") in the output tablulation.</p>
 <span class="normal">981</span>
 <span class="normal">982</span>
 <span class="normal">983</span>
-<span class="normal">984</span>
-<span class="normal">985</span>
-<span class="normal">986</span>
-<span class="normal">987</span>
-<span class="normal">988</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">process_attr_program_inputs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="normal">984</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">process_attr_program_inputs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Process given attribute inputs, whether arguments or in a file.</span>
 
 <span class="sd">    The args.___ namespace is updated by the JSON file contents.</span>
@@ -4661,13 +4706,13 @@ by the attribute name ("column name") in the output tablulation.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>util/drm_tabulate.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">309</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
 <span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
-<span class="normal">313</span>
-<span class="normal">314</span>
-<span class="normal">315</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">strip_units</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="normal">311</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">strip_units</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&#39;&#39;&#39;Strip astropy units from x.&#39;&#39;&#39;</span>
     <span class="c1"># TODO: allow coercing units to a supplied value</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">):</span>

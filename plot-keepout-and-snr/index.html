@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#most-helpful-sandbox-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Most helpful Sandbox usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,17 +1003,19 @@
   <h1>plot-keepout-and-snr</h1>
 
 <p>plot-keepout-and-snr: plot time-trace of keepout and snr within a single DRM</p>
-<p>Usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  plot-keepout-and-snr.py [-o OUTPATH] SCRIPT DRM
 </code></pre>
-<p>where:</p>
-<p>-o OUTPATH gives an output path for results, containing two %s slots  </p>
-<p>Most helpful Sandbox usage:</p>
-<p>PYTHONPATH=EXOSIMS plot-keepout-and-snr.py Scripts/FOO.json sims/FOO/drm/SEED.pkl </p>
-<p>where FOO.json is a script, and SEED.pkl is a DRM.  Output will be placed in the working directory 
-unless -o path/to/output/%s.%s or the like is given.</p>
+<h2 id="options">Options</h2>
+<ul>
+<li><code>-o OUTPATH</code> gives an output path for results, containing two %s slots</li>
+</ul>
+<h2 id="most-helpful-sandbox-usage">Most helpful Sandbox usage</h2>
+<pre><code>  PYTHONPATH=EXOSIMS plot-keepout-and-snr.py Scripts/FOO.json sims/FOO/drm/SEED.pkl
+</code></pre>
+<p>where <code>FOO.json</code> is a script, and <code>SEED.pkl</code> is a DRM.  Output will be placed in the
+working directory unless <code>-o path/to/output/%s.%s</code> or the like is given.</p>
 <p>Note: This imports EXOSIMS and instantiates an object based on the given SCRIPT.</p>
-<p>Michael Turmon, JPL, 07/2019</p>
 
 
 

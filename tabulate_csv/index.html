@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,38 +1014,37 @@
   <h1>tabulate_csv</h1>
 
 <p>tabulate_csv.py: tabulate CSV file or files according to standard processes</p>
-<p>usage:
-  <code>tabulate_csv.py [ -q ] [ -p ] [ -o outfile ] MODE CSVFILE</code></p>
-<p>where:</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  tabulate_csv.py [ -q ] [ -p ] [ -o outfile ] MODE CSVFILE
+</code></pre>
+<h2 id="arguments">Arguments</h2>
 <ul>
 <li>MODE is a comma-separated list of modes, or "all"
-    (at present, "funnel" is the only mode)</li>
-<li>
-<p>CSVFILE is a CSV file (or file pattern) with input fields for the table</p>
-</li>
-<li>
-<p>-o outfile gives an output file or output file pattern (stdout default)</p>
-</li>
-<li>-p means plain text output versus the default markdown</li>
-<li>-q means to continue quietly if CSVFILE is not present</li>
+  (at present, "funnel" is the only mode)</li>
+<li>CSVFILE is a CSV file (or file pattern) with input fields for the table</li>
+</ul>
+<h2 id="options">Options</h2>
+<ul>
+<li><code>-o outfile</code> gives an output file or output file pattern (stdout default)</li>
+<li><code>-p</code> means plain text output versus the default markdown</li>
+<li><code>-q</code> means to continue quietly if CSVFILE is not present</li>
 </ul>
 <p>The MODE is intended to be one or several keywords indicating the kind
 of tabulation to be done.  There are really two cases:</p>
 <ul>
 <li>single-mode operation.  The CSVFILE can be given explicitly, and so can
-    the optional outfile.</li>
+  the optional outfile.</li>
 <li>multi-mode operation.  Here the CSVFILE should be a pattern with two
-    %s's: the first for the relevant MODE, the second for the "csv" suffix.
-    And the outfile, if given, should also contain two %s placeholders: the first
-    for the mode and the second for the suffix (md or txt).</li>
+  %s's: the first for the relevant MODE, the second for the "csv" suffix.
+  And the outfile, if given, should also contain two %s placeholders: the first
+  for the mode and the second for the suffix (md or txt).</li>
 </ul>
-<p>The setup is intended to support many tabulations at once.  Now, there is just one:
-   <code>reduce-funnel.csv -&gt; table-funnel.md</code></p>
-<p>Typical usage:</p>
+<p>The setup is intended to support many tabulations at once.  Now, there is just one:</p>
+<p><code>reduce-funnel.csv -&gt; table-funnel.md</code></p>
+<h2 id="typical-usage">Typical usage</h2>
 <pre><code class="language-shell">  util/tabulate_csv.py funnel sims/HabEx_4m_foo/reduce-funnel.csv
   util/tabulate_csv.py -q -o sims/HabEx_4m_foo/tbl/table-%s.%s all sims/HabEx_4m_foo/reduce-%s.%s
 </code></pre>
-<p>turmon jan 2019</p>
 
 
 

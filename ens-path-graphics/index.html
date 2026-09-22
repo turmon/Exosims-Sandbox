@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -965,13 +1011,15 @@
 <li>csv-file summaries of stars visited</li>
 </ul>
 <p>Note that this operates on sets of DRMs, not just one DRM.</p>
-<p>Usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  ens-path-graphics [-a] [--outfile FILE] SCRIPT DRMs
 </code></pre>
-<p>where:
-  SCRIPT is the JSON script used to generate the DRMs
-  DRMs is a list of DRM pickle files
-and, optionally:</p>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>SCRIPT</code> is the JSON script used to generate the DRMs</li>
+<li><code>DRMs</code> is a list of DRM pickle files</li>
+</ul>
+<h2 id="options">Options</h2>
 <pre><code>  -a -&gt; skip the animation of the ensemble path 3D plot
   --outfile FILE -&gt; outputs filenames generated from a template,
         which should contain 2 appearances of %s (e.g., dir/ens-path-%s.%s)

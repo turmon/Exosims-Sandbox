@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#note-comma-separated-postprocessing-steps-are-done-in-one-invovation" class="md-skip">
+        <a href="#example" class="md-skip">
           Skip to content
         </a>
       
@@ -951,54 +951,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#note-comma-separated-postprocessing-steps-are-done-in-one-invovation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Note: comma-separated postprocessing steps are done in one invovation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
         Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#we-are-in-scratch-in-a-venv" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        we are in /scratch, in a VENV
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-the-script" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create the script
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#submit-the-generated-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        submit the generated file
       
     </span>
   </a>
@@ -1022,27 +978,34 @@
 
 
 
-<p>exp-add-sims.sh: Generate a SLURM batch script for an Experiment/Family</p>
+  <h1>exp-add-sims</h1>
+
+<p>exp-add-sims.sh: Generate a Slurm batch script for an Experiment/Family</p>
 <p>Given an Experiment or Family consisting of multiple EXOSIMS scripts, and a
-seed or list of seeds, makes a batch script ready for SLURM submission.
-Features:
-  - Submits an array job over all Scripts in the Family/Experiment
-  - With -j N, allows N-way parallelism over seeds in each Script
-  - With -m TARGET, allows postprocessing with "make reduce", etc.</p>
-<p>Simple Usage:
-  exp-add-sims.sh -0 -j 16 -m reduce,html-only Scripts/example.fam Experiment/seed100.txt
-  exp-add-sims.sh -0 -j 1  -m reduce,html-only Scripts/example.fam =777</p>
+seed or list of seeds, writes out a batch script ready for Slurm submission.
+Features:</p>
+<ul>
+<li>Composes an array job over all Scripts in the Family/Experiment</li>
+<li>With <code>-j N</code>, allows N-way parallelism over seeds in each Script</li>
+<li>With <code>-m TARGET</code>, allows postprocessing with <code>make reduce</code>, etc.</li>
+</ul>
+<p>Simple Usage:</p>
+<pre><code>  exp-add-sims.sh -0 -j 16 -m reduce,html-only Scripts/example.fam Experiment/seed100.txt
+  exp-add-sims.sh -0 -j 1  -m reduce,html-only Scripts/example.fam =777
+</code></pre>
 <p>Complete Usage:</p>
 <pre><code>  exp-add-sims.sh [-0] [-j N] [-/ S] [[-m target,target,...] ...] [-q|-v] Experiment Seeds
 </code></pre>
-<p>where arguments are:
-  Experiment: a directory name within Scripts/ of an Experiment or Family
-  Seeds: a file of integer seeds, or =S to use a single integer seed S.</p>
+<p>where arguments are:</p>
+<ul>
+<li>Experiment: a directory name within Scripts/ of an Experiment or Family</li>
+<li>Seeds: a file of integer seeds, or <code>=S</code> to use a single integer seed S.</li>
+</ul>
 <p>and options are:</p>
 <pre><code>  -0: Warm caches before ensemble seed-by-seed runs
   -j N: Ensemble is created with N-way parallelism
   -/ S: Divide the &quot;M&quot; scripts in the Experiment into &quot;S&quot; batches, 
-        producing &quot;S&quot; scripts. Default 1. Needed for large M.
+        producing &quot;S&quot; batch scripts. Default 1. Needed for large M.
   -m TARGET: Run &quot;make S==... TARGET postprocessing after ensemble
 </code></pre>
 <p>and less-used options:</p>
@@ -1050,38 +1013,48 @@ Features:
   -v: chatty about job invocation
   -h: print this help
 </code></pre>
-<h4 id="note-comma-separated-postprocessing-steps-are-done-in-one-invovation">Note: comma-separated postprocessing steps are done in one invovation</h4>
+<p>The output batch file is named <code>Batch/Run.sh</code> within the <code>Scripts/...</code> 
+root of the Experiment or Family, helping trace provenance. (If <code>-/</code> was 
+given, scripts are in the same directory, but named sequentially.)</p>
+<p>Control over <code>make</code> postprocessing: comma-separated postprocessing 
+steps are done in one invovation <code>make</code>, and repeated <code>-m</code> options 
+cause repeated invocations of <code>make</code>. Thus:</p>
+<pre><code>   -m reduce,obs-timeline-2 -m html-only
+</code></pre>
+<p>will have the batch job run:</p>
+<pre><code>  make S=... reduce obs-timeline-2
+  make S=... html-only
+</code></pre>
+<p>within each script directory. The comma-separated form is quicker 
+to type, but the trailing <code>-m html-only</code> ensures that a final HTML 
+page is generated with the timelines in it.</p>
+<p>Context:</p>
 <ul>
-<li>of "make", and repeated "-m" options cause repeated invocations of</li>
-<li><code>"make". So -m reduce,obs-timeline-2 -m html-only will</code>: make S=... reduce obs-timeline-2
-                                                           make S=... html-only</li>
-<li>within each script directory. The comma-separated form is quicker </li>
-<li>to type, but the trailing "-m html-only" ensures that a final HTML </li>
-<li>page is generated with the timelines in it.</li>
-<li></li>
-<li><code>Context</code>: - Your working directory is the /scratch or /scratch-edge Sandbox
-             - Your scripts are in a Family/Experiment in same Sandbox
-             - You should be in the Python VENV you wish to use</li>
-<li></li>
-<li>The generated script can be submitted to either the "slurm" or "edge" cluster, </li>
-<li>provided that the Experiment/Family exists in the Scripts/ directory</li>
-<li>on the scratch for that cluster.  (You must copy the files</li>
-<li>in <code>Scripts/...</code> between clusters yourself.) Just use <code>sbatch -M edge</code> or </li>
-<li><code>sbatch -M slurm</code>. Or, <code>sbatch</code> without <code>-M</code> will submit to the default </li>
-<li>cluster for that node.</li>
+<li>Your working directory is the <code>/scratch</code> or <code>/scratch-edge</code> Sandbox</li>
+<li>Your scripts are in a Family/Experiment in same Sandbox</li>
+<li>You should be in the Python VENV you wish to use</li>
 </ul>
+<p>The generated script can be submitted to either the "slurm" or "edge" cluster, 
+provided that the Experiment/Family exists in the <code>Scripts/</code> directory
+on the scratch for that cluster.  (You must copy the files
+in <code>Scripts/...</code> between clusters yourself.) Just use <code>sbatch -M edge</code> or 
+<code>sbatch -M slurm</code>. Or, <code>sbatch</code> without <code>-M</code> will submit to the default 
+cluster for that node.</p>
 <h4 id="example">Example</h4>
-<h1 id="we-are-in-scratch-in-a-venv">we are in /scratch, in a VENV</h1>
-<p>$ pwd; echo $VIRTUAL_ENV
+<pre><code># we are in /scratch, in a VENV
+$ pwd; echo $VIRTUAL_ENV
 /scratch/exo-yield/Sandbox/hwo
-/scratch-jpl/exo-yield/Sandbox/Python-venvs/exosims-202509-mjt</p>
-<h1 id="create-the-script">create the script</h1>
-<p>$ exp-add-sims.sh -0 -j16 -m reduce,obs-timeline-2 -m html-only Scripts/Test.exp Experiments/seed100.txt 
+/scratch-jpl/exo-yield/Sandbox/Python-venvs/exosims-202509-mjt
+
+# create the script
+$ exp-add-sims.sh -0 -j16 -m reduce,obs-timeline-2 -m html-only Scripts/Test.exp Experiments/seed100.txt 
 (...output...)
-exp-add-sims.sh: Batch script placed in: Scripts/Test.exp/Batch/Run.sh</p>
-<h1 id="submit-the-generated-file">submit the generated file</h1>
-<p>$ sbatch Scripts/Test.exp/Batch/Run.sh
-Submitted batch job 4987542</p>
+exp-add-sims.sh: Batch script placed in: Scripts/Test.exp/Batch/Run.sh
+
+# submit the generated file
+$ sbatch Scripts/Test.exp/Batch/Run.sh
+Submitted batch job 4987542
+</code></pre>
 
 
 

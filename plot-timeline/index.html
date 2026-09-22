@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#most-helpful-sandbox-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Most helpful Sandbox usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-complex-actual-usage-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More-complex actual usage line
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,22 +1014,23 @@
   <h1>plot-timeline</h1>
 
 <p>plot-timeline: plot timeline of all observations within a single DRM</p>
-<p>Usage:</p>
-<p><code>plot-timeline.py [-d] [-s] [-t CSV] [-o OUTPATH] SCRIPT DRM</code></p>
-<p>where:</p>
-<ul>
-<li>-d means to omit the day-in-the-life plot (can be useful)</li>
-<li>-s means to omit the synoptic all-mission plot</li>
-<li>-o OUTPATH gives an output path for results, containing two %s slots  </li>
-<li>-t CSV names a CSV file for General Astrophysics proxy observation-durations
-     (without -t, a sane builtin default is used).</li>
-</ul>
-<p>Most helpful Sandbox usage:</p>
-<pre><code>  plot-timeline.py -d Scripts/FOO.json sims/FOO/drm/SEED.pkl 
+<h2 id="usage">Usage</h2>
+<pre><code>  plot-timeline.py [-d] [-s] [-t CSV] [-o OUTPATH] SCRIPT DRM
 </code></pre>
-<p>where <code>FOO.json</code> is a script, and <code>SEED.pkl</code> is a DRM.  Output will be placed in the working directory 
-unless <code>-o path/to/output/%s.%s</code> or the like is given.</p>
-<p>More-complex actual usage line:</p>
+<h2 id="options">Options</h2>
+<ul>
+<li><code>-d</code> means to omit the day-in-the-life plot (can be useful)</li>
+<li><code>-s</code> means to omit the synoptic all-mission plot</li>
+<li><code>-o OUTPATH</code> gives an output path for results, containing two %s slots</li>
+<li><code>-t CSV</code> names a CSV file for General Astrophysics proxy observation-durations
+   (without <code>-t</code>, a sane builtin default is used).</li>
+</ul>
+<h2 id="most-helpful-sandbox-usage">Most helpful Sandbox usage</h2>
+<pre><code>  plot-timeline.py -d Scripts/FOO.json sims/FOO/drm/SEED.pkl
+</code></pre>
+<p>where <code>FOO.json</code> is a script, and <code>SEED.pkl</code> is a DRM.  Output will be placed in the
+working directory unless <code>-o path/to/output/%s.%s</code> or the like is given.</p>
+<h2 id="more-complex-actual-usage-line">More-complex actual usage line</h2>
 <pre><code>  util/plot-timeline.py -d Scripts/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402.json sims/HabEx_4m_TSDDold_DD_TF17_maxchar3_a0.78b0.2c0.07d0.11e.58f.05__20190402/drm/992454934.pkl
 </code></pre>
 

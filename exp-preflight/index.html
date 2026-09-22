@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -994,19 +970,15 @@ multi-ensemble runs.  This serves multiple purposes:</p>
 </ul>
 <p>If cache files were generated, the time estimate may be off.  If
 you want to use the time estimate in this case, just re-run the script.</p>
-<p>Usage:
-  <code>exp-preflight.sh EXP</code></p>
+<p>Usage:</p>
+<pre><code>  exp-preflight.sh EXP
+</code></pre>
 <p>where EXP is an experiment name.  By convention, EXP is in the <code>Scripts/</code> directory
 and ends in <code>.exp</code>.  The directory named by EXP must contain several json scripts.
 One of them is an index, and the others will be used for ensemble runs.</p>
 <p>Simplest usage:</p>
 <pre><code>  $ util/exp-preflight.sh Scripts/ExampleExp.exp
 </code></pre>
-<p>turmon may 2020</p>
-<h4 id="_1"></h4>
-<ul>
-<li></li>
-</ul>
 
 
 

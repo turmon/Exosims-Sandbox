@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -981,25 +957,20 @@
   <h1>rad-sma-rectangle-plot-driver</h1>
 
 <p>rad-sma-rectangle-plot-driver.sh: sh driver for radius/luminosity box-format plots</p>
-<p>usage:</p>
-<pre><code>  rad-sma-rectangle-plot-driver.sh [-d] [-o OP] in_tmpl
+<p>Usage:</p>
+<pre><code>  rad-sma-rectangle-plot-driver.sh [-q] [-o OP] in_tmpl
 </code></pre>
 <p>where:</p>
 <ul>
-<li>in_tmpl: filename template for data input
-      e.g.: sims/ExoS_A_SAG13/reduce-%s.%s</li>
-<li>dest_tmpl: the destination template for graphical output
-      e.g.: sims/ExoS_A_SAG13/gfx/plot-%s.%s</li>
-<li>-q indicates to plot quantiles, otherwise, means are plotted.</li>
+<li><code>in_tmpl</code>: filename template for data input,
+   e.g. <code>sims/ExoS_A_SAG13/reduce-%s.%s</code></li>
+<li><code>dest_tmpl</code>: the destination template for graphical output,
+   e.g. <code>sims/ExoS_A_SAG13/gfx/plot-%s.%s</code></li>
+<li><code>-q</code> indicates to plot quantiles, otherwise, means are plotted.</li>
 </ul>
 <p>For example,</p>
-<ul>
-<li><code>rad-sma-rectangle-plot-driver.sh self</code></li>
-</ul>
-<h4 id="_1"></h4>
-<ul>
-<li></li>
-</ul>
+<pre><code>  rad-sma-rectangle-plot-driver.sh self
+</code></pre>
 
 
 

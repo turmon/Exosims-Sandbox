@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,25 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -958,16 +982,18 @@
 
 <p>python_version_check: Check python and EXOSIMS readiness to run.</p>
 <p>Finds python and python-package version information,
-and optionally attempt a test instantiation and run_sim()
+and optionally attempt a test instantiation and <code>run_sim()</code>
 of an EXOSIMS object.</p>
-<p>Usage:</p>
+<h2 id="usage">Usage</h2>
 <pre><code>  python_version_check.py [-x] [-i] [-r] [-s SCRIPT] [-c CACHEDIR] [-R [sdet|conda|FILE|URL]]
 </code></pre>
-<p>Simplest usage:
-  <code>python_version_check.py</code></p>
-<p>More complex usage:
-  <code>python_version_check.py -R https://raw.githubusercontent.com/dsavransky/EXOSIMS/photometryUpdate/requirements.txt -x</code></p>
-<p>For more on usage, use the -h option.
+<p>Simplest usage:</p>
+<pre><code>  python_version_check.py
+</code></pre>
+<p>More complex usage:</p>
+<pre><code>  python_version_check.py -R https://raw.githubusercontent.com/dsavransky/EXOSIMS/photometryUpdate/requirements.txt -x
+</code></pre>
+<p>For more on usage, use the <code>-h</code> option.
 Some options are described there but not documented here.</p>
 
 

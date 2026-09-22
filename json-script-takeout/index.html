@@ -61,11 +61,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -944,25 +939,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -981,25 +957,25 @@
   <h1>json-script-takeout</h1>
 
 <p>json-script-takeout.sh: make a tarfile of the external files referenced by a script</p>
-<p>usage:</p>
+<p>Usage:</p>
 <pre><code>  json-script-takeout.sh [-o outfile] script
 </code></pre>
-<p>where:
-  script: JSON script
-      e.g.: Scripts/HabEx_4m_TSDD_pop100DD_revwt.json
-optionally:
-  outfile: the destination filename for the tar archive
-           (if not supplied, a ".tgz" is added to the script basename)</p>
-<p>We make the assumption that the files are referenced by the $EXOSIMS_PARAMS
+<p>where:</p>
+<ul>
+<li><code>script</code>: JSON script, for example
+  <code>Scripts/HabEx_4m_TSDD_pop100DD_revwt.json</code></li>
+</ul>
+<p>optionally:</p>
+<ul>
+<li><code>outfile</code>: the destination filename for the tar archive
+  (if not supplied, a <code>.tgz</code> is added to the script basename)</li>
+</ul>
+<p>We make the assumption that the files are referenced by the <code>$EXOSIMS_PARAMS</code>
 variable.</p>
 <p>For example,</p>
-<p>json-script-takeout.sh Scripts/HabEx_4m_TSDD_pop100DD_revwt.json</p>
-<p>See also: json-attr-edit</p>
-<p>Michael Turmon, JPL, Dec 2023</p>
-<h4 id="_1"></h4>
-<ul>
-<li></li>
-</ul>
+<pre><code>  json-script-takeout.sh Scripts/HabEx_4m_TSDD_pop100DD_revwt.json
+</code></pre>
+<p>See also: <code>json-attr-edit</code></p>
 
 
 

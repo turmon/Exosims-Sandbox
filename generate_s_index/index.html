@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,58 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arguments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#note" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Note
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -956,36 +1013,37 @@
 
   <h1>generate_s_index</h1>
 
-<p>generate_s_index.py: generate the s_index.json file for an Experiment</p>
-<p>usage:
-  <code>generate_s_index.py [ -o outfile ] SCRIPT [...]</code></p>
-<p>where:</p>
+<p>generate_s_index.py: generate the <code>s_index.json</code> file for an Experiment</p>
+<h2 id="usage">Usage</h2>
+<pre><code>  generate_s_index.py [ -o outfile ] SCRIPT [...]
+</code></pre>
+<h2 id="arguments">Arguments</h2>
 <ul>
-<li>SCRIPT ... is a list of JSON scripts, or </li>
-<li>SCRIPT is a directory containing JSON scripts
-    (if a directory, the directory is scanned for all its EXOSIMS scripts)</li>
-<li>-o allows naming a specific output .json file</li>
+<li><code>SCRIPT ...</code> is a list of JSON scripts, or</li>
+<li><code>SCRIPT</code> is a directory containing JSON scripts
+   (if a directory, the directory is scanned for all its EXOSIMS scripts)</li>
+<li><code>-o</code> allows naming a specific output <code>.json</code> file</li>
 </ul>
 <p>Only <code>.json</code> files that look like EXOSIMS input scripts are indexed.</p>
-<p>The output file (-o) typically would not be given. If not, its path is 
-inferred from the directory of the first given SCRIPT (or from the 
-script-directory, if that style of argument is used). </p>
+<p>The output file (<code>-o</code>) typically would not be given. If not, its path is
+inferred from the directory of the first given SCRIPT (or from the
+script-directory, if that style of argument is used).</p>
 <p>The full output filename will be the script directory name as determined
 above, plus <code>s_index.json</code>.</p>
-<p>Typical usage:</p>
+<h2 id="typical-usage">Typical usage</h2>
 <ul>
 <li>Usually best:
-    <code>util/generate_s_index.py Scripts/ExampleExp.exp</code></li>
+   <code>util/generate_s_index.py Scripts/ExampleExp.exp</code></li>
 <li>Also OK:
-    <code>util/generate_s_index.py Scripts/ExampleExp.exp/*.json</code></li>
+   <code>util/generate_s_index.py Scripts/ExampleExp.exp/*.json</code></li>
 </ul>
-<p>NOTE:
-This is a "primitive" indexer that does not do anything clever about the actual
-Experiment parameters. The <code>s_index.json</code> file lists all viable EXOSIMS scripts, 
+<h2 id="note">Note</h2>
+<p>This is a "primitive" indexer that does not do anything clever about the actual
+Experiment parameters. The <code>s_index.json</code> file lists all viable EXOSIMS scripts,
 but <em>the index does not break out any specific parameter values</em>.</p>
 <p>That is, if iterating over telescope diameter and contrast, or scheduler coefficients,
-symbolic names of these parameters will be entered in the s_index.json file generated
-by other tools, like json-xform.py. Such index files will look like this:</p>
+symbolic names of these parameters will be entered in the <code>s_index.json</code> file generated
+by other tools, like <code>json-xform.py</code>. Such index files will look like this:</p>
 <pre><code class="language-json">{
   &quot;diam&quot;: 5,
   &quot;contrast&quot;: 1e-10,
@@ -1003,9 +1061,9 @@ by other tools, like json-xform.py. Such index files will look like this:</p>
   &quot;run_name&quot;: &quot;H5_C1e-10_baseA_IWA2.0&quot;
 },
 </code></pre>
-<p>Thus, this is a backup mechanism to allow Sandbox tools to work without complaint. 
-The downstream effect (not catastrophic) is that Experiment-wide tables like 
-<code>reduce-yield-plus.csv</code> will not have row-by-row parameter information other than 
+<p>Thus, this is a backup mechanism to allow Sandbox tools to work without complaint.
+The downstream effect (not catastrophic) is that Experiment-wide tables like
+<code>reduce-yield-plus.csv</code> will not have row-by-row parameter information other than
 the textual Ensemble name (e.g., <code>H5_C1e-10_baseA_IWA2.0</code>).</p>
 
 

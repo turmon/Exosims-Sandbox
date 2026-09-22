@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#typical-usage" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -939,6 +944,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#typical-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-for-experts-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option for experts only
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -957,43 +1003,44 @@
   <h1>keepout_path_graphics</h1>
 
 <p>keepout_path_graphics: Plot targets, planets, and keepout regions, with optional DRM overlay</p>
-<p>For usage, use the -h option.  Some options may be described there but not here.</p>
-<p>Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout regions,
-and, if a DRM is provided (see below), detections, characterizations, and slews.
-Output is to a movie (.mp4), or individual frames (.png).  Also, some cumulative keepout
-summary statistics, and plots, can optionally be generated.</p>
-<p>DRM or observing-tour display:  If pickles summarizing a DRM are supplied (--drm), then the
-observing tour is loaded and the observations are shown. It is assumed that --drm and --spc
-are used together.</p>
-<p>Typical usage:</p>
-<p><code>keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json</code></p>
-<p>where:</p>
+<p>For usage, use the <code>-h</code> option.  Some options may be described there but not here.</p>
+<p>Produces a time-stepped map, in sky coordinates, of stellar targets, planets, keepout
+regions, and, if a DRM is provided (see below), detections, characterizations, and slews.
+Output is to a movie (<code>.mp4</code>), or individual frames (<code>.png</code>).  Also, some cumulative
+keepout summary statistics, and plots, can optionally be generated.</p>
+<p>DRM or observing-tour display:  If pickles summarizing a DRM are supplied (<code>--drm</code>), then
+the observing tour is loaded and the observations are shown. It is assumed that <code>--drm</code>
+and <code>--spc</code> are used together.</p>
+<h2 id="typical-usage">Typical usage</h2>
+<pre><code>  keepout_path_graphics.py -s 0 -l 0.2 -d 0.5 -m $HOME/keepout.mp4 ./sampleScript_coron.json
+</code></pre>
+<h2 id="options">Options</h2>
 <ul>
-<li>-s is the start-time of the movie
-       if zero, the start-time from the script is used.
-       if a float in [0,1], the movie is started that proportion of the way through the mission.
-       if a number &lt;= 10000 is given, this is the offset from mission start in days
-       if a number &gt; 10000 is given, this is the MJD start time.</li>
-<li>-l is the length in years
-       if zero is given (-l 0), the duration from the script is used.</li>
-<li>-d is the delta-t between frames in days</li>
-<li>-m is the name of the movie</li>
+<li><code>-s</code> is the start-time of the movie.
+  If zero, the start-time from the script is used.
+  If a float in [0,1], the movie is started that proportion of the way through the mission.
+  If a number &lt;= 10000 is given, this is the offset from mission start in days.
+  If a number &gt; 10000 is given, this is the MJD start time.</li>
+<li><code>-l</code> is the length in years.
+  If zero is given (<code>-l 0</code>), the duration from the script is used.</li>
+<li><code>-d</code> is the delta-t between frames in days</li>
+<li><code>-m</code> is the name of the movie</li>
 </ul>
 <p>optionally:</p>
 <ul>
-<li>-e     -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended</li>
-<li>-C     -- make a coronagraph-only movie, even if a starshade is present.
-            (only affects movie and final frame, not cumulative keepout)</li>
-<li>-f DIR -- the directory name for .png frame-by-frame output</li>
-<li>-c DIR -- the directory name for cumulative keepout output</li>
-<li>--drm FILE -- the file containing the DRM as a pickle</li>
-<li>--spc FILE -- the file containing the SPC as a pickle</li>
+<li><code>-e</code> -- use equatorial coordinates as opposed to ra/dec, HIGHLY recommended</li>
+<li><code>-C</code> -- make a coronagraph-only movie, even if a starshade is present.
+  (only affects movie and final frame, not cumulative keepout)</li>
+<li><code>-f DIR</code> -- the directory name for <code>.png</code> frame-by-frame output</li>
+<li><code>-c DIR</code> -- the directory name for cumulative keepout output</li>
+<li><code>--drm FILE</code> -- the file containing the DRM as a pickle</li>
+<li><code>--spc FILE</code> -- the file containing the SPC as a pickle</li>
 </ul>
-<p>Option for experts only:</p>
+<h2 id="option-for-experts-only">Option for experts only</h2>
 <ul>
-<li>-x SCRIPT -- the given SCRIPT filename is loaded on top of the argument script
-              if the given SCRIPT name begins with !, it is treated as a
-              json literal rather than a filename</li>
+<li><code>-x SCRIPT</code> -- the given SCRIPT filename is loaded on top of the argument script.
+  If the given SCRIPT name begins with <code>!</code>, it is treated as a
+  json literal rather than a filename.</li>
 </ul>
 
 
