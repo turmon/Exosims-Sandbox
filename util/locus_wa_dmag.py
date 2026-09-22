@@ -1,16 +1,17 @@
 #!/usr/bin/env python
-r'''
-locus_wa_dmag.py: provide locus of WA, dMag pairs of simulated universe
+r'''locus_wa_dmag.py: provide locus of WA, dMag pairs of simulated universe
 
-usage:
+## Usage
 ```
   locus-wa-dmag.py [ -q ] [ -p ] SCRIPT CSVFILE
 ```
 
-where:
-  SCRIPT is a json script to initialize Exosims
-  CSVFILE is a CSV file (or file pattern) with input fields for the table
-and:
+## Arguments
+
+* `SCRIPT` is a json script to initialize Exosims
+* `CSVFILE` is a CSV file (or file pattern) with input fields for the table
+
+## Options
 ```
   [warning: below is out of date]
   -p means plain text output versus the default markdown
@@ -19,9 +20,10 @@ and:
 
 Output goes to stdout, which was a mistake.
 
-Typical usage:
+## Typical usage
+```
   PYTHONPATH=EXOSIMS:Local util/locus-wa-dmag.py Scripts/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04.json sims/HabEx_4m_TSDDold_DD_TF17_promo6_20190123.exp/s_c1=0.17_c2=0.35_c6=0.04/reduce-earth-char-list.csv.gz
-
+```
 '''
 
 from __future__ import division

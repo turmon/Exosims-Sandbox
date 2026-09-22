@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-r'''
-time-slew-vs-char.py: reduce a pile of DRMs to slew-time vs. char-time
+r'''time-slew-vs-char.py: reduce a pile of DRMs to slew-time vs. char-time
 
-usage:
+## Usage
 ```
   time-slew-vs-char.py [ -O outfile ] [ -j N ] DRM [ ...]
 ```
 
-where:
-  DRM ... is a list of DRM pickles,
-and:
+## Arguments
+
+* `DRM ...` is a list of DRM pickles
+
+## Options
 ```
   -O outfile gives a template (containing exactly two occurrences of %s) for
      file outputs.  This is optional - output will go to the sims/SCRIPT/...
@@ -19,13 +20,14 @@ and:
      If N = 0 or 1, no parallel workers are used, which is helpful for debugging.
 ```
 
-Typical usage:
+## Typical usage
+```
   util/time-slew-vs-char.py sims/HabEx_4m_TSDDtemp_top130DD_dmag26p0_20180408/drm/*
+```
 
 Note: This started as a one-off.  I adapted the DRM data reduction script because
-I wanted to see if a functional "shell", suitable for one-offs, could be extracted 
+I wanted to see if a functional "shell", suitable for one-offs, could be extracted
 from the rather complex full-reduction setup.
-
 '''
 
 from __future__ import division

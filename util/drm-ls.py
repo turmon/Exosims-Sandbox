@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 """drm-ls.py: Summarize DRMs to the terminal similar to "ls".
 
-Usage:
-  `drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]`
+## Usage
+```
+  drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]
+```
 
 Simplest usage:
+```
   drm-ls.py
+```
 
-where:
+## Options
 ```
  -l gives long-format output (extra columns)
  -q gives short, summary output (no per-DRM output)
@@ -20,11 +24,11 @@ A file, a list of files, a directory, or list thereof, can be given
 for listing.  By default, DRMs in the current working directory are
 listed.
 
-DRM files should be named with extensions .pkl, .drm, .gz, or .bz2, and
+DRM files should be named with extensions `.pkl`, `.drm`, `.gz`, or `.bz2`, and
 should correspond to Python pickles.  Gzip or bzip2 compressed files
-(bearing any extension, even .pkl) will be uncompressed and examined.
+(bearing any extension, even `.pkl`) will be uncompressed and examined.
 
-For more on usage, use the -h option.
+For more on usage, use the `-h` option.
 Some options may be described there but not documented here.
 """
 

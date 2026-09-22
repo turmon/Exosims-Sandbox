@@ -1,5 +1,5 @@
 #
-# drm_tab_plot_demo.py: demo of a few plots using drm_tabulate as a module
+# drm_tab_plot_demo.py: demo of a few plots using `drm_tabulate` as a module
 
 # %matplotlib tk
 

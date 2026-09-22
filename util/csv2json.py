@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """csv2json.py: Convert table in CSV format to a list of JSON objects
 
-Usage:
+## Usage
 ```
     csv2json.py test.csv test.json
   (or)
@@ -39,10 +39,11 @@ row, like this:
       }
   ]
 ```
-* Note that the RowNum field will be added for convenience.
-* Not tested with complex/quoted strings within the input CSV
 
-turmon 2022-july
+## Notes
+
+* Note that the `RowNum` field will be added for convenience.
+* Not tested with complex/quoted strings within the input CSV
 """
 
 

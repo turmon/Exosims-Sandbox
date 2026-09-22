@@ -1,20 +1,19 @@
 #!/usr/bin/env python
-r"""
-star_visit_pmf_tabulate.py: make per-star table of detection visits
+r"""star_visit_pmf_tabulate.py: make per-star table of detection visits
 
-Usage:
+## Usage
 ```
   star_visit_pmf_tabulate.py [-N n] SCENARIO
 ```
 
-where:
+## Arguments
 ```
   SCENARIO: a scenario-summary directory (containing a "drm" subdirectory,
      but not naming the drm directory itself).
      In Sandbox convention, SCENARIO is typically in the sims/ hierarchy.
 ```
 
-and optionally:
+## Options
 ```
   -N n => cap the number of DRMs examined to "n", to speed testing.
 ```
@@ -24,7 +23,6 @@ two files:
 
 + `detection-visits.html`: a HTML table listing stars and detection visits
 + `detection-visits.csv`: the CSV version of the above table, for later analysis
-
 """
 
 import os

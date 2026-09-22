@@ -1,27 +1,24 @@
 #!/usr/bin/env python
 """plot-keepout-and-snr: plot time-trace of keepout and snr within a single DRM
 
-Usage:
-
+## Usage
 ```
   plot-keepout-and-snr.py [-o OUTPATH] SCRIPT DRM
 ```
 
-where:
+## Options
 
-  -o OUTPATH gives an output path for results, containing two %s slots  
+* `-o OUTPATH` gives an output path for results, containing two %s slots
 
-Most helpful Sandbox usage:
+## Most helpful Sandbox usage
+```
+  PYTHONPATH=EXOSIMS plot-keepout-and-snr.py Scripts/FOO.json sims/FOO/drm/SEED.pkl
+```
 
-  PYTHONPATH=EXOSIMS plot-keepout-and-snr.py Scripts/FOO.json sims/FOO/drm/SEED.pkl 
-
-where FOO.json is a script, and SEED.pkl is a DRM.  Output will be placed in the working directory 
-unless -o path/to/output/%s.%s or the like is given.
+where `FOO.json` is a script, and `SEED.pkl` is a DRM.  Output will be placed in the
+working directory unless `-o path/to/output/%s.%s` or the like is given.
 
 Note: This imports EXOSIMS and instantiates an object based on the given SCRIPT.
-
-Michael Turmon, JPL, 07/2019
-
 """
 
 from __future__ import print_function

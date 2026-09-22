@@ -1,41 +1,43 @@
 #!/usr/bin/env python
-r'''
-generate_s_index.py: generate the s_index.json file for an Experiment
+r'''generate_s_index.py: generate the `s_index.json` file for an Experiment
 
-usage:
-  `generate_s_index.py [ -o outfile ] SCRIPT [...]`
+## Usage
+```
+  generate_s_index.py [ -o outfile ] SCRIPT [...]
+```
 
-where:
+## Arguments
 
-*  SCRIPT ... is a list of JSON scripts, or 
-*  SCRIPT is a directory containing JSON scripts
-    (if a directory, the directory is scanned for all its EXOSIMS scripts)
-*  -o allows naming a specific output .json file
+*  `SCRIPT ...` is a list of JSON scripts, or
+*  `SCRIPT` is a directory containing JSON scripts
+   (if a directory, the directory is scanned for all its EXOSIMS scripts)
+*  `-o` allows naming a specific output `.json` file
 
 Only `.json` files that look like EXOSIMS input scripts are indexed.
 
-The output file (-o) typically would not be given. If not, its path is 
-inferred from the directory of the first given SCRIPT (or from the 
-script-directory, if that style of argument is used). 
+The output file (`-o`) typically would not be given. If not, its path is
+inferred from the directory of the first given SCRIPT (or from the
+script-directory, if that style of argument is used).
 
 The full output filename will be the script directory name as determined
 above, plus `s_index.json`.
 
-Typical usage:
+## Typical usage
 
 *  Usually best:
-    `util/generate_s_index.py Scripts/ExampleExp.exp`
+   `util/generate_s_index.py Scripts/ExampleExp.exp`
 *  Also OK:
-    `util/generate_s_index.py Scripts/ExampleExp.exp/*.json`
+   `util/generate_s_index.py Scripts/ExampleExp.exp/*.json`
 
-NOTE:
+## Note
+
 This is a "primitive" indexer that does not do anything clever about the actual
-Experiment parameters. The `s_index.json` file lists all viable EXOSIMS scripts, 
+Experiment parameters. The `s_index.json` file lists all viable EXOSIMS scripts,
 but *the index does not break out any specific parameter values*.
 
 That is, if iterating over telescope diameter and contrast, or scheduler coefficients,
-symbolic names of these parameters will be entered in the s_index.json file generated
-by other tools, like json-xform.py. Such index files will look like this:
+symbolic names of these parameters will be entered in the `s_index.json` file generated
+by other tools, like `json-xform.py`. Such index files will look like this:
 
 ``` json
 {
@@ -59,11 +61,10 @@ An entry produced by the present routine just has an arbitrary script number:
 },
 ```
 
-Thus, this is a backup mechanism to allow Sandbox tools to work without complaint. 
-The downstream effect (not catastrophic) is that Experiment-wide tables like 
-`reduce-yield-plus.csv` will not have row-by-row parameter information other than 
+Thus, this is a backup mechanism to allow Sandbox tools to work without complaint.
+The downstream effect (not catastrophic) is that Experiment-wide tables like
+`reduce-yield-plus.csv` will not have row-by-row parameter information other than
 the textual Ensemble name (e.g., `H5_C1e-10_baseA_IWA2.0`).
-
 '''
 # turmon aug 2023
 

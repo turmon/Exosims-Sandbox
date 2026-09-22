@@ -2,21 +2,25 @@
 """python_version_check: Check python and EXOSIMS readiness to run.
 
 Finds python and python-package version information,
-and optionally attempt a test instantiation and run_sim()
+and optionally attempt a test instantiation and `run_sim()`
 of an EXOSIMS object.
 
-Usage:
+## Usage
 ```
   python_version_check.py [-x] [-i] [-r] [-s SCRIPT] [-c CACHEDIR] [-R [sdet|conda|FILE|URL]]
 ```
 
 Simplest usage:
-  `python_version_check.py`
+```
+  python_version_check.py
+```
 
 More complex usage:
-  `python_version_check.py -R https://raw.githubusercontent.com/dsavransky/EXOSIMS/photometryUpdate/requirements.txt -x`
+```
+  python_version_check.py -R https://raw.githubusercontent.com/dsavransky/EXOSIMS/photometryUpdate/requirements.txt -x
+```
 
-For more on usage, use the -h option.
+For more on usage, use the `-h` option.
 Some options are described there but not documented here.
 """
 

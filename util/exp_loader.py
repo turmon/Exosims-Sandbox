@@ -1,11 +1,12 @@
 # exp_loader.py: load an Experiment's per-Ensemble reduction info into a pandas table
 #
-# script (no arguments) that:
-#   -- loads the s_index file for an Experiment, as a pandas table
-#      (one row per Ensemble)
-#   -- iterates over the runs therein, and loads the reduce-info.csv for each
-#   -- adds the reduction info as more columns in the run list
-#   -- writes the pandas file as a .pkl
+# Script (no arguments) that:
+#
+# * loads the `s_index` file for an Experiment, as a pandas table
+#   (one row per Ensemble)
+# * iterates over the runs therein, and loads the `reduce-info.csv` for each
+# * adds the reduction info as more columns in the run list
+# * writes the pandas file as a `.pkl`
 #
 # ...it could have just been a csv, but I wanted to allow more complex outputs if desired
 

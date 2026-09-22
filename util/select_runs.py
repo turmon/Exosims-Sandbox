@@ -1,16 +1,16 @@
 #!/usr/bin/env python
-r'''
-select_runs.py: select runs from a list
+r'''select_runs.py: select runs from a list
 
-usage:
+## Usage
 ```
   select_runs.py [ -q ] [ -n N ] [ -m MODE ] SCENARIO
 ```
 
-where:
-  SCENARIO is a location (for now, directory) containing run information
+## Arguments
 
-and:
+* `SCENARIO` is a location (for now, directory) containing run information
+
+## Options
 ```
   -m MODE tells what mode
      by default this is "drm" (output the DRM filenames within the SCENARIO)
@@ -19,10 +19,10 @@ and:
   -q means to exit quietly if SCENARIO is not present
 ```
 
-Typical usage:
+## Typical usage
+```
   util/select_runs.py -n 5 sims/HabEx_4m_TSDD
-
-turmon aug 2023
+```
 '''
 
 from operator import itemgetter

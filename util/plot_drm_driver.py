@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-plot_drm_driver.py: generate all Ensemble-level DRM plots
+"""plot_drm_driver.py: generate all Ensemble-level DRM plots
 
 Driver script to generate all Ensemble-level DRM plots
 
@@ -9,6 +8,7 @@ table-driven manner, loading CSV files and calling each plotting function
 with the appropriate arguments.
 
 See the `plot_drm_gallery/README.md` for:
+
 - Design information
 - How to make a new plot type
 - How to backtrack from plots to the function and data in them

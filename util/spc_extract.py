@@ -1,15 +1,21 @@
 #!/usr/bin/env python
 """spc_extract.py: Extract info from SPC files into CSV
 
-For usage, use the -h option.  Some options may be described there but not here.
+For usage, use the `-h` option.  Some options may be described there but not here.
 
-Typical usage:
-  `spc-extract.py sims/script/spc/*.spc`
+## Typical usage
+```
+  spc-extract.py sims/script/spc/*.spc
+```
 or:
-  `spc-extract.py -k .len sims/script/spc/*.spc`
+```
+  spc-extract.py -k .len sims/script/spc/*.spc
+```
 
 SPC files, directories of `.spc` files, or scenario/experiment directories
 may be given; directories are expanded recursively to all `.spc` files within.
+
+## Keys
 
 The `-k` option can be repeated to name particular SPC keys to output.
 If no `-k` is given, `.default-star` is used.  Special KEY values:
@@ -17,20 +23,22 @@ If no `-k` is given, `.default-star` is used.  Special KEY values:
 + `.len`            => give field names and their vector lengths (diagnostic)
 + `.name`           => give field names only (diagnostic)
 + `.all`            => output fields of the most-common non-scalar length,
-                       plus all scalar fields.  Use `--like KEY` to target
-                       a specific length (e.g., `--like Mp` for planet-length
-                       fields, `--like L` for star-length fields).
-+ `.default-star`   => output a standard set of star keys (default when no -k given)
+  plus all scalar fields.  Use `--like KEY` to target
+  a specific length (e.g., `--like Mp` for planet-length
+  fields, `--like L` for star-length fields).
++ `.default-star`   => output a standard set of star keys (default when no `-k` given)
 + `.default-planet` => output a standard set of planet keys
 
-You may include identifier columns, prepended before data columns in the 
+## Identifier columns
+
+You may include identifier columns, prepended before data columns in the
 order scenario, basename, seed, by giving these options:
 
 + `-N` => scenario name (`sims/A.fam/B.exp/C` becomes `A.fam/B.exp/C`)
 + `-B` => scenario basename (last path component of the scenario; `C` above)
 + `-s` => seed (numeric stem of the `.spc` filename)
 
-Other options:
+## Other options
 
 + `--json`     => emit JSON array of objects instead of CSV
 + `--like KEY` => with `-k .all`, select fields of the same length as KEY
@@ -38,7 +46,6 @@ Other options:
 
 Caveat: The customization of `is_earthlike` in `config-reduce.json`
 is not yet honored by this program.
-
 """
 
 

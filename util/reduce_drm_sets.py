@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-r'''
-reduce_drm_sets.py: reduce a list of simulation-ensembles to summary CSV files
+r'''reduce_drm_sets.py: reduce a list of simulation-ensembles to summary CSV files
 
-usage:
+## Usage
 ```
   reduce_drm_sets.py [ -E ] [ -O outfile ] [ -j N ] [ -i indexfile] ENS [...]
 ```
 
-where:
-  ENS ... is a list of simulation *directories* ("ensembles"),
-and:
+## Arguments
+
+* `ENS ...` is a list of simulation *directories* ("ensembles")
+
+## Options
 ```
   -O outfile gives a template (containing exactly two occurrences of "%s") for
      file outputs.  This is optional, and output will go to the ENS parent
@@ -19,13 +20,14 @@ and:
      Parallelism is vestigial; it slows processing on current hosts.
      If N = 0 or 1, no parallel workers are used: fastest for our
      small workload, and helpful for debugging.
-  -i indexfile names a JSON index file (by convention, s_index.json) that 
+  -i indexfile names a JSON index file (by convention, s_index.json) that
      associates experiment names with parameter values for that experiment.
      This allows output of summary information that is labeled with the
      corresponding parameter values.
      (Giving -i is usually un-needed: if Sandbox conventions are used, this
      code automatically looks for s_index.json in the ENS parent directory)
 ```
+
 also, importantly:
 ```
   -E means to glob-expand the given ENS into ENS/*/. In this case, s_index.json
@@ -33,6 +35,8 @@ also, importantly:
      in this case, ENS is itself the parent directory.
      NOTE: Typically -E is used.
 ```
+
+## Output files
 
 This program rolls up the summary information already recorded (for each ENS)
 in `ENS/reduce_info.csv`, and places the cumulative summary in a CSV file following
@@ -42,9 +46,9 @@ related CSV files. Overall:
 - `reduce-info.csv`: one-line file with overall yield and size information
 - `reduce-yield.csv`: same as below but with no ensemble name information
 - `reduce-yield-all.json`: one JSON object per ENS, with summary information as
-    in `reduce-yield-plus.csv` (below), as well as some other information such as runtime.
+  in `reduce-yield-plus.csv` (below), as well as some other information such as runtime.
 - `reduce-yield-plus.csv`: one line per ENS, with summary yield information,
-    ENS name, and parameter information (if `s_index.json` exists). Like so:
+  ENS name, and parameter information (if `s_index.json` exists). Like so:
 ```
   experiment,diam,contrast,tput,iwa,chars_earth_unique,detections_earth_all,detections_earth_unique,ensemble_size
   s_YX_D7.8_iwa44_C6.36e-11_tput0.22,7.8,6.36e-11,0.22,44,7.42,20.41,10.89,100
@@ -57,25 +61,29 @@ related CSV files. Overall:
 (Note: the "experiment" column should have been labeled "scenario", according to
 our current naming conventions.)
 
+## Nested Experiments
+
 This program supports nested Experiments. That is, if `-E` is given, and if the
-parent ENS contains only Experiments (`.exp` suffixes -- no `.fam`), an omnibus 
-summary is generated (`ENS/reduce-yield-plus.csv`) that consolidates *all 
-sub-Experiments* (`ENS/*.exp/reduce-yield-plus.csv`). This allows "chunking" 
+parent ENS contains only Experiments (`.exp` suffixes -- no `.fam`), an omnibus
+summary is generated (`ENS/reduce-yield-plus.csv`) that consolidates *all
+sub-Experiments* (`ENS/*.exp/reduce-yield-plus.csv`). This allows "chunking"
 large Experiments into sub-Experiments, but still generating a single yield
-summary CSV. To support this, all Experiments (ENS and ENS/*.exp) must contain
+summary CSV. To support this, all Experiments (ENS and `ENS/*.exp`) must contain
 their own `s_index.json` (with their portion of the whole). Upstream tooling
 must generate these files.
 
+## Typical use cases
+
 The typical use cases are as follows:
 
-- ENS list contains N basic Ensembles (single scenario yields)
+- ENS list contains N basic Ensembles (single scenario yields).
   The parent ENS should end in `.exp` (`s_index.json` expected) or `.fam`.
-    - `reduce-info.csv` contains the Ensemble sizing (N, and the sum of DRM 
+    - `reduce-info.csv` contains the Ensemble sizing (N, and the sum of DRM
       counts within each Ensemble), and maximum yields.
-    - `reduce-yield-plus.csv` contains N lines, each with average 
+    - `reduce-yield-plus.csv` contains N lines, each with average
       yields for one Ensemble, and the Ensemble name.
-      If `s_index.json` exists (parent is an Experiment, and ends in 
-      `.exp` by convention), this file will have extra columns giving 
+      If `s_index.json` exists (parent is an Experiment, and ends in
+      `.exp` by convention), this file will have extra columns giving
       all parameters for that Ensemble.
 - ENS list contains N Experiments (all ending in `.exp`, no `.fam`).
     - `reduce-info.csv` is now summarizing summaries. It contains the number
@@ -87,21 +95,21 @@ The typical use cases are as follows:
 - ENS list contains mixed Ensemble collections (Experiments and Families,
   ending in `.exp` and `.fam`), for a total of N collections.
     - `reduce-info.csv` is now summarizing summaries, but that's OK. It
-    contains the number (N) of child collections, and the overall number
-    of Ensembles underneath, and maximal yields. In some cases, these
-    maximal yields will be for completely unrelated scenarios, and
-    so not very informative, but in other cases, they will be.
+      contains the number (N) of child collections, and the overall number
+      of Ensembles underneath, and maximal yields. In some cases, these
+      maximal yields will be for completely unrelated scenarios, and
+      so not very informative, but in other cases, they will be.
     - `reduce-yield-plus.csv` will contain N lines, one for each collection,
-    with the collection name and maximal yield. 
+      with the collection name and maximal yield.
 
 These cases are in fact all the same. In each case, this code is loading
 `ENS/reduce-info.csv` for each relevant ENS, and producing a one-line
 "maximal" summary, and a multi-line summary file of all these reduce-info's.
 
-Typical usage:
-
-  `util/reduce_drm_sets.py -E sims/Yokohama_Extended.fam`
-
+## Typical usage
+```
+  util/reduce_drm_sets.py -E sims/Yokohama_Extended.fam
+```
 '''
 
 import argparse

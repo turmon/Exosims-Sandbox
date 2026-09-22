@@ -1,20 +1,21 @@
 #!/usr/bin/env python
-r'''
-export_ensemble_files.py: export selected files (plots, csv) from an ensemble
+r'''export_ensemble_files.py: export selected files (plots, csv) from an ensemble
 
-usage:
+## Usage
+```
+  export-ensemble-files.py [ -p ] [ -o ] SIMDIR
+```
 
-  `export-ensemble-files.py [ -p ] [ -o ] SIMDIR`
-
-where:
+## Arguments
 
 +  `SIMDIR` is a simulation directory, typically, `sims/FOO`
 +  `-o outfile` gives an output subdirectory
 +  `-p` means plain text output versus the default markdown
 
-Typical usage:
-  `util/export-ensemble-files.py sims/HabEx_4m_foo`
-
+## Typical usage
+```
+  util/export-ensemble-files.py sims/HabEx_4m_foo
+```
 '''
 # turmon oct 2019
 

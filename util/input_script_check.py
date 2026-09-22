@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 """input_script_check.py: Check EXOSIMS input script "specs" for keywords that are unused.
 
-Usage:
+## Usage
+```
   input_script_check.py script.json [...]
+```
 
-Notes:
-  * JPL scripts use a localized sim-runner, so you will need to put the
-    sim-runner class in your PYTHONPATH with the shell construct:
-    PYTHONPATH=Local util/input_script_check.py ...
+## Notes
 
-  * You can give a list of scripts, and they will be cycled through
+* JPL scripts use a localized sim-runner, so you will need to put the
+  sim-runner class in your PYTHONPATH with the shell construct:
+  `PYTHONPATH=Local util/input_script_check.py ...`
+
+* You can give a list of scripts, and they will be cycled through
   and checked one-by-one.
 
-Use with -h for more usage help.
+Use with `-h` for more usage help.
 """
 
 # turmon 2023-09 adapted from the original by Dmitry Savransky

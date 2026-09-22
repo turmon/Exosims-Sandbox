@@ -1,31 +1,29 @@
 #!/usr/bin/env python
 """plot-star-obs-trace: plot time-trace of keepout and observations within a single DRM
 
-Usage:
-
-  `plot-star-obs-trace.py [-o OUTPATH] [--aspect R] DRM`
-
-where:
-
+## Usage
 ```
-  -o OUTPATH gives an output path for results, containing two %s slots  
+  plot-star-obs-trace.py [-o OUTPATH] [--aspect R] DRM
+```
+
+## Options
+```
+  -o OUTPATH gives an output path for results, containing two %s slots
   --aspect gives the (vertical) aspect ratio, >1 helps for large target lists
 ```
 
-Most helpful Sandbox usage:
+## Most helpful Sandbox usage
+```
+  plot-star-obs-trace.py sims/FOO/drm/SEED.pkl
+```
 
-  plot-star-obs-trace.py sims/FOO/drm/SEED.pkl 
-
-SEED.pkl is a DRM.  Output will be placed in the working directory 
-unless -o path/to/output/%s.%s or the like is given.
+`SEED.pkl` is a DRM.  Output will be placed in the working directory
+unless `-o path/to/output/%s.%s` or the like is given.
 
 If present, the corresponding SPC will be deduced and loaded to give the
 correct star names. If not, a warning is given, but it's not a failure.
 
 Note: does not need to import EXOSIMS
-
-Michael Turmon, JPL
-
 """
 
 import os

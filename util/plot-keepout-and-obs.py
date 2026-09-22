@@ -1,27 +1,24 @@
 #!/usr/bin/env python
 """plot-keepout-and-obs: plot time-trace of keepout and observations within a single DRM
 
-Usage:
-
+## Usage
 ```
   plot-keepout-and-obs.py [-o OUTPATH] SCRIPT DRM
 ```
 
-where:
+## Options
 
-  -o OUTPATH gives an output path for results, containing two %s slots  
+* `-o OUTPATH` gives an output path for results, containing two %s slots
 
-Most helpful Sandbox usage:
+## Most helpful Sandbox usage
+```
+  plot-keepout-and-obs.py Scripts/FOO.json sims/FOO/drm/SEED.pkl
+```
 
-  plot-keepout-and-obs.py Scripts/FOO.json sims/FOO/drm/SEED.pkl 
-
-where FOO.json is a script, and SEED.pkl is a DRM.  Output will be placed in the working directory 
-unless -o path/to/output/%s.%s or the like is given.
+where `FOO.json` is a script, and `SEED.pkl` is a DRM.  Output will be placed in the
+working directory unless `-o path/to/output/%s.%s` or the like is given.
 
 Note: This imports EXOSIMS and instantiates an object based on the given SCRIPT.
-
-Michael Turmon, JPL, 04/2019 -- created based on an idea by Dean Keithly
-
 """
 
 import os
