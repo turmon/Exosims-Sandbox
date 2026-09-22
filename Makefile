@@ -283,7 +283,7 @@ $(foreach LINK,$(REDUCE_CHAIN),$(eval $(call PROPAGATE_REDUCTION_UPWARD,$(subst 
 ## Graphics
 ##
 
-.PHONY: graphics graphics-old graphics-clean graphics-extra
+.PHONY: graphics graphics-clean graphics-extra
 # distinguished sentinel file for make dependency chain
 GRAPHICS_SENTINEL:=sims/$(S)/gfx/det-info.txt
 
