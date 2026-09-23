@@ -466,7 +466,8 @@ html-all:
 ##
 ## targets: exp-graphics*, exp-path-ensemble*, exp-html*
 ## Exceptions:
-##   exp-reduce is handled separately (reduce must precede selection)
+##   exp-reduce is handled separately (but the targets here reduce first,
+##       because reduce must precede selection)
 ##   exp-html-only has a direct rule that regenerates everything, but
 ##       the sub-targets (exp-html-only-top-10, etc.) are also defined here.
 
@@ -475,7 +476,11 @@ html-all:
 # selection helper routine to pick out some ensembles *within* the experiment,
 # and runs a sub-Make on each such ensemble, using a shell for-loop.
 # The "exp-reduce" target is *not* done that way, because the reduce
-# needs to be made before selection makes sense.
+# needs to be made before selection makes sense.  Instead, each target
+# below depends on the full reduction (as exp-reduce does), so that the
+# selector sees an up-to-date reduce-yield-plus.csv.  Otherwise, a newly-run
+# ensemble that has not yet been reduced would be invisible to the selector,
+# and hence would never be reduced or processed.
 
 # Rule to make a generic target for N ensembles within an experiment, given a count.
 #   $1 = make target
@@ -497,7 +502,7 @@ SELECT_PROG_mix=$(SELECT_PROG) -k experiment
 
 define MAKE_EXP_OPERATION
 .PHONY: exp-$1-$2-$3
-exp-$1-$2-$3: experiment-exists
+exp-$1-$2-$3: experiment-exists sims/reduce-info.csv
 	@+ for d in `$(SELECT_PROG_$2) -n $3 $2 sims/$(S)/reduce-yield-plus.csv`; do \
 	        [ -d sims/$(S)/$$$$d/drm ] || continue; \
 		echo $(MAKE) S=$(S)/$$$$d $1; \
