@@ -9,10 +9,11 @@
 # * `EXP_ORDER_top`: by yield, highest first (key `chars_earth_unique`)
 # * `EXP_ORDER_mix`: arbitrary but stable (MD5 hash of key `experiment`)
 #
-# Selecting the first N ensembles of one of these lists is then the same
-# as `select_ensembles.py -n N`, for every N, from a single file.
-# The Makefile includes this fragment, and remakes it (with this script)
-# after the experiment is reduced.
+# Operational context/motivation: Selecting the first N elements of either list is then the same
+# as `select_ensembles.py -n N`.
+# The Makefile includes this fragment to generate dependencies for the 
+# `exp-*` targets. The Makefile knows to remake it (with this script)
+# after the experiment is reduced (altering the reduction summary file).
 #
 # ## Usage:
 # ```
@@ -26,10 +27,6 @@
 # ### Options:
 #
 # * `-o OUTFILE` gives the output file. The default is `EXPDIR/exp-select.mk`.
-#
-# The output file begins with a comment noting that it is generated, and by
-# what command.  It is written to a temporary file and then renamed, so an
-# interrupted run never leaves a partial file.  It is made group-writable.
 #
 # Typical usage (the Makefile does this):
 # ```
@@ -50,6 +47,8 @@ cmd_line="util/$PROGNAME $*"
 umask 002
 
 # selector program, and its common options
+#   -q => quiet if not reduced already
+#   -o experiment => output this key (ens. name)
 SELECT_PROG="util/select_ensembles.py -q -o experiment -n T"
 
 outfile=
