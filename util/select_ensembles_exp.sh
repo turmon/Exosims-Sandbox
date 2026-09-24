@@ -91,15 +91,25 @@ if [ -z "$outfile" ]; then
 fi
 
 csv="$expdir/reduce-yield-plus.csv"
-tmpfile="$outfile.tmp"
+tmpfile="$outfile.$$.tmp"
 
-rm -f "$tmpfile"
+# remove the temp file on any exit (after the mv, there is nothing to remove)
+trap 'rm -f "$tmpfile"' EXIT
+
+# header is a here-document for clarity
+# cannot use $($SELECT_PROG ...) to place it all within the 
+# here-document because set -e does not catch errors within 
+# here-document $() constructs!
 {
-    echo "# Generated file -- do not edit."
-    echo "# Made by: $cmd_line"
-    echo "# On: $(date '+%Y-%m-%d %H:%M:%S')"
-    echo "# Full ordering of the ensembles within $expdir, from:"
-    echo "#   $csv"
+    cat <<EOF
+# Generated file -- do not edit.
+# Made by: $cmd_line
+# On: $(date '+%Y-%m-%d %H:%M:%S')
+# Full ordering of the ensembles within:
+#   $expdir
+# extracted from:
+#   $csv
+EOF
     $SELECT_PROG -k chars_earth_unique -M EXP_ORDER_top top "$csv"
     $SELECT_PROG -k experiment         -M EXP_ORDER_mix mix "$csv"
 } > "$tmpfile"
