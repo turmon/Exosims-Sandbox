@@ -158,9 +158,9 @@ HTML_PROG_NOINDEX=util/html-summary.py
 EMU_HTML_PROG=$(UV_PREFIX) util/emulator_html_summary.py -R Local/www-resources -S ensemble-reports.css -J sorttable.js
 # analysis/plots of experiment results
 EMU_PLOT_PROG=$(UV_PREFIX) util/run_emulator_workflows.py
-# program to select a given number of ensembles within an experiment
-#  also needs a sort key (-k) argument before use
-SELECT_PROG=util/select_ensembles.py -q -o experiment
+# program to record the orderings of ensembles within an experiment,
+#  as a Makefile fragment (see EXP_SELECT_MK)
+EXP_SELECT_PROG=util/select_ensembles_exp.sh
 # Ensemble counts to select ensembles within an experiment
 EXP_COUNTS:=1 2 5 10 20 50 100 T
 
@@ -384,9 +384,10 @@ sims/%/path-ens/path-map.png: sims/%/drm
 # (1) The per-DRM rules below map sims/ENS/path/SEED.* to sims/ENS/drm/SEED.pkl.
 #     That needs two stems (ENS and SEED), but a pattern rule has only one.
 #     So the stem is ENS/path/SEED, and $$(subst ...) computes the .pkl from it.
-# (2) It makes the $(SELECT_RUN_PROG) and $(SELECT_PROG) calls lazy: a
-#     selector runs only for a -N target actually asked for, instead of once
-#     per (count x target-kind) combination on every single invocation of make.
+# (2) It makes the $(SELECT_RUN_PROG) calls, and the ensemble selection for
+#     exp-* targets, lazy: they run only for a target actually asked for,
+#     instead of once per (count x target-kind) combination on every single
+#     invocation of make.
 .SECONDEXPANSION:
 
 # Script file for a per-DRM product: sims/ENS/path/FILE -> Scripts/ENS.json
@@ -518,6 +519,7 @@ html-all:
 # "mix", so one file serves every N.
 
 # generated Makefile fragment defining EXP_ORDER_top and EXP_ORDER_mix
+#   "top": by yield (# earth chars); "mix": by MD5 hash of the ensemble name
 EXP_SELECT_MK:=sims/$(S)/exp-select.mk
 # flag file (within the experiment): an ensemble html index was remade
 EXP_HTML_STALE:=.exp-html-stale
@@ -539,16 +541,8 @@ include $(EXP_SELECT_MK)
 # reduction still appears in the dry run, as a prerequisite of each target.)
 $(EXP_SELECT_MK): $(if $(DRY_RUN),,sims/reduce-info.csv)
 	@ echo "Make: Selecting ensembles within $(@D) ..."
-	$(SELECT_PROG_top) -n T -M EXP_ORDER_top top sims/$(S)/reduce-yield-plus.csv >  $@.tmp
-	$(SELECT_PROG_mix) -n T -M EXP_ORDER_mix mix sims/$(S)/reduce-yield-plus.csv >> $@.tmp
-	mv $@.tmp $@
+	$(EXP_SELECT_PROG) -o $@ sims/$(S)
 endif
-
-# There are two types of calls to the selector program:
-#  one for "top" -- keying off # earth chars
-#  one for "mix" -- keying off of the MD5 hash of the (string) experiment name
-SELECT_PROG_top=$(SELECT_PROG) -k chars_earth_unique
-SELECT_PROG_mix=$(SELECT_PROG) -k experiment
 
 # Ensemble directories selected within the experiment.
 #   $1 = selection(s), each as MODE/N, e.g., top/10 or "top/10 mix/20"
