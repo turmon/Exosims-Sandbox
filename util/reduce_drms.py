@@ -21,6 +21,29 @@ Args:
   script, and which can be used to print a selected TYPE of debug output.
 '''
 
+## Note on the 0-DRM case, and interaction with the Makefile
+#
+# The Makefile treats a directory holding drm/ as an Ensemble: the pattern rule
+# sims/%/reduce-info.csv depends on sims/%/drm, and reduce-info.csv is the only
+# output of this script that make tracks (the other reduce-*.csv files are not
+# make targets).  Parent reductions (reduce_drm_sets.py) depend in turn on each
+# Ensemble's reduce-info.csv.
+#
+# When drm/ holds no DRMs (e.g., runs not yet finished), this script exits with
+# status 0 and writes nothing.  Make does not check that a recipe created its
+# target, so upward propagation still proceeds -- but reduce-info.csv stays
+# missing, so the Ensemble is out of date on every make invocation.  For exp-*
+# targets, where make restarts after remaking an included makefile, this once
+# caused an endless loop.  The Makefile now skips Ensembles having no
+# drm/*.pkl, and allows at most one restart.
+#
+# It may be cleaner to write a reduce-info.csv in this case, too.  An empty or
+# header-only file would be inconsistent with how the "info" file is used:
+# reduce_drm_sets.py expects a one-line summary, and fails on such a file.
+# One way out is a one-line "info" file with N = 0 (ensemble_size = 0).  This
+# would require an adjustment to reduce_drm_sets.py, which presently counts
+# such an Ensemble as a real one, with all-zero yields, rather than skipping it.
+
 # turmon jan 2018, oct 2018
 
 ## Note on design and code extensions
