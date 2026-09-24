@@ -252,10 +252,14 @@ sims/%/reduce-info.csv: sims/%/drm
 # reduction depends on the reduction of every ensemble it contains.  This rule
 # is what replaces the old exp-reduce for-loop.  As before, the presence of
 # both drm/ and spc/ is the cue that a subdirectory is an ensemble.
+# An ensemble with no DRMs yet (e.g., runs in progress) is skipped: reducing
+# it would succeed without writing reduce-info.csv, so it would be perpetually
+# out of date -- and, via EXP_SELECT_MK below, make would restart forever.
 # The ifeq guard matters: when $(S) is an ensemble this rule must not exist,
 # or its recipe would shadow the pattern rule above.
 EXP_ENSEMBLES     = $(patsubst %/drm,%,$(wildcard sims/$(S)/*/drm))
-EXP_ENSEMBLE_CSVS = $(foreach d,$(EXP_ENSEMBLES),$(if $(wildcard $d/spc),$d/reduce-info.csv))
+EXP_ENSEMBLE_CSVS = $(foreach d,$(EXP_ENSEMBLES),\
+                      $(if $(and $(wildcard $d/spc),$(wildcard $d/drm/*.pkl)),$d/reduce-info.csv))
 ifeq ($(wildcard sims/$(S)/drm),)
 sims/$(S)/reduce-info.csv: $(EXP_ENSEMBLE_CSVS)
 	@ echo "Make: Reducing overall experiment: $(@D) ..."
@@ -539,7 +543,11 @@ include $(EXP_SELECT_MK)
 # makefile, and its prerequisites -- here, the full reduction.  For dry runs,
 # drop that prerequisite, so the selection is made from existing CSVs.  (The
 # reduction still appears in the dry run, as a prerequisite of each target.)
-$(EXP_SELECT_MK): $(if $(DRY_RUN),,sims/reduce-info.csv)
+# Also drop it after a restart (MAKE_RESTARTS is set): if some reduction
+# recipe succeeded without writing its target, that target would be remade,
+# and EXP_SELECT_MK with it, on every restart -- an endless loop.  This
+# ensures at most one restart.
+$(EXP_SELECT_MK): $(if $(or $(DRY_RUN),$(MAKE_RESTARTS)),,sims/reduce-info.csv)
 	@ echo "Make: Selecting ensembles within $(@D) ..."
 	$(EXP_SELECT_PROG) -o $@ sims/$(S)
 endif
