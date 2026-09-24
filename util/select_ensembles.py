@@ -3,7 +3,7 @@ r'''select_ensembles.py: select from a list of simulation-ensembles
 
 ## Usage
 ```
-  select_ensembles.py [-q] [-0] [-S] [-n N] [-k key] [-o key] MODE CSVFILE
+  select_ensembles.py [-q] [-0] [-S] [-n N] [-k key] [-o key] [-M VAR] MODE CSVFILE
 ```
 
 ## Arguments
@@ -22,6 +22,7 @@ r'''select_ensembles.py: select from a list of simulation-ensembles
   -t THRESH means to output only records where the value key is <= THRESH
   -T THRESH means to output only records where the value key is > THRESH
   -q means to exit quietly if CSVFILE is not present
+  -M VAR means to output a Makefile assignment "VAR := key1 key2 ..."
 ```
 
 ## Modes
@@ -45,6 +46,14 @@ In addition, the pseudokey `_index` (for `-k` or `-o`) gives the ordinal number
 of the CSV row.  Also, for MODE of mix, when `-k KEY` is used, the pseudokey
 `_KEY` is available as output, and yields the md5 hash of the value of KEY
 for that row (e.g., for `-k experiment`, the pseudokey is: `_experiment`).
+
+With `-M VAR`, the selected output keys are printed as one line of
+Makefile syntax, `VAR := key1 key2 ...`, rather than one key per line
+(`$` within a key is escaped as `$$`).  This is printed even if nothing
+is selected, or if CSVFILE is absent under `-q`, in which case it is just
+`VAR :=`.  So, the output is always a valid Makefile fragment.  The
+Makefile uses this, with `-n T`, to record the full ordering of ensembles
+within an Experiment.
 
 ## Typical usage
 ```
@@ -130,11 +139,21 @@ def select(table, n, thresh_lo, thresh_hi, sortkey, reverse):
     table_s = sorted(table, key=itemgetter(sortkey), reverse=reverse)
     return table_s[:min(n,len(table_s))]
 
+def emit(args, keys):
+    r'''Print the selected output keys, one per line, or as a Makefile variable.'''
+    if args.makevar:
+        vals = [str(k).replace('$', '$$') for k in keys]
+        print(' '.join([args.makevar, ':='] + vals))
+    else:
+        for k in keys:
+            print(k, end=args.terminator)
+
 def main(args):
+    r'''Returns the list of selected output keys.'''
     # load CSV
     table = load_csv(args.infile)
     # prevent special cases
-    if args.n == 0 or len(table) == 0: return
+    if args.n == 0 or len(table) == 0: return []
     # handle the "n = -1" flag
     n_select = args.n if args.n >= 0 else len(table)
     # assign sort key
@@ -165,7 +184,7 @@ def main(args):
     # select some rows
     table_s = select(table, n_select, args.t, args.T, args.sortkey, reverse)
     # do nothing if table is empty
-    if len(table_s) == 0: return
+    if len(table_s) == 0: return []
     # assign output key -- error check now because decorate() added a key
     if args.outkey:
         outkey = args.outkey
@@ -174,9 +193,8 @@ def main(args):
     if outkey not in table_s[0]:
         print("%s: Error: requested output key not in CSV." % args.progname, file=sys.stderr)
         sys.exit(1)
-    # output the requested key
-    for row in table_s:
-        print(row[outkey], end=args.terminator)
+    # return the requested key
+    return [row[outkey] for row in table_s]
 
 
 if __name__ == '__main__':
@@ -198,6 +216,8 @@ if __name__ == '__main__':
                             default=False)
     parser.add_argument('-0', help='line terminator is \\0', action='store_true', dest='zero',
                             default=False)
+    parser.add_argument('-M', type=str, default='', dest='makevar', metavar='VAR',
+                            help='output as Makefile assignment "VAR := key1 key2 ..."')
     parser.add_argument('-q', help='quiet', action='store_true', dest='quiet',
                             default=False)
     parser.add_argument('-v', help='verbosity', action='count', dest='verbose',
@@ -214,6 +234,7 @@ if __name__ == '__main__':
         if not args.quiet:
             print("%s: Error: Supplied input file `%s' is not readable." % (
                 args.progname, args.infile), file=sys.stderr)
+        if args.quiet: emit(args, [])
         sys.exit(0 if args.quiet else 1)
 
     # remap Scenario directory to file using Sandbox conventions
@@ -272,7 +293,8 @@ if __name__ == '__main__':
         if not args.quiet:
             print("%s: Error: Supplied csv file `%s' is not readable." % (
                 args.progname, args.infile), file=sys.stderr)
+        if args.quiet: emit(args, [])
         sys.exit(0 if args.quiet else 1)
 
-    main(args)
+    emit(args, main(args))
     sys.exit(0)

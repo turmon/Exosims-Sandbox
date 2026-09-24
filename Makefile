@@ -37,12 +37,14 @@
 #   exp-reduce:      makes "reduce" for all ensembles within the experiment
 #   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
-#   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -j2
+#   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -jN
 #   exp-path-ensemble* \   Same pattern as html above with -mix or -top, and a
 #   exp-graphics*       \  number saying how many.  Also, can leave off -top-N
 #   exp-html-only*      /  and just make 10 top + 20 selected.
-#   exp-movie-M-*      /   Make M movies in each of (top/mix)-N ensembles.
+#   exp-path-movie-M-*  /  Make M movies in each of (top/mix)-N ensembles.
+#   exp-keepout-M-*    /   Make M keepout maps in each of (top/mix)-N ensembles.
 #   exp-obs-timeline-M-*   Make M obs-timelines in each of (top/mix)-N ensembles.
+#   (The exp-* targets first reduce any ensembles that need it.)
 # (3) Web-server
 #   html-ensure: start Apache httpd web-server, if not running already
 #   html-start: start Apache httpd web-server
@@ -94,8 +96,11 @@ S := $(patsubst %/,%,$(S))
 # 2e: strip added space at the end of S
 S := $(strip $(S))
 # 3: repeat script value back, if supplied
+#    (but not again if make restarts, after remaking an included makefile)
 ifdef S_COPY
- $(info Make: Scenario name: "$(S)")
+ ifndef MAKE_RESTARTS
+  $(info Make: Scenario name: "$(S)")
+ endif
 endif
 
 # needed to escape equal signs in some Experiments, alas
@@ -147,6 +152,8 @@ PATH_ENS_PROG=util/ens-path-summary.sh -a
 # html summary of ensembles/experiments
 #   -i: to regenerate the global index.html as well as that for $(S)
 HTML_PROG=util/html-summary.py -i
+#   same, but without -i: index just the named sim(s)
+HTML_PROG_NOINDEX=util/html-summary.py
 # html summary of emulator Analysis/ results
 EMU_HTML_PROG=$(UV_PREFIX) util/emulator_html_summary.py -R Local/www-resources -S ensemble-reports.css -J sorttable.js
 # analysis/plots of experiment results
@@ -306,11 +313,15 @@ GRAPHICS_SENTINEL:=sims/$(S)/gfx/det-info.txt
 graphics: script-exists $(GRAPHICS_SENTINEL)
 
 # newer graphics - one ensemble
-$(GRAPHICS_SENTINEL): sims/$(S)/reduce-info.csv
+# This, and the other per-ensemble product rules below, are pattern rules
+# (keyed on the ensemble directory, %) rather than explicit rules for $(S)
+# alone.  That way the ensembles *within* an experiment can be built by the
+# exp-* targets in this same make process, without a sub-make per ensemble.
+sims/%/gfx/det-info.txt: sims/%/reduce-info.csv
 	@ echo "Make: Graphics (new-format) into $(@D) ..."
-	@ rm -f sims/$(S)/gfx/det-*.*
-	$(GRAPHICS_PROG) sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
-	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
+	@ rm -f sims/$*/gfx/det-*.*
+	$(GRAPHICS_PROG) sims/$*/reduce-%s.%s sims/$*/gfx/det-%s.%s
+	$(GRAPHYCS_PROG) sims/$*/reduce-%s.csv
 
 # imperatively remove existing graphics, allowing clean re-make
 graphics-clean: script-exists
@@ -332,11 +343,11 @@ graphics-extra: script-exists sims/$(S)/reduce-info.csv
 # delegate to the table status file
 tables: script-exists sims/$(S)/tbl/table-status.txt
 
-# just one ensemble's graphics
-sims/$(S)/tbl/table-status.txt: sims/$(S)/reduce-info.csv
+# just one ensemble's tables
+sims/%/tbl/table-status.txt: sims/%/reduce-info.csv
 	@ echo "Make: Tables into $(@D) ..."
-	@ rm -f sims/$(S)/tbl/table-*.*
-	$(TABLES_PROG) -o sims/$(S)/tbl/table-%s.%s all sims/$(S)/reduce-%s.%s
+	@ rm -f sims/$*/tbl/table-*.*
+	$(TABLES_PROG) -o sims/$*/tbl/table-%s.%s all sims/$*/reduce-%s.%s
 
 ########################################
 ## Detection visits tables - for scheduler analysis
@@ -346,9 +357,9 @@ sims/$(S)/tbl/table-status.txt: sims/$(S)/reduce-info.csv
 star-visits: script-exists sims/$(S)/sched/detection-visits.html
 
 # one ensemble's detection visit document
-sims/$(S)/sched/detection-visits.html: sims/$(S)/drm
+sims/%/sched/detection-visits.html: sims/%/drm
 	@ echo "Make: Detection visits document into $(@D) ..."
-	$(STAR_VISIT_PROG) sims/$(S)
+	$(STAR_VISIT_PROG) sims/$*
 
 
 ########################################
@@ -358,9 +369,9 @@ sims/$(S)/sched/detection-visits.html: sims/$(S)/drm
 path-ensemble: script-exists sims/$(S)/path-ens/path-map.png
 
 # one ensemble's path plots - they depend on the DRM-set, not the reduction
-sims/$(S)/path-ens/path-map.png: sims/$(S)/drm
+sims/%/path-ens/path-map.png: sims/%/drm
 	@ echo "Make: Making ensemble tour summary graphic in \`$(basename $@)'"
-	$(PATH_ENS_PROG) sims/$(S)/drm
+	$(PATH_ENS_PROG) sims/$*/drm
 
 ########################################
 ## Path movies
@@ -368,47 +379,55 @@ sims/$(S)/path-ens/path-map.png: sims/$(S)/drm
 #  target is: path-movie-N and path-final-N,
 #  for N = 1, 2, 5, 10, 20, etc.
 
-# Rule to make a single-drm path movie, given a SCENARIO
-sims/$(S)/path/%.mp4: sims/$(S)/drm/%.pkl
+# Enable deferred ("secondary") expansion of prerequisites for the rules
+# defined below.  This does two jobs:
+# (1) The per-DRM rules below map sims/ENS/path/SEED.* to sims/ENS/drm/SEED.pkl.
+#     That needs two stems (ENS and SEED), but a pattern rule has only one.
+#     So the stem is ENS/path/SEED, and $$(subst ...) computes the .pkl from it.
+# (2) It makes the $(SELECT_RUN_PROG) and $(SELECT_PROG) calls lazy: a
+#     selector runs only for a -N target actually asked for, instead of once
+#     per (count x target-kind) combination on every single invocation of make.
+.SECONDEXPANSION:
+
+# Script file for a per-DRM product: sims/ENS/path/FILE -> Scripts/ENS.json
+PATH_TO_SCRIPT = $(patsubst sims/%/path/,Scripts/%.json,$(dir $1))
+
+# Rule to make a single-drm path movie
+sims/%.mp4: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Path movie \`$@'"
 	$(PATH_PROG) $<
 
-# Rule to make a single-drm path final-frame, given a SCENARIO
-sims/$(S)/path/%-final.png: sims/$(S)/drm/%.pkl
+# Rule to make a single-drm path final-frame
+sims/%-final.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Path final-frame \`$@'"
 	$(PATH_PROG_FINAL) $<
 
-# Rule to make a single-drm timeline plot-set, given a SCENARIO
-sims/$(S)/path/%-obs-timelines.txt: sims/$(S)/drm/%.pkl
+# Rule to make a single-drm timeline plot-set
+sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Timeline \`$@'"
-	$(TIMELINE_PROG) -o sims/$(S)/path/$(*)-%s.%s -j Scripts/$(S).json $<
+	$(TIMELINE_PROG) -o sims/$(*)-%s.%s -j $(call PATH_TO_SCRIPT,$@) $<
 
-# Rule to make a single-drm keepout map, given a SCENARIO
-sims/$(S)/path/%-keepout-and-obs.png: sims/$(S)/drm/%.pkl
+# Rule to make a single-drm keepout map
+sims/%-keepout-and-obs.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Keepout \`$@'"
-	$(KEEPOUT_PROG) -o sims/$(S)/path/$(*)-%s.%s Scripts/$(S).json $<
+	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $(call PATH_TO_SCRIPT,$@) $<
 
 ## Note: script-exists is the first prerequisite of each rule below.  It
 ## raises a clear error when S names neither a script nor an experiment
 ## (e.g., if S is an "experiment", sims/$(S)/drm/ does not exist and the
 ## selector below quietly returns nothing).
 
-# Enable deferred ("secondary") expansion of prerequisites for the rules
-# defined below.  This is what makes the $(SELECT_RUN_PROG) call lazy: the
-# selector runs only for a -N target actually asked for, instead of once per
-# (count x target-kind) combination on every single invocation of make.
-.SECONDEXPANSION:
-
 # Map a run-count onto the list of per-DRM products to build.
 #   $1 = number of runs to select (or T for all)
 #   $2 = suffix that replaces ".pkl" on each selected DRM
+#   $3 = the ensemble directory, sims/...
 # NOTE: the shell command lives here in a variable, rather than inline as
 # $$(shell ...) in the prerequisite lists below.  Make scans a rule line for
 # the target/prereq ":" before expanding anything, so a literal ":" inside
 # $$(...) would be misread as a second rule separator ("*** multiple target
 # patterns.  Stop.").  Keeping the command here makes the rule lines immune
 # to the choice of sed delimiter.
-SELECT_RUN_TARGETS = $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | \
+SELECT_RUN_TARGETS = $(shell $(SELECT_RUN_PROG) -n $1 $3 | \
                        sed -e 's:/drm/:/path/:' -e 's:\.pkl:$2:')
 
 # Targets to make a group of per-DRM products, given a count N, e.g.:
@@ -419,16 +438,16 @@ SELECT_RUN_TARGETS = $(shell $(SELECT_RUN_PROG) -n $1 sims/$(S) | \
 # same setup.
 # NOTE: these targets must NOT be declared .PHONY.  Make skips pattern-rule
 # search for phony targets, which would silently disable all four rules.
-path-movie-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,.mp4)
+path-movie-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,.mp4,sims/$(S))
 	@ echo "Make: Placed movies in \`sims/$(S)/path'."
 
-path-final-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png)
+path-final-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png,sims/$(S))
 	@ echo "Make: Placed final-frames in \`sims/$(S)/path'."
 
-obs-timeline-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt)
+obs-timeline-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt,sims/$(S))
 	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
 
-keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-keepout-and-obs.png)
+keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-keepout-and-obs.png,sims/$(S))
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
 
 # Per-DRM counts used to construct the exp-* targets further below
@@ -451,9 +470,15 @@ html-only: script-exists
 	$(HTML_PROG) $(S)
 
 # one ensemble's html summary
-sims/$(S)/html/index.html: sims/$(S)/gfx/det-info.txt sims/$(S)/tbl/table-status.txt
+# When the ensemble is $(S) itself, -i (in HTML_PROG) also re-indexes the
+# enclosing sims.  When it is an ensemble within experiment $(S) (see exp-html
+# below), many of these can run at once under -j, and all their -i's would
+# rewrite the same parent indexes.  So instead, flag the experiment's index
+# as stale, and the exp-html target re-indexes once, at the end.
+sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt
 	@ echo "Make: HTML index $@ ..."
-	$(HTML_PROG) $(S)
+	$(if $(filter $*,$(S)),$(HTML_PROG),$(HTML_PROG_NOINDEX)) $*
+	$(if $(filter $*,$(S)),,@ touch sims/$(S)/$(EXP_HTML_STALE))
 
 # recursively regenerate all index.html's for all sims,
 # and then regenerate the global index.html.  Does *not*
@@ -464,112 +489,151 @@ html-all:
 ########################################
 ## Experiments = dirs *containing* ensembles
 ##
-## targets: exp-graphics*, exp-path-ensemble*, exp-html*
+## targets: exp-graphics*, exp-path-ensemble*, exp-html*, and per-DRM
+##   products (exp-path-movie*, exp-keepout*, exp-obs-timeline*)
 ## Exceptions:
-##   exp-reduce is handled separately (but the targets here reduce first,
-##       because reduce must precede selection)
+##   exp-reduce is handled separately (see "Data reductions")
 ##   exp-html-only has a direct rule that regenerates everything, but
 ##       the sub-targets (exp-html-only-top-10, etc.) are also defined here.
 
-# The make targets for Experiments are prefixed exp-*.
-# Many are defined by macro expansion using the following rule.  It uses a
-# selection helper routine to pick out some ensembles *within* the experiment,
-# and runs a sub-Make on each such ensemble, using a shell for-loop.
-# The "exp-reduce" target is *not* done that way, because the reduce
-# needs to be made before selection makes sense.  Instead, each target
-# below depends on the full reduction (as exp-reduce does), so that the
-# selector sees an up-to-date reduce-yield-plus.csv.  Otherwise, a newly-run
-# ensemble that has not yet been reduced would be invisible to the selector,
-# and hence would never be reduced or processed.
+# The make targets for Experiments are prefixed exp-*.  Each uses a
+# selection helper to pick out some ensembles *within* the experiment (by
+# "top" yield, or by an arbitrary-but-stable "mix"), and then depends
+# directly on the products (html, graphics, movies...) for those ensembles.
+# These are built by the same pattern rules used for a single ensemble, all
+# within this one make process: there is no sub-make per ensemble.
+#
+# The catch is that selection reads reduce-yield-plus.csv, so the reduction
+# must be up to date *before* the selection is made.  (Otherwise, a newly-run
+# ensemble not yet reduced would be invisible to the selector, and hence
+# would never be reduced or processed.)  A plain $(shell ...) runs too early,
+# when the Makefile is read.  So instead, the selection is recorded in a
+# generated Makefile fragment, EXP_SELECT_MK, which is included below and
+# depends on the full reduction.  GNU make first brings included makefiles up
+# to date -- here, by reducing, and then regenerating the fragment -- and
+# then restarts itself to read the new version.  This uses only features
+# present in older GNU make (3.81+), so it does not need .WAIT (4.4+).
+#
+# EXP_SELECT_MK records the *full* ordering of ensembles, for "top" and for
+# "mix", so one file serves every N.
 
-# Rule to make a generic target for N ensembles within an experiment, given a count.
-#   $1 = make target
-#   $2 = top or mix; ensembles with top yield OR mixed selection of ensembles
-#   $3 = number of ensembles N
-#   $$$$d = subdirectory of the experiment directory
-# Notes to this somewhat complex macro:
-# * Change the eval(...) below to info(...) to debug this macro.
-# * Text here is expanded twice by make.  The $$$$d construction is expanded the
-# first time (within the eval) to $$d.  During the later invocation of the rule
-# itself, make turns $$d into $d, that is, the shell variable "d".
-# * "+" prepended to rule below transmits -j setting to sub-make.
-# * There are two types of calls to the selector program:
+# generated Makefile fragment defining EXP_ORDER_top and EXP_ORDER_mix
+EXP_SELECT_MK:=sims/$(S)/exp-select.mk
+# flag file (within the experiment): an ensemble html index was remade
+EXP_HTML_STALE:=.exp-html-stale
+# the goals (if any) that need EXP_SELECT_MK
+EXP_SELECT_GOALS:=$(filter-out exp-reduce exp-reduce-only exp-preflight exp-html-only exp-analysis-%,\
+                    $(filter exp-%,$(MAKECMDGOALS)))
+# nonempty if this is a dry run (make -n)
+DRY_RUN:=$(findstring n,$(firstword -$(MAKEFLAGS)))
+
+# Only include (and thus possibly reduce) when an exp-* goal needs selection:
+# included makefiles are always brought up to date, so an unguarded include
+# would reduce the whole experiment for any goal at all.
+ifneq ($(and $(EXP_SELECT_GOALS),$(wildcard Scripts/$(S)/.),$(wildcard sims/$(S)/.)),)
+include $(EXP_SELECT_MK)
+
+# Under make -n, GNU make still *really runs* the rule for an included
+# makefile, and its prerequisites -- here, the full reduction.  For dry runs,
+# drop that prerequisite, so the selection is made from existing CSVs.  (The
+# reduction still appears in the dry run, as a prerequisite of each target.)
+$(EXP_SELECT_MK): $(if $(DRY_RUN),,sims/reduce-info.csv)
+	@ echo "Make: Selecting ensembles within $(@D) ..."
+	$(SELECT_PROG_top) -n T -M EXP_ORDER_top top sims/$(S)/reduce-yield-plus.csv >  $@.tmp
+	$(SELECT_PROG_mix) -n T -M EXP_ORDER_mix mix sims/$(S)/reduce-yield-plus.csv >> $@.tmp
+	mv $@.tmp $@
+endif
+
+# There are two types of calls to the selector program:
 #  one for "top" -- keying off # earth chars
 #  one for "mix" -- keying off of the MD5 hash of the (string) experiment name
-
 SELECT_PROG_top=$(SELECT_PROG) -k chars_earth_unique
 SELECT_PROG_mix=$(SELECT_PROG) -k experiment
 
+# Ensemble directories selected within the experiment.
+#   $1 = selection(s), each as MODE/N, e.g., top/10 or "top/10 mix/20"
+#        where MODE is top or mix, and N is a count, or T for all
+# Only directories with a drm/ qualify.  The sort removes duplicates, so an
+# ensemble chosen by both top/10 and mix/20 is only listed once.
+EXP_SELECT   = $(sort $(foreach s,$1,$(call EXP_SELECT_1,$(firstword $(subst /, ,$s)),$(lastword $(subst /, ,$s)))))
+EXP_SELECT_1 = $(foreach d,$(if $(filter T,$2),$(EXP_ORDER_$1),$(wordlist 1,$2,$(EXP_ORDER_$1))),\
+                 $(if $(wildcard sims/$(S)/$d/drm),sims/$(S)/$d))
+
+# Products for one ensemble, for each kind of exp-* operation.
+#   $1 = ensemble directory (sims/...)
+#   $2 = number of per-DRM products (movies, etc.) within the ensemble
+# Intermediate files in the chain (reduce-info.csv, det-info.txt, ...) are
+# listed explicitly.  Otherwise make would regard them as "intermediate", and
+# delete them after the build.
+EXP_PRODUCTS_html          = $1/reduce-info.csv $1/gfx/det-info.txt $1/tbl/table-status.txt $1/html/index.html
+EXP_PRODUCTS_html-only     =
+EXP_PRODUCTS_graphics      = $1/reduce-info.csv $1/gfx/det-info.txt
+EXP_PRODUCTS_path-ensemble = $1/path-ens/path-map.png
+EXP_PRODUCTS_path-movie    = $(call SELECT_RUN_TARGETS,$2,.mp4,$1)
+EXP_PRODUCTS_keepout       = $(call SELECT_RUN_TARGETS,$2,-keepout-and-obs.png,$1)
+EXP_PRODUCTS_obs-timeline  = $(call SELECT_RUN_TARGETS,$2,-obs-timelines.txt,$1)
+
+# Products for all selected ensembles.  $1 = kind, $2 = count, $3 = selection(s)
+EXP_PRODUCTS = $(foreach d,$(call EXP_SELECT,$3),$(call EXP_PRODUCTS_$1,$d,$2))
+
+# Recipes run after the products are made, for each kind (most have none).
+#   $1 = selection(s)
+# html: re-index the experiment and its enclosing sims, once, if an
+# ensemble's index was remade (see the per-ensemble html rule)
+EXP_RECIPE_html = @ if [ -e sims/$(S)/$(EXP_HTML_STALE) ]; then \
+	  echo "Make: HTML index (experiment) $(S) ..."; \
+	  $(HTML_PROG) $(S) && rm -f sims/$(S)/$(EXP_HTML_STALE); fi
+# html-only: index the selected ensembles, and their enclosing sims
+EXP_RECIPE_html-only = $(if $(call EXP_SELECT,$1),$(HTML_PROG) $(patsubst sims/%,%,$(call EXP_SELECT,$1)))
+
+# Rule to make a generic target for ensembles within an experiment.
+#   $1 = make target, e.g., exp-html-top-10
+#   $2 = kind: html, html-only, graphics, path-ensemble,
+#        path-movie, keepout, or obs-timeline
+#   $3 = number of per-DRM products M (for path-movie etc.; else empty)
+#   $4 = selection(s), as for EXP_SELECT
+# Notes to this somewhat complex macro:
+# * Change the eval(...) below to info(...) to debug this macro.
+# * Text here is expanded by the call, by the eval, and then (for the
+#   prerequisites) again by .SECONDEXPANSION, hence the $$$$.  The deferred
+#   expansion means the selectors run only for the targets actually made.
+# * sims/reduce-info.csv is already up to date (EXP_SELECT_MK depends on
+#   it), except in a dry run, where it shows the reductions to be done.
 define MAKE_EXP_OPERATION
-.PHONY: exp-$1-$2-$3
-exp-$1-$2-$3: experiment-exists sims/reduce-info.csv
-	@+ for d in `$(SELECT_PROG_$2) -n $3 $2 sims/$(S)/reduce-yield-plus.csv`; do \
-	        [ -d sims/$(S)/$$$$d/drm ] || continue; \
-		echo $(MAKE) S=$(S)/$$$$d $1; \
-		$(MAKE) --no-print-directory S=$(S)/$$$$d $1 || exit $$$$?; \
-	done
+.PHONY: $1
+$1: experiment-exists sims/reduce-info.csv $$$$(call EXP_PRODUCTS,$2,$3,$4)
+	$$(call EXP_RECIPE_$2,$4)
 endef
 
+# Define the families of targets, for each kind:
+#   exp-KIND-{top,mix}-N, e.g., exp-html-mix-10
+#   exp-KIND-M-{top,mix}-N, e.g., exp-path-movie-5-top-10 (per-DRM products)
+$(foreach K,path-ensemble graphics html html-only,\
+  $(foreach X,top mix,\
+    $(foreach N,$(EXP_COUNTS),\
+      $(eval $(call MAKE_EXP_OPERATION,exp-$K-$X-$N,$K,,$X/$N)))))
+$(foreach K,path-movie keepout obs-timeline,\
+  $(foreach M,$(MOVIE_COUNTS),\
+    $(foreach X,top mix,\
+      $(foreach N,$(EXP_COUNTS),\
+        $(eval $(call MAKE_EXP_OPERATION,exp-$K-$M-$X-$N,$K,$M,$X/$N))))))
 
-## path-ensemble
-# targets: exp-path-ensemble-{top,mix}-N 
-# such as: exp-path-ensemble-mix-10
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-ensemble,top,$N)))
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-ensemble,mix,$N)))
-# default target for above -- supports 2-way parallelism
-.PHONY: exp-path-ensemble
-exp-path-ensemble: exp-path-ensemble-top-10 exp-path-ensemble-mix-20
-
-## path-movie
-# targets: exp-path-movie-M-{top,mix}-N
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-movie-$M,top,$N))))
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,path-movie-$M,mix,$N))))
-# default target for above -- supports 2-way parallelism
+# Default targets for the above: 10 top + 20 mix ensembles (or 10 + 10 for
+# per-DRM products).  These can use make -jN for N-way parallelism.
+$(eval $(call MAKE_EXP_OPERATION,exp-path-ensemble,path-ensemble,,top/10 mix/20))
+$(eval $(call MAKE_EXP_OPERATION,exp-graphics,graphics,,top/10 mix/20))
+$(eval $(call MAKE_EXP_OPERATION,exp-html,html,,top/10 mix/20))
 # 5 movies each within the top-10 and mix-10 ensembles = 10*5 + 10*5 = 100 movies
-.PHONY: exp-path-movie exp-path-movie-5
+# (and likewise for keepout maps and obs-timelines)
+$(eval $(call MAKE_EXP_OPERATION,exp-path-movie-5,path-movie,5,top/10 mix/10))
+$(eval $(call MAKE_EXP_OPERATION,exp-keepout-5,keepout,5,top/10 mix/10))
+$(eval $(call MAKE_EXP_OPERATION,exp-obs-timeline-5,obs-timeline,5,top/10 mix/10))
+.PHONY: exp-path-movie exp-keepout exp-obs-timeline
 exp-path-movie: exp-path-movie-5;
-exp-path-movie-5: exp-path-movie-5-top-10 exp-path-movie-5-mix-10
-
-## keepout
-# targets: exp-keepout-M-{top,mix}-N
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,keepout-$M,top,$N))))
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,keepout-$M,mix,$N))))
-# default target for above -- supports 2-way parallelism
-# 5 keepout-maps each within the top-10 and mix-10 ensembles = 10*5 + 10*5 = 100 maps
-.PHONY: exp-keepout exp-keepout-5
 exp-keepout: exp-keepout-5;
-exp-keepout-5: exp-keepout-5-top-10 exp-keepout-5-mix-10
-
-## obs-timeline
-# targets: exp-obs-timeline-M-{top,mix}-N
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,obs-timeline-$M,top,$N))))
-$(foreach M,$(MOVIE_COUNTS),$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,obs-timeline-$M,mix,$N))))
-# default target for above -- supports 2-way parallelism
-# 5 timelines each within the top-10 and mix-10 ensembles = 10*5 + 10*5 = 100 timelines
-.PHONY: exp-obs-timeline exp-obs-timeline-5
 exp-obs-timeline: exp-obs-timeline-5;
-exp-obs-timeline-5: exp-obs-timeline-5-top-10 exp-obs-timeline-5-mix-10
-
-## graphics
-# targets: exp-graphics-{top,mix}-N
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,graphics,top,$N)))
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,graphics,mix,$N)))
-# default target for above -- supports 2-way parallelism
-.PHONY: exp-graphics
-exp-graphics: exp-graphics-top-10 exp-graphics-mix-20
-
-## html -- within the sub-make, it will require graphics
-# targets: exp-html-{top,mix}-N
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,html,top,$N)))
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,html,mix,$N)))
-# default target for above -- supports 2-way parallelism
-.PHONY: exp-html
-exp-html: exp-html-top-10 exp-html-mix-20
 
 ## html-only -- does not re-make graphics
-# targets: exp-html-only-{top,mix}-N
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,html-only,top,$N)))
-$(foreach N,$(EXP_COUNTS),$(eval $(call MAKE_EXP_OPERATION,html-only,mix,$N)))
 # default target for above -- handled specially
 #   re-generates all html for all the ensembles (-r option)
 .PHONY: exp-html-only
