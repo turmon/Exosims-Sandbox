@@ -1623,8 +1623,8 @@ class SimulationRun(object):
 
         # maintain a running tally of instrument time - detection mode only
         # these side variables are from the script, not the DRM/SPC
-        #ohTime = 0.2 # [days] -- overhead time
-        ohTime = self.sim_info['ohTime'] # [days] -- overhead time
+        ohTime_by_syst = self.sim_info['ohTime_by_syst'] # [days] -- overhead time, per system
+        ohTime = self.sim_info['ohTime'] # [days] -- fallback overhead time
         settlingTime = self.sim_info['settlingTime'] # [days] -- settling time
         my_inst_time = 0.0 # [days]
         
@@ -1653,7 +1653,13 @@ class SimulationRun(object):
             # track the accumulated observational time
             ## NB: exoplanetObsTime includes detection + char time, we want det only, so don't use
             ## elapsed_obs_time = strip_units(obs['exoplanetObsTime'])
-            my_inst_time += strip_units(obs['det_time']) + ohTime + settlingTime
+            # Match Exosims observation_detection(), which allocates:
+            #   intTime*timeMultiplier + settlingTime + ohTime(of the det mode's system)
+            # DRM det_time is intTime alone. det_mode (minus its 'syst') is in the DRM.
+            det_mode = obs.get('det_mode', {})
+            time_mult = det_mode.get('timeMultiplier', 1.0)
+            obs_ohTime = ohTime_by_syst.get(det_mode.get('systName'), ohTime)
+            my_inst_time += strip_units(obs['det_time']) * time_mult + obs_ohTime + settlingTime
             elapsed_obs_time = my_inst_time
             # detected planets
             p_detected = np.array(obs['plan_inds'])[np.where(obs_det['det_status']==1)[0]]
@@ -3509,15 +3515,23 @@ def load_exosims_sim(args):
     # 2: obtain overhead time
     # note: we do not strictly need to instantiate the object to get this
     # note: the module instantiation set up the ohTime as an astropy Quantity
-    # note: this is actually a function of the SuppressionSystem
-    ohTime = 1.0 # [days] --- this is the Exosims default
+    # note: ohTime is a property of each starlightSuppressionSystem, so we
+    # keep it per-system (by name); the DRM's det_mode['systName'] selects one
+    ohTime_default = 1.0 # [days] --- this is the Exosims default
+    ohTime_by_syst = {}
     for syst in specs.get('starlightSuppressionSystems', []):
-        ohTime = max(ohTime, strip_units(syst.get('ohTime', 0.0)))
-    rv['ohTime'] = ohTime
+        ohTime_by_syst[syst.get('name')] = strip_units(syst.get('ohTime', ohTime_default))
+    rv['ohTime_by_syst'] = ohTime_by_syst
+    # fallback ohTime, for DRMs lacking det_mode: that of the default detection
+    # mode (first mode with detectionMode set, else the first mode)
+    modes = specs.get('observingModes', [])
+    det_modes = [m for m in modes if m.get('detectionMode', False)] or modes
+    det_syst = det_modes[0].get('systName') if det_modes else None
+    rv['ohTime'] = ohTime_by_syst.get(det_syst, ohTime_default)
     # obtain settling time
     # settling time is in Observatory
-    #  -- 1.0 days is the Exosims default
-    settlingTime = specs.get('settlingTime', 1.0) # [days]
+    #  -- 0.042 days (1 hour) is the Exosims default
+    settlingTime = specs.get('settlingTime', 0.042) # [days]
     rv['settlingTime'] = settlingTime
 
     # 3: obtain mission lifetime

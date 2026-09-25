@@ -150,6 +150,17 @@ def get_char_time(obs):
         # coronagraph-only char - sum integration windows
         return sum(cslice['char_time'] for cslice in obs['char_info'])
 
+def get_char_slices(obs):
+    r'''Utility function, gets (char_time, char_mode) pairs from a drm observation.
+
+    As in get_char_time, starshade chars have one char_time within obs, while
+    coronagraph chars have a list of char_info's, one per char mode.
+    The char_mode is None if the DRM does not record it.'''
+    if 'char_time' in obs:
+        return [(obs['char_time'], obs.get('char_mode'))]
+    else:
+        return [(cslice['char_time'], cslice.get('char_mode')) for cslice in obs['char_info']]
+
 def load_dt_generator_info(obstime_csv):
     r'''Load info to initialize a generator of random observation times from a CSV file.'''
     values, probs = [], []
@@ -265,17 +276,30 @@ class SimulationRun(object):
             # if no detection modes, give a warning, but continue
             t_mult = 1.0
             sys.stderr.write('No detection modes found, using timeMultiplier = %f\n' % t_mult)
-        # TODO:
-        # the timeMultiplier is mode-dependent; char modes can have a different one
+        # timeMultiplier and ohTime are mode-dependent; the DRM records the mode
+        # of each observation, so these are fallbacks for DRMs lacking a mode
         self.timeMultiplier = t_mult
-        # FIXME: for ohTime, use what is in the starlight suppression system
-        #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
-        # FIXME: could use (or attempt to use) the as-written Sandbox outspec 
+        # ohTime is a property of each starlightSuppressionSystem, found via
+        # the mode's systName
+        # FIXME: could use (or attempt to use) the as-written Sandbox outspec
         # (.../log/outspec/NNN.json), rather than assuming we know the default value
-        self.ohTime = self.outspec.get('ohTime', 0.2) # [days] -- overhead time
-        self.settlingTime = self.outspec.get('settlingTime', 1.0) # [days] -- settling time
+        self.ohTime_by_syst = {syst.get('name'): syst.get('ohTime', 1.0) # [days] -- Exosims default
+                               for syst in self.outspec.get('starlightSuppressionSystems', [])}
+        det_syst = mode_det[0].get('systName') if mode_det else None
+        self.ohTime = self.ohTime_by_syst.get(det_syst, 1.0) # [days] -- fallback overhead time
+        self.settlingTime = self.outspec.get('settlingTime', 0.042) # [days] -- Exosims default
         self.missionLife = self.outspec['missionLife'] * 365.25 # [days]
         self.charMargin = self.outspec.get('charMargin', 0.15) # [dimensionless] - Exosims default
+
+    def mode_overheads(self, mode):
+        r'''Return (timeMultiplier, ohTime) for an observing mode as stored in the DRM.
+
+        The DRM copy of a mode lacks its 'syst', but has 'systName', which
+        selects the ohTime. If mode is None, the fallback values are returned.'''
+        if not mode:
+            return self.timeMultiplier, self.ohTime
+        return (mode.get('timeMultiplier', self.timeMultiplier),
+                self.ohTime_by_syst.get(mode.get('systName'), self.ohTime))
 
     def get_obs_times(self):
         r'''Extract observation start and end times, place in object.
@@ -291,10 +315,8 @@ class SimulationRun(object):
           integrations needed to cover the full field of view, or the full wavelength band.
         '''
 
-        # fixme: ohtime, timeMultiplier are in general functions of mode
-        ohTime = self.ohTime
+        # ohTime and timeMultiplier are functions of the mode, found per-observation
         settlingTime = self.settlingTime
-        timeMultiplier = self.timeMultiplier
         # initialize: start_time, interval, star_name
         det_t0,  det_dt,  det_oi  = [], [], []
         char_t0, char_dt, char_oi = [], [], []
@@ -308,6 +330,7 @@ class SimulationRun(object):
             if ('det_info' in obs) or ('det_time' in obs):
                 # a detection
                 det_time_noU = strip_units(obs['det_time'])
+                timeMultiplier, ohTime = self.mode_overheads(obs.get('det_mode'))
                 obs_time = det_time_noU * timeMultiplier + ohTime + settlingTime
                 obs_oh_0 = ohTime + settlingTime
                 obs_oh_1 = det_time_noU * (timeMultiplier-1)
@@ -326,16 +349,21 @@ class SimulationRun(object):
                 # Note: charMargin is already included in char_time_noU (it's the integration time)
                 # Note: overheads are not added to char_time_noU by coroOnly
                 # Exception?: do some schedulers include some overhead(s) in char_time?
-                # We must put timeMultiplier into char_time (in general though, it's mode-dependent)
-                char_time_noU = strip_units(get_char_time(obs))
-                if char_time_noU == 0:
-                    # "missed char" special case -- no obs was made
-                    char_time = 0.0
-                    obs_oh_0, obs_oh1 = 0.0, 0.0
-                else:
-                    char_time = char_time_noU * timeMultiplier + ohTime + settlingTime
-                    obs_oh_0 = ohTime + settlingTime
-                    obs_oh_1 = char_time_noU * (timeMultiplier-1)
+                # Exosims allocates overheads per char mode (each char_info slice), as:
+                #   char_time * timeMultiplier + ohTime + settlingTime
+                # but only if char_time > 0: a zero slice is a "missed char" (no obs made).
+                # The slices are merged here into one window: all ohTime+settlingTime
+                # at the start (oh_0), and all extra (timeMultiplier) time at the end (oh_1).
+                char_time_noU, obs_oh_0, obs_oh_1 = 0.0, 0.0, 0.0
+                for slice_time, slice_mode in get_char_slices(obs):
+                    slice_time = strip_units(slice_time)
+                    if slice_time == 0:
+                        continue
+                    timeMultiplier, ohTime = self.mode_overheads(slice_mode)
+                    char_time_noU += slice_time
+                    obs_oh_0 += ohTime + settlingTime
+                    obs_oh_1 += slice_time * (timeMultiplier-1)
+                char_time = char_time_noU + obs_oh_0 + obs_oh_1
                 if 'char_info' in obs:
                     char_info = obs['char_info'][0]
                 else:

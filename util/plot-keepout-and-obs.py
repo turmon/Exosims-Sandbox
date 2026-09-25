@@ -159,12 +159,26 @@ class SimulationRun(object):
         # Note: the specs (from the script) does not have to contain these numbers; we are
         # in some cases repeating the Exosims default in case they aren't present.
         # FIXME: there is also a char_margin parameter
-        # FIXME: for ohTime, use what is in the starlight suppression system
-        #   (outspec['starlightSuppressionSystems'][0]['ohTime']  or so)
-        self.ohTime = self.specs.get('ohTime', 0.2) # [days] -- overhead time
-        self.settlingTime = self.specs['settlingTime'] # [days] -- settling time
+        # ohTime is a property of each starlightSuppressionSystem, found via the mode's
+        # systName; the DRM records the mode of each detection, so these
+        # timeMultiplier and ohTime values are fallbacks for DRMs lacking a mode
+        self.ohTime_by_syst = {syst.get('name'): syst.get('ohTime', 1.0) # [days] -- Exosims default
+                               for syst in self.specs.get('starlightSuppressionSystems', [])}
+        det_syst = mode_det[0].get('systName') if mode_det else None
+        self.ohTime = self.ohTime_by_syst.get(det_syst, 1.0) # [days] -- fallback overhead time
+        self.settlingTime = self.specs.get('settlingTime', 0.042) # [days] -- Exosims default
         self.missionLife = self.specs['missionLife'] * 365.25 # [days]
         self.charMargin = self.specs.get('charMargin', 0.15) # [dimensionless] - Exosims default
+
+    def mode_overheads(self, mode):
+        r'''Return (timeMultiplier, ohTime) for an observing mode as stored in the DRM.
+
+        The DRM copy of a mode lacks its 'syst', but has 'systName', which
+        selects the ohTime. If mode is None, the fallback values are returned.'''
+        if not mode:
+            return self.timeMultiplier, self.ohTime
+        return (mode.get('timeMultiplier', self.timeMultiplier),
+                self.ohTime_by_syst.get(mode.get('systName'), self.ohTime))
 
     def get_koangles(self, OS):
         r'''Get koangles array from information in the OpticalSystem.
@@ -237,9 +251,7 @@ class SimulationRun(object):
           integrations needed to cover the full field of view, or the full wavelength band.
         '''
 
-        ohTime = self.ohTime
         settlingTime = self.settlingTime
-        timeMultiplier = self.timeMultiplier
         # initial values
         det_t0,  det_dt,  det_sind  = [], [], []
         char_t0, char_dt, char_sind = [], [], []
@@ -249,6 +261,7 @@ class SimulationRun(object):
             star_ind = obs['star_ind']
             if ('det_info' in obs) or ('det_time' in obs):
                 # a detection
+                timeMultiplier, ohTime = self.mode_overheads(obs.get('det_mode'))
                 obs_time = strip_units(obs['det_time'])*timeMultiplier + ohTime + settlingTime
                 det_t0.append(arrival_time)
                 det_dt.append(obs_time)
