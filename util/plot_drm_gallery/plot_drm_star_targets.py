@@ -60,7 +60,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '')
+    extra_plots = '+' in mode.get('op', '').split(',')
 
     # Unpack CSV data
     t_star_targ, = plot_data

@@ -54,7 +54,7 @@ def plot_drm_visit_times(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    do_incremental_plot = '+' in mode.get('op', '')
+    do_incremental_plot = '+' in mode.get('op', '').split(',')
     
     # Unpack CSV data
     t_visit_time, = plot_data

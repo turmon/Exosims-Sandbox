@@ -53,7 +53,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    do_incremental_plot = '+' in mode.get('op', '')
+    do_incremental_plot = '+' in mode.get('op', '').split(',')
     
     # Unpack CSV data
     t_det_time, = plot_data

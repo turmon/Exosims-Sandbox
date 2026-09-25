@@ -63,7 +63,7 @@ def plot_drm_yield_times(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    do_incremental_plot = '+' in mode.get('op', '')
+    do_incremental_plot = '+' in mode.get('op', '').split(',')
     
     # Unpack CSV data
     t_yield_time, = plot_data

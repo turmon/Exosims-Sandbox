@@ -51,7 +51,7 @@ def plot_drm_event_counts(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '')
+    extra_plots = '+' in mode.get('op', '').split(',')
 
     # Unpack CSV data
     t_counts, t_earth_counts = plot_data

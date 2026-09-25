@@ -93,8 +93,11 @@ Current registry entries:
 Every plot function receives a `mode` dict -- a package to flow information
 downward to the plot code. Standard keys:
 
-- `op` (str) -- operation mode string. Empty string is normal; `"+"` requests
-  extra/optional plots.
+- `op` (str) -- operation mode string, a comma-separated list of options,
+  tested as tokens (`'+' in mode.get('op', '').split(',')`). Empty string is
+  normal; `"+"` requests extra/optional plots. `"std"` makes the `promote`
+  plots show mean +/- 1 std instead of median and quartiles. Options that a
+  plot does not recognize are ignored, e.g. `"+,std"` for all plots.
 - `verbose` (int) -- verbosity level. 0 = quiet, 1 = normal, 2+ = debug.
 - `ext_list` (list[str]) -- file extensions to write, e.g. `['png']` or
   `['png', 'pdf']`.

@@ -357,7 +357,8 @@ Optional arguments:
     --skip PLOT         Skip the specified plot (by name), can repeat
     --list              List all available plots and exit
     --jobs N, -j N      Number of parallel workers (default: auto; 0 or 1 for serial)
-    --mode_op OP        Global mode.op string (default: ""; "+" => extra plots)
+    --mode_op OP        Global mode.op string, comma-separated options (default: "";
+                        "+" => extra plots, "std" => promote plots use mean +/- std)
                         Per-plot overrides can be set in config-reduce.json,
                         as graphics.mode_op -- see reduce_drm_tools/README.md
     --pdf               Graphical output to PDF also
@@ -377,7 +378,7 @@ Optional arguments:
     parser.add_argument('--list', action='store_true',
                        help='List all available plots and exit')
     parser.add_argument('--mode_op', type=str, default='',
-                       help='All-plot mode operation string (default: "")')
+                       help='All-plot mode operation string, comma-separated options (default: "")')
     parser.add_argument('--pdf', action='store_true', help='Output PDFs also')
     parser.add_argument('--jobs', '-j', type=int, default=None, metavar='N',
                        help='Number of parallel workers (default: auto; 0 or 1 for serial)')

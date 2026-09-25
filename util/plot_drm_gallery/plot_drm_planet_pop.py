@@ -107,7 +107,7 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '')
+    extra_plots = '+' in mode.get('op', '').split(',')
 
     # Unpack CSV data
     t_planets, = plot_data

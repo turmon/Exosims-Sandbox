@@ -53,7 +53,7 @@ def plot_drm_earth_chars(reduce_info, plot_data, dest_tmpl, mode):
     """
 
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '')
+    extra_plots = '+' in mode.get('op', '').split(',')
 
     # Unpack CSV data
     t_earth_chars, = plot_data
