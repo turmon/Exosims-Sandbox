@@ -414,7 +414,8 @@ sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 	$(TIMELINE_PROG) -o sims/$(*)-%s.%s $<
 
 # Rule to make a single-drm keepout map
-sims/%-keepout-and-obs.png: $$(subst /path/,/drm/,sims/$$*).pkl
+# (target is the first of the files KEEPOUT_PROG writes: -obs-keepout-all.png)
+sims/%-obs-keepout-all.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Keepout \`$@'"
 	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $(call PATH_TO_SCRIPT,$@) $<
 
@@ -453,7 +454,7 @@ path-final-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png,sims/$(S))
 obs-timeline-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt,sims/$(S))
 	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
 
-keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-keepout-and-obs.png,sims/$(S))
+keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-keepout-all.png,sims/$(S))
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
 
 # Per-DRM counts used to construct the exp-* targets further below
@@ -573,7 +574,7 @@ EXP_PRODUCTS_html-only     =
 EXP_PRODUCTS_graphics      = $1/reduce-info.csv $1/gfx/det-info.txt
 EXP_PRODUCTS_path-ensemble = $1/path-ens/path-map.png
 EXP_PRODUCTS_path-movie    = $(call SELECT_RUN_TARGETS,$2,.mp4,$1)
-EXP_PRODUCTS_keepout       = $(call SELECT_RUN_TARGETS,$2,-keepout-and-obs.png,$1)
+EXP_PRODUCTS_keepout       = $(call SELECT_RUN_TARGETS,$2,-obs-keepout-all.png,$1)
 EXP_PRODUCTS_obs-timeline  = $(call SELECT_RUN_TARGETS,$2,-obs-timelines.txt,$1)
 
 # Products for all selected ensembles.  $1 = kind, $2 = count, $3 = selection(s)
