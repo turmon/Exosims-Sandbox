@@ -84,7 +84,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
         
         # Axis labels
-        ax.set_xlabel('Detection Integration Time [day]', fontweight='bold')
+        ax.set_xlabel('Detection Integration and Overhead Time [day]', fontweight='bold')
         ax.set_ylabel(ytext, fontweight='bold')
         
         # Legend
@@ -197,7 +197,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         return tracker.get_files()
     
     style_promote_plot(ax, 
-                      'All Planets: Cumulative Promotions vs. Detector Time',
+                      'All Planets: Cumulative Promotions vs. Detection Time',
                       'Targets Passing Criterion [count]', 
                       names_legend)
     write_plots(fig, 'promote-allplan-cume')
@@ -228,7 +228,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                        **ebar_props)
         
         style_promote_plot(ax,
-                          'Habitable Zone: Cumulative Promotions vs. Detector Time',
+                          'Habitable Zone: Cumulative Promotions vs. Detection Time',
                           'Targets Passing Criterion [count]',
                           names_legend)
         write_plots(fig, 'promote-hzone-cume')
@@ -258,7 +258,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                    **ebar_props)
     
     style_promote_plot(ax,
-                      f'{pn.adj} Planets: Cumulative Promotions vs. Detector Time',
+                      f'{pn.adj} Planets: Cumulative Promotions vs. Detection Time',
                       'Targets Passing Criterion [count]',
                       names_legend)
     write_plots(fig, 'promote-earth-cume')
@@ -288,7 +288,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                    **ebar_props)
     
     style_promote_plot(ax,
-                      f'Counted By Star: {pn.adj} Planets: Cumulative Promotions vs. Detector Time',
+                      f'Counted By Star: {pn.adj} Planets: Cumulative Promotions vs. Detection Time',
                       'Targets Passing Criterion [count]',
                       names_legend)
     write_plots(fig, 'promote-star-cume')
@@ -321,7 +321,7 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
                         **ebar_props)
     
         style_promote_plot(ax,
-                          'Counted By Star: Cumulative Observation Span vs. Detector Time',
+                          'Counted By Star: Cumulative Observation Span vs. Detection Time',
                           'Targets Passing Span Criterion [count]',
                           names_legend)
         write_plots(fig, 'promote-star-span-cume')
