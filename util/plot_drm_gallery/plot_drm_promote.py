@@ -38,7 +38,11 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     dest_tmpl : str
         Template string for output file paths with two %s placeholders
     mode : dict
-        Dictionary with 'op' key containing operation mode string
+        Dictionary with 'op' key containing operation mode string, a
+        comma-separated list of options:
+          '+'   => make extra plots
+          'std' => promotion-vs-time plots show mean +/- 1 std,
+                   rather than median with 25%/75% quantiles
 
     Outputs
     -------
@@ -52,8 +56,12 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         phist-star-span-2year.png, phist-star-span-3year.png
     """
 
+    # Mode options: comma-separated list of tokens
+    ops = mode.get('op', '').split(',')
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '')
+    extra_plots = '+' in ops
+    # Promotion-vs-time: mean +/- std, rather than median + IQR
+    use_std = 'std' in ops
 
     # Unpack CSV data
     t_promote, t_phist = plot_data
@@ -85,8 +93,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         
         # Axis labels
         ax.set_xlabel('Detection Integration and Overhead Time [day]', fontweight='bold')
-        ax.set_ylabel(ytext, fontweight='bold')
-        
+        stat_text = ' (mean ± 1σ)' if use_std else ' (median, IQR)'
+        ax.set_ylabel(ytext + stat_text, fontweight='bold')
+
         # Legend
         ax.legend(legtext, loc='upper left')
         ax.tick_params(labelsize=13)
@@ -124,6 +133,19 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     def write_plots(fig, dest_name):
         """Write the current figure to various files"""
         tracker.write_plots(fig, dest_name, dest_tmpl, verbose=mode.get('verbose', 1))
+
+    # Inner function: center line and error-bar extents for a promotion field.
+    # yerr is always in errorbar()'s (2,N) = (lower,upper) form, so the
+    # symmetric (std) case is just lower == upper, and callers need not care.
+    def center_and_yerr(name):
+        """Center line and (2,N) error-bar extents for field-family `name`"""
+        if use_std:
+            y = t_promote[f'{name}_mean'].values
+            s = t_promote[f'{name}_std'].values
+            return y, np.vstack((s, s))
+        y = t_promote[f'{name}_q50'].values
+        return y, np.vstack((y - t_promote[f'{name}_q25'].values,
+                             t_promote[f'{name}_q75'].values - y))
 
     # Offsets on various error-bars in the plot 
     # (units of days with one complete sample per ~30 days)
@@ -170,23 +192,16 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     # Put each of the above detection-times on one plot
     skipping = False
     for n, name in enumerate(names):
-        f_mean = f'{name}_q50'
-        f_bar1 = f'{name}_q25'
-        f_bar2 = f'{name}_q75'
-        
-        if f_mean not in t_promote.columns:
+        f_center = f'{name}_mean' if use_std else f'{name}_q50'
+        if f_center not in t_promote.columns:
             # Stop at any error here
-            print(f'\t{PROGNAME}: No {f_mean} in promotion table, skipping')
+            print(f'\t{PROGNAME}: No {f_center} in promotion table, skipping')
             skipping = True
             break
-        
-        # Asymmetric error bars
-        yerr_lower = t_promote[f_mean].values - t_promote[f_bar1].values
-        yerr_upper = t_promote[f_bar2].values - t_promote[f_mean].values
-        
-        ax.errorbar(tsamp + t_offsets[n],
-                   t_promote[f_mean].values,
-                   yerr=[yerr_lower, yerr_upper],
+
+        y, yerr = center_and_yerr(name)
+        ax.errorbar(tsamp + t_offsets[n], y,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)  # NB: skinny
     
@@ -214,16 +229,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         n_plot = len(names)
         
         for n, name in enumerate(names):
-            f_mean = f'{name}_q50'
-            f_bar1 = f'{name}_q25'
-            f_bar2 = f'{name}_q75'
-            
-            yerr_lower = t_promote[f_mean].values - t_promote[f_bar1].values
-            yerr_upper = t_promote[f_bar2].values - t_promote[f_mean].values
-            
-            ax.errorbar(tsamp + t_offsets[n],
-                       t_promote[f_mean].values,
-                       yerr=[yerr_lower, yerr_upper],
+            y, yerr = center_and_yerr(name)
+            ax.errorbar(tsamp + t_offsets[n], y,
+                       yerr=yerr,
                        color=line_colors[n],
                        **ebar_props)
         
@@ -244,16 +252,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     n_plot = len(names)
     
     for n, name in enumerate(names):
-        f_mean = f'{name}_q50'
-        f_bar1 = f'{name}_q25'
-        f_bar2 = f'{name}_q75'
-        
-        yerr_lower = t_promote[f_mean].values - t_promote[f_bar1].values
-        yerr_upper = t_promote[f_bar2].values - t_promote[f_mean].values
-        
-        ax.errorbar(tsamp + t_offsets[n],
-                   t_promote[f_mean].values,
-                   yerr=[yerr_lower, yerr_upper],
+        y, yerr = center_and_yerr(name)
+        ax.errorbar(tsamp + t_offsets[n], y,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -274,16 +275,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
     n_plot = len(names)
     
     for n, name in enumerate(names):
-        f_mean = f'{name}_q50'
-        f_bar1 = f'{name}_q25'
-        f_bar2 = f'{name}_q75'
-        
-        yerr_lower = t_promote[f_mean].values - t_promote[f_bar1].values
-        yerr_upper = t_promote[f_bar2].values - t_promote[f_mean].values
-        
-        ax.errorbar(tsamp + t_offsets[n],
-                   t_promote[f_mean].values,
-                   yerr=[yerr_lower, yerr_upper],
+        y, yerr = center_and_yerr(name)
+        ax.errorbar(tsamp + t_offsets[n], y,
+                   yerr=yerr,
                    color=line_colors[n],
                    **ebar_props)
     
@@ -307,16 +301,9 @@ def plot_drm_promote(reduce_info, plot_data, dest_tmpl, mode):
         n_plot = len(names)
         
         for n, name in enumerate(names):
-            f_mean = f'{name}_q50'
-            f_bar1 = f'{name}_q25'
-            f_bar2 = f'{name}_q75'
-            
-            yerr_lower = t_promote[f_mean].values - t_promote[f_bar1].values
-            yerr_upper = t_promote[f_bar2].values - t_promote[f_mean].values
-            
-            ax.errorbar(tsamp + t_offsets[n],
-                        t_promote[f_mean].values,
-                        yerr=[yerr_lower, yerr_upper],
+            y, yerr = center_and_yerr(name)
+            ax.errorbar(tsamp + t_offsets[n], y,
+                        yerr=yerr,
                         # color=?
                         **ebar_props)
     
@@ -479,7 +466,7 @@ the plot name and file extension.
     parser.add_argument('dest_tmpl', type=str,
                        help='Destination template string (e.g., "output/det-%%s.%%s")')
     parser.add_argument('--mode_op', type=str, default='',
-                       help='Operation mode, default: "" (normal)')
+                       help='Operation mode, comma-separated options: "+" => extra plots, "std" => mean +/- std (default: "")')
     parser.add_argument('--verbose', '-v', action='count', default=1,
                        help='Verbosity')
     parser.add_argument('--quiet', '-q', action='store_true', help='Minimal verbosity')
