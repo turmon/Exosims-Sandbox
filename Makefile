@@ -408,9 +408,10 @@ sims/%-final.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	$(PATH_PROG_FINAL) $<
 
 # Rule to make a single-drm timeline plot-set
+# (TIMELINE_PROG infers the JSON spec, preferring the outspec, from the DRM path)
 sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Timeline \`$@'"
-	$(TIMELINE_PROG) -o sims/$(*)-%s.%s -j $(call PATH_TO_SCRIPT,$@) $<
+	$(TIMELINE_PROG) -o sims/$(*)-%s.%s $<
 
 # Rule to make a single-drm keepout map
 sims/%-keepout-and-obs.png: $$(subst /path/,/drm/,sims/$$*).pkl

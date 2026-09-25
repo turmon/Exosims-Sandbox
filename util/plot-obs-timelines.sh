@@ -12,7 +12,7 @@
 #  -o TEMPLATE  gives the explicit output file template
 #               must contain two %s's, such as timelines-%s.%s
 #               By default, this is deduced from Sandbox conventions
-#  -j JSON      gives the JSON script name
+#  -j JSON      gives the JSON script (or outspec) name, used as-is
 #               By default, this is deduced from Sandbox conventions
 #  -D           signals to run python with the debugger on
 # ```
@@ -39,15 +39,22 @@
 #
 # * The SPC file will be deduced from the DRM filename by the called routines
 #   (not by this script).
-# * The script file (`.json`) is deduced from the DRM filename (directory
-#   component), but can be supplied explicitly with `-j`
+# * The script file (`.json`) is deduced from the DRM filename, but can be
+#   supplied explicitly with `-j`. The outspec is preferred, because it
+#   contains the parameter values actually used, including Exosims defaults.
+#   The first readable file among these is used:
+#     sims/ENS/log/outspec/SEED.json  (per-seed outspec)
+#     sims/ENS/run/outspec_SEED.json  (per-seed outspec, older layout)
+#     sims/ENS/reduce-outspec.json    (outspec copied by reduce_drms.py)
+#     sims/ENS/reduce-script.json     (script copied by reduce_drms.py)
+#     Scripts/ENS.json                (the original script)
 # * The image output name is generated from the DRM, but can be explicitly given.
 #
 # For example:
 # ```
 #       drm  = sims/HabEx_4m_TS_dmag26p0_20180206/drm/777.pkl
 #       spc  = sims/HabEx_4m_TS_dmag26p0_20180206/spc/777.spc
-#       json = Scripts/HabEx_4m_TS_dmag26p0_20180206.json
+#       json = sims/HabEx_4m_TS_dmag26p0_20180206/log/outspec/777.json
 # ```
 #
 ## [end comment block]
@@ -122,18 +129,38 @@ echo "${PROGNAME}: Timeline graphics: $(basename $drm)"
 ## script argument
 ##
 
-# if not given: guess script name from DRM
+# if not given: infer script name from DRM, preferring the outspec
 if [ -z "$script_opt" ]; then
     # e.g., consider:
     #    drm = ./sims/HabEx_4m_TS_dmag26p0_20180206/drm/777.pkl
     #    drm = ./sims/Habex_X.exp/s_c1_c2_c3/drm/777.pkl
-    script_opt=$(echo "$drm" | sed -e 's|/drm/.*|.json|' -e 's|.*sims/|Scripts/|')
-    echo "${PROGNAME}: From DRM, guess script is \`$script_opt'."
+    # simdir = ./sims/Habex_X.exp/s_c1_c2_c3, seed = 777
+    simdir="${drm%/drm/*}"
+    seed=$(basename "$drm" .pkl)
+    candidates=(
+	"$simdir/log/outspec/$seed.json"
+	"$simdir/run/outspec_$seed.json"
+	"$simdir/reduce-outspec.json"
+	"$simdir/reduce-script.json"
+	"$(echo "$drm" | sed -e 's|/drm/.*|.json|' -e 's|.*sims/|Scripts/|')"
+    )
+    for f in "${candidates[@]}"; do
+	if [ -r "$f" ]; then
+	    script_opt="$f"
+	    break
+	fi
+    done
+    if [ -z "$script_opt" ]; then
+	echo "${PROGNAME}: Could not infer script-file from DRM. Tried:" >&2
+	printf '    %s\n' "${candidates[@]}" >&2
+	exit 1
+    fi
+    echo "${PROGNAME}: From DRM, using script \`$script_opt'."
 fi
 if [ ! -r "$script_opt" ]; then
-    echo "${PROGNAME}: Inferred script-file \`$script_opt' not readable, exiting." >&2
+    echo "${PROGNAME}: Script-file \`$script_opt' not readable, exiting." >&2
     exit 1
-fi    
+fi
 
 ##############################################################
 ##
