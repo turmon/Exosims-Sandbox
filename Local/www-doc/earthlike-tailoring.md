@@ -145,9 +145,19 @@ the reduction code folds these extra values into the overall
 
 `graphics.mode_op`: 
 Requests a plot family's "extra" plots to be made by default when
-`make gramphcs` is run.
-(This is similar to running `make graphics-extra`, but more granular,
-because we can request extra plots from only one plot family.)
+`make graphics` is run. Example:
+```
+    {
+      "graphics": {
+        "_comment": "Make extra (mode_op '+') promotion plots",
+        "mode_op": {
+          "promote": "+"
+        }
+      }
+    }
+```
+This is similar to running `make graphics-extra`, but more granular,
+because we can request extra plots from only one plot family.
 
 Both of these settings are separate from the "earthlike" class definition.
 
