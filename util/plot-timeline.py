@@ -28,14 +28,7 @@ working directory unless `-o path/to/output/%s.%s` or the like is given.
 ```
 """
 
-# Michael Turmon, JPL
-# 04/2019 - created
-# 10/2023 - added star names and char_status
-# 09/2025 - do better with overhead
-# based on an idea by Dean Keithly
 
-
-# import six.moves.cPickle as pickle
 import pickle
 import os
 import sys
@@ -720,24 +713,6 @@ class plotTimelineContainer(object):
                                     xmin=t0[i]+dt[i]-oi.oh_1,
                                     xmax=t0[i]+dt[i],
                                     **l_props_oh, colors='dimgray')
-
-
-###
-### possibly-useful stuff relating to Exosims time parameterization
-###
-
-# allModes = outspec['observingModes']
-# mode1 = [mode for mode in allModes if 'detectionMode' in mode.keys() or 'detection' in mode.keys()]
-# mode = mode1[0]
-# if not 'timeMultiplier' in mode.keys():
-#     mode['timeMultiplier'] = 1.
-
-# arrival_times = [drm[i]['arrival_time'] for i in LD]
-# sumOHTIME = outspec['settlingTime'] + outspec['starlightSuppressionSystems'][0]['ohTime']
-# det_times = [drm[i]['det_time'].value*(mode['timeMultiplier'])+sumOHTIME for i in LD]
-# det_timesROUNDED = [round(drm[i]['det_time'].value*(mode['timeMultiplier'])+sumOHTIME,1) for i in LD]
-# ObsNums = [drm[i]['ObsNum'] for i in LD]
-# char_times = [drm[i]['char_time'].value*(1.+outspec['charMargin'])+sumOHTIME*(drm[i]['char_time'].value > 0.) for i in LD]
 
 
 def main(args):
