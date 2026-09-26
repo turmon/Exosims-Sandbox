@@ -39,9 +39,9 @@
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
 #   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -jN
 #   exp-path-ensemble* \   Same pattern as html above with -mix or -top, and a
-#   exp-graphics*       \  number saying how many.  Also, can leave off -top-N
-#   exp-html-only*      /  and just make 10 top + 20 selected.
-#   exp-path-movie-M-*  /  Make M movies in each of (top/mix)-N ensembles.
+#   exp-graphics*       |  number saying how many.  Also, can leave off -top-N
+#   exp-html-only*      |  and just make 10 top + 20 selected.
+#   exp-path-movie-M-*  |  Make M movies in each of (top/mix)-N ensembles.
 #   exp-keepout-M-*    /   Make M keepout maps in each of (top/mix)-N ensembles.
 #   exp-obs-timeline-M-*   Make M obs-timelines in each of (top/mix)-N ensembles.
 #   (The exp-* targets first reduce any ensembles that need it.)
@@ -274,14 +274,15 @@ sims/%/reduce-info.csv: sims/%/drm
 
 # When $(S) is an experiment/family -- it has no drm/ of its own -- its
 # reduction depends on the reduction of every ensemble it contains.  This rule
-# is what replaces the old exp-reduce for-loop.  As before, the presence of
+# replaces the old exp-reduce for-loop.  The presence of
 # both drm/ and spc/ is the cue that a subdirectory is an ensemble.
-# Ensembles with no DRMs are included: they are reduced to an N=0 placeholder
+# Ensembles with no DRM files are included: they are reduced to an N=0 placeholder
 # (see above), which lists them in the experiment's tables.
-# NOTE: only ensembles *directly* within $(S) are found.  For a family of
-# families (e.g., S=a.fam, with ensembles in a.fam/b.exp/), this rule has no
-# prerequisites, so the ensembles further down are not reduced.  Instead, give
-# S as the experiment directly holding the ensembles (S=a.fam/b.exp): its
+# NOTE: To better support very large Experiments (say, > 10K scripts), only ensembles 
+# *directly* within $(S) are found, rather than full recursive expansion.  For 
+# a family of experiments (e.g., S=a.fam, with ensembles in a.fam/b.exp/), this rule 
+# has no prerequisites, so the ensembles further down are not reduced.  Instead, give
+# S as the experiment *directly* holding the ensembles (S=a.fam/b.exp): its
 # reduction then propagates upward to a.fam (see PROPAGATE_REDUCTION_UPWARD).
 # The ifeq guard matters: when $(S) is an ensemble this rule must not exist,
 # or its recipe would shadow the pattern rule above.
@@ -345,15 +346,15 @@ GRAPHICS_SENTINEL:=sims/$(S)/gfx/det-info.txt
 # delegate to the graphics sentinel file
 graphics: script-exists ensemble-exists $(GRAPHICS_SENTINEL)
 
-# newer graphics - one ensemble
+# graphics - one ensemble
 # This, and the other per-ensemble product rules below, are pattern rules
 # (keyed on the ensemble directory, %) rather than explicit rules for $(S)
 # alone.  That way the ensembles *within* an experiment can be built by the
 # exp-* targets in this same make process, without a sub-make per ensemble.
 # The order-only drm/ prerequisite keeps this rule, and the tables and html
-# rules below, from matching an experiment/family directory: those have a
-# reduce-info.csv of their own, but it summarizes ensembles, and cannot be
-# plotted.  (Order-only: a change in drm/ does not by itself force a remake.)
+# rules below, from matching an experiment/family directory: those also have a
+# reduce-info.csv, but they summarize ensembles, and plots are irrelevant.
+# (Order-only: a change in drm/ does not by itself force a remake.)
 sims/%/gfx/det-info.txt: sims/%/reduce-info.csv | sims/%/drm
 	@ echo "Make: Graphics (new-format) into $(@D) ..."
 	@ rm -f sims/$*/gfx/det-*.*
@@ -375,7 +376,7 @@ graphics-extra: script-exists ensemble-exists sims/$(S)/reduce-info.csv
 	$(GRAPHYCS_PROG) sims/$(S)/reduce-%s.csv
 
 ########################################
-## Tables - promotion funnel (more to come?)
+## Tables - promotion funnel
 ##
 .PHONY: tables
 # delegate to the table status file
