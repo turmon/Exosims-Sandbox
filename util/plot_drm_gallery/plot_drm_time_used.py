@@ -75,7 +75,7 @@ def plot_drm_time_used(reduce_info, plot_data, dest_tmpl, mode):
         ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
         
         # Axis labels
-        ax.set_xlabel('Time [day]', fontweight='bold')
+        ax.set_xlabel('Mission Time [day]', fontweight='bold')
         ax.set_ylabel(ytext, fontweight='bold')
         
         # Legend

@@ -115,7 +115,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
         top = max(top, t_fuel[f_mean].max())
     
     # Plot/axis styles
-    title1 = 'Cumulative Fuel Use vs. Time'
+    title1 = 'Cumulative Fuel Use vs. Mission Time'
     title2 = cs.plot_make_title(reduce_info)
     
     # Control axis y-range:
@@ -128,7 +128,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     
     # Title: prevent special interpretation of _ and make bold
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Time [days]', fontweight='bold')
+    ax.set_xlabel('Mission Time [day]', fontweight='bold')
     ax.set_ylabel('Fuel Used [kg]', fontweight='bold')
     ax.legend(names_legend, loc='upper left')
     ax.tick_params(labelsize=13)
@@ -182,7 +182,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
         top = max(top, t_fuel[f_mean].max())
     
     # Plot/axis styles
-    title1 = 'Cumulative Delta-V vs. Time'
+    title1 = 'Cumulative Delta-V vs. Mission Time'
     title2 = cs.plot_make_title(reduce_info)
     
     # Control axis y-range:
@@ -195,7 +195,7 @@ def plot_drm_fuel_used(reduce_info, plot_data, dest_tmpl, mode):
     
     # Title: prevent special interpretation of _ and make bold
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Time [days]', fontweight='bold')
+    ax.set_xlabel('Mission Time [day]', fontweight='bold')
     ax.set_ylabel('Delta V [m/s]', fontweight='bold')
     ax.legend(names_legend, loc='upper left')
     ax.tick_params(labelsize=13)

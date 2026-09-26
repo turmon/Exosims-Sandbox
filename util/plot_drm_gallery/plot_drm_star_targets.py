@@ -297,7 +297,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     title2 = cs.plot_make_title(reduce_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Integration Time [d]', fontweight='bold')
+    ax.set_xlabel('Integration Time [day]', fontweight='bold')
     ax.set_ylabel('Mean Yield [count]', fontweight='bold')
     ax.tick_params(labelsize=13)
     ax.grid(True)
@@ -330,7 +330,7 @@ def plot_drm_star_targets(reduce_info, plot_data, dest_tmpl, mode):
     title2 = cs.plot_make_title(reduce_info)
     
     ax.set_title(f'{title2}\n{title1}', fontsize=11*1.1, fontweight='bold')
-    ax.set_xlabel('Integration Time [d]', fontweight='bold')
+    ax.set_xlabel('Integration Time [day]', fontweight='bold')
     ax.set_ylabel('Mean Characterizations [count]', fontweight='bold')
     ax.tick_params(labelsize=13)
     ax.grid(True)
