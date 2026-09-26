@@ -361,8 +361,8 @@ class plotKeepoutContainer(object):
         N_sind_all = sim.koMap.shape[1]
         sind_show = np.zeros(N_sind_all, dtype=bool) # False - show nothing
         if not char_only:
-            sind_show[sim.det_sind] = True
-        sind_show[sim.char_sind] = True
+            sind_show[sim.det_sind.astype(int)] = True
+        sind_show[sim.char_sind.astype(int)] = True
         # layer of koMap to show -- shape[0] = 1 if coronagraph-only, or = 2 for shade.
         # thus: result = 0 if detection-mode, or if coronagraph-only;
         # result = 1 if char_only and starshade
@@ -380,7 +380,7 @@ class plotKeepoutContainer(object):
         # number of figures
         N_fig = int(np.ceil(N_range_all / N_range_per_fig))
 
-        print(f'{self.args.progname}: Making {N_fig} figure(s) for {N_star} star(s).')
+        print(f'{self.args.progname}: Making {N_fig} figure(s) for {N_star} star(s){" [char-only]" if char_only else ""}.')
         # record the number of range plots made across all figures
         n_range_tot = 0
         for n_fig in range(N_fig):
@@ -467,7 +467,8 @@ class plotKeepoutContainer(object):
         #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True, min_n_ticks=1))
         # this is also the number of stars
         star_names = sim.star_name[sind_show]
-        sn_len = max([len(sn) for sn in star_names])
+        # (sn can be empty)
+        sn_len = max([len(sn) for sn in star_names] + [1])
         ax.set_yticks(np.arange(len(star_names)))
         # pad with digit-width space ("figure space")
         ax.set_yticklabels(np.array([sn.ljust(sn_len, "\u2007") for sn in star_names]))
