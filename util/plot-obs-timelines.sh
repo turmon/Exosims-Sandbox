@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# plot-obs-timelines.sh: Wrapper script, makes plots of observations from a DRM
+# plot-obs-timelines.sh: Wrapper: make timelines of observations from a DRM
 #
 # Usage:
 # ```
@@ -157,7 +157,7 @@ if [ -z "$script_opt" ]; then
 	printf '    %s\n' "${candidates[@]}" >&2
 	exit 1
     fi
-    echo "${PROGNAME}: From DRM, using script \`$script_opt'."
+    echo "${PROGNAME}: Using script \`$script_opt'."
 fi
 if [ ! -r "$script_opt" ]; then
     echo "${PROGNAME}: Script-file \`$script_opt' not readable, exiting." >&2
