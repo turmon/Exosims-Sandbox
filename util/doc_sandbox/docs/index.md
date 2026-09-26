@@ -85,6 +85,8 @@ outputs like plots and movies:
 		console/NNN.out   -- console log from a run
 		environ/NNN.txt   -- runtime environment from a run
 		outspec/NNN.json  -- outspec from a run
+    reduce-script.json    -- copy of the script, made by reduction
+    reduce-outspec.json   -- copy of one outspec, made by reduction
     reduce-info.csv       -- CSV files summarizing the ensemble
     reduce-radlum.csv
     reduce-times.csv
@@ -250,6 +252,30 @@ They are useful in analyzing observation-scheduling behavior,
 verifying that keepout constraints are honored, and related questions.
 They are made by `plot-keepout-and-obs.py`, `plot-timeline.py`,
 and `keepout_path_graphics.py`.
+
+Besides the DRM, the timeline and keepout plotters need the JSON
+parameters of the run. By default, these are found from the DRM filename
+(`sims/<script>/drm/SEED.pkl`), taking the first readable file in a list:
+
+* The timeline (`plot-obs-timelines.sh`, which calls `plot-timeline.py`)
+  prefers the outspec, which holds the parameter values actually used,
+  including Exosims defaults the script left out:
+  `log/outspec/SEED.json`, `run/outspec_SEED.json` (older layout),
+  `reduce-outspec.json`, `reduce-script.json`, and lastly `Scripts/<script>.json`.
+* The keepout plotters (`plot-keepout-and-obs.py`, `plot-keepout-and-snr.py`)
+  instantiate Exosims objects from these parameters, so they prefer the script:
+  `reduce-script.json`, then `Scripts/<script>.json`.
+  The outspec is avoided because it records machine-specific default paths
+  from the run (e.g., the star catalog and ephemeris files), which may not
+  exist where the plot is made.
+
+Each of these scripts announces the file it chose.
+The file can instead be given explicitly with `-j`, to
+`plot-obs-timelines.sh` or to either keepout plotter, and is then used as-is;
+for instance, `-j sims/<script>/log/outspec/SEED.json` makes a keepout plot
+from the outspec.
+(`plot-timeline.py` itself takes the file as a required argument, which
+`plot-obs-timelines.sh` supplies.)
 
 For a given DRM with a certain (integer) SEED,
 these files are placed in the directory

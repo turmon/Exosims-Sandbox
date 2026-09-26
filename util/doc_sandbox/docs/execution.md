@@ -184,6 +184,14 @@ These run independently across `N` DRMs, so they can be parallelized by using th
  
 which makes 10 path movies (the default number) in parallel.
 
+The timeline and keepout plots also need the run's JSON parameters,
+which the plotting scripts find from the DRM filename (the outspec for
+timelines, the script for keepout).
+See [Graphical Output Files: Single DRM](index.md#graphical-output-files-single-drm)
+for the lookup order, and for how to run a plotter directly with `-j SPEC`
+to choose the file yourself.
+(That `-j` is an option to the plotting scripts, unrelated to `make -j P`.)
+
 The dependencies in the `Makefile` are incomplete for these graphics.
 That is, `make` knows how to build them, but the `html` target doesn't
 automatically know to re-make the html index file when they are changed.
