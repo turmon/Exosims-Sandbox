@@ -198,11 +198,6 @@ PROMOTION_PHIST_BINS = np.arange(PROMOTION_PHIST_NBINS+1)
 # a photometric estimate.
 LIST_TABLE_SIGFIGS = 4
 
-# filter incoming DRMs to characterization-only?  (disabled)
-#MODE = 'char'
-#MODE = 'det'
-MODE = '*all*'
-
 # bands we are collecting characterization info on
 CHAR_BANDS = ['union', 'blue', 'red']
 
@@ -431,16 +426,6 @@ class SimulationRun(object):
         # drm = pickle.loads(open(f).read())
         drm = pickle.load(open(f, 'rb'), **pickle_args)
         gc.enable()
-        # sometimes, skip some drms - generally unused.
-        #if args.drm1 and len(drm) > 1: continue
-        #if args.drm2 and len(drm) < 2: continue
-        # allow to filter the events - disabled at present
-        if 'char' in MODE:
-            drm_filter = [d for d in drm if 'char_mode' in d]
-            drm = drm_filter
-        elif 'det' in MODE:
-            drm_filter = [d for d in drm if 'det_status' in d]
-            drm = drm_filter
         # load a spc file
         g = f.replace('pkl', 'spc').replace('/drm/', '/spc/')
         if os.path.isfile(g):
