@@ -2570,6 +2570,10 @@ def outer_load_and_reduce(f, args=None):
     if fails:
         # be terse -- one line per job (also, calling process should have warned)
         print(f'{args.progname}: Reduction configuration failed: {len(fails)} keys', file=sys.stderr)
+    # likewise for module globals: a spawned worker re-imports this module
+    # and would otherwise see the defaults, not the values set in main()
+    if args is not None:
+        UPDATE_GLOBALS(args.sim_info)
     sim = SimulationRun(f, sim_info=args.sim_info if args else {})
     return sim.summarize()
 
