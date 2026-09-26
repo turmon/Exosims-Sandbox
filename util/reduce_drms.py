@@ -155,11 +155,11 @@ DEBUG = ''
 # number of CPUs
 N_CPU = mproc.cpu_count()
 
-# Temporal binning of mission elapsed time for detection-time plot
-# (also for delta-v plot)
+# Temporal binning of mission elapsed time
+# (yield, visit, time-usage, fuel, and delta-v histograms)
 # default is 5-year mission, but see UPDATE_GLOBALS below
 # np.arange(start_day, end_day, days_per_bin)
-DETECTION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5)
+MISSION_TIME_BINS = np.arange(0.0, 366*5.0, 30.5)
 
 # Temporal binning of certain events (slews, chars) -- days
 #   The histograms we compute for these events are normalized to sum to unity, 
@@ -180,11 +180,11 @@ EARTH_CHAR_COUNT_BINS = np.arange(0.0, 61.0, 1.0)
 EVENT_COUNT_NBINS = 2000
 
 # Temporal binning of promotion candidates
-#  tailored for 5-year mission at <= 80% utilization
+#  covers <= 80% utilization of a 5-year mission, but see UPDATE_GLOBALS below
 #  note, this is in units of instrument (detector) time
 PROMOTION_TIME_BINS = np.arange(0.0, 366*5.0*0.80, 30.5)
 # indexes (month numbers at current 30-day spacing) of T1 and T2
-# These are in units of mission clock time
+# These are in units of mission clock time (indexes into MISSION_TIME_BINS)
 PROMOTION_PHIST_T1_INX = 24
 PROMOTION_PHIST_T2_INX = 36
 # promotion planet histograms go up to this many planets
@@ -209,10 +209,10 @@ CHAR_BANDS = ['union', 'blue', 'red']
 
 def UPDATE_GLOBALS(sim_info):
     r'''Update selected global variables upon initialization.'''
-    global DETECTION_TIME_BINS
+    global MISSION_TIME_BINS, PROMOTION_TIME_BINS
     missionLife = sim_info['missionLife']
-    foo = copy.copy(DETECTION_TIME_BINS)
-    DETECTION_TIME_BINS = np.arange(0.0, 366*missionLife, 30.5)
+    MISSION_TIME_BINS = np.arange(0.0, 366*missionLife, 30.5)
+    PROMOTION_TIME_BINS = np.arange(0.0, 366*missionLife*0.80, 30.5)
 
 
 ########################################
@@ -958,7 +958,7 @@ class SimulationRun(object):
         # For now, the fix is to eliminate this IF and suffer the consequences,
         # (if any!) and then fix the main code, as needed, for current DRMs.
         if False:
-            zero = np.zeros(len(DETECTION_TIME_BINS))
+            zero = np.zeros(len(MISSION_TIME_BINS))
             return {
                 'h_time_det_cume':  zero,
                 'h_time_det_incr':  zero,
@@ -1069,18 +1069,18 @@ class SimulationRun(object):
             print('Observed %d unusual slews' % mismatch)
         # account for empty DRMs by adding a final tiepoint
         if len(slew_time_tiepoint) == 1:
-            slew_time_tiepoint.append(DETECTION_TIME_BINS[-1])
+            slew_time_tiepoint.append(MISSION_TIME_BINS[-1])
             slew_fuel_tiepoint.append(0.0)
             slew_time_cume_tiepoint.append(0.0)
         if len(sk_time_tiepoint) == 1:
-            sk_time_tiepoint.append(DETECTION_TIME_BINS[-1])
+            sk_time_tiepoint.append(MISSION_TIME_BINS[-1])
             sk_fuel_tiepoint.append(0.0)
             char_time_cume_tiepoint.append(0.0)
         if len(det_time_tiepoint) == 1:
-            det_time_tiepoint.append(DETECTION_TIME_BINS[-1])
+            det_time_tiepoint.append(MISSION_TIME_BINS[-1])
             det_time_cume_tiepoint.append(0.0)
         # extend to end of mission timeline - py 2.7.14 interp1d does not support fill values consistently
-        final_time = DETECTION_TIME_BINS[-1]
+        final_time = MISSION_TIME_BINS[-1]
         det_time_tiepoint.append(final_time) # i1
         slew_time_tiepoint.append(final_time) # i2, i4
         sk_time_tiepoint.append(final_time) # i3, i5
@@ -1091,19 +1091,19 @@ class SimulationRun(object):
         sk_fuel_tiepoint.append(sk_fuel_tiepoint[-1]) # i5
         # i1: linear interpolator for time-spent-detecting
         det_time_interp_func = interp1d(det_time_tiepoint, det_time_cume_tiepoint)
-        h_time_det = det_time_interp_func(DETECTION_TIME_BINS)
+        h_time_det = det_time_interp_func(MISSION_TIME_BINS)
         # i2: linear interpolator for time-spent-slewing
         slew_time_interp_func = interp1d(slew_time_tiepoint, slew_time_cume_tiepoint)
-        h_time_slew = slew_time_interp_func(DETECTION_TIME_BINS)
+        h_time_slew = slew_time_interp_func(MISSION_TIME_BINS)
         # i3: linear interpolator for time-spent-characterizing
         char_time_interp_func = interp1d(sk_time_tiepoint, char_time_cume_tiepoint)
-        h_time_char = char_time_interp_func(DETECTION_TIME_BINS)
+        h_time_char = char_time_interp_func(MISSION_TIME_BINS)
         # i4: linear interpolator for slew fuel
         slew_fuel_interp_func = interp1d(slew_time_tiepoint, slew_fuel_tiepoint)
-        h_time_fuel_slew = slew_fuel_interp_func(DETECTION_TIME_BINS)
+        h_time_fuel_slew = slew_fuel_interp_func(MISSION_TIME_BINS)
         # i5: linear interpolator for station-keeping fuel
         sk_fuel_interp_func = interp1d(sk_time_tiepoint, sk_fuel_tiepoint)
-        h_time_fuel_keep = sk_fuel_interp_func(DETECTION_TIME_BINS)
+        h_time_fuel_keep = sk_fuel_interp_func(MISSION_TIME_BINS)
         # combined fuel use
         h_time_fuel_all = h_time_fuel_slew + h_time_fuel_keep
         # return value
@@ -1167,9 +1167,9 @@ class SimulationRun(object):
 
         # these histograms are all incremental (per-month)
         # ...binned by time, weighted by delta-v
-        h_time_delta_v_slew = np.histogram(slew_times, bins=DETECTION_TIME_BINS, weights=slew_dvs)[0]
-        h_time_delta_v_det  = np.histogram(det_times,  bins=DETECTION_TIME_BINS, weights=det_dvs) [0]
-        h_time_delta_v_char = np.histogram(char_times, bins=DETECTION_TIME_BINS, weights=char_dvs)[0]
+        h_time_delta_v_slew = np.histogram(slew_times, bins=MISSION_TIME_BINS, weights=slew_dvs)[0]
+        h_time_delta_v_det  = np.histogram(det_times,  bins=MISSION_TIME_BINS, weights=det_dvs) [0]
+        h_time_delta_v_char = np.histogram(char_times, bins=MISSION_TIME_BINS, weights=char_dvs)[0]
         # combined delta-v for observations taken by the telescope bus
         h_time_delta_v_obs = h_time_delta_v_det + h_time_delta_v_char
 
@@ -1810,10 +1810,11 @@ class SimulationRun(object):
         promo_phists = OrderedDict()
         sources = locals()
         for key in all_keys:
-            # find histogram of counts, binned by time -- both instrument time, and mission clock time
+            # find histogram of counts, binned by time -- both instrument time (PROMOTION_TIME_BINS),
+            # and mission clock time (MISSION_TIME_BINS)
             key_source = 'p_%s' % key
             hist_vs_itime = np.histogram([i.inst_time    for i in sources[key_source]], bins=PROMOTION_TIME_BINS)[0]
-            hist_vs_mtime = np.histogram([i.arrival_time for i in sources[key_source]], bins=PROMOTION_TIME_BINS)[0]
+            hist_vs_mtime = np.histogram([i.arrival_time for i in sources[key_source]], bins=MISSION_TIME_BINS)[0]
             # save this "incremental" histogram and its cumulative version - instrument time
             promo_counts['h_promo_%s_incr' % key] = hist_vs_itime
             promo_counts['h_promo_%s_cume' % key] = np.cumsum(hist_vs_itime)
@@ -2187,9 +2188,9 @@ class SimulationRun(object):
 
         # FIXME: NO LONGER USED, REMOVE
         # bin the detection-times ("h_" is mnemonic for histogrammed)
-        ## h_det_time_all = np.histogram(det_time_all, DETECTION_TIME_BINS)[0]
-        ## h_det_time_unq = np.histogram(det_time_unq, DETECTION_TIME_BINS)[0]
-        ## h_det_time_rev = np.histogram(det_time_rev, DETECTION_TIME_BINS)[0]
+        ## h_det_time_all = np.histogram(det_time_all, MISSION_TIME_BINS)[0]
+        ## h_det_time_unq = np.histogram(det_time_unq, MISSION_TIME_BINS)[0]
+        ## h_det_time_rev = np.histogram(det_time_rev, MISSION_TIME_BINS)[0]
 
         # some portions of the return value are automated
         namespace = locals()
@@ -2387,7 +2388,7 @@ class SimulationRun(object):
         # ("h_" is mnemonic for histogrammed)
         rv = {}
         for n in names:
-            rv['h_' + n] = np.histogram(yac[n], DETECTION_TIME_BINS)[0]
+            rv['h_' + n] = np.histogram(yac[n], MISSION_TIME_BINS)[0]
         # the list of keys that we're returning ... for use in later steps
         rv['_yield_time_keys'] = ['h_' + n for n in names]
 
@@ -2436,8 +2437,8 @@ class SimulationRun(object):
                 # TODO: key off missionLife instead
                 # ratio: (last year yield) / (full yield), and friends
                 c_sta_1 = len([y1 for y1 in ycn if y1 < (1*365.25)])
-                c_fin_1 = len([y1 for y1 in ycn if y1 > (DETECTION_TIME_BINS[-1] - 1*365.25)])
-                c_fin_2 = len([y1 for y1 in ycn if y1 > (DETECTION_TIME_BINS[-1] - 2*365.25)])
+                c_fin_1 = len([y1 for y1 in ycn if y1 > (MISSION_TIME_BINS[-1] - 1*365.25)])
+                c_fin_2 = len([y1 for y1 in ycn if y1 > (MISSION_TIME_BINS[-1] - 2*365.25)])
                 c_total = len(ycn)
                 slope0 = np.array(c_sta_1 / c_total) if c_total > 0 else np.array(0.0)
                 slope1 = np.array(c_fin_1 / c_total) if c_total > 0 else np.array(0.0)
@@ -2503,7 +2504,7 @@ class SimulationRun(object):
         # ("h_" is mnemonic for histogrammed)
         rv = {}
         for n in names:
-            rv['h_visit_' + n] = np.histogram(vac[n], DETECTION_TIME_BINS)[0]
+            rv['h_visit_' + n] = np.histogram(vac[n], MISSION_TIME_BINS)[0]
         # the list of keys that we're returning ... for use in later steps
         rv['_visit_time_keys'] = list(rv.keys())
         # return the pooled result
@@ -2695,8 +2696,8 @@ class EnsembleSummary(object):
         # start empty
         summary = {}
         # A1: detection time bins, lo + hi
-        summary['h_det_time_lo'] = DETECTION_TIME_BINS[:-1]
-        summary['h_det_time_hi'] = DETECTION_TIME_BINS[1:]
+        summary['h_det_time_lo'] = MISSION_TIME_BINS[:-1]
+        summary['h_det_time_hi'] = MISSION_TIME_BINS[1:]
         # A2: resolutions of event duration bins (same length)
         summary['h_event_b0_duration_lo'] = DURATION_TIME_B0_BINS[:-2]
         summary['h_event_b0_duration_hi'] = DURATION_TIME_B0_BINS[1:-1]
@@ -3558,6 +3559,12 @@ def main(args):
     print('%s: Loading %d file patterns.' % (args.progname, len(args.infile)))
     args.sim_info = load_exosims_sim(args)
     UPDATE_GLOBALS(args.sim_info)
+    # the promotion histograms at T1/T2 sum the first INX monthly bins of mission time
+    n_month = len(MISSION_TIME_BINS) - 1
+    for name, inx in (('T1', PROMOTION_PHIST_T1_INX), ('T2', PROMOTION_PHIST_T2_INX)):
+        if inx > n_month:
+            print(f'{args.progname}: Warning: missionLife = {args.sim_info["missionLife"]} yr has {n_month} monthly bins; '
+                  f'{name} promotion histogram (index {inx}) covers only the full mission.')
     lazy = True
     ensemble = EnsembleSummary(args.infile, args, lazy=lazy)
     if ensemble.Ndrm_actual == 0:
