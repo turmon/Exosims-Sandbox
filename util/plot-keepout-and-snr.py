@@ -34,8 +34,6 @@ With `-c`, no script is needed.
 Note: This imports EXOSIMS and instantiates an object based on the SPEC.
 """
 
-from __future__ import print_function
-from six.moves import range
 import six.moves.cPickle as pickle
 import os
 import sys
