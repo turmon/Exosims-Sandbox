@@ -2434,7 +2434,7 @@ class SimulationRun(object):
                 t80 = np.array(np.nan)
             else:
                 ycn = yac[n_orig]
-                # TODO: key off missionLife instead
+                # Note: this automatically adapts to changing missionLife
                 # ratio: (last year yield) / (full yield), and friends
                 c_sta_1 = len([y1 for y1 in ycn if y1 < (1*365.25)])
                 c_fin_1 = len([y1 for y1 in ycn if y1 > (MISSION_TIME_BINS[-1] - 1*365.25)])
