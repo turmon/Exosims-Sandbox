@@ -157,7 +157,7 @@ if [ -z "$script_opt" ]; then
 	printf '    %s\n' "${candidates[@]}" >&2
 	exit 1
     fi
-    echo "${PROGNAME}: Using script \`$script_opt'."
+    echo "${PROGNAME}: Script: \`$script_opt'"
 fi
 if [ ! -r "$script_opt" ]; then
     echo "${PROGNAME}: Script-file \`$script_opt' not readable, exiting." >&2

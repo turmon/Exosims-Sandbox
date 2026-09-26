@@ -763,6 +763,7 @@ def main(args):
         plotter.plot_timeline_collection(sim)
     if args.synoptic:
         plotter.plot_timeline_panels(sim, slew_debug=args.slew_debug, debug_out=args.debug_out)
+    print('%s: Done.' % args.progname)
 
 
 if __name__ == '__main__':
