@@ -1359,7 +1359,8 @@ def reduce_info_summary(d, names=None):
         names = PlanetNames()
     # do not display floats to 12 digits of precision
     def fmt_float(x):
-        return ('%.3f' % float(x))
+        # blank: yields of an ensemble with no DRMs yet (ensemble_size = 0)
+        return ('%.3f' % float(x)) if x != '' else '(n/a)'
     def fmt_int(x):
         return ('%d' % int(x))
     def fmt_str(x):

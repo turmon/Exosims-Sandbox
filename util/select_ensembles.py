@@ -3,7 +3,7 @@ r'''select_ensembles.py: select from a list of simulation-ensembles
 
 ## Usage
 ```
-  select_ensembles.py [-q] [-0] [-S] [-n N] [-k key] [-o key] [-M VAR] MODE CSVFILE
+  select_ensembles.py [-q] [-0] [-S] [-e] [-n N] [-k key] [-o key] [-M VAR] MODE CSVFILE
 ```
 
 ## Arguments
@@ -21,6 +21,7 @@ r'''select_ensembles.py: select from a list of simulation-ensembles
   -0 means to use \0 as the item separator for output keys
   -t THRESH means to output only records where the value key is <= THRESH
   -T THRESH means to output only records where the value key is > THRESH
+  -e means to exclude empty ensembles (records with ensemble_size = 0)
   -q means to exit quietly if CSVFILE is not present
   -M VAR means to output a Makefile assignment "VAR := key1 key2 ..."
 ```
@@ -81,13 +82,25 @@ VERBOSITY = 0
 ###
 ########################################
 
-def load_csv(infile):
+def is_empty_ensemble(row):
+    r'''True if the CSV row (as strings) is for an ensemble with no DRMs.
+
+    reduce_drms.py writes such a placeholder, with ensemble_size = 0, and
+    blank yields.'''
+    try:
+        return float(row.get('ensemble_size') or 'nan') == 0
+    except ValueError:
+        return False
+
+def load_csv(infile, exclude_empty=False):
     # load the CSV
     info = []
     try:
         with open(infile, 'r') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
             for row in reader:
+                if exclude_empty and is_empty_ensemble(row):
+                    continue
                 info.append(row)
     except IOError:
         sys.stderr.write("Error: could not open `%s'.  Quitting." % infile)
@@ -95,20 +108,33 @@ def load_csv(infile):
     # (no conversion possible)
     if len(info) == 0: return info
     # find conversion (just string-to-number where possible)
-    # (we just inspect the first row)
+    # (inspect the first row having a value: blank cells, as in the yields of
+    # an empty ensemble, say nothing about the column type)
     c_func = {}
     for k in info[0].keys():
+        c_func[k] = str
+        vals = [row[k] for row in info if row[k] not in ('', None)]
+        if not vals:
+            continue
         try:
-            float(info[0][k])
+            float(vals[0])
             c_func[k] = float
         except ValueError:
-            c_func[k] = str
+            pass
+    def convert(k, v):
+        # blank cell in a numeric column => NaN
+        if c_func[k] is float and v in ('', None):
+            return float('nan')
+        try:
+            return c_func[k](v)
+        except ValueError:
+            return float('nan') # stray non-number in a numeric column
     # do the conversion
     new_info = []
     for index,row in enumerate(info):
         new_row = {}
         for k in row:
-            new_row[k] = c_func[k](row[k])
+            new_row[k] = convert(k, row[k])
         # some "experiment" fields have an initial space: remove it
         # (FIXME: why is reduce_drms.py inserting these spaces?)
         if 'experiment' in new_row:
@@ -151,7 +177,7 @@ def emit(args, keys):
 def main(args):
     r'''Returns the list of selected output keys.'''
     # load CSV
-    table = load_csv(args.infile)
+    table = load_csv(args.infile, exclude_empty=args.exclude_empty)
     # prevent special cases
     if args.n == 0 or len(table) == 0: return []
     # handle the "n = -1" flag
@@ -218,6 +244,8 @@ if __name__ == '__main__':
                             default=False)
     parser.add_argument('-M', type=str, default='', dest='makevar', metavar='VAR',
                             help='output as Makefile assignment "VAR := key1 key2 ..."')
+    parser.add_argument('-e', help='exclude empty ensembles (ensemble_size = 0)', action='store_true',
+                            dest='exclude_empty', default=False)
     parser.add_argument('-q', help='quiet', action='store_true', dest='quiet',
                             default=False)
     parser.add_argument('-v', help='verbosity', action='count', dest='verbose',

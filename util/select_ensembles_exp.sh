@@ -49,7 +49,8 @@ umask 002
 # selector program, and its common options
 #   -q => quiet if not reduced already
 #   -o experiment => output this key (ens. name)
-SELECT_PROG="util/select_ensembles.py -q -o experiment -n T"
+# (-e: ensembles having no DRMs yet are not selected)
+SELECT_PROG="util/select_ensembles.py -q -e -o experiment -n T"
 
 outfile=
 while getopts "ho:" opt; do

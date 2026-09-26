@@ -244,7 +244,13 @@ class EnsembleRun(object):
             ]
         props = {}
         for key, converter, nullval in prop_map:
-            props[key] = converter(raw_props.get(key, nullval))
+            raw = raw_props.get(key, nullval)
+            if raw == '' and converter is float:
+                # blank cell: the yields of an Ensemble with no DRMs yet
+                # (reduce_drms.py writes such a placeholder, with ensemble_size = 0)
+                props[key] = np.nan
+            else:
+                props[key] = converter(raw)
         return props
 
     def read_sim_summary(self, d, sim_root):
@@ -405,6 +411,10 @@ class EnsembleSummary(object):
             'ensemble_size', 
             ]
 
+        # Ensembles with no DRMs yet (ensemble_size = 0) are listed in the
+        # per-ensemble tables, but are not part of the roll-up
+        reductions = [r for r in reductions if r['ensemble_size'] > 0]
+
         # 1: flatten the reductions from [ens][attribute] to [attribute]
         # accum is a dictionary of lists
         accum = {}
@@ -448,7 +458,7 @@ class EnsembleSummary(object):
             # experiment: actually the "scenario" name
             # we only write the last component, not the full path (TBD)
             experiment=os.path.basename(args.expt_name_readable),
-            experiment_size=len(reductions), # only already-reduced ensembles
+            experiment_size=len(reductions), # only already-reduced, non-empty, ensembles
             )
         summary.update(extra_info)
         # record this cross-ensemble summary in the object
@@ -526,8 +536,10 @@ class EnsembleSummary(object):
                     # add in all desired params to "d"
                     for f in param_fields:
                         d[f] = scenario_params[f]
-                w.writerow(d)
-                # save result for the JSON
+                # NaN (e.g., yields of an Ensemble with no DRMs) => blank cell
+                w.writerow({k: ('' if isinstance(v, float) and np.isnan(v) else v)
+                            for k, v in d.items()})
+                # save result for the JSON (NaN => null, below)
                 d_full.append(d)
         if 'csv' in otype:
             ensure_permissions(fn)

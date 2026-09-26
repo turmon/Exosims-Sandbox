@@ -191,7 +191,7 @@ def load_hist(args, field):
                 info.append(row)
     except IOError:
         print('%s: Fatal.  Unable to open source (histogram) CSV file %s' % (args.progname, fn_bins))
-        raise
+        sys.exit(1)
     assert len(info) == 15, 'Expected 15 rows in %s' % fn_bins
     # 2: grab the Earth results
     earth = []
@@ -203,7 +203,7 @@ def load_hist(args, field):
                 earth.append(row)
     except IOError:
         print('%s: Fatal.  Unable to open source (earth) CSV file %s' % (args.progname, fn_earth))
-        raise
+        sys.exit(1)
     assert len(earth) == 1, 'Expected 1 row in %s' % fn_earth
     # 3: extract the fields and compile
     hist = []
@@ -636,6 +636,18 @@ if __name__ == '__main__':
 
     # set umask in hopes that files will be group-writable
     os.umask(0o002)
+
+    # fail early, and without a traceback, if the input CSVs are not present
+    # (e.g., the template points into an experiment, rather than an ensemble)
+    if args.csv != 'self':
+        if args.csv.count('%') != 1:
+            print('%s: Fatal.  Need ONE filename template (%%s) in "%s"' % (args.progname, args.csv))
+            sys.exit(1)
+        for tag in ('radlum', 'earth'):
+            if not os.path.isfile(args.csv % tag):
+                print('%s: Fatal.  Missing input %s (is %s a reduced ensemble?)' % (
+                    args.progname, args.csv % tag, os.path.dirname(args.csv) or '.'))
+                sys.exit(1)
 
     # load local reduction parameters
     # find enclosing directory

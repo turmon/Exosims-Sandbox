@@ -59,6 +59,20 @@ SHELL:=/bin/bash
 # clear builtin suffix rules (for .c, etc.)
 .SUFFIXES:
 
+# If a recipe fails after it has (re)written its target, delete the target.
+# Many targets here are sentinel files written by the helper program midway
+# through a recipe (e.g., gfx/det-info.txt is written before the rad-sma plots
+# are made).  Without this, a later failure would leave a fresh sentinel, and
+# make would consider the failed step done.
+.DELETE_ON_ERROR:
+
+# Final recipe line for rules whose target is a sentinel written by a helper.
+# A helper that exits 0 without writing its target would otherwise leave the
+# target perpetually out of date: it would be remade on every invocation, and
+# for exp-* targets, could cause endless restarts (see EXP_SELECT_MK).  This
+# turns that silent condition into an error.
+CHECK_MADE = @ test -e $@ || { echo "Make: Error: recipe did not produce \`$@'" >&2; exit 1; }
+
 # clear builtin pattern rules to get files out of source control
 %: %,v
 %: RCS/%,v
@@ -182,8 +196,14 @@ analysis-exists:
 	@ [ -d sims/$(S)/Analysis ] || \
 		(echo "Require an experiment/family Analysis directory \`sims/$(S)/Analysis'" && exit 1)
 
+# for targets that apply to a single ensemble only (graphics, html, ...)
+# script-exists alone would accept an experiment directory
+ensemble-exists:
+	@ [ -d sims/$(S)/drm ] || \
+		(echo "Require an ensemble (a directory holding drm/): \`sims/$(S)' is not one." && \
+		 echo "For an experiment or family, use the exp-* targets (e.g., exp-graphics, exp-html)." && exit 1)
 
-.PHONY: default script-exists experiment-exists analysis-exists
+.PHONY: default script-exists experiment-exists analysis-exists ensemble-exists
 
 # do not try to remake Makefile
 Makefile:;
@@ -244,26 +264,34 @@ reduce-only: script-exists sims/$(S)/reduce-info.csv
 # ensembles *within* an experiment can also be built as prerequisites (see
 # exp-reduce above).  It declines to match container directories, which have
 # no drm/, so those fall through to PROPAGATE_REDUCTION_UPWARD below.
+# An ensemble with no DRMs yet (e.g., runs in progress) gets a placeholder
+# reduce-info.csv, with ensemble_size = 0, so the target is still made.  When
+# the first DRM lands, drm/ becomes newer, and the ensemble is re-reduced.
 sims/%/reduce-info.csv: sims/%/drm
 	@ echo "Make: Reducing $< ..."
 	$(REDUCE_PROG) $<
+	$(CHECK_MADE)
 
 # When $(S) is an experiment/family -- it has no drm/ of its own -- its
 # reduction depends on the reduction of every ensemble it contains.  This rule
 # is what replaces the old exp-reduce for-loop.  As before, the presence of
 # both drm/ and spc/ is the cue that a subdirectory is an ensemble.
-# An ensemble with no DRMs yet (e.g., runs in progress) is skipped: reducing
-# it would succeed without writing reduce-info.csv, so it would be perpetually
-# out of date -- and, via EXP_SELECT_MK below, make would restart forever.
+# Ensembles with no DRMs are included: they are reduced to an N=0 placeholder
+# (see above), which lists them in the experiment's tables.
+# NOTE: only ensembles *directly* within $(S) are found.  For a family of
+# families (e.g., S=a.fam, with ensembles in a.fam/b.exp/), this rule has no
+# prerequisites, so the ensembles further down are not reduced.  Instead, give
+# S as the experiment directly holding the ensembles (S=a.fam/b.exp): its
+# reduction then propagates upward to a.fam (see PROPAGATE_REDUCTION_UPWARD).
 # The ifeq guard matters: when $(S) is an ensemble this rule must not exist,
 # or its recipe would shadow the pattern rule above.
 EXP_ENSEMBLES     = $(patsubst %/drm,%,$(wildcard sims/$(S)/*/drm))
-EXP_ENSEMBLE_CSVS = $(foreach d,$(EXP_ENSEMBLES),\
-                      $(if $(and $(wildcard $d/spc),$(wildcard $d/drm/*.pkl)),$d/reduce-info.csv))
+EXP_ENSEMBLE_CSVS = $(foreach d,$(EXP_ENSEMBLES),$(if $(wildcard $d/spc),$d/reduce-info.csv))
 ifeq ($(wildcard sims/$(S)/drm),)
 sims/$(S)/reduce-info.csv: $(EXP_ENSEMBLE_CSVS)
 	@ echo "Make: Reducing overall experiment: $(@D) ..."
 	$(REDUCE_ENS_PROG) $(@D)
+	$(CHECK_MADE)
 endif
 
 # Below: a variable, a macro, and a foreach link the top-level reduce
@@ -289,6 +317,7 @@ define PROPAGATE_REDUCTION_UPWARD
 $(dir $1)reduce-info.csv: $1/reduce-info.csv
 	@ echo "Make: Reducing parent: $$(@D)"
 	$(REDUCE_ENS_PROG) $$(@D)
+	$$(CHECK_MADE)
 endef
 
 # Expand the above rule into one transformation for each intermediate dir.
@@ -314,27 +343,32 @@ GRAPHICS_SENTINEL:=sims/$(S)/gfx/det-info.txt
 
 # ** This is the main graphics target **
 # delegate to the graphics sentinel file
-graphics: script-exists $(GRAPHICS_SENTINEL)
+graphics: script-exists ensemble-exists $(GRAPHICS_SENTINEL)
 
 # newer graphics - one ensemble
 # This, and the other per-ensemble product rules below, are pattern rules
 # (keyed on the ensemble directory, %) rather than explicit rules for $(S)
 # alone.  That way the ensembles *within* an experiment can be built by the
 # exp-* targets in this same make process, without a sub-make per ensemble.
-sims/%/gfx/det-info.txt: sims/%/reduce-info.csv
+# The order-only drm/ prerequisite keeps this rule, and the tables and html
+# rules below, from matching an experiment/family directory: those have a
+# reduce-info.csv of their own, but it summarizes ensembles, and cannot be
+# plotted.  (Order-only: a change in drm/ does not by itself force a remake.)
+sims/%/gfx/det-info.txt: sims/%/reduce-info.csv | sims/%/drm
 	@ echo "Make: Graphics (new-format) into $(@D) ..."
 	@ rm -f sims/$*/gfx/det-*.*
 	$(GRAPHICS_PROG) sims/$*/reduce-%s.%s sims/$*/gfx/det-%s.%s
 	$(GRAPHYCS_PROG) sims/$*/reduce-%s.csv
+	$(CHECK_MADE)
 
 # imperatively remove existing graphics, allowing clean re-make
-graphics-clean: script-exists
+graphics-clean: script-exists ensemble-exists
 	@ echo "Make: Removing existing graphics in sims/$(S)/gfx ..."
 	rm -f sims/$(S)/gfx/det-*.*
 
 # extra (and normal) graphics - one ensemble
 # this is imperative, not delegated to $(GRAPHICS_SENTINEL)
-graphics-extra: script-exists sims/$(S)/reduce-info.csv
+graphics-extra: script-exists ensemble-exists sims/$(S)/reduce-info.csv
 	@ echo "Make: Graphics (normal + extras) into sims/$(S)/gfx ..."
 	@ rm -f sims/$(S)/gfx/det-*.*
 	$(GRAPHICS_PROG) --mode_op + sims/$(S)/reduce-%s.%s sims/$(S)/gfx/det-%s.%s
@@ -345,20 +379,21 @@ graphics-extra: script-exists sims/$(S)/reduce-info.csv
 ##
 .PHONY: tables
 # delegate to the table status file
-tables: script-exists sims/$(S)/tbl/table-status.txt
+tables: script-exists ensemble-exists sims/$(S)/tbl/table-status.txt
 
 # just one ensemble's tables
-sims/%/tbl/table-status.txt: sims/%/reduce-info.csv
+sims/%/tbl/table-status.txt: sims/%/reduce-info.csv | sims/%/drm
 	@ echo "Make: Tables into $(@D) ..."
 	@ rm -f sims/$*/tbl/table-*.*
 	$(TABLES_PROG) -o sims/$*/tbl/table-%s.%s all sims/$*/reduce-%s.%s
+	$(CHECK_MADE)
 
 ########################################
 ## Detection visits tables - for scheduler analysis
 ##
 .PHONY: star-visits
 # delegate to the html document
-star-visits: script-exists sims/$(S)/sched/detection-visits.html
+star-visits: script-exists ensemble-exists sims/$(S)/sched/detection-visits.html
 
 # one ensemble's detection visit document
 sims/%/sched/detection-visits.html: sims/%/drm
@@ -370,7 +405,7 @@ sims/%/sched/detection-visits.html: sims/%/drm
 ## Path ensemble graphics - starshade slew map
 ##
 # delegate to the 'path-ens' for the named script
-path-ensemble: script-exists sims/$(S)/path-ens/path-map.png
+path-ensemble: script-exists ensemble-exists sims/$(S)/path-ens/path-map.png
 
 # one ensemble's path plots - they depend on the DRM-set, not the reduction
 sims/%/path-ens/path-map.png: sims/%/drm
@@ -417,10 +452,10 @@ sims/%-obs-keepout-all.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Keepout \`$@'"
 	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $<
 
-## Note: script-exists is the first prerequisite of each rule below.  It
-## raises a clear error when S names neither a script nor an experiment
+## Note: script-exists and ensemble-exists are the first prerequisites of each
+## rule below.  They raise a clear error when S does not name an ensemble
 ## (e.g., if S is an "experiment", sims/$(S)/drm/ does not exist and the
-## selector below quietly returns nothing).
+## selector below would quietly return nothing).
 
 # Map a run-count onto the list of per-DRM products to build.
 #   $1 = number of runs to select (or T for all)
@@ -443,16 +478,16 @@ SELECT_RUN_TARGETS = $(shell $(SELECT_RUN_PROG) -n $1 $3 | \
 # same setup.
 # NOTE: these targets must NOT be declared .PHONY.  Make skips pattern-rule
 # search for phony targets, which would silently disable all four rules.
-path-movie-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,.mp4,sims/$(S))
+path-movie-%: script-exists ensemble-exists $$(call SELECT_RUN_TARGETS,$$*,.mp4,sims/$(S))
 	@ echo "Make: Placed movies in \`sims/$(S)/path'."
 
-path-final-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png,sims/$(S))
+path-final-%: script-exists ensemble-exists $$(call SELECT_RUN_TARGETS,$$*,-final.png,sims/$(S))
 	@ echo "Make: Placed final-frames in \`sims/$(S)/path'."
 
-obs-timeline-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt,sims/$(S))
+obs-timeline-%: script-exists ensemble-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-timelines.txt,sims/$(S))
 	@ echo "Make: Placed obs-timelines in \`sims/$(S)/path'."
 
-keepout-%: script-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-keepout-all.png,sims/$(S))
+keepout-%: script-exists ensemble-exists $$(call SELECT_RUN_TARGETS,$$*,-obs-keepout-all.png,sims/$(S))
 	@ echo "Make: Placed keepout in \`sims/$(S)/path'."
 
 # Per-DRM counts used to construct the exp-* targets further below
@@ -466,7 +501,7 @@ MOVIE_COUNTS:=1 2 5 10 20 50 100 T
 .PHONY: html html-all html-only
 
 # delegate to the 'html/index.html' for the named script
-html: script-exists reduce sims/$(S)/html/index.html;
+html: script-exists ensemble-exists reduce sims/$(S)/html/index.html;
 
 # same as html, but omit re-making the graphics
 #   for experiments, generates the top-level index only
@@ -480,9 +515,10 @@ html-only: script-exists
 # below), many of these can run at once under -j, and all their -i's would
 # rewrite the same parent indexes.  So instead, flag the experiment's index
 # as stale, and the exp-html target re-indexes once, at the end.
-sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt
+sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt | sims/%/drm
 	@ echo "Make: HTML index $@ ..."
 	$(if $(filter $*,$(S)),$(HTML_PROG),$(HTML_PROG_NOINDEX)) $*
+	$(CHECK_MADE)
 	$(if $(filter $*,$(S)),,@ touch sims/$(S)/$(EXP_HTML_STALE))
 
 # recursively regenerate all index.html's for all sims,
@@ -524,6 +560,7 @@ html-all:
 
 # generated Makefile fragment defining EXP_ORDER_top and EXP_ORDER_mix
 #   "top": by yield (# earth chars); "mix": by MD5 hash of the ensemble name
+#   (ensembles with no DRMs yet -- ensemble_size = 0 -- are not selected)
 EXP_SELECT_MK:=sims/$(S)/exp-select.mk
 # flag file (within the experiment): an ensemble html index was remade
 EXP_HTML_STALE:=.exp-html-stale
@@ -546,10 +583,12 @@ include $(EXP_SELECT_MK)
 # Also drop it after a restart (MAKE_RESTARTS is set): if some reduction
 # recipe succeeded without writing its target, that target would be remade,
 # and EXP_SELECT_MK with it, on every restart -- an endless loop.  This
-# ensures at most one restart.
+# ensures at most one restart.  (CHECK_MADE in the reduction recipes now
+# makes such a recipe an error, so this is a second line of defense.)
 $(EXP_SELECT_MK): $(if $(or $(DRY_RUN),$(MAKE_RESTARTS)),,sims/reduce-info.csv)
 	@ echo "Make: Selecting ensembles within $(@D) ..."
 	$(EXP_SELECT_PROG) -o $@ sims/$(S)
+	$(CHECK_MADE)
 endif
 
 # Ensemble directories selected within the experiment.

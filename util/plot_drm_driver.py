@@ -542,11 +542,19 @@ Optional arguments:
     # records this step as finished. Zero (success) exit status is returned.
     # For an error, the early exit ensures that "signal_plot_end" is not performed
     # here, and nonzero exit status is returned.
-    if fail_count == 0:
-        signal_plot_end(args)
-    else:
+    #  - If every plot was skipped, that is an error too: the input is not a
+    #    reduced ensemble (e.g., it is an experiment directory, whose
+    #    reduce-*.csv files summarize ensembles), and marking it done would
+    #    hide the mistake.
+    if fail_count > 0:
         print(f"{args.progname}: Failed {fail_count} plot set(s). Run incomplete.", file=sys.stderr)
-    return 0 if fail_count == 0 else 1
+        return 1
+    if plots_to_run and ok_count == 0:
+        print(f"{args.progname}: Error: No plot sets could be made from '{args.src_tmpl}'. "
+              "Is that a reduced ensemble?", file=sys.stderr)
+        return 1
+    signal_plot_end(args)
+    return 0
 
 
 if __name__ == '__main__':

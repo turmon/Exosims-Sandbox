@@ -29,20 +29,22 @@ Args:
 # make targets).  Parent reductions (reduce_drm_sets.py) depend in turn on each
 # Ensemble's reduce-info.csv.
 #
-# When drm/ holds no DRMs (e.g., runs not yet finished), this script exits with
-# status 0 and writes nothing.  Make does not check that a recipe created its
-# target, so upward propagation still proceeds -- but reduce-info.csv stays
-# missing, so the Ensemble is out of date on every make invocation.  For exp-*
-# targets, where make restarts after remaking an included makefile, this once
-# caused an endless loop.  The Makefile now skips Ensembles having no
-# drm/*.pkl, and allows at most one restart.
+# Every successful run must therefore write reduce-info.csv: a recipe that
+# exits 0 without writing its target leaves the target perpetually out of date.
+# (The Makefile's CHECK_MADE turns that into an error.  For exp-* targets, where
+# make restarts after remaking an included makefile, it once caused an endless
+# loop.)  Hence:
 #
-# It may be cleaner to write a reduce-info.csv in this case, too.  An empty or
-# header-only file would be inconsistent with how the "info" file is used:
-# reduce_drm_sets.py expects a one-line summary, and fails on such a file.
-# One way out is a one-line "info" file with N = 0 (ensemble_size = 0).  This
-# would require an adjustment to reduce_drm_sets.py, which presently counts
-# such an Ensemble as a real one, with all-zero yields, rather than skipping it.
+# + When drm/ holds no DRMs (e.g., runs not yet finished), this script writes
+#   a placeholder reduce-info.csv, with ensemble_size = 0 and blank yields and
+#   extras, and exits 0.  When a DRM lands in drm/, drm/ becomes newer than the
+#   placeholder, and make re-reduces.  reduce_drm_sets.py lists such an
+#   Ensemble in its per-ensemble tables, but omits it from the roll-up, and
+#   the exp-* selections (select_ensembles.py -e) skip it.
+# + When reduce-skip.txt is present, an existing reduce-info.csv is touched
+#   (else, a placeholder is written).
+# + reduce-info.csv is written last, so a failure midway through the dump
+#   does not leave a fresh sentinel beside incomplete outputs.
 
 # turmon jan 2018, oct 2018
 
@@ -2961,8 +2963,10 @@ class EnsembleSummary(object):
         basic_stats = ('mean', 'std', 'sem', 'nEns')
 
         # 0: metadata and scalars
-        fn = args.outfile % ('info', 'csv')
-        print('\tDumping to %s' % fn)
+        # reduce-info.csv is the make target (sentinel) for the whole reduction,
+        # so it is composed here, but written last (see the end of this method):
+        # a failure midway through must not leave it behind.
+        fn_info = args.outfile % ('info', 'csv')
         # fetch extra keys, if requested
         info_extras = self.extract_extras(args.reduce_config)
         # time of newest simulation (modtime of drm directory)
@@ -2994,14 +2998,6 @@ class EnsembleSummary(object):
                         'tdep_t80_char_full_allplan_uniq_union_mean', 0.0),
                     # fields from config-reduce, possibly empty
                     )
-        # ensure extras go into last columns
-        info_fields = sorted(info.keys())
-        info_x_fields = list(info_extras.keys())
-        with open(fn, 'w') as csvfile:
-            w = csv.DictWriter(csvfile, fieldnames=info_fields+info_x_fields)
-            w.writeheader()
-            w.writerow({**info, **info_extras})
-        ensure_permissions(fn)
 
         # 0b: exo-Earth (scalars)
         fn = args.outfile % ('earth', 'csv')
@@ -3423,6 +3419,10 @@ class EnsembleSummary(object):
                         separators=(',', ': '), default=array_encoder)
         ensure_permissions(fn)
 
+        # last: the metadata and scalars composed in step 0, above
+        print('\tDumping to %s' % fn_info)
+        write_reduce_info(fn_info, info, info_extras)
+
                 
 def obtain_outspec(args, announce=True):
     r'''Identify a good "specs" (script) file using Sandbox structure
@@ -3528,6 +3528,70 @@ def load_exosims_sim(args):
     rv['missionLife'] = specs.get('missionLife', 5.0) # [years]
     return rv
 
+# The base columns of reduce-info.csv, written in this (sorted) order, and
+# followed by any extras requested in config-reduce.json.  Both the real
+# reduction (EnsembleSummary.dump) and the no-DRM placeholder use this list,
+# via write_reduce_info(), so the two cannot drift apart: a key in "info" that
+# is not listed here is an error.
+REDUCE_INFO_FIELDS = sorted([
+    'user', 'runtime', 'simtime', 'experiment', 'ensemble_size',
+    'detections_unique_mean', 'chars_unique_mean', 'chars_strict_mean',
+    'detections_earth_unique', 'detections_earth_all',
+    'chars_earth_unique', 'chars_earth_strict',
+    'targ_dep_slope_all', 'targ_dep_t80_all',
+    ])
+
+
+def write_reduce_info(fn, info, extras):
+    r'''Write the one-line reduce-info.csv: base fields, then extras.
+
+    Any base field absent from info is written as a blank cell.'''
+    with open(fn, 'w') as csvfile:
+        w = csv.DictWriter(csvfile, fieldnames=REDUCE_INFO_FIELDS + list(extras.keys()), restval='')
+        w.writeheader()
+        w.writerow({**info, **extras})
+    try:
+        os.chmod(fn, 0o664)
+    except OSError:
+        pass # e.g., don't own the file
+
+
+def write_placeholder_info(args, drm_dir):
+    r'''Write reduce-info.csv for an ensemble having no DRMs yet.
+
+    The file has ensemble_size = 0, and blank yields and extras: a zero would
+    claim a real, zero, yield, and the extras could be of any type.  Its
+    presence tells make that this ensemble is reduced (until a DRM lands in
+    drm_dir), and it lets the ensemble be listed in its experiment's tables.'''
+    fn = args.outfile % ('info', 'csv')
+    simtime = time.strftime("%Y-%m-%d_%H:%M", time.localtime(os.path.getmtime(drm_dir)))
+    info = dict(user=os.environ['USER'],
+                runtime=time.strftime("%Y-%m-%d_%H:%M"),
+                simtime=simtime,
+                experiment=args.expt_name,
+                ensemble_size=0)
+    # the same extra columns (all blank) as a real reduction would have
+    extras = {k: '' for k in args.reduce_config.get('reduce_info_extras', {})
+              if not k.startswith('_')}
+    print('%s: Writing placeholder (ensemble_size = 0) to %s' % (args.progname, fn))
+    write_reduce_info(fn, info, extras)
+
+
+def empty_drm_dir(drm):
+    r'''If the DRM argument list names one DRM directory, return it, else None.
+
+    The argument can be sims/ENS/drm, or sims/ENS/drm/*.pkl, the latter with
+    the wildcard unexpanded because there were no matches.'''
+    if len(drm) != 1:
+        return None
+    p = os.path.normpath(drm[0])
+    if '*' in os.path.basename(p):
+        p = os.path.dirname(p)
+    if os.path.basename(p) == 'drm' and os.path.isdir(p):
+        return p
+    return None
+
+
 def expand_infiles(drm):
     infiles, errfiles = [], []
     for p in drm:
@@ -3598,34 +3662,31 @@ if __name__ == '__main__':
         print('\n'.join(f'\t{p}' for p in errfiles))
         sys.exit(1)
 
-    # report status if no DRMs
+    # no DRMs: if given one drm/ directory (the case under make, for runs in
+    # progress), a placeholder reduce-info.csv is written below; else, just exit
+    empty_dir = None
     if len(args.infile) == 0:
         print('%s: No DRMs or empty directory supplied.' % args.progname)
-    # edge case: * wildcard, no DRMs, was unexpanded => better message
-    if len(args.infile) == 1 and '*' in os.path.basename(args.infile[0]):
-        # the wildcard appears here when invoked with arg .../drm/*.pkl, and there are no .pkl's
-        # this fix is a bit hacky (there "could" be a drm with a star in its name),
-        # but it helps do the right thing with automatic invocation by make
-        print('%s: Wildcard appears in input drm, assuming empty.' % args.progname)
-        # print('%s: Subsequent reduction error is likely.' % args.progname)
-        args.infile = []
-    if len(args.infile) == 0:
-        print('%s: No input DRMs. Exiting.' % args.progname)
-        sys.exit(0)
-    # NB: we can now assume at least one input DRM
+        empty_dir = empty_drm_dir(args.drm)
+        if empty_dir is None:
+            print('%s: No input DRMs. Exiting.' % args.progname)
+            sys.exit(0)
 
     # Get sim_dir once and for all with parent of parent:
     # sims/Yokohama.fam/Trials.fam/s_dbug_YX_NIR_D8.0/drm/397016230.pkl
     #   -> 
     # sims/Yokohama.fam/Trials.fam/s_dbug_YX_NIR_D8.0
-    args.sim_dir = os.path.dirname(os.path.dirname(args.infile[0]))
+    if empty_dir:
+        args.sim_dir = os.path.dirname(empty_dir)
+    else:
+        args.sim_dir = os.path.dirname(os.path.dirname(args.infile[0]))
     # Get scenario name (called expt_name here)
     # ' ' + == hack to distinguish auto-generated from manual expt_name
     args.expt_name = ' ' + os.path.basename(args.sim_dir)
     # allow to over-ride with a single name in a special file
     # TODO: put in config-reduce.json instead?
     try:
-        ens_fn = re.sub(r'/drm/.*', '/EnsembleName.txt', args.infile[0])
+        ens_fn = os.path.join(args.sim_dir, 'EnsembleName.txt')
         if os.path.exists(ens_fn):
             args.expt_name = open(ens_fn).readline().strip()
             print('%s: New ensemble name is "%s".' % (args.progname, args.expt_name))
@@ -3651,12 +3712,6 @@ if __name__ == '__main__':
     if not os.path.exists(directory):
         os.makedirs(directory, exist_ok=True)
 
-    # if this file is present, do not continue
-    skip_fn = args.outfile % ('skip', 'txt')
-    if os.path.isfile(skip_fn):
-        print('%s: Skipping reduction in %s.' % (args.progname, os.path.dirname(args.outfile)))
-        sys.exit(0)
-
     # load local reduction parameters
     # (note: configuration w/r/t job specs is in UPDATE_GLOBALS())
     args.reduce_config = utils.load_reduce_config(Path(args.sim_dir), log_origin=args.progname)
@@ -3666,6 +3721,25 @@ if __name__ == '__main__':
         args.reduce_config = {}
     else:
         print(f'{args.progname}: Loaded reduction config: {args.reduce_config["_config_filename"]}')
+
+    # if this file is present, do not continue
+    # (but ensure reduce-info.csv is present and up to date, so that make sees
+    # this ensemble as done, rather than remaking it on every invocation)
+    skip_fn = args.outfile % ('skip', 'txt')
+    if os.path.isfile(skip_fn):
+        print('%s: Skipping reduction in %s.' % (args.progname, os.path.dirname(args.outfile)))
+        info_fn = args.outfile % ('info', 'csv')
+        if os.path.isfile(info_fn):
+            os.utime(info_fn)
+        else:
+            write_placeholder_info(args, empty_dir or os.path.dirname(args.infile[0]))
+        sys.exit(0)
+
+    # no DRMs: write the placeholder
+    if empty_dir:
+        write_placeholder_info(args, empty_dir)
+        sys.exit(0)
+    # NB: we can now assume at least one input DRM
 
     # customize the overall binner class
     fails = RpLBins.customize_parameters(args.reduce_config)
