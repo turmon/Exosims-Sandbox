@@ -394,9 +394,6 @@ sims/%/path-ens/path-map.png: sims/%/drm
 #     invocation of make.
 .SECONDEXPANSION:
 
-# Script file for a per-DRM product: sims/ENS/path/FILE -> Scripts/ENS.json
-PATH_TO_SCRIPT = $(patsubst sims/%/path/,Scripts/%.json,$(dir $1))
-
 # Rule to make a single-drm path movie
 sims/%.mp4: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Path movie \`$@'"
@@ -415,9 +412,10 @@ sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 
 # Rule to make a single-drm keepout map
 # (target is the first of the files KEEPOUT_PROG writes: -obs-keepout-all.png)
+# (KEEPOUT_PROG infers the JSON script, not the outspec, from the DRM path)
 sims/%-obs-keepout-all.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Keepout \`$@'"
-	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $(call PATH_TO_SCRIPT,$@) $<
+	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $<
 
 ## Note: script-exists is the first prerequisite of each rule below.  It
 ## raises a clear error when S names neither a script nor an experiment

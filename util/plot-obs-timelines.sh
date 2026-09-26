@@ -48,6 +48,8 @@
 #     sims/ENS/reduce-outspec.json    (outspec copied by reduce_drms.py)
 #     sims/ENS/reduce-script.json     (script copied by reduce_drms.py)
 #     Scripts/ENS.json                (the original script)
+#   The Python equivalent is utils.infer_spec_for_drm (in util/reduce_drm_tools/),
+#   whose SPEC_ORDER_OUTSPEC_FIRST matches this order; keep the two consistent.
 # * The image output name is generated from the DRM, but can be explicitly given.
 #
 # For example:

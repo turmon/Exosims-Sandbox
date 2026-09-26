@@ -11,7 +11,7 @@ These notes are incomplete -- adapted from another project.
 ```
 util/reduce_drm_tools/
   __init__.py               Package init
-  utils.py                  Config-file loading, unit stripping
+  utils.py                  Config-file loading, unit stripping, DRM spec-file lookup
   PlanetBins.py             RpLBins: numeric planet binning, is_earthlike()
   PlanetNames.py            PlanetNames: display names for the earthlike class
 ```
