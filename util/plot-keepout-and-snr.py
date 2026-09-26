@@ -440,8 +440,8 @@ class plotKeepoutContainer(object):
         N_sind_all = sim.koMap.shape[1]
         sind_show = np.zeros(N_sind_all, dtype=bool) # False - show nothing
         if not char_only:
-            sind_show[sim.det_sind] = True
-        sind_show[sim.char_sind] = True
+            sind_show[sim.det_sind.astype(int)] = True
+        sind_show[sim.char_sind.astype(int)] = True
         # layer of koMap to show -- shape[0] = 1 if coronagraph-only, or = 2 for shade.
         # thus: result = 0 if detection-mode, or if coronagraph-only;
         # result = 1 if char_only and starshade
