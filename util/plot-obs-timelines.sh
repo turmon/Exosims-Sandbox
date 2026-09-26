@@ -4,7 +4,7 @@
 #
 # Usage:
 # ```
-#   plot-obs-timelines.sh [-o TEMPLATE] [-j JSON] DRM
+#   plot-obs-timelines.sh [-o TEMPLATE] [-j SPEC] DRM
 # ```
 #
 # where:
@@ -12,7 +12,7 @@
 #  -o TEMPLATE  gives the explicit output file template
 #               must contain two %s's, such as timelines-%s.%s
 #               By default, this is deduced from Sandbox conventions
-#  -j JSON      gives the JSON script (or outspec) name, used as-is
+#  -j SPEC      gives the JSON script (or outspec) name, used as-is
 #               By default, this is deduced from Sandbox conventions
 #  -D           signals to run python with the debugger on
 # ```
