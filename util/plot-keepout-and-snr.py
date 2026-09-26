@@ -3,22 +3,35 @@
 
 ## Usage
 ```
-  plot-keepout-and-snr.py [-o OUTPATH] SCRIPT DRM
+  plot-keepout-and-snr.py [-o OUTPATH] [-j SPEC] [-c] [-C] [-s] DRM
 ```
 
 ## Options
 
 * `-o OUTPATH` gives an output path for results, containing two %s slots
+* `-j SPEC` gives the JSON script (or outspec) to use, as-is
+* `-c` / `-C` read / write the sim object from / to a cache file
+* `-s` makes the SNR plot
 
 ## Most helpful Sandbox usage
 ```
-  PYTHONPATH=EXOSIMS plot-keepout-and-snr.py Scripts/FOO.json sims/FOO/drm/SEED.pkl
+  PYTHONPATH=EXOSIMS plot-keepout-and-snr.py sims/FOO/drm/SEED.pkl
 ```
 
-where `FOO.json` is a script, and `SEED.pkl` is a DRM.  Output will be placed in the
+where `SEED.pkl` is a DRM.  Output will be placed in the
 working directory unless `-o path/to/output/%s.%s` or the like is given.
 
-Note: This imports EXOSIMS and instantiates an object based on the given SCRIPT.
+If `-j` is not given, the script is inferred from the DRM filename, as the first
+readable file among:
+```
+  sims/FOO/reduce-script.json   (script copied by reduce_drms.py)
+  Scripts/FOO.json              (the original script)
+```
+The outspec (e.g., `sims/FOO/log/outspec/SEED.json`) is not used unless given
+with `-j`, because it pins machine-specific default paths from the run.
+With `-c`, no script is needed.
+
+Note: This imports EXOSIMS and instantiates an object based on the SPEC.
 """
 
 from __future__ import print_function
@@ -42,6 +55,8 @@ import astropy.units as u
 #matplotlib.use('Agg')
 import matplotlib as mpl; mpl.use('Agg') # not interactive: don't use X backend
 import matplotlib.pyplot as plt
+
+from reduce_drm_tools import utils
 
 # alas, this needs Exosims
 import EXOSIMS
@@ -582,7 +597,8 @@ def main(args):
         if args.cache_write:
             fn = args.outpath % ('sim-cache', 'pkl')
             print('%s: Dumping Exosims object to %s.' % (args.progname, fn))
-            pickle.dump(sim, open(fn, 'w'))
+            with open(fn, 'wb') as f:
+                pickle.dump(sim, f)
         print('%s: Finished with the Exosims object.' % args.progname)
             
     # open a plot container object
@@ -600,8 +616,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Plot timeline of keepout and observations reported in DRMs.", epilog='')
-    parser.add_argument('script', metavar='SCRIPT', default='', help='json script file')
     parser.add_argument('drm', metavar='DRM', default='', help='drm file')
+    parser.add_argument('-j', default=None, type=str, dest='script', metavar='SPEC',
+                            help='JSON script (or outspec) file; default: inferred from DRM')
     parser.add_argument('-o', default='./%s.%s', type=str, dest='outpath', help='Output file pattern.')
     #parser.add_argument('-v', default=False, action='store_true', 
     #                        dest='verbose', help='Verbosity.')
@@ -619,6 +636,17 @@ if __name__ == '__main__':
     if args.outpath.count('%s') != 2:
         sys.stderr.write('Fatal.  Outpath (%s) must have two %%s patterns.' % args.outpath)
         sys.exit(1)
+
+    # if not given: infer script from DRM (script-first, see utils.SPEC_ORDER_*)
+    # (not needed when reading the sim object from cache)
+    if args.script is None and not args.cache_read:
+        spec, tried = utils.infer_spec_for_drm(args.drm, order=utils.SPEC_ORDER_SCRIPT_FIRST)
+        if spec is None:
+            sys.stderr.write(f'{args.progname}: Could not infer script from DRM. Tried:\n')
+            sys.stderr.write(''.join(f'    {fn}\n' for fn in tried))
+            sys.exit(1)
+        args.script = str(spec)
+        print(f"{args.progname}: From DRM, using script `{args.script}'.")
 
     try:
         args.seed = int(os.path.basename(args.drm).split('.')[0])
