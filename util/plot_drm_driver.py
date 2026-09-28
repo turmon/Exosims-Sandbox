@@ -176,13 +176,13 @@ def load_csv_files(src_tmpl, csv_files, plot_name):
         # either spelling, .csv or .csv.gz (see cs.resolve_csv_path)
         filepath = cs.resolve_csv_path(src_tmpl, csv_file)
         if filepath is None:
-            print(f"{PROGNAME}: Warning: CSV file '{src_tmpl % (csv_file, 'csv')}' not found, skipping {plot_name} plot",
+            print(f"\t{PROGNAME}: Skipping {plot_name} plot: File '{os.path.basename(src_tmpl % (csv_file, 'csv'))}' not found, ",
                   file=sys.stderr)
             return None
         try:
             dataframes.append(pd.read_csv(filepath))
         except Exception as e:
-            print(f"{PROGNAME}: Warning: Could not read '{filepath}': {e}, skipping {plot_name} plot",
+            print(f"\t{PROGNAME}: Skipping {plot_name} plot: No data in '{os.path.basename(filepath)}' ({e})",
                   file=sys.stderr)
             return None
     return dataframes
