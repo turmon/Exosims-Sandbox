@@ -89,8 +89,9 @@ CHECK_MADE = @ test -e $@ || { echo "Make: Error: recipe did not produce \`$@'" 
 # fixed file that stands for them all.  Instead, each appends a line to
 # ENS/path/per-drm-status.txt, which the html index depends on.  The line
 # records when, what kind, and which file, so readers can see what wrote it.
+# (umask: if this creates the file, make it group-writable, as for the helpers)
 #   $1 = kind of product, e.g., path-movie
-PER_DRM_STATUS = @ echo "$$(date '+%Y-%m-%dT%H:%M:%S') $1 $(notdir $@)" >> $(@D)/per-drm-status.txt
+PER_DRM_STATUS = @ umask 002; echo "$$(date '+%Y-%m-%dT%H:%M:%S') $1 $(notdir $@)" >> $(@D)/per-drm-status.txt
 
 # clear builtin pattern rules to get files out of source control
 %: %,v
@@ -555,7 +556,7 @@ sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt \
 	@ echo "Make: HTML index $@ ..."
 	$(if $(filter $*,$(S)),$(HTML_PROG),$(HTML_PROG_NOINDEX)) $*
 	$(CHECK_MADE)
-	$(if $(filter $*,$(S)),,@ touch sims/$(S)/$(EXP_HTML_STALE))
+	$(if $(filter $*,$(S)),,@ umask 002; touch sims/$(S)/$(EXP_HTML_STALE))
 
 # recursively regenerate all index.html's for all sims,
 # and then regenerate the global index.html.  Does *not*
