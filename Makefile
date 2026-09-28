@@ -30,7 +30,6 @@
 #   keepout-N:       make "N" keepout-vs-time plots
 #                    (the -N targets choose N arbitrary runs, where N is
 #                    any count, e.g., 1, 2, 5, 10, ..., or T, where T=all)
-#   status:          list the current contents of DRMs for this scenario (like "ls")
 # (2) Multi-script reduction and plotting
 #   => All these targets require an *experiment* name.
 #   exp-reduce:      makes "reduce" for all ensembles within the experiment
@@ -47,8 +46,10 @@
 #   exp-obs-timeline-M-* /  -M-top-N and make 5 each in 10 top + 10 selected.
 #   (Except for bare exp-html-only, the exp-* targets first reduce any
 #   ensembles that need it.)
-# (3) Maintenance
+# (3) Information and maintenance
 #  => Work for either scenarios or (recursively) with experiments/families.
+#   list:            quick recursive listing of the simulations underneath ("ls -R")
+#   list-drms:       drm-by-drm summary of the observations within all sims below
 #   tar-log:         replace each scenario/log with its "tar" archive to save space
 #   tar-data:        replace each scenario/{drm,spc} with a "tar" archive 
 #                    (deletes originals, leaving the tarfile)
@@ -227,28 +228,30 @@ ensemble-exists:
 Makefile:;
 
 ########################################
-## Simulation status and misc
+## Simulation status and maintenance
+.PHONY: list list-drms exp-preflight
 
-# list drms that have been made
-status: script-exists
-	util/drm-ls.py -l sims/$(S)/drm
+# quick list of simulations below
+list: script-exists
+	util/drm-ls.py -i sims/$(S)
 
-.PHONY: exp-preflight
+# list each drm below (loads all pickles)
+list-drms: script-exists
+	util/drm-ls.py -i -l sims/$(S)
+
 exp-preflight:
 	util/exp-preflight.sh Scripts/$(S)
 
 # compress logfiles - don't require script-exists
-.PHONY: tar-log
+.PHONY: tar-log tar-data tar-some-data
 tar-log:
 	$(TAR_LOG_PROG) sims/$(S)
 
 # compress data-files - don't require script-exists
-.PHONY: tar-data
 tar-data:
 	$(TAR_DATA_PROG) sims/$(S)
 
 # compress low-yield (-l) data-files - don't require script-exists
-.PHONY: tar-some-data
 tar-some-data:
 	$(TAR_DATA_PROG) -l sims/$(S)
 
