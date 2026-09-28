@@ -3,145 +3,217 @@
 
 ## Usage
 ```
-  drm-ls.py [-d N] [-lqrc] [FILE_OR_DIRECTORY ...]
+  drm-ls.py [-lscDi] DIR_OR_DRM ...
 ```
 
 Simplest usage:
 ```
-  drm-ls.py
+  drm-ls.py sims/ENSEMBLE
 ```
 
 ## Options
 ```
  -l gives long-format output (extra columns)
- -q gives short, summary output (no per-DRM output)
- -r performs recursive descent (otherwise, named files/dirs are examined)
- -d N limits recursive descent to N levels
+ -s gives summary output: rollups only (no per-DRM output)
  -c gives CSV output instead of tabular output
+ -i gives run info, from the environment logs (alone: instead of the listing)
+ -D gives diagnostic output: a traceback for DRMs that fail to load
+ -h gives help
 ```
 
-A file, a list of files, a directory, or list thereof, can be given
-for listing.  By default, DRMs in the current working directory are
-listed.
+Each argument is a Sandbox directory, or a DRM file.  Sandbox directories
+follow these conventions, and the DRMs within them are found accordingly:
 
-DRM files should be named with extensions `.pkl`, `.drm`, `.gz`, or `.bz2`, and
-should correspond to Python pickles.  Gzip or bzip2 compressed files
-(bearing any extension, even `.pkl`) will be uncompressed and examined.
++ `X/drm/` exists: X is an ensemble, and its DRMs are `X/drm/*.pkl`
++ `X` is named `*.fam` or `*.exp`: a family or experiment, whose
+  subdirectories are examined in turn, by these same rules
++ `X` is `sims` itself: treated as a family, so all DRMs are listed
++ otherwise, X is ignored (e.g., `Analysis/` within an experiment)
 
-For more on usage, use the `-h` option.
-Some options may be described there but not documented here.
+For convenience, an ensemble's `drm/` directory may also be given.  DRM files
+given explicitly (e.g., `sims/ENS/drm/17*.pkl`) are listed as-is, grouped
+under their ensemble.
+
+## Listing
+
+Output is a tree, indented like the `tree` utility, following the Sandbox
+hierarchy: sims, families, experiments, ensembles, and (unless `-s`) the DRMs
+within each ensemble, labeled by seed.  The line for each sims, family,
+experiment, or ensemble is a rollup over all the DRMs below it: their count
+(Ndrm), and the per-DRM mean of each column.  The columns are `Nobs`, the
+number of observations (DRM entries) of any kind, and, with `-l`:
+
++ `Ndet_ok`: successful detections, summed over observations (so a planet
+  re-detected on a revisit counts again)
++ `Nchar_ok`: successful (full, not partial) characterizations, summed likewise
++ `Nstar_det`: number of distinct stars with at least one successful detection
+
+With `-c`, the same rows are given as CSV, with the full path and the kind of
+each row (sims, family, experiment, ensemble, drm) in place of the tree.
+
+A DRM that cannot be loaded -- typically, a pickle made with packages (or
+versions) not present in this python installation -- is skipped with a
+warning, and omitted from the rollups.  Warnings are collapsed to one line
+per ensemble for each distinct error.
+
+## Run info
+
+The run info (`-i`) is a similar tree.  For each node, it gives the number
+of ensembles below it (Nscen, for sims, families, and experiments), the
+number of DRMs below it (Nens, noting how many have logs, if not all), and
+summarizes the run start time, the EXOSIMS version, and the EXOSIMS path,
+across those DRMs, as recorded in the environment log for each DRM (for
+`ENS/drm/SEED.pkl`, this is `ENS/log/environ/SEED.txt`, or for older
+ensembles, the header of `ENS/run/outseed_SEED.txt`).  Values that differ
+among the runs are listed along with their counts (for the EXOSIMS path,
+one per line).  Given alone, `-i` does not examine the DRMs themselves.
+With `-l` or `-s`, the run-info tree comes before the listing.
 """
 
-# author:
-#  Michael Turmon, JPL
-#
-# robustness note: the signature for a pickle in MAGIC_NUMBERS may be
-# sensitive to the pickle encoding used, e.g. pickle version, or
-# python 2.x or 3.x.  Extra magic numbers for these other pickles
-# could be added.
 
-
-from __future__ import print_function
 import argparse
 import sys
 import os
 import os.path
-import six.moves.cPickle as pickle
+import glob
+import time
+import traceback
+import pickle
 from collections import defaultdict
-import bz2, gzip
 import numpy as np
 import astropy.units as u
 #from astropy.time import Time
 
 
 # unpickling python2/numpy pickles within python3 requires this
-PICKLE_ARGS = {} if sys.version_info.major < 3 else {'encoding': 'latin1'}
-
-# magic numbers at the start of compressed files
-MAGIC_NUMBERS = [
-    (b"\x1f\x8b\x08", gzip.GzipFile),
-    (b"\x42\x5a\x68", bz2.BZ2File),
-    (b"(lp", lambda f: open(f, 'rb')), # "list begin" -- works for python 2.x DRMs, even empty ones
-    ]
-MAGIC_MAXLEN = max(len(m[0]) for m in MAGIC_NUMBERS)
+PICKLE_ARGS = {'encoding': 'latin1'}
 
 # global modes
 CSV_OUTPUT = False
 
-class UnknownFileException(Exception):
-    r'''Raised when encountering a file that does not appear to be a DRM.'''
-    pass
+# column order for DRM summaries
+KEY_ORDER = ['Nobs', 'Ndet_ok', 'Nchar_ok', 'Nstar_det']
 
 
 ############################################################
 #
-# Utilities
+# Sandbox tree
 #
 ############################################################
 
+class Node(object):
+    r'''One Sandbox directory: sims, family, experiment, or ensemble.
 
-def args_to_filenames(arglist, recurse, max_depth):
-    # traverse root directory, and list directories as dirs and files as files
-    result = []
+    Ensembles hold DRM filenames (drms); the others hold child Nodes (children).
+    After loading, stats holds one summary dict per DRM, keyed by filename.'''
+    def __init__(self, name, path, kind):
+        self.name = name  # label in the tree
+        self.path = path  # directory path
+        self.kind = kind  # ensemble, family, experiment, or sims
+        self.children = []
+        self.drms = []
+        self.stats = {}
+
+    def all_drms(self):
+        r'''All DRM filenames at or below this node.'''
+        return self.drms + [fn for c in self.children for fn in c.all_drms()]
+
+    def n_ensembles(self):
+        r'''Number of ensembles at or below this node.'''
+        return (self.kind == 'ensemble') + sum(c.n_ensembles() for c in self.children)
+
+    def all_stats(self):
+        r'''All per-DRM summary dicts at or below this node.'''
+        return list(self.stats.values()) + [s for c in self.children for s in c.all_stats()]
+
+
+def container_kind(d):
+    r'''Return the kind of Sandbox container d is, or None if not one.'''
+    if d.endswith('.fam'):
+        return 'family'
+    if d.endswith('.exp'):
+        return 'experiment'
+    if os.path.basename(d) == 'sims':
+        return 'sims'
+    return None
+
+
+def ensemble_node(ens_dir, name):
+    r'''Return the Node for ensemble directory ens_dir, with all its DRMs.'''
+    node = Node(name, ens_dir, 'ensemble')
+    node.drms = sorted(glob.glob(os.path.join(ens_dir, 'drm', '*.pkl')))
+    return node
+
+
+def sandbox_node(d, name):
+    r'''Return the Node for Sandbox directory d, or None if d is not one.'''
+    if os.path.isdir(os.path.join(d, 'drm')):
+        return ensemble_node(d, name)
+    kind = container_kind(d)
+    if kind and os.path.isdir(d):
+        node = Node(name, d, kind)
+        # descend, ignoring non-Sandbox subdirectories
+        for sub in sorted(os.scandir(d), key=lambda e: e.name):
+            if sub.is_dir():
+                child = sandbox_node(sub.path, sub.name)
+                if child is not None:
+                    node.children.append(child)
+        return node
+    return None
+
+
+def args_to_trees(arglist):
+    r'''Return a list of Nodes, one tree per argument (or per group of DRM files).'''
+    trees = []
     for arg in arglist:
-        if os.path.isdir(arg):
-            for root, dirs, files in os.walk(arg):
-                path = root.split(os.sep)
-                if (not recurse) or (len(path) >= max_depth):
-                    del dirs[0:] # modify dirs in place => do not descend farther
-                result.extend(drm_filter([os.path.join(root, f) for f in sorted(files)]))
+        arg = os.path.normpath(arg)
+        if os.path.isfile(arg):
+            # explicit DRM file: group with the previous one, if same ensemble
+            ens_dir = os.path.dirname(os.path.dirname(arg))
+            if not (trees and trees[-1].kind == 'ensemble' and trees[-1].path == ens_dir
+                    and trees[-1].explicit):
+                node = Node(ens_dir, ens_dir, 'ensemble')
+                node.explicit = True
+                trees.append(node)
+            trees[-1].drms.append(arg)
+            continue
+        if os.path.basename(arg) == 'drm' and os.path.isdir(arg):
+            # an ensemble's drm/ directory, given directly
+            node = ensemble_node(os.path.dirname(arg), os.path.dirname(arg))
         else:
-            result.extend(drm_filter([arg]))
-    return result
+            node = sandbox_node(arg, arg)
+        if node is None:
+            print('%s: Warning: skipping %s: not a DRM, ensemble, family, or experiment'
+                  % (os.path.basename(sys.argv[0]), arg), file=sys.stderr)
+            continue
+        node.explicit = False
+        trees.append(node)
+    return trees
 
 
-def drm_filter(files):
-    r'''Filter file list to include only readable files, with DRM-like extensions.'''
-    # don't peek into the file yet, it takes too long
-    ok = []
-    for f in files:
-        if os.path.isfile(f) and os.path.splitext(f)[1] in ('.pkl', '.gz', '.bz2', '.drm'):
-            if f.startswith('./'):
-                ok.append(f[2:])
-            else:
-                ok.append(f)
-    return ok
+def tree_prefix(depth):
+    r'''Prefix for the line naming a node at the given depth.'''
+    return '' if depth == 0 else '|  ' * (depth - 1) + '|- '
 
 
-def file_accessor(fn):
-    r'''Return an accessor for the filename, depending on the compression type, if any.'''
-    with open(fn, 'rb') as f:
-        try:
-            file_start = f.read(MAGIC_MAXLEN)
-        except EOFError:
-            file_start = ''
-    for magic, accessor in MAGIC_NUMBERS:
-        if file_start.startswith(magic):
-            return accessor(fn)
-    raise UnknownFileException("File %s not a DRM" % fn)
-
+############################################################
+#
+# DRM loading and summaries
+#
+############################################################
 
 def load_drm(fn):
-    r"""Return list of observations made, loaded from an external DRM pickle."""
-    global DIAGNOSE
+    r"""Return (drm, None), with drm the list of observations in a DRM pickle.
 
-    def why_skip(fn, reason, diagnose):
-        r'''Supply uniform message upon skipping a file.'''
-        if diagnose:
-            print('Skipped %s (%s)' % (fn, reason))
-
+    If the DRM cannot be loaded -- e.g., a pickle made with packages (or
+    versions) not present in this python installation -- instead return
+    (None, (reason, traceback-text)).  The caller reports it."""
     try:
-        drm = pickle.load(file_accessor(fn), **PICKLE_ARGS)
-    except (pickle.UnpicklingError, EOFError, UnknownFileException):
-        # vanilla textfiles should route through this path
-        # some pickles that are not DRMs will route through this path
-        # Note: possibly, other errors should be added to the tuple above
-        why_skip(fn, 'could not unpack as a DRM', DIAGNOSE)
-        return None
-    except:
-        # an unqualified try/except can mask errors, so raise it
-        why_skip(fn, 'Unpacking Error!', True)
-        raise
+        with open(fn, 'rb') as f:
+            drm = pickle.load(f, **PICKLE_ARGS)
+    except Exception as e:
+        # anything can go wrong within an unpickle: return it, and go on
+        return None, ('could not load (%s: %s)' % (type(e).__name__, e), traceback.format_exc())
     # we read something: examine it to verify it is a DRM.
     # we take a valid DRM to be either:
     #   (1) an empty list (could be a non-DRM, but tough luck)
@@ -151,13 +223,12 @@ def load_drm(fn):
     # dictionaries, etc.
     if isinstance(drm, list):
         if len(drm) == 0:
-            return drm # case 1 above
+            return drm, None # case 1 above
         if len(drm) > 0 and isinstance(drm[0], dict) and ('star_ind' in drm[0]):
-            return drm # case 2 above
-    why_skip(fn, 'unpacked, but not a DRM', DIAGNOSE)
-    return None
+            return drm, None # case 2 above
+    return None, ('loaded, but not a DRM', '')
 
- 
+
 def detail_summarize(drm):
     r'''More detailed DRM summary.'''
     # successful detections - an array entry for each observation
@@ -168,92 +239,186 @@ def detail_summarize(drm):
     chars = np.array([np.sum(np.maximum(0, obs['char_status'])) if 'char_status' in obs else 0
                       for obs in drm ])
     n_char = np.sum(chars)
-    # final mass
-    masses = [obs['scMass'] for obs in drm if 'scMass' in obs]
-    mass = masses[-1].value if masses else -99
-    # final arrival time
-    arr_times = [obs['arrival_time'] for obs in drm if 'arrival_time' in obs]
-    arr_time = strip_units(arr_times[-1]) if arr_times else -99
     # stars we visited, in order
     all_stars = np.array([obs['star_ind'] for obs in drm])
     all_star_det = set(all_stars[dets > 0]) # de-duplicate
     n_star_det = len(all_star_det)
     # package and return
-    result = dict(Nobs=len(drm),Ndet=n_det,Nchar=n_char,Nstar_det=n_star_det,Fmass=mass, ArrTime=arr_time)
+    result = dict(Nobs=len(drm), Ndet_ok=n_det, Nchar_ok=n_char, Nstar_det=n_star_det)
     return result
 
 
-def key_print_order(s):
-    default_key_order = ['Nobs', 'Ndet', 'Nchar', 'Nstar_det', 'Fmass','ArrTime']
-    ordered_keys = []
-    # take keys in defined order first
-    for k in default_key_order:
-        if k in s:
-            ordered_keys.append(k)
-    # next, add in anything else
-    for k in sorted(s):
-        if k not in ordered_keys:
-            ordered_keys.append(k)
-    return ordered_keys
+def skip_report(node, failures):
+    r'''Report the DRMs within node that failed to load, one line per distinct reason.
 
-def strip_units(x):
-    r'''Remove astropy units from x, if present.'''
-    try:
-        return x.value
-    except AttributeError:
-        return x
+    failures is a list of (fn, (reason, traceback-text)).'''
+    by_reason = defaultdict(list)
+    for fn, why in failures:
+        by_reason[why[0]].append((fn, why[1]))
+    for reason, fails in by_reason.items():
+        if len(fails) == 1:
+            what = fails[0][0]
+        else:
+            what = '%d DRMs in %s' % (len(fails), node.path)
+        print('%s: Warning: skipping %s: %s' % (os.path.basename(sys.argv[0]), what, reason),
+              file=sys.stderr)
+        if DIAGNOSE and fails[0][1]:
+            # one traceback per group, from its first DRM
+            print(fails[0][1], end='', file=sys.stderr)
 
-def summarize_print(fn, s, verbosity, fmt='%.0f', first_call=[]):
-    # fmt0: file line; delim1: inter-number delimiter
+
+def load_tree_stats(node, verbosity):
+    r'''Load and summarize the DRMs in the tree at node.  Return count of unreadable DRMs.'''
+    failures = []
+    for fn in node.drms:
+        drm, why = load_drm(fn)
+        if drm is None:
+            failures.append((fn, why))
+        elif verbosity > 1:
+            node.stats[fn] = detail_summarize(drm) # inspect the drm
+        else:
+            node.stats[fn] = dict(Nobs=len(drm)) # don't look within the drm
+    skip_report(node, failures)
+    n_bad = len(failures)
+    for child in node.children:
+        n_bad += load_tree_stats(child, verbosity)
+    return n_bad
+
+
+def tree_rows(node, keys, summary, depth=0):
+    r'''Return table rows (path, kind, label, Ndrm, values) for the tree at node.'''
+    stats = node.all_stats()
+    if stats:
+        means = ['%.2f' % np.mean([s[k] for s in stats]) for k in keys]
+    else:
+        means = [''] * len(keys)
+    rows = [(node.path, node.kind, tree_prefix(depth) + node.name, str(len(stats)), means)]
+    for child in node.children:
+        rows.extend(tree_rows(child, keys, summary, depth + 1))
+    if not summary:
+        for fn in node.drms:
+            if fn in node.stats:
+                seed = os.path.splitext(os.path.basename(fn))[0]
+                values = ['%.0f' % node.stats[fn][k] for k in keys]
+                rows.append((fn, 'drm', tree_prefix(depth + 1) + seed, '', values))
+    return rows
+
+
+def table_print(trees, verbosity, summary):
+    r'''Print the DRM summary table, one tree per Node in trees.'''
+    keys = KEY_ORDER if verbosity > 1 else KEY_ORDER[:1]
+    rows = [r for node in trees for r in tree_rows(node, keys, summary)]
     if CSV_OUTPUT:
-        fmt0 = '{0},'.format
-        delim1 = ','
-    else:
-        fmt0 = '{0:<31}\t'.format
-        delim1 = '\t'
-    # print header, if desired - uses mutable argument to detect first call
-    if len(first_call) == 0:
-        first_call.append('called') # header is done
-        line = delim1.join(['%s' % (k,) for k in key_print_order(s)])
-        if verbosity:
-            print(fmt0('DRM') + line)
-    if verbosity > 1:
-        line = delim1.join([fmt % (strip_units(s[k]),) for k in key_print_order(s)])
-    elif verbosity == 1:
-        line = fmt % (s['Nobs'],)
-    print(fmt0(fn) + line)
+        print(','.join(['path', 'kind', 'Ndrm'] + keys))
+        for path, kind, _, ndrm, values in rows:
+            print(','.join([path, kind, ndrm] + values))
+        return
+    # plain text: label column left-justified, numeric columns right-justified
+    header = ['DRM', 'Ndrm'] + keys
+    table = [header] + [[label, ndrm] + values for _, _, label, ndrm, values in rows]
+    widths = [max(len(r[j]) for r in table) for j in range(len(header))]
+    for r in table:
+        line = r[0].ljust(widths[0])
+        line += ''.join('  ' + r[j].rjust(widths[j]) for j in range(1, len(r)))
+        print(line)
 
 
-def summarize(fn, drm, accum, verbosity):
-    r'''Summarize each DRM, add up the total valid DRMs'''
-    # number of observations
-    if verbosity > 1:
-        # inspect the drm
-        s = detail_summarize(drm)
+############################################################
+#
+# Run info (environment logs)
+#
+############################################################
+
+def environ_filenames(fn):
+    r'''Return the candidate run-environment logs for DRM filename fn, newest format first.'''
+    ens_dir = os.path.dirname(os.path.dirname(os.path.abspath(fn)))
+    seed = os.path.basename(fn).split('.')[0]
+    return [os.path.join(ens_dir, 'log', 'environ', seed + '.txt'),
+            os.path.join(ens_dir, 'run', 'outseed_%s.txt' % seed)]
+
+
+def load_environ(fn):
+    r'''Return the run environment for DRM filename fn as a dict, or None if no log.
+
+    The log is either log/environ/SEED.txt, with "key: value" lines, or (older)
+    run/outseed_SEED.txt, with the same lines prefixed by "# ", followed by the seed.'''
+    for log_fn in environ_filenames(fn):
+        try:
+            with open(log_fn) as f:
+                lines = f.readlines()
+            break
+        except OSError:
+            pass
     else:
-        # don't look within the drm
-        s = dict(Nobs=len(drm))
-    if verbosity:
-        summarize_print(fn, s, verbosity)
-    # update accumulator
-    for k in s:
-        accum[k] += s[k]
-        
-    
-def summ_accum(Ndrm, accum, verbosity):
-    r'''Summarize the accumulated counts.'''
-    #print 'TOTAL NDRM =', accum['n_drm']
-    #print 'TOTAL NOBS =', accum['n_obs']
-    verbosity_used = max(verbosity, 1)
-    if Ndrm > 0: 
-        summarize_print('*TOTAL', accum, verbosity_used, first_call=['called'])
-    if Ndrm > 0:
-        mean = {k: accum[k]/(1.0*Ndrm) for k in accum}
-        summarize_print('*MEAN', mean, verbosity_used, fmt='%.2f', first_call=['called'])
-    # this is not handled per-DRM, because it makes no sense there
-    if not CSV_OUTPUT:
-        print('%d DRMs examined' % Ndrm)
-    
+        return None
+    env = {}
+    for line in lines:
+        if line.startswith('#'):
+            line = line[1:]
+        key, sep, value = line.partition(':')
+        if sep:
+            env[key.strip()] = value.strip()
+    # older logs give the time as, e.g., "Sun May 10 19:24:13 2026": standardize it
+    if 'time' in env:
+        try:
+            env['time'] = time.strftime('%Y-%m-%d %H:%M:%S',
+                                        time.strptime(env['time'], '%a %b %d %H:%M:%S %Y'))
+        except ValueError:
+            pass
+    return env
+
+
+def info_lines(envs):
+    r'''Return (key, value) lines summarizing the run environments envs.
+
+    A value is a string, or a list of strings, to be printed one per line.'''
+    lines = []
+    if not envs:
+        return lines
+    # run start time: the range, since it differs for every run
+    times = sorted(env['time'] for env in envs if 'time' in env)
+    if times:
+        span = times[0] if times[0] == times[-1] else '%s to %s' % (times[0], times[-1])
+        lines.append(('time', span))
+    # others: typically constant, but list each distinct value, with counts
+    # (paths are long, so several of them go one per line)
+    for key in ('EXOSIMS_version', 'EXOSIMS_path'):
+        counts = defaultdict(int)
+        for env in envs:
+            counts[env.get(key, '(missing)')] += 1
+        if len(counts) == 1:
+            values = list(counts)[0]
+        else:
+            values = ['%s (%d)' % (v, n) for v, n in sorted(counts.items())]
+            if key != 'EXOSIMS_path':
+                values = ', '.join(values)
+        lines.append((key, values))
+    return lines
+
+
+def info_print(node, envs_of, depth=0):
+    r'''Print the run-info tree at node.  envs_of maps DRM filename to its environment.'''
+    prefix = '# ' if CSV_OUTPUT else ''
+    fns = node.all_drms()
+    envs = [envs_of[fn] for fn in fns if envs_of[fn] is not None]
+    indent = prefix + '|  ' * (depth + 1)
+    print('%s%s%s' % (prefix, tree_prefix(depth), node.name))
+    # Nscen = number of ensembles (drm/ directories) below a family/experiment/sims
+    if node.kind != 'ensemble':
+        print('%sNscen = %d' % (indent, node.n_ensembles()))
+    # Nens = number of DRMs, noting any that lack logs
+    logs_note = '' if len(envs) == len(fns) else '  (%d with logs)' % len(envs)
+    print('%sNens = %d%s' % (indent, len(fns), logs_note))
+    for key, value in info_lines(envs):
+        if isinstance(value, list):
+            print('%s%s:' % (indent, key))
+            for v in value:
+                print('%s    %s' % (indent, v))
+        else:
+            print('%s%s: %s' % (indent, key, value))
+    for child in node.children:
+        info_print(child, envs_of, depth + 1)
+
 
 ############################################################
 #
@@ -271,45 +436,46 @@ def main(args):
     global DIAGNOSE
     DIAGNOSE = args.DIAGNOSE
 
-    # Get filenames of DRMs
-    fns = args_to_filenames(args.drm, args.recurse, args.max_depth)
+    # Find the DRMs, as trees following the Sandbox hierarchy
+    trees = args_to_trees(args.drm)
+    if not trees:
+        return
 
-    # Summarize each DRM
-    Ndrm = 0
-    accum = defaultdict(int)
-    for fn in fns:
-        drm = load_drm(fn)
-        if drm is None:
-            continue # not an actual DRM file, eg a textfile
-        summarize(fn, drm, accum, args.verbose)
-        Ndrm += 1
+    # Run info from the run-environment logs, if requested
+    if args.info:
+        envs_of = {fn: load_environ(fn)
+                   for node in trees for fn in node.all_drms()}
+        for node in trees:
+            info_print(node, envs_of)
+        # -i alone (no -l or -s) is info only
+        if args.verbose == 1 and not args.summary:
+            return
 
-    # Produce cumulative summary across all DRMs
-    summ_accum(Ndrm, accum, args.verbose)
+    # Summarize each DRM, and roll up
+    n_bad = sum(load_tree_stats(node, args.verbose) for node in trees)
+    table_print(trees, args.verbose, args.summary)
+    if n_bad:
+        print('%s: Warning: %d file(s) could not be loaded as DRMs, and are omitted'
+              % (os.path.basename(sys.argv[0]), n_bad), file=sys.stderr)
 
 
-    
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Summarize EXOSIMS DRM(s).",
                                      epilog='')
-    parser.add_argument('drm', metavar='DRM', nargs='*', default='.',
-                            help='drm file, or directory thereof')
-    parser.add_argument('-d', '--depth', help='depth limit to recursive descent',
-                      dest='max_depth', type=int, default=1000)
+    parser.add_argument('drm', metavar='DIR_OR_DRM', nargs='+',
+                            help='Sandbox directory (ensemble, family, experiment), or DRM file')
     parser.add_argument('-l', '--long', help='long-format listing',
                       dest='verbose', action='count', default=1)
-    parser.add_argument('-D', '--diagnose', help='diagnostic (debugging) output',
+    parser.add_argument('-D', '--diagnose', help='diagnostic output: traceback for DRMs that fail to load (one per group)',
                       dest='DIAGNOSE', action='count', default=0)
-    parser.add_argument('-q', '--quiet', help='cumulative summary only (quiet)',
-                      dest='verbose', action='store_const', const=0)
+    parser.add_argument('-s', '--summary', help='rollups only (no per-DRM output)',
+                      dest='summary', action='store_true', default=False)
     parser.add_argument('-c', '--csv', help='CSV output', default=False,
                       dest='csv_output', action='store_true')
-    parser.add_argument('-r', '--recursive', help='recursively list', default=False,
-                      dest='recurse', action='store_true')
+    parser.add_argument('-i', '--info', help='tree of run info, from environment logs', default=False,
+                      dest='info', action='store_true')
     args = parser.parse_args()
-    
+
     main(args)
     sys.exit(0)
-
-
-
