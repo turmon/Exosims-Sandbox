@@ -36,7 +36,7 @@ under their ensemble.
 
 ## Listing
 
-Output is a tree, indented like the `tree` utility, following the Sandbox
+Output is a tree, with depth flagged by repeated `> `, following the Sandbox
 hierarchy: sims, families, experiments, ensembles, and (unless `-s`) the DRMs
 within each ensemble, labeled by seed.  The line for each sims, family,
 experiment, or ensemble is a rollup over all the DRMs below it: their count
@@ -192,8 +192,10 @@ def args_to_trees(arglist):
 
 
 def tree_prefix(depth):
-    r'''Prefix for the line naming a node at the given depth.'''
-    return '' if depth == 0 else '|  ' * (depth - 1) + '|- '
+    r'''Prefix for the line naming a node at the given depth: "> " repeated depth times.
+
+    The name thus starts in column 2*depth, and its details (in -i) in 2*depth+2.'''
+    return '> ' * depth
 
 
 ############################################################
@@ -401,7 +403,7 @@ def info_print(node, envs_of, depth=0):
     prefix = '# ' if CSV_OUTPUT else ''
     fns = node.all_drms()
     envs = [envs_of[fn] for fn in fns if envs_of[fn] is not None]
-    indent = prefix + '|  ' * (depth + 1)
+    indent = prefix + '  ' * (depth + 1)
     print('%s%s%s' % (prefix, tree_prefix(depth), node.name))
     # Nscen = number of ensembles (drm/ directories) below a family/experiment/sims
     if node.kind != 'ensemble':
