@@ -68,3 +68,9 @@ Local/www-resources/doc_sandbox/*
 Scripts
 !Scripts/sims.json
 
+
+# [2026-09-28]
+# emulator utilities: from a separate project, installed into util/ on each
+# host (see Makefile: EMU_PLOT_PROG and EMU_HTML_PROG call them)
+util/run_emulator_workflows.py
+util/emulator_html_summary.py
