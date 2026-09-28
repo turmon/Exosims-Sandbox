@@ -15,13 +15,16 @@
 #
 # Targets:
 # (1) Data reduction and plotting
-#   => All these targets require a scenario name.
+#   => All these targets require an ensemble (a directory with drm/)
+#      For experiments/families, use the exp-* targets in (2).
 #   reduce:          reduce DRMs to tabulated CSV files for later plotting
+#   reduce-only:     same as reduce, but do not re-reduce the enclosing dirs
 #   graphics:        make an array of standard plots
 #   graphics-extra:  make even more plots
 #   graphics-clean:  remove existing plots, to allow re-make
 #   html:            refresh the index.html that summarizes the given scenario
-#   html-only:       same as html, but do not re-reduce the data or remake graphics
+#   html-only:       same as html, but do not re-reduce DRMs or remake graphics
+#                    (does not descend recursively; exp-html-only does)
 #   path-ensemble:   make lon/lat plots of slews taken by an ensemble
 #   star-visits:     per-star tabulation of successful detection visits
 #   path-movie-N:    make "N" path-movies and final frames 
@@ -33,6 +36,7 @@
 # (2) Multi-script reduction and plotting
 #   => All these targets require an *experiment* name.
 #   exp-reduce:      makes "reduce" for all ensembles within the experiment
+#   exp-reduce-only: re-reduce only the experiment itself, from its ensembles' CSVs
 #   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
 #   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -jN
@@ -40,7 +44,7 @@
 #   exp-graphics*        /  number saying how many.  Also, can leave off -top-N
 #                           and just make 10 top + 20 selected.
 #   exp-html-only-*         Same pattern, but without re-making graphics.
-#   exp-html-only           Re-index *all* ensembles (no reduction or graphics).
+#   exp-html-only           Re-index *all* ensembles below (no reduction or graphics).
 #   exp-path-movie-M-*   \  Make M movies, keepout maps, or obs-timelines in
 #   exp-keepout-M-*      |  each of (top/mix)-N ensembles.  Also, can leave off
 #   exp-obs-timeline-M-* /  -M-top-N and make 5 each in 10 top + 10 selected.
@@ -221,7 +225,7 @@ analysis-exists:
 ensemble-exists:
 	@ [ -d sims/$(S)/drm ] || \
 		(echo "Require an ensemble (a directory holding drm/): \`sims/$(S)' is not one." && \
-		 echo "For an experiment or family, use the exp-* targets (e.g., exp-graphics, exp-html)." && exit 1)
+		 echo "For an experiment or family, use the exp-* targets (e.g., exp-reduce, exp-graphics, exp-html)." && exit 1)
 
 .PHONY: default script-exists experiment-exists analysis-exists ensemble-exists
 
@@ -275,10 +279,12 @@ exp-reduce-only: experiment-exists
 
 # 'make reduce' flows from sims/ down to $S/ through DIR/reduce-info.csv targets
 # in all intermediate dirs: see the PROPAGATE_REDUCTION_UPWARD mechanism below
-reduce: script-exists sims/reduce-info.csv
+# Ensembles only: for an experiment/family, use exp-reduce (same graph, above)
+reduce: script-exists ensemble-exists sims/reduce-info.csv
 
 # 'make reduce-only' does not flow from sims -> $S: it just does the bottom level
-reduce-only: script-exists sims/$(S)/reduce-info.csv
+# (for an experiment/family, use exp-reduce-only)
+reduce-only: script-exists ensemble-exists sims/$(S)/reduce-info.csv
 
 # dependence for a bottom-level reduction: any directory holding a drm/ is an
 # ensemble.  Writes DIR/reduce-info.csv, and many others.
