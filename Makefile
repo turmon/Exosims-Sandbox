@@ -73,6 +73,14 @@ SHELL:=/bin/bash
 # turns that silent condition into an error.
 CHECK_MADE = @ test -e $@ || { echo "Make: Error: recipe did not produce \`$@'" >&2; exit 1; }
 
+# Final recipe line for the per-DRM rules (path movies, obs-timelines, ...).
+# These products are made for a varying subset of the DRMs, so there is no
+# fixed file that stands for them all.  Instead, each appends a line to
+# ENS/path/per-drm-status.txt, which the html index depends on.  The line
+# records when, what kind, and which file, so readers can see what wrote it.
+#   $1 = kind of product, e.g., path-movie
+PER_DRM_STATUS = @ echo "$$(date '+%Y-%m-%dT%H:%M:%S') $1 $(notdir $@)" >> $(@D)/per-drm-status.txt
+
 # clear builtin pattern rules to get files out of source control
 %: %,v
 %: RCS/%,v
@@ -434,17 +442,20 @@ sims/%/path-ens/path-map.png: sims/%/drm
 sims/%.mp4: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Path movie \`$@'"
 	$(PATH_PROG) $<
+	$(call PER_DRM_STATUS,path-movie)
 
 # Rule to make a single-drm path final-frame
 sims/%-final.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Path final-frame \`$@'"
 	$(PATH_PROG_FINAL) $<
+	$(call PER_DRM_STATUS,path-final)
 
 # Rule to make a single-drm timeline plot-set
 # (TIMELINE_PROG infers the JSON spec, preferring the outspec, from the DRM path)
 sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Timeline \`$@'"
 	$(TIMELINE_PROG) -o sims/$(*)-%s.%s $<
+	$(call PER_DRM_STATUS,obs-timeline)
 
 # Rule to make a single-drm keepout map
 # (target is the first of the files KEEPOUT_PROG writes: -obs-keepout-all.png)
@@ -452,6 +463,7 @@ sims/%-obs-timelines.txt: $$(subst /path/,/drm/,sims/$$*).pkl
 sims/%-obs-keepout-all.png: $$(subst /path/,/drm/,sims/$$*).pkl
 	@ echo "Make: Keepout \`$@'"
 	$(KEEPOUT_PROG) -o sims/$(*)-%s.%s $<
+	$(call PER_DRM_STATUS,keepout)
 
 ## Note: script-exists and ensemble-exists are the first prerequisites of each
 ## rule below.  They raise a clear error when S does not name an ensemble
@@ -516,7 +528,14 @@ html-only: script-exists
 # below), many of these can run at once under -j, and all their -i's would
 # rewrite the same parent indexes.  So instead, flag the experiment's index
 # as stale, and the exp-html target re-indexes once, at the end.
-sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt | sims/%/drm
+# The $$(wildcard ...) prerequisites are optional products, not made by this
+# rule, but shown in the index: the per-DRM products (via their status file),
+# the ensemble path map, and the detection-visits document.  Each one counts
+# only if it exists, so a new one prompts a remake of the index.
+sims/%/html/index.html: sims/%/gfx/det-info.txt sims/%/tbl/table-status.txt \
+                        $$(wildcard sims/$$*/path/per-drm-status.txt \
+                                    sims/$$*/path-ens/path-map.png \
+                                    sims/$$*/sched/detection-visits.html) | sims/%/drm
 	@ echo "Make: HTML index $@ ..."
 	$(if $(filter $*,$(S)),$(HTML_PROG),$(HTML_PROG_NOINDEX)) $*
 	$(CHECK_MADE)
