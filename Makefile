@@ -1,42 +1,38 @@
-# Makefile for EXOSIMS data reduction and plot generation.
+# Makefile for EXOSIMS data reduction, plot generation, web pages.
 #
 # Usage:
 #    $ make [ -B ] S=SCENARIO TARGET
 #    $ make TARGET
 # where TARGET is one of the below.
 #
-# * make -B forces the action, e.g., when the plot code changes.
+# * make -B ("Blank slate") forces the action, e.g., when the plot code changes.
 # * The S=SCENARIO argument is required for data reduction, plots, and html
 #   SCENARIO is the base name of the relevant script file, e.g., for
-#   Scripts/HabEx_4m_TS_20180201.json, use S=HabEx_4m_TS_20180201
-# * Alternately: set S to the json script, or the sim directory, so that
+#   Scripts/Test.fam/HabEx_4m_starshade.json, use S=Test.fam/HabEx_4m_starshade
+# * Alternately: set S to the JSON script, or the sim directory, so that
 #   shell filename completion can fill in the name.
 # * Simulations are added by the `add-sims.sh' command, separate from "make".
 #
 # Targets:
 # (1) Data reduction and plotting
-#   All these targets require a scenario name.
+#   => All these targets require a scenario name.
 #   reduce:          reduce DRMs to tabulated CSV files for later plotting
-#   graphics:        make detection/char plots, and radius-luminosity bar plots.
-#   graphics-extra:  make even more detection/char plots
-#   graphics-clean:  remove existing detection/char plots, to allow re-make
-#   html:            re-generate the index.html that summarizes the given scenario
-#   html-only:       same as html, but do not re-reduce the data or remake graphics.
-#   path-ensemble:   make lon/lat plots of slews taken by an ensemble.
+#   graphics:        make an array of standard plots
+#   graphics-extra:  make even more plots
+#   graphics-clean:  remove existing plots, to allow re-make
+#   html:            refresh the index.html that summarizes the given scenario
+#   html-only:       same as html, but do not re-reduce the data or remake graphics
+#   path-ensemble:   make lon/lat plots of slews taken by an ensemble
 #   star-visits:     per-star tabulation of successful detection visits
 #   path-movie-N:    make "N" path-movies and final frames 
-#   path-final-N:    make "N" final frames, only
+#   path-final-N:    make "N" final frames (but not the movies)
 #   obs-timeline-N:  make "N" observing-target timelines
 #   keepout-N:       make "N" keepout-vs-time plots
-#                    (the -N targets choose N arbitrary sims, where N is
+#                    (the -N targets choose N arbitrary runs, where N is
 #                    any count, e.g., 1, 2, 5, 10, ..., or T, where T=all)
-#   tar-log:         replace scenario/log with its "tar" archive to save space
-#   tar-data:        replace scenario/{drm,spc} with a "tar" archive (DELETES
-#                    them); for an experiment, does so within each ensemble
-#   tar-some-data:   same as tar-data, but only for low-yield ensembles
 #   status:          list the current contents of DRMs for this scenario (like "ls")
 # (2) Multi-script reduction and plotting
-#   All these targets require an *experiment* name.
+#   => All these targets require an *experiment* name.
 #   exp-reduce:      makes "reduce" for all ensembles within the experiment
 #   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
@@ -51,15 +47,21 @@
 #   exp-obs-timeline-M-* /  -M-top-N and make 5 each in 10 top + 10 selected.
 #   (Except for bare exp-html-only, the exp-* targets first reduce any
 #   ensembles that need it.)
-# (3) Web-server
+# (3) Maintenance
+#  => Work for either scenarios or (recursively) with experiments/families.
+#   tar-log:         replace each scenario/log with its "tar" archive to save space
+#   tar-data:        replace each scenario/{drm,spc} with a "tar" archive 
+#                    (deletes originals, leaving the tarfile)
+#   tar-some-data:   same as tar-data, but only for low-yield ensembles
+# (4) Web server
 #   html-ensure: start Apache httpd web-server, if not running already
 #   html-start: start Apache httpd web-server
 #   html-stop: stop Apache httpd web-server
 #   html-status: show running web-servers, if any
-# (4) Documentation
+# (5) Documentation
 #   doc: build the plot and code documentation, and install it for the web-server
 #
-## turmon oct 2017, mar 2018, feb 2022
+##
 
 # set the default shell
 SHELL:=/bin/bash
