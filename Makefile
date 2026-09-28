@@ -11,7 +11,7 @@
 #   Scripts/HabEx_4m_TS_20180201.json, use S=HabEx_4m_TS_20180201
 # * Alternately: set S to the json script, or the sim directory, so that
 #   shell filename completion can fill in the name.
-# * Simulations are added by the `add-sim.sh' command, separate from "make".
+# * Simulations are added by the `add-sims.sh' command, separate from "make".
 #
 # Targets:
 # (1) Data reduction and plotting
@@ -28,9 +28,12 @@
 #   path-final-N:    make "N" final frames, only
 #   obs-timeline-N:  make "N" observing-target timelines
 #   keepout-N:       make "N" keepout-vs-time plots
-#                    (the -N targets choose N arbitrary sims, where 
-#                    N = 1, 2, 5, 10, 20, 50, 100, or T, where T=all)
+#                    (the -N targets choose N arbitrary sims, where N is
+#                    any count, e.g., 1, 2, 5, 10, ..., or T, where T=all)
 #   tar-log:         replace scenario/log with its "tar" archive to save space
+#   tar-data:        replace scenario/{drm,spc} with a "tar" archive (DELETES
+#                    them); for an experiment, does so within each ensemble
+#   tar-some-data:   same as tar-data, but only for low-yield ensembles
 #   status:          list the current contents of DRMs for this scenario (like "ls")
 # (2) Multi-script reduction and plotting
 #   All these targets require an *experiment* name.
@@ -38,18 +41,23 @@
 #   exp-html-top-N:  makes html (inc. graphics) for the N top (by yield) ensembles
 #   exp-html-mix-N:  makes html (inc. graphics) for N selected-arbitrarily ensembles
 #   exp-html:        makes html for 10 top + 20 selected ensembles - can use make -jN
-#   exp-path-ensemble* \   Same pattern as html above with -mix or -top, and a
-#   exp-graphics*       |  number saying how many.  Also, can leave off -top-N
-#   exp-html-only*      |  and just make 10 top + 20 selected.
-#   exp-path-movie-M-*  |  Make M movies in each of (top/mix)-N ensembles.
-#   exp-keepout-M-*    /   Make M keepout maps in each of (top/mix)-N ensembles.
-#   exp-obs-timeline-M-*   Make M obs-timelines in each of (top/mix)-N ensembles.
-#   (The exp-* targets first reduce any ensembles that need it.)
+#   exp-path-ensemble*   \  Same pattern as html above with -mix or -top, and a
+#   exp-graphics*        /  number saying how many.  Also, can leave off -top-N
+#                           and just make 10 top + 20 selected.
+#   exp-html-only-*         Same pattern, but without re-making graphics.
+#   exp-html-only           Re-index *all* ensembles (no reduction or graphics).
+#   exp-path-movie-M-*   \  Make M movies, keepout maps, or obs-timelines in
+#   exp-keepout-M-*      |  each of (top/mix)-N ensembles.  Also, can leave off
+#   exp-obs-timeline-M-* /  -M-top-N and make 5 each in 10 top + 10 selected.
+#   (Except for bare exp-html-only, the exp-* targets first reduce any
+#   ensembles that need it.)
 # (3) Web-server
 #   html-ensure: start Apache httpd web-server, if not running already
 #   html-start: start Apache httpd web-server
 #   html-stop: stop Apache httpd web-server
 #   html-status: show running web-servers, if any
+# (4) Documentation
+#   doc: build the plot and code documentation, and install it for the web-server
 #
 ## turmon oct 2017, mar 2018, feb 2022
 
@@ -408,24 +416,27 @@ star-visits: script-exists ensemble-exists sims/$(S)/sched/detection-visits.html
 sims/%/sched/detection-visits.html: sims/%/drm
 	@ echo "Make: Detection visits document into $(@D) ..."
 	$(STAR_VISIT_PROG) sims/$*
+	$(CHECK_MADE)
 
 
 ########################################
 ## Path ensemble graphics - starshade slew map
 ##
+.PHONY: path-ensemble
 # delegate to the 'path-ens' for the named script
 path-ensemble: script-exists ensemble-exists sims/$(S)/path-ens/path-map.png
 
 # one ensemble's path plots - they depend on the DRM-set, not the reduction
 sims/%/path-ens/path-map.png: sims/%/drm
-	@ echo "Make: Making ensemble tour summary graphic in \`$(basename $@)'"
+	@ echo "Make: Making ensemble tour summary graphic in \`$(@D)'"
 	$(PATH_ENS_PROG) sims/$*/drm
+	$(CHECK_MADE)
 
 ########################################
-## Path movies
+## Per-DRM products: path movies, final frames, obs-timelines, keepout maps
 ##   
-#  target is: path-movie-N and path-final-N,
-#  for N = 1, 2, 5, 10, 20, etc.
+#  targets are: path-movie-N, path-final-N, obs-timeline-N, keepout-N,
+#  for N = any count, or T for all
 
 # Enable deferred ("secondary") expansion of prerequisites for the rules
 # defined below.  This does two jobs:
