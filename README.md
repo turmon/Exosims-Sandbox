@@ -3,11 +3,7 @@
 This is the code making up an EXOSIMS "Sandbox" -- a directory containing
 scripts (JSON-encoded parameter files) that drive EXOSIMS simulation runs,
 source code that performs runs and analysis, and support code for display
-of results over a browser interface.
-
-All the simulation scripts used by the Standards Team for the STDT final
-report reside here.  In principle, multiple such Sandbox directories could
-exist for separate families of simulations.
+of results through a browser interface.
 
 ## Process
 
