@@ -26,15 +26,23 @@ year scale is nonuniform.
 Each observation (detection or spectral characterization)
 is represented by one marker in the plot:
 
-| Marker        | Short Name | Description |
-| ----------- | ----------- | ----------- |
-| Green box   | Planet detected|  Successful detection of a planet   |
-| Green box, red edge   | Planet present, undetected |  Missed detection due to poor SNR or WA   |
-| White box, red edge   | No planet present|  Detection observation with no planet present    |
+| Marker        | Short Name     | Description |
+| ------------- | -------------- | ----------- |
+| Green box     | Success           | Successful detection of a planet |
+| Red box, solid        | No planet | No planet exists at this star |
+| Red box, green center | Fail/SNR  | Planet present, missed detection: SNR too low |
+| Red box, white center | Fail/IWA  | Planet present, missed detection: inside IWA  |
+| Red box, black center | Fail/OWA  | Planet present, missed detection: outside OWA |
 | Green circle  | Full | Full spectral characterization       |
 | Orange circle | Partial | Partial characterization (IWA/OWA issue)       |
-| Red circle      | Fail | Failed characterization (poor SNR) |
-| Gray circle | Miss | Missed characterization (e.g., unexpected keepout violation) |
+| Red circle    | Fail | Failed characterization (poor SNR) |
+| Gray circle   | Miss | Missed characterization (e.g., unexpected keepout violation) |
+
+When there is more than one planet at the star, the most successful
+outcome sets the color of the marker. For example, if one planet is detected and
+another was inside IWA, the detected planet "wins" and a green box is shown.
+Similarly, full characterizations "win" over partial or failed characterizations
+of another planet around that star.
 
 ## Observation Trace
 
@@ -52,22 +60,19 @@ If a further detection is attempted, the stripe color resets.
 
 Two other, narrower plots are appended at the right.
 
-The first plot (headed by a ``#Planet'' title)
+The first plot (headed by a `#Planet` title)
 shows the number of planets
 around the star (blank for no planets).
 A red X marks stars that did have one or more planets
 but in which those planets were not characterized.
-(As noted, only stars that were observed are in the plot,
-so other planets may be present around stars not 
+(Only stars that were observed are shown, 
+so other planets were around stars not 
 appearing in the plot.)
 
 The rightmost sub-plot gives a histogram of the number
-of detection (in blue)
-and characterization (in yellow) 
-visits (whether successful or not). 
+of the number of visits (detection in blue,
+characterization in yellow).
 
 The optimal appearance in these subplots
-is a green box, without a red X, and a short histogram
+is a solid green box (without a red `X`) and a short histogram
 of three stacked detections and one characterization.
-The lack of a red X means that the characterization was 
-successful.

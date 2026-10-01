@@ -27,22 +27,19 @@ The intent is to show how accurate the shown average is.
 
 ## Table Contents
 
-**Column naming.** The final column is the *earthlike* planet class.
-Its heading follows the `name` given in the scenario's `config-reduce.json`,
-and is "Earth" when nothing is customized -- so a scenario that re-defines the
-class to, say, a Sub-Neptune population will show "Sub-Neptune" there instead.
-This page uses the default name throughout.
-
-In all cases, consideration is restricted to a population P of
-stars (all observed stars, or promoted stars).
-
-Every detection observation is an "Attempt," ending in either
+Every detection observation is an "Attempt," ending in one or
+the other of 
 Failure (`det_status` = 0, -1, or -2 in the simulation DRM),
 or Success (`det_status = 1` in the DRM).
 
 In general, "cumulative" means the total number of detections,
-counting repeated detections of the same target. And
-"unique" means that repeat detections, or failures, are not counted.
+counting repeated detections of the same target. In contrast, 
+"unique" means that repeat detections are not counted, so it becomes
+a count of the underlying object.
+
+So for example, in the "Star" column, "Attempt: Cume" counts the 
+number of detection visits to stars, whereas "Attempt: Unique" counts the 
+number of stars ever visited.
 
 Specific notes on row-by-row properties:
 
@@ -54,33 +51,32 @@ Specific notes on row-by-row properties:
    <br>
    This property does not carry through to unique counts. 
    (E.g., two attempts on one target could end in one failure and one
-   success, and all unique numbers would equal 1.)
+   success, and all "unique" quantities would equal 1.)
 
 - Failures also sub-divide, so that:
   <br>
   `Fails_Cume = Fails_IWA + Fails_OWA + Fails_SNR`
   <br>
-	All of the reported subcategories are cumulative counts.
+  All of the reported subcategories are cumulative counts.
 
 - Failure categories do not make sense for stars because there is no way to
   attribute a specific set of planet failures to the host star.
   They are blanked out in the table.
 
-- `Detected(n)` for planets means:
+- `Detected(n)` for *planets* is the count of planets with:
   <br>
-  "the number of planets having exactly `n`
-  occurrences of (`det_status=1`) during the mission". 
+  "exactly `n` times during the mission when `det_status[planet] == 1`".
   <br>
   There is also an overflow category, `Det(n > 4)`.
 
-- `Detected(n)` for stars is less obvious. We choose it to mean:
+- `Detected(n)` for stars is less obvious. We choose it to count the number of stars with:
   <br> 
-  "the number of
-  stars with any combination of planets having exactly `n` ocurrences of (`det_status=1`) during the
-  mission". 
-  <br>
-  This is generally useful only for Earth-only SU's, or SU's that are
-  restricted to one planet type.
+  "exactly `n` times during the mission when `any(det_status == 1)`".
+  <br> 
+  This choice preserves the additive properties listed below.
+  Because of the `any` in the definition, this is generally useful 
+  only for Simulated Universes (SUs) restricted to a narrow planet type,
+  such as Earth-only SUs.
 
 - Because the `Detected(n)` counts partition the set of all detections, 
   we get this relationship:
@@ -90,10 +86,16 @@ Specific notes on row-by-row properties:
 - Note that the `Detected(n)` categories imply that `n` detections were cumulatively performed.
   So, provided the overflow class (`Detected(n>4)`) is empty, we also have:
   <br>
-  `Detected_cume = 1*Det(n=1) + 2*Det(n=2) + 3*Det(n=3) + 4*Det(n=4)`
+  `Detected_cume = 1 * Det(n=1) + 2 * Det(n=2) + 3 * Det(n=3) + 4 * Det(n=4)`
 
 
+## Customization 
 
+Column definition and naming: The final column is the *Earthlike* planet class.
+Its heading follows the `name` given in the scenario's `config-reduce.json`,
+and is "Earth" when nothing is customized -- so a scenario that re-defines the
+class to, say, a Sub-Neptune population will show "Sub-Neptune" there instead.
+This explanatory text uses the default name.
 
 
 
