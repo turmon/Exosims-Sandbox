@@ -10,11 +10,18 @@ of the ten are made by default; the other five need mode_op "+" (see RATIOS).
 
 The table holds planets around stars the mission visited, so "all" is the
 population it had the chance to observe, not the whole simulated universe.
+
+With mode_op "zoom", every plot is framed on the range of the detected or
+characterized planets, padded by 20% (in dex) on each side, rather than on the
+whole 5x3 bin grid.  The densities are re-fit to the planets inside that box,
+so the kernel narrows along with it -- a sharper plot, not just a cropped one.
+Counts and rates in the titles are then over the box, and say "[zoom]".
 """
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import argparse
 import sys
 import os
@@ -104,10 +111,14 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         planet-pop-tput-starchar2char.png
         planet-pop-tput-nodet2char.png
         planet-pop-tput-char2det.png
+    With mode_op "zoom", the same files, framed on the observed planets.
     """
 
+    ops = mode.get('op', '').split(',')
     # Make extra plots?
-    extra_plots = '+' in mode.get('op', '').split(',')
+    extra_plots = '+' in ops
+    # Frame (and fit) the plots on the observed planets?
+    zoom = 'zoom' in ops
 
     # Unpack CSV data
     t_planets, = plot_data
@@ -136,6 +147,23 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         print(f'\t{PROGNAME}: No usable planet rows, skipping')
         return []
 
+    # Zoom: one box for every plot, framing the detected or characterized
+    # planets.  Dropping the rows outside it is what makes the zoom more than
+    # a crop: the kernel bandwidth is fit to the spread of the sample, so a
+    # sample confined to the box gives a correspondingly finer density.
+    extent = None
+    if zoom:
+        seen = good & ((column('det_ok') > 0) | (column('char_ok') > 0))
+        if np.any(seen):
+            extent = rsc.observed_extent(sma_all[seen], rp_all[seen])
+            (x0, x1), (y0, y1) = extent
+            good = good & (sma_all >= x0) & (sma_all <= x1) & (rp_all >= y0) & (rp_all <= y1)
+        else:
+            print(f'\t{PROGNAME}: No detected or characterized planets to zoom to, '
+                      'using the full extent')
+    # title marker: the counts below are over the box, not the population
+    zoom_tag = ' [zoom]' if extent else ''
+
     # bin geometry, as customized by config-reduce.json for this scenario
     binner = rsc.configured_binner(reduce_info.get('_sim_dir', '.'),
                                        log_origin=PROGNAME,
@@ -154,10 +182,29 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         ax.set_xlabel('Semi-Major Axis, Luminosity-Scaled [AU]', fontweight='bold')
         ax.set_ylabel('$R_p$ [Earth radii]', fontweight='bold')
         ax.tick_params(labelsize=13)
-        # frame the whole 5x3 grid, log-log, and un-exponentiate the tick labels
-        rsc.set_koppa_limits(ax, binner)
+        # frame the whole 5x3 grid (or the zoom box, already padded), log-log,
+        # and un-exponentiate the tick labels
+        rsc.set_koppa_limits(ax, binner, extent=extent,
+                                 margin=0.0 if extent else 0.03)
         for axis in (ax.xaxis, ax.yaxis):
             axis.set_major_formatter(plt.FuncFormatter(lambda v, _: '{:.8g}'.format(v)))
+        if extent:
+            # A zoomed axis spans about a decade or less, so few (or no)
+            # decade ticks fall on it.  Over a narrow span, evenly-spaced
+            # ticks read best; otherwise label the minor log ticks, but only
+            # 2, 3, 5 of them, as all nine would crowd.
+            for axis, (lo, hi) in zip((ax.xaxis, ax.yaxis), extent):
+                if np.log10(hi / lo) < 0.6:
+                    axis.set_major_locator(mticker.AutoLocator())
+                    axis.set_minor_formatter(mticker.NullFormatter())
+                else:
+                    axis.set_minor_formatter(plt.FuncFormatter(minor_label))
+            ax.tick_params(which='both', labelsize=12)
+
+    # Inner function: label minor ticks of a zoomed log axis at 2, 3, 5
+    def minor_label(v, _):
+        mantissa = round(v / 10.0**np.floor(np.log10(v)))
+        return '{:.3g}'.format(v) if mantissa in (2, 3, 5) else ''
         ax.grid(True, alpha=0.3)
 
     # Inner function: write the current figure to files
@@ -178,7 +225,7 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
                       f'skipping the {stem} density plot')
             continue
         try:
-            Xg, Yg, Z, n_used = rsc.kde_on_bins(sma, rp, binner)
+            Xg, Yg, Z, n_used = rsc.kde_on_bins(sma, rp, binner, extent=extent)
         except (ValueError, np.linalg.LinAlgError) as e:
             # too few points, or all of them collinear/identical
             # (scipy's message is a paragraph; the first sentence is the reason)
@@ -198,7 +245,7 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         # the KDE's point budget as a computational choice, so it cannot be
         # read as one of the data-driven counts beside it.
         fit = '' if n_used == n_pl else f', KDE on {n_used/1000:g}k'
-        style_rad_sma_plot(ax, f'{phrase}: Density ({n_pl} planets{fit})')
+        style_rad_sma_plot(ax, f'{phrase}: Density ({n_pl} planets{fit}){zoom_tag}')
         cbar = fig.colorbar(cs_kde, ax=ax)
         cbar.set_label('Probability Density [/ dex$^2$]', fontweight='bold')
         write_plots(fig, f'planet-pop-density-{stem}')
@@ -241,7 +288,7 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
         masks = {stem: pops[num][take] for stem, _, num, _, _x in specs}
         try:
             Xg, Yg, ratios, n_used = rsc.kde_ratios_on_bins(
-                sma_all[take], rp_all[take], masks, binner)
+                sma_all[take], rp_all[take], masks, binner, extent=extent)
         except (ValueError, np.linalg.LinAlgError) as e:
             # too few points, or all of them collinear/identical
             # (scipy's message is a paragraph; the first sentence is the reason)
@@ -265,7 +312,7 @@ def plot_drm_planet_pop(reduce_info, plot_data, dest_tmpl, mode):
             # position-dependent map does not show.
             fit = '' if n_used == n_den else f' (KDE on {n_used/1000:g}k)'
             style_rad_sma_plot(
-                ax, f'P({phrase}): {n_num}/{n_den} = {100.0*n_num/n_den:.1f}%{fit}')
+                ax, f'P({phrase}): {n_num}/{n_den} = {100.0*n_num/n_den:.1f}%{fit}{zoom_tag}')
             cbar = fig.colorbar(cs_map, ax=ax)
             cbar.set_label('Probability', fontweight='bold')
             write_plots(fig, f'planet-pop-{stem}')

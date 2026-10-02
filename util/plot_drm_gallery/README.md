@@ -96,7 +96,9 @@ downward to the plot code. Standard keys:
 - `op` (str) -- operation mode string, a comma-separated list of options,
   tested as tokens (`'+' in mode.get('op', '').split(',')`). Empty string is
   normal; `"+"` requests extra/optional plots. `"std"` makes the `promote`
-  plots show mean +/- 1 std instead of median and quartiles. Options that a
+  plots show mean +/- 1 std instead of median and quartiles. `"zoom"` frames
+  the `planet_pop` plots on the detected/characterized planets (plus 20%
+  padding), re-fitting their densities to that box. Options that a
   plot does not recognize are ignored, e.g. `"+,std"` for all plots.
 - `verbose` (int) -- verbosity level. 0 = quiet, 1 = normal, 2+ = debug.
 - `ext_list` (list[str]) -- file extensions to write, e.g. `['png']` or

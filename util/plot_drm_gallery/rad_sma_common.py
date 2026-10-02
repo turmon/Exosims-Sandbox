@@ -24,6 +24,7 @@ import math
 import numpy as np
 from pathlib import Path
 from scipy.stats import gaussian_kde
+from scipy.spatial import cKDTree
 from matplotlib.patches import Rectangle, Polygon
 
 # reduce_drm_tools lives one level up, in util/ -- same dance as common_style
@@ -64,9 +65,17 @@ KDE_LEVELS = np.linspace(0.05, 1.0, 10)
 # Ratio maps (kde_ratios_on_bins) are probabilities, so their levels are
 # absolute, and the same for every such plot: the colors mean one thing.
 RATIO_LEVELS = np.linspace(0.0, 1.0, 11)
-# Where the denominator has essentially no data the ratio is meaningless, so
-# it is masked: cells holding less than this fraction of the peak kernel
-# weight come back NaN, and contourf leaves them blank.
+# Where the denominator has no data the ratio is meaningless, so it is
+# masked (NaN, which contourf leaves blank).  The primary test is for data
+# near the cell: at least NEIGHBOR_COUNT points within NEIGHBOR_RADIUS kernel
+# bandwidths.  This ends the map just beyond the data, wherever that is,
+# which a threshold on the kernel weight cannot do -- the Gaussian tail
+# reaches a bandwidth or more past the data at any usable threshold.  The
+# count is >1 so that a lone outlier does not extend the map.
+NEIGHBOR_RADIUS = 0.5
+NEIGHBOR_COUNT = 3
+# Backstop: cells holding less than this fraction of the peak kernel weight
+# are masked too, rather than shown as a ratio of two nearly-zero numbers.
 RATIO_WEIGHT_FLOOR = 1e-3
 # grid points evaluated per chunk, to bound the (n_points x chunk) work array
 RATIO_CHUNK = 512
@@ -125,6 +134,31 @@ def koppa_bin_extent(binner):
     return (sma.min(), sma.max()), (binner.Rp_bins[0], binner.Rp_bins[-1])
 
 
+def observed_extent(sma, rp, pad=0.20, min_span=0.1):
+    r'''Return ((sma_lo, sma_hi), (Rp_lo, Rp_hi)) framing the given points.
+
+    The range of the points is padded by pad times its span on each side,
+    measured in dex because the plane is plotted log-log.  Each axis is
+    widened to at least min_span dex about its center, so that one point, or
+    many identical ones, still give a box of nonzero size.'''
+    def _span(v):
+        lo, hi = np.log10(np.min(v)), np.log10(np.max(v))
+        if hi - lo < min_span:
+            mid = 0.5 * (lo + hi)
+            lo, hi = mid - 0.5 * min_span, mid + 0.5 * min_span
+        p = pad * (hi - lo)
+        return 10.0**(lo - p), 10.0**(hi + p)
+    return _span(sma), _span(rp)
+
+
+def _log_grid(extent, grid):
+    r'''Return a grid x grid log10 mesh spanning extent (in data coordinates).'''
+    (sma_lo, sma_hi), (rp_lo, rp_hi) = extent
+    xg = np.linspace(np.log10(sma_lo), np.log10(sma_hi), grid)
+    yg = np.linspace(np.log10(rp_lo),  np.log10(rp_hi),  grid)
+    return np.meshgrid(xg, yg)
+
+
 def draw_koppa_boxes(ax, binner, alpha=1.0, zorder=0):
     r'''Draw the 5x3 radius/insolation bins as colored rectangles.
 
@@ -149,13 +183,15 @@ def draw_earthlike_region(ax, binner, zorder=2):
     ax.add_patch(Polygon(np.vstack((x, y)).T, zorder=zorder, **EARTH_STYLE))
 
 
-def kde_on_bins(sma, rp, binner, grid=KDE_GRID, max_points=KDE_MAX_POINTS, seed=0):
+def kde_on_bins(sma, rp, binner, grid=KDE_GRID, max_points=KDE_MAX_POINTS, seed=0,
+                    extent=None):
     r'''Kernel density of points in the radius/SMA plane, over the 5x3 bins.
 
     Estimated in log10 coordinates, because the plane is plotted log-log: a
     Gaussian kernel in linear SMA would be badly mis-shaped at the low end.
     The returned grid is in data coordinates, ready to hand to contourf, and
-    the density is per dex^2.
+    the density is per dex^2.  The grid spans the bins, or extent (as from
+    observed_extent) if given.
 
     Large samples are randomly subsampled to max_points -- with a fixed seed,
     so re-running reproduces the plot -- because the cost is the product of
@@ -171,16 +207,13 @@ def kde_on_bins(sma, rp, binner, grid=KDE_GRID, max_points=KDE_MAX_POINTS, seed=
         x, y = x[inx], y[inx]
         n_used = max_points
     kernel = gaussian_kde(np.vstack((x, y)))
-    (sma_lo, sma_hi), (rp_lo, rp_hi) = koppa_bin_extent(binner)
-    xg = np.linspace(np.log10(sma_lo), np.log10(sma_hi), grid)
-    yg = np.linspace(np.log10(rp_lo),  np.log10(rp_hi),  grid)
-    Xg, Yg = np.meshgrid(xg, yg)
-    Z = kernel(np.vstack((Xg.ravel(), Yg.ravel()))).reshape(Xg.shape)
+    Xg, Yg = _log_grid(extent or koppa_bin_extent(binner), grid)
+    Z =kernel(np.vstack((Xg.ravel(), Yg.ravel()))).reshape(Xg.shape)
     return 10.0**Xg, 10.0**Yg, Z, n_used
 
 
 def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
-                           max_points=KDE_MAX_POINTS, seed=0):
+                           max_points=KDE_MAX_POINTS, seed=0, extent=None):
     r'''Kernel-regression estimate of P(mask | position) over the 5x3 bins.
 
     Given points (sma, rp) and one or more boolean masks over those same
@@ -197,17 +230,21 @@ def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
         P(mask | x) = sum_i w_i(x) mask_i / sum_i w_i(x)
 
     which is the Nadaraya-Watson estimator of the indicator, and lies in
-    [0, 1] by construction.  Cells where the denominator holds less than
-    RATIO_WEIGHT_FLOOR of its peak weight come back NaN rather than as a
-    ratio of two nearly-zero numbers.
+    [0, 1] by construction.  Cells without NEIGHBOR_COUNT points within
+    NEIGHBOR_RADIUS bandwidths come back NaN, as do cells where the
+    denominator holds less than RATIO_WEIGHT_FLOOR of its peak weight.  The
+    neighbor test uses every point, not just the subsample, so a sparse but
+    real stretch of data that the subsample missed is not blanked.
 
     The kernel is the one gaussian_kde would choose for the denominator
     sample, so these maps and the density maps are smoothed alike.  Several
-    masks are evaluated in one pass because they share that kernel.
+    masks are evaluated in one pass because they share that kernel.  As in
+    kde_on_bins, the grid spans the bins, or extent if given.
 
     Returns (X, Y, {name: R}, n_used).
     '''
     x, y = np.log10(sma), np.log10(rp)
+    pts_all = np.vstack((x, y))
     n_used = len(x)
     if n_used > max_points:
         inx = np.random.default_rng(seed).choice(n_used, max_points, replace=False)
@@ -218,10 +255,7 @@ def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
     pts = np.vstack((x, y))
     inv_cov = gaussian_kde(pts).inv_cov
 
-    (sma_lo, sma_hi), (rp_lo, rp_hi) = koppa_bin_extent(binner)
-    xg = np.linspace(np.log10(sma_lo), np.log10(sma_hi), grid)
-    yg = np.linspace(np.log10(rp_lo),  np.log10(rp_hi),  grid)
-    Xg, Yg = np.meshgrid(xg, yg)
+    Xg, Yg = _log_grid(extent or koppa_bin_extent(binner), grid)
     flat = np.vstack((Xg.ravel(), Yg.ravel()))
     n_grid = flat.shape[1]
 
@@ -240,7 +274,7 @@ def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
         for name, wt in weights.items():
             num[name][lo:hi] = w @ wt
 
-    ok = den > den.max() * RATIO_WEIGHT_FLOOR
+    ok = (den > den.max() * RATIO_WEIGHT_FLOOR) & _has_neighbors(pts_all, flat, inv_cov)
     ratios = {}
     for name in masks:
         r = np.full(n_grid, np.nan)
@@ -249,9 +283,26 @@ def kde_ratios_on_bins(sma, rp, masks, binner, grid=KDE_GRID,
     return 10.0**Xg, 10.0**Yg, ratios, n_used
 
 
-def set_koppa_limits(ax, binner, margin=0.03):
-    r'''Set log-log limits framing the 5x3 bins, with a small margin in dex.'''
-    (x0, x1), (y0, y1) = koppa_bin_extent(binner)
+def _has_neighbors(pts, flat, inv_cov, radius=NEIGHBOR_RADIUS, count=NEIGHBOR_COUNT):
+    r'''Mark the grid points (flat) with count of pts within radius bandwidths.
+
+    Distance is the kernel's Mahalanobis distance (inv_cov), so radius is in
+    kernel bandwidths.  Whitening by W, with inv_cov = W.T @ W, turns that
+    into the Euclidean distance a k-d tree measures.'''
+    W = np.linalg.cholesky(inv_cov).T
+    tree = cKDTree((W @ pts).T)
+    k = min(count, pts.shape[1])
+    d_k = tree.query((W @ flat).T, k=k)[0]
+    # distance to the k-th nearest (k=1 gives a 1-d array)
+    d_k = d_k if d_k.ndim == 1 else d_k[:, -1]
+    return d_k <= radius
+
+
+def set_koppa_limits(ax, binner, margin=0.03, extent=None):
+    r'''Set log-log limits framing the 5x3 bins, with a small margin in dex.
+
+    If extent is given (as from observed_extent), frame that instead.'''
+    (x0, x1), (y0, y1) = extent or koppa_bin_extent(binner)
     def _span(lo, hi):
         pad = margin * (math.log10(hi) - math.log10(lo))
         return 10.0**(math.log10(lo) - pad), 10.0**(math.log10(hi) + pad)
