@@ -233,7 +233,7 @@ servers there will restart automatically.)
 
 ### Tuning experiment support
 
-We had occasional need to run multiple linked ensembles to understand
+We sometimes run multiple linked ensembles to understand
 performance of schedulers in response to different tuning parameters.
 For instance, a scheduler might need to trade off slew time against
 Brown completeness ("should we spend time slewing to a far-off
@@ -242,23 +242,27 @@ integrate longer on a nearby target with smaller completeness").
 So we seek to compute and maximize yield
 across a selected set of tuning parameters.
 
-This was handled by creating a series of Exosims input scripts, one for
+This was handled by creating a series of EXOSIMS input scripts, one for
 each parameter setting, running
 `add-sims.sh` for each, and performing data reduction as noted above.
 This amounts to an outer loop around the above process.
 
-Regarding execution, we would generate a list of the input script
-filenames, and farm this list out to the machines available (aftac1,
-aftac2, aftac3).  The detailed process is described in the file 
-`Experiments/run-experiment-howto.txt`.
+Regarding execution, we generate a list of the input script
+filenames, and farm this list out to the machines available.
+The detailed process is described in the file 
+`Experiments/run-experiment-howto.txt`, and see also
+`exp-add-sims.sh` in the root directory.
 
-One important detail has to do with Monte Carlo noise.  When tuning the
-scheduler, we want to randomize over multiple simulated universes to
-provide robust parameter choices.  But, when comparing two parameter
-settings, we want to use the same *set* of simulated universes for both, to
-suppress the additional noise that would arise if the two settings used
-independent simulated universes.  (This is a simple instance of stratified
-sampling.)  So the sets of random number seeds used for each ensemble
-across the tuning experiment should be the same.  This is one purpose of the
-standardized seed files in the `Experiments` directory.
+One detail has to do with Monte Carlo noise.  When tuning the
+scheduler, we want to randomize over multiple simulated universes
+to provide robust parameter choices.  But, when comparing two
+scheduler parameter settings, we want to use the same *set* of
+simulated universes for both, to suppress the additional variation
+that would arise if the two settings used independent simulated
+universes.  So the sets of random number seeds used for each ensemble
+across a scheduler tuning experiment should be the same.  This is
+one purpose of the standardized seed files in the `Experiments`
+directory. However, other parameter variations do change
+the target list, thereby scrambling the assignment of random draws
+to stars and eliminating such same-seed noise suppression.
 
